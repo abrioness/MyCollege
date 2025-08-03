@@ -1,0 +1,74 @@
+﻿@model WebColegio.Models.TblNotas
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro de Notas</h4>
+        </div>
+        <div class="card-body">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+           
+            <div class="form-group">
+                <label for="IdAsignacion" class="control-label">Asignación del Profesor por Materia</label>
+                <select class="form-select" id="IdAsignacion" name="IdAsignacion" required>
+                    <option disabled selected>Seleccione una Opción</option>
+
+                    @*  @foreach (var item in Model.sex)
+                    {
+                        <option value="@item.IdSexo">@item.Sexo</option>
+                    } *@
+
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="IdTipoEvaluacion" class="control-label">Tipo de Evaluación</label>
+                <select class="form-select" id="IdTipoEvaluacion" name="IdTipoEvaluacion" required>
+                    <option disabled selected>Seleccione una Opción</option>
+
+                    @*  @foreach (var item in Model.sex)
+                    {
+                        <option value="@item.IdSexo">@item.Sexo</option>
+                    } *@
+
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="IdPeriodo" class="control-label">Periodo de Evaluación</label>
+                <select class="form-select" id="IdPeriodo" name="IdPeriodo" required>
+                    <option disabled selected>Seleccione una Opción</option>
+
+                    @*  @foreach (var item in Model.sex)
+                    {
+                        <option value="@item.IdSexo">@item.Sexo</option>
+                    } *@
+
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="Calificaciones" class="control-label">Calificación</label>
+                <input name="Calificaciones" class="form-control" />
+                <span asp-validation-for="Calificaciones" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="Descripcion" class="control-label">Descripción</label>
+                <input name="Descripcion" class="form-control" />
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+@* <div>
+    <a asp-action="Index">Back to List</a>
+</div> *@
+

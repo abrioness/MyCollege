@@ -1,0 +1,61 @@
+﻿@model WebColegio.Models.PagoColegiatura
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+@* <h1>Create</h1> *@
+
+<h4>Pago de Colegiatura</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @* <div class="form-group">
+                <label asp-for="IdPago" class="control-label"></label>
+                <input asp-for="IdPago" class="form-control" />
+                <span asp-validation-for="IdPago" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="IdFactura" class="control-label"></label>
+                <input asp-for="IdFactura" class="form-control" />
+                <span asp-validation-for="IdFactura" class="text-danger"></span>
+            </div> *@
+            <div class="form-group">
+                <label for="FechaPago" class="control-label">Fecha de Pago</label>
+                <input name="FechaPago" class="form-control" />
+                <span asp-validation-for="FechaPago" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="MontoPagado" class="control-label">Monto Pagado</label>
+                <input name="MontoPagado" class="form-control" />
+                <span asp-validation-for="MontoPagado" class="text-danger"></span>
+            </div>
+           @*  <div class="form-group">
+                <label asp-for="IdMetodoPago" class="control-label"></label>
+                <input asp-for="IdMetodoPago" class="form-control" />
+                <span asp-validation-for="IdMetodoPago" class="text-danger"></span>
+            </div> *@
+            <div class="form-group">
+                <label for="ReferenciaPago" class="control-label">Referencia de Pago</label>
+                <input name="ReferenciaPago" class="form-control" />
+                <span asp-validation-for="ReferenciaPago" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="Descripcion" class="control-label">Descripción</label>
+                <input name="Descripcion" class="form-control" />
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+           <br/>
+            <div class="form-group">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@* <div>
+    <a asp-action="Index">Back to List</a>
+</div> *@
+

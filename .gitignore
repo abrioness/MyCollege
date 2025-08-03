@@ -1,0 +1,11 @@
+# Archivos y carpetas que no deben ir al repo
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+*.dbmdl
+*.pdb
+*.ide

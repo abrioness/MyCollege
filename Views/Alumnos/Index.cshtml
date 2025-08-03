@@ -1,0 +1,87 @@
+﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@* @{
+	ViewData["Title"] = "Index";
+} *@
+
+<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+	<div class="card-header bg-primary text-white">
+		<h5 class="mb-0"><i class="bi bi-people"></i> Lista de Alumnos</h5>
+	</div>
+	<div class="card-body">
+
+
+<table id="tablaAlumnos" class="display responsive nowrap" style="width:100%">
+	<thead>
+		<tr>
+		<th>Nombre</th>
+		<th>Apellido</th>
+		<th>Edad</th>
+		<th>Cedula</th>
+		<th>Grado</th>
+		<th>Turno</th> 
+		<th>Sexo</th>
+			<th>Editar</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach(var itemAlumno in Model.alumno){
+			<tr>
+				<th>
+					@itemAlumno.Nombre
+				</th>
+				<th>
+					@itemAlumno.Apellido
+				</th>
+				<th>
+					@itemAlumno.Edad
+				</th>
+				<th>
+					@itemAlumno.Cedula
+				</th>
+				@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
+				{
+					<th>
+					
+						@grado.NombreGrado
+
+					</th>
+				}
+				@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemAlumno.IdTurno))
+				{
+					<th>
+						@turno.NombreTurno
+
+					</th>
+				}
+				@foreach (var sexo in Model.sexos.Where(a => a.IdSexo == itemAlumno.IdSexo))
+				{
+					<th>
+
+						@sexo.Sexo
+
+					</th>
+				}
+				<td>
+					<a asp-action="Edit" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-primary">Editar</a>
+				</td>
+    </tr>
+		}
+	</tbody>
+	
+</table>
+</div>
+</div>
+<script>
+	$(document).ready(function () {
+		$('#tablaAlumnos').DataTable({
+			responsive: true,
+			language: {
+				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+			},
+			dom: 'Bfrtip', // B = botones, f = search, r = procesando, t = tabla, i = info, p = paginación
+			buttons: [
+				'copy', 'excel', 'pdf', 'print'
+			]
+		});
+	});
+</script>

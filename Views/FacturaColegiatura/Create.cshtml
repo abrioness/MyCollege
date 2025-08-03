@@ -1,0 +1,79 @@
+﻿@model WebColegio.Models.FacturaColegiatura
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-coin-plus"></i> Facturación</h4>
+        </div>
+        <div class="card-body">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+           @*  <div class="form-group">
+                <label asp-for="IdFactura" class="control-label"></label>
+                <input asp-for="IdFactura" class="form-control" />
+                <span asp-validation-for="IdFactura" class="text-danger"></span>
+            </div> *@
+           
+          
+            <div class="form-group">
+                <label for="TipoColegiatura" class="control-label">Tipo de Colegiatura</label>
+                <select class="form-select" id="TipoColegiatura" name="TipoColegiatura" required>
+                    <option disabled selected>Seleccione una Opción</option>
+
+                    @*  @foreach (var item in Model.sex)
+                    {
+                        <option value="@item.IdSexo">@item.Sexo</option>
+                    } *@
+
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="MontoTotal" class="control-label">Monto Total</label>
+                <input name="MontoTotal" class="form-control" />
+                <span asp-validation-for="MontoTotal" class="text-danger"></span>
+            </div>
+            @* <div class="form-group">
+                <label for="IdEstado" class="control-label"></label>
+                <input asp-for="IdEstado" class="form-control" />
+                <span asp-validation-for="IdEstado" class="text-danger"></span>
+            </div> *@
+            <div class="form-group">
+                <label for="MesFacturado" class="control-label">Mes Facturado</label>
+                <input name="MesFacturado" class="form-control" />
+                <span asp-validation-for="MesFacturado" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="AnyoFacturado" class="control-label">Año Facturado</label>
+                <input name="AnyoFacturado" class="form-control" />
+                <span asp-validation-for="AnyoFacturado" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="Descripcion" class="control-label">Descripción</label>
+                <input name="Descripcion" class="form-control" />
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+           <br/>
+
+                <!-- Botones -->
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+@* <div>
+    <a asp-action="Index">Back to List</a>
+</div> *@
+

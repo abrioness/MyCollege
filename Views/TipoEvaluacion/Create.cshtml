@@ -1,0 +1,65 @@
+﻿@model WebColegio.Models.TipoEvaluacion
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>TipoEvaluacion</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="IdTipoEvaluacion" class="control-label"></label>
+                <input asp-for="IdTipoEvaluacion" class="form-control" />
+                <span asp-validation-for="IdTipoEvaluacion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NombreTipEvaluacion" class="control-label"></label>
+                <input asp-for="NombreTipEvaluacion" class="form-control" />
+                <span asp-validation-for="NombreTipEvaluacion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Porcentaje" class="control-label"></label>
+                <input asp-for="Porcentaje" class="form-control" />
+                <span asp-validation-for="Porcentaje" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Activo" /> @Html.DisplayNameFor(model => model.Activo)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="UsuarioRegistro" class="control-label"></label>
+                <input asp-for="UsuarioRegistro" class="form-control" />
+                <span asp-validation-for="UsuarioRegistro" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechaRegistro" class="control-label"></label>
+                <input asp-for="FechaRegistro" class="form-control" />
+                <span asp-validation-for="FechaRegistro" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UsuarioActualiza" class="control-label"></label>
+                <input asp-for="UsuarioActualiza" class="form-control" />
+                <span asp-validation-for="UsuarioActualiza" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechaActualiza" class="control-label"></label>
+                <input asp-for="FechaActualiza" class="form-control" />
+                <span asp-validation-for="FechaActualiza" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+

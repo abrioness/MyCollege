@@ -1,0 +1,136 @@
+﻿@model WebColegio.Models.ViewModel.AlumnosViewModel
+
+@* @{
+    ViewData["Title"] = "Edit";
+} *@
+
+<h1>Edit</h1>
+
+<h4>TblAlumno</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                
+                <input type="hidden" asp-for="alumnos.IdAlumno" class="form-control" />
+                
+            </div>
+            <div class="form-group">
+                <label asp-for="alumnos.Nombre" class="control-label"></label>
+                <input asp-for="alumnos.Nombre" class="form-control" />
+                <span asp-validation-for="alumnos.Nombre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="alumnos.Apellido" class="control-label"></label>
+                <input asp-for="alumnos.Apellido" class="form-control" />
+                <span asp-validation-for="alumnos.Apellido" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="alumnos.Edad" class="control-label"></label>
+                <input asp-for="alumnos.Edad" class="form-control" />
+                <span asp-validation-for="alumnos.Edad" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="alumnos.Cedula" class="control-label"></label>
+                <input asp-for="alumnos.Cedula" class="form-control" />
+                <span asp-validation-for="alumnos.Cedula" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Grado</label>
+                <select class="form-control list-group" asp-for="alumnos.IdGrado" asp-items="Model.gradosSelectListItem">
+                    <option value="">Seleccione el Grado</option>
+                </select>
+                <span asp-validation-for="alumnos.IdGrado" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Turno</label>
+                <select class="form-control list-group" asp-for="alumnos.IdTurno" asp-items="Model.turnosSelectListItem">
+                    <option value="">Seleccione el Turno</option>
+                </select>
+                <span asp-validation-for="alumnos.IdTurno" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Modalidad</label>
+                <select class="form-control list-group" asp-for="alumnos.IdModalidad" asp-items="Model.sexosSelectListItem">
+                    <option value="">Seleccione la Modalidad</option>
+                </select>
+                <span asp-validation-for="alumnos.IdModalidad" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Recinto</label>
+                <select class="form-control list-group" asp-for="alumnos.IdRecinto" asp-items="Model.sexosSelectListItem">
+                    <option value="">Seleccione el Sexo</option>
+                </select>
+                <span asp-validation-for="alumnos.IdRecinto" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="alumnos.IdSexo" class="control-label"></label>
+                <select class="form-control list-group" asp-for="alumnos.IdSexo" asp-items="Model.sexosSelectListItem">
+                    <option value="">Seleccione el Sexo</option>
+                </select>
+                <span asp-validation-for="alumnos.IdSexo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Grupo</label>
+                <select class="form-control list-group" asp-for="alumnos.IdGrupo" asp-items="Model.gruposSelectListItem">
+                    <option value="">Seleccione el Grupo</option>
+                </select>
+                <span asp-validation-for="alumnos.IdGrupo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Dirección</label>
+                <input asp-for="alumnos.Direccion" class="form-control" />
+                <span asp-validation-for="alumnos.Direccion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Teléfono</label>
+                <input asp-for="alumnos.Telefono" class="form-control" />
+                <span asp-validation-for="alumnos.Telefono" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Nombre de la Madre</label>
+                <input asp-for="alumnos.NombreMadre" class="form-control" />
+                <span asp-validation-for="alumnos.NombreMadre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Nombre del Padre</label>
+                <input asp-for="alumnos.NombrePadre" class="form-control" />
+                <span asp-validation-for="alumnos.NombrePadre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Nombre del Tutor</label>
+                <input asp-for="alumnos.NombreTutor" class="form-control" />
+                <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label  class="control-label">Correo</label>
+                <input asp-for="alumnos.Correo" class="form-control" />
+                <span asp-validation-for="alumnos.Correo" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                
+                <input type="hidden" asp-for="alumnos.UsuarioRegistro" class="form-control" />
+                
+            </div>
+            <div class="form-group">
+                
+                <input type="hidden" asp-for="alumnos.FechaRegistro" class="form-control" />
+               
+            </div>
+               <br
+                   
+            <div class="form-group">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+            </div>
+            <div>
+                <a asp-action="Index">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
