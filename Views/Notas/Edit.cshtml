@@ -1,0 +1,153 @@
+﻿@model WebColegio.Models.ViewModel.NotasViewModel
+
+@* @{
+    ViewData["Title"] = "Edit";
+} *@
+
+
+
+
+<div class="container mt-6" style="padding:50px;">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Editar</h4>
+        </div>
+        <div class="card-body">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="row">
+                    <div class="col-lg-6">
+            <div class="form-group">
+
+                <input type="hidden" asp-for="notas.IdNota" class="form-control" />
+
+            </div>
+                <div class="form-group">
+                    <label asp-for="notas.IdAlumno" class="control-label">Nombre del Alumno</label>
+                                <select asp-for="notas.IdAlumno" id="NombreAlumno" asp-items="Model.alumnosSelectListItem" class="form-select" required>
+                                    <option disabled selected>Seleccione el Alumno</option>
+                                </select>
+                    
+                </div>
+                <div class="form-group">
+                    <label asp-for="notas.IdTipoEvaluacion" class="control-label">Tipo de Evaluación</label>
+
+                    <select asp-for="notas.IdTipoEvaluacion" asp-items="Model.tipoEvaluacionesSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione la Evaluación</option>
+                    </select>
+                    <span asp-validation-for="notas.IdTipoEvaluacion" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="notas.IdPeriodo" class="control-label">Periodo de Evaluación</label>
+                    <select asp-for="notas.IdPeriodo" asp-items="Model.periodoEvaluacionsSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione la Evaluación</option>
+                    </select>
+                    <span asp-validation-for="notas.IdPeriodo" class="text-danger"></span>
+
+                </div>
+                <div class="form-group">
+                    <label asp-for="notas.IdAsignatura" class="control-label">Asignatura</label>
+                    <select asp-for="notas.IdAsignatura" asp-items="Model.asignaturaSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione la Evaluación</option>
+                    </select>
+                    <span asp-validation-for="notas.IdAsignatura" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="notas.Descripcion" class="control-label">Observación</label>
+                    <textarea asp-for="notas.Descripcion" class="form-control"> </textarea>
+                    @* <span asp-validation-for="Descripcion" class="text-danger"></span> *@
+                </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label asp-for="notas.PrimerCorte" class="control-label" >Primer Corte</label>
+                            <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control" step="0.01" />
+               
+                <span asp-validation-for="notas.PrimerCorte" class="text-danger"></span>
+            </div>
+
+
+            <div class="form-group">
+                <label asp-for="notas.SegundoCorte" class="control-label">Segundo Corte</label>
+                 <input asp-for="notas.SegundoCorte" id="segundoCorte" class="form-control" step="0.01" />
+                <span asp-validation-for="notas.SegundoCorte" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="notas.TercerCorte" class="control-label">Tercer Corte</label>
+                            <input asp-for="notas.TercerCorte" id="tercerCorte" class="form-control" step="0.01" />
+                <span asp-validation-for="notas.TercerCorte" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="notas.CuartoCorte" class="control-label">Cuarto Corte</label>
+                            <input asp-for="notas.CuartoCorte" id="cuartoCorte" class="form-control" step="0.01" />
+                <span asp-validation-for="notas.CuartoCorte" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="notas.NotaFinal" class="control-label">Nota Final</label>
+                            <input asp-for="notas.NotaFinal" id="notaFinal" class="form-control" readonly step="0.01" />
+                @* <span asp-validation-for="CuartoCorte" class="text-danger"></span> *@
+            </div>
+
+
+            <br />
+        </div>
+    </div>
+    <br />
+    <!-- Botones -->
+    <div class="col-12 text-end">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Guardar
+        </button>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+        </form>
+    </div>
+</div>
+</div>
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+<script>
+    $(document).ready(function () {
+        // Deshabilitar campos si ya tienen valor
+        if ($("#primerCorte").val() && $("#primerCorte").val() !== "0") {
+            $("#primerCorte").prop("disabled", true);
+        }
+        if ($("#segundoCorte").val() && $("#segundoCorte").val() !== "0") {
+            $("#segundoCorte").prop("disabled", true);
+        }
+        if ($("#tercerCorte").val() && $("#tercerCorte").val() !== "0") {
+            $("#tercerCorte").prop("disabled", true);
+        }
+        if ($("#cuartoCorte").val() && $("#cuartoCorte").val() !== "0") {
+            $("#cuartoCorte").prop("disabled", true);
+        }
+
+        // Nombre del alumno siempre deshabilitado
+        $("#NombreAlumno").prop("disabled", true);
+
+        // Función para calcular la nota final
+        function calcularNotaFinal() {
+            let t1 = parseFloat($("#primerCorte").val()) || 0;
+            let t2 = parseFloat($("#segundoCorte").val()) || 0;
+            let t3 = parseFloat($("#tercerCorte").val()) || 0;
+            let t4 = parseFloat($("#cuartoCorte").val()) || 0;
+
+            let notaFinal = (t1 + t2 + t3 + t4) / 4;
+
+            $("#notaFinal").val(notaFinal.toFixed(2));
+        }
+
+        // Recalcular cada vez que cambien los cortes
+        $("#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
+    });
+</script>
+}
+
+
+ 
+

@@ -2,8 +2,10 @@
 @* @{
 	ViewData["Title"] = "Index";
 } *@
-
-<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+<div class="container mt-6" style="padding:50px;">
+<div class="card shadow-lg p-3 mb-5 bg-white rounded" style="padding-top:50px;">
 	<div class="card-header bg-primary text-white">
 		<h5 class="mb-0"><i class="bi bi-people"></i> Lista de Alumnos</h5>
 	</div>
@@ -20,7 +22,7 @@
 		<th>Grado</th>
 		<th>Turno</th> 
 		<th>Sexo</th>
-			<th>Editar</th>
+		<th>Editar</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -62,7 +64,7 @@
 					</th>
 				}
 				<td>
-					<a asp-action="Edit" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-primary">Editar</a>
+								<a asp-action="Edit" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
 				</td>
     </tr>
 		}
@@ -71,17 +73,30 @@
 </table>
 </div>
 </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
-	$(document).ready(function () {
+$(document).ready(function () {
 		$('#tablaAlumnos').DataTable({
-			responsive: true,
-			language: {
-				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
-			},
-			dom: 'Bfrtip', // B = botones, f = search, r = procesando, t = tabla, i = info, p = paginación
-			buttons: [
-				'copy', 'excel', 'pdf', 'print'
-			]
-		});
+		responsive: true,
+		dom: 'Bfrtip', // Botones + filtro + tabla
+		buttons: [
+			{
+				extend: 'excelHtml5',
+				text: 'Exportar a Excel',
+				className: 'btn btn-success'
+			}
+		],
+		language: {
+			url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+		}
 	});
+});
 </script>
+

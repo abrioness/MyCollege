@@ -1,0 +1,129 @@
+﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@* @{
+	ViewData["Title"] = "Index";
+} *@<script src="~/js/site.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+<div class="container mt-6" style="padding:20px;">
+<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+	<div class="card-header bg-primary text-white">
+		<h5 class="mb-0"><i class="bi bi-mortarboard-fill"></i> Notas</h5>
+	</div>
+	<div class="card-body">
+
+
+		<table id="tablaNotas" class="display responsive nowrap" style="width:100%">
+			<thead>
+				<tr>
+					<th>Alumno</th>
+					<th>Tipo de Evaluación</th>
+					<th>Periodo</th>
+					<th>Asignatura</th>
+					<th>I Corte</th>
+					<th>II Corte</th>
+					<th>III Corte</th>
+					<th>IV Corte</th>
+					<th>Nota Fiinal</th>
+					<th>Editar</th>
+					<th>Detalle</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var itemNotas in Model.notas)
+				{
+					<tr>
+						
+							@foreach (var alumno in Model.alumno.Where(a => a.IdAlumno == itemNotas.IdAlumno))
+							{
+							<th>
+
+								@alumno.Nombre  @alumno.Apellido
+
+							</th>
+							}
+
+						@foreach (var evaluacion in Model.tipoEvaluaciones.Where(a => a.IdTipoEvaluacion == itemNotas.IdTipoEvaluacion))
+						{
+							<th>
+
+								@evaluacion.NombreTipEvaluacion
+
+							</th>
+						}
+						@foreach (var periodo in Model.periodoEvaluacions.Where(a => a.IdPeriodo == itemNotas.IdPeriodo))
+						{
+							<th>
+
+								@periodo.NombrePeriodo
+
+							</th>
+						}
+						@foreach (var asignatura in Model.asignaturas.Where(a => a.IdAsignatura == itemNotas.IdAsignatura))
+						{
+							<th>
+
+								@asignatura.NombreAsignatura
+
+							</th>
+						}
+						<th>
+
+								@itemNotas.PrimerCorte
+						</th>
+						<th>
+
+							@itemNotas.SegundoCorte
+						</th>
+						<th>
+
+							@itemNotas.TercerCorte
+						</th>
+						<th>
+
+							@itemNotas.CuartoCorte
+						</th>
+						<th>
+
+							@itemNotas.NotaFinal
+						</th>
+						
+						
+						<td>
+							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
+						</td>
+						<td>
+							<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
+						</td>
+					</tr>
+				}
+			</tbody>
+
+		</table>
+	</div>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+			$('#tablaNotas').DataTable({
+			responsive: true,
+			dom: 'Bfrtip', // Botones + filtro + tabla
+			buttons: [
+				{
+					extend: 'excelHtml5',
+					text: 'Exportar a Excel',
+					className: 'btn btn-success'
+				}
+			],
+			language: {
+				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+			}
+		});
+	});
+</script>

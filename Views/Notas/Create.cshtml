@@ -1,74 +1,158 @@
-﻿@model WebColegio.Models.TblNotas
+﻿@model WebColegio.Models.ViewModel.NotasViewModel
 
 @{
     ViewData["Title"] = "Create";
 }
-
-<div class="container mt-4">
+@*<div class="content">
+     <div class="modal-body">
+        <span class="h5 mb-1">Bienvenido: @TempData["nombreusuario"] </span>
+    </div> *@
+<div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro de Notas</h4>
+            <h4 class="mb-0"><i class="bi bi-pencil"></i> Registro de Notas</h4>
         </div>
         <div class="card-body">
-        <form asp-action="Create">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" >
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+           <div class="row">
+               <div class="col-lg-6">
+                            <div class="form-group">
+                                <label asp-for="notas.IdAlumno">Nombre del Alumno</label>
+                                <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar alumno..." />
+                                <input type="hidden" id="IdAlumno" name="notas.IdAlumno" />
+                            </div>
            
+                <div class="form-group">
+                    <label asp-for="notas.IdTipoEvaluacion" class="control-label">Tipo de Evaluación</label>
+                                
+                                    <select asp-for="notas.IdTipoEvaluacion" asp-items="Model.tipoEvaluacionesSelectListItem" class="form-select" required>
+                                        <option disabled selected>Seleccione la Evaluación</option>
+                                    </select>
+                                    <span asp-validation-for="notas.IdTipoEvaluacion" class="text-danger"></span>
+                </div>
             <div class="form-group">
-                <label for="IdAsignacion" class="control-label">Asignación del Profesor por Materia</label>
-                <select class="form-select" id="IdAsignacion" name="IdAsignacion" required>
-                    <option disabled selected>Seleccione una Opción</option>
-
-                    @*  @foreach (var item in Model.sex)
-                    {
-                        <option value="@item.IdSexo">@item.Sexo</option>
-                    } *@
-
-                </select>
+                                <label asp-for="notas.IdPeriodo" class="control-label">Periodo de Evaluación</label>
+                                <select asp-for="notas.IdPeriodo" asp-items="Model.periodoEvaluacionsSelectListItem" class="form-select" required>
+                                    <option disabled selected>Seleccione la Evaluación</option>
+                                </select>
+                                <span asp-validation-for="notas.IdPeriodo" class="text-danger"></span>
+                
             </div>
+                    <div class="form-group">
+                        <label asp-for="notas.IdAsignatura" class="control-label">Asignatura</label>
+                                <select asp-for="notas.IdAsignatura" asp-items="Model.asignaturaSelectListItem" class="form-select" required>
+                                    <option disabled selected>Seleccione la Evaluación</option>
+                                </select>
+                                <span asp-validation-for="notas.IdAsignatura" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="Descripcion" class="control-label">Observación</label>
+                                <textarea name="Descripcion" class="form-control"> </textarea>
+                                @* <span asp-validation-for="Descripcion" class="text-danger"></span> *@
+                            </div>
+                            </div>
+                <div class="col-lg-6">
             <div class="form-group">
-                <label for="IdTipoEvaluacion" class="control-label">Tipo de Evaluación</label>
-                <select class="form-select" id="IdTipoEvaluacion" name="IdTipoEvaluacion" required>
-                    <option disabled selected>Seleccione una Opción</option>
-
-                    @*  @foreach (var item in Model.sex)
-                    {
-                        <option value="@item.IdSexo">@item.Sexo</option>
-                    } *@
-
-                </select>
+                        <label asp-for="notas.PrimerCorte" class="control-label">Primer Corte</label>
+                                <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control" />
+                                <span asp-validation-for="notas.PrimerCorte" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label for="IdPeriodo" class="control-label">Periodo de Evaluación</label>
-                <select class="form-select" id="IdPeriodo" name="IdPeriodo" required>
-                    <option disabled selected>Seleccione una Opción</option>
-
-                    @*  @foreach (var item in Model.sex)
-                    {
-                        <option value="@item.IdSexo">@item.Sexo</option>
-                    } *@
-
-                </select>
+                        
+                        
+             <div class="form-group">
+                                <label asp-for="notas.SegundoCorte" class="control-label">Segundo Corte</label>
+                                <input asp-for="notas.SegundoCorte" id="segundoCorte" class="form-control" />
+                                <span asp-validation-for="notas.SegundoCorte" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label for="Calificaciones" class="control-label">Calificación</label>
-                <input name="Calificaciones" class="form-control" />
-                <span asp-validation-for="Calificaciones" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label for="Descripcion" class="control-label">Descripción</label>
-                <input name="Descripcion" class="form-control" />
-                <span asp-validation-for="Descripcion" class="text-danger"></span>
-            </div>
+                    <div class="form-group">
+                                <label asp-for="notas.TercerCorte" class="control-label">Tercer Corte</label>
+                                <input asp-for="notas.TercerCorte" id="tercerCorte" class="form-control" />
+                                <span asp-validation-for="notas.TercerCorte" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                                <label asp-for="notas.CuartoCorte" class="control-label">Cuarto Corte</label>
+                                <input asp-for="notas.CuartoCorte" id="cuartoCorte" class="form-control" />
+                                <span asp-validation-for="notas.CuartoCorte" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                                <label asp-for="notas.NotaFinal" class="control-label">Nota Final</label>
+                                <input asp-for="notas.NotaFinal" id="notaFinal" class="form-control" disabled />
+                        @* <span asp-validation-for="CuartoCorte" class="text-danger"></span> *@
+                    </div>
+            
+                        
             <br />
-            <div class="form-group">
-                <input type="submit" value="Guardar" class="btn btn-primary" />
-            </div>
+						</div>
+					</div>
+                    <br />
+                    <!-- Botones -->
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+
         </form>
         </div>
     </div>
 </div>
+@* </div> *@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 @* <div>
     <a asp-action="Index">Back to List</a>
 </div> *@
 
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+    <script>
+        $("#AlumnoNombre").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "https://localhost:7008/api/Alumnos/buscar",
+                    data: { q: request.term },
+                    success: function (data) {
+                         console.log("Respuesta API:", data); // 👈 debug
+                        response($.map(data, function (item) {
+                            return {
+                                label: item.nombreCompleto,
+                                value: item.nombreCompleto,
+                                id: item.id
+                            };
+                        }));
+                    }
+                });
+            },
+            minLength: 2, // empieza a buscar desde 2 letras
+            select: function (event, ui) {
+                $("#IdAlumno").val(ui.item.id); // Guardamos el ID del alumno
+            }
+        });
+    
+        $(function () {
+            function calcularNotaFinal() {
+                let t1 = parseFloat($("#primerCorte").val()) || 0;
+                let t2 = parseFloat($("#segundoCorte").val()) || 0;
+                let t3 = parseFloat($("#tercerCorte").val()) || 0;
+                let t4 = parseFloat($("#cuartoCorte").val()) || 0;
+
+                // Aquí defines la fórmula de la nota final
+                // Ejemplo: promedio simple
+                let notaFinal = (t1 + t2  + t3 + t4) /4;
+
+                $("#notaFinal").val(notaFinal.toFixed(2));
+            }
+
+            // Recalcular cada vez que cambie un valor
+            $("#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
+        });
+
+    </script>
+}

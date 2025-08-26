@@ -14,6 +14,7 @@
         public List<Grupos> grupos { get; set; } = new List<Grupos>();
         public List<Grados> grados { get; set; } = new List<Grados>();
         public List<Modalidades> modalidades { get; set; } = new List<Modalidades>();
+        public List<Asignaturas> asignaturas { get; set; } = new List<Asignaturas>();
 
 
 

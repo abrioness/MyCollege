@@ -1,36 +1,148 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using WebColegio.Models;
+using WebColegio.Models.ViewModel;
+using WebColegio.Services;
+using WebColegio.Views.Shared;
 
 namespace WebColegio.Controllers
 {
     public class NotasController : Controller
     {
-        // GET: NotasController
-        public ActionResult Index()
+        private readonly IServicesApi _Iservices;
+        public NotasController(IServicesApi services)
         {
-            return View();
+            _Iservices = services;
+        }
+        // GET: NotasController
+        public async Task<ActionResult> Index()
+        {
+            var _notas = await _Iservices.GetNotasAsync();
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoEvaluacion = await _Iservices.GetTipEvaluacionAsync();            
+            var _periodo = await _Iservices.GetPeriodoEvaluacionAsync();
+            var _asignatura = await _Iservices.GetAsignaturaAsync();
+            
+
+            var VieModelNotas = new ColeccionCatalogos
+            {
+                notas=_notas,
+                alumno = _alumnos,
+                tipoEvaluaciones = _tipoEvaluacion,               
+                periodoEvaluacions = _periodo,
+                asignaturas = _asignatura,
+                
+            };
+            if(VieModelNotas==null)
+            {
+                TempData["Message"] = "No hay notas registradas";
+                return View("NotFound"); // Redirige a una vista de error o no encontrado
+            }
+            else
+            { TempData["Message"] = "Notas encontradas";
+                return View(VieModelNotas);
+            }
+          
         }
 
         // GET: NotasController/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            return View();
+            var v_alumNota = await _Iservices.V_alumnoNotas(id);
+            var nota = await _Iservices.GetNotasById(id);   //_context.TblNotas.FirstOrDefault(n => n.Id == id);
+            //var asignatura = (await _Iservices.GetAsignaturaAsync())
+            // .FirstOrDefault(a => a.IdAsignatura == nota.IdAsignatura);
+
+
+            var viewModel = new NotasViewModel
+            {
+                notas = nota,
+                alumnoNotas = v_alumNota,
+           
+                asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
+        .Select(r => new SelectListItem
+        {
+            Value = r.IdAsignatura.ToString(),
+            Text = r.NombreAsignatura
+        }).ToList(),
+                periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdPeriodo.ToString(),
+                                      Text = r.NombrePeriodo,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                sexoSelectListItem = (await _Iservices.GetSexosAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdSexo.ToString(),
+                                      Text = r.Sexo,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+            };
+
+            if (nota == null)
+            {
+                return NotFound();
+            }
+
+            return View(viewModel);
         }
 
         // GET: NotasController/Create
-        public ActionResult Create()
+        public async Task<ActionResult> Create()
         {
-            return View();
+            var viewmodel = new NotasViewModel
+            {
+
+                tipoEvaluacionesSelectListItem = (await _Iservices.GetTipEvaluacionAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdTipoEvaluacion.ToString(),
+                                      Text = r.NombreTipEvaluacion,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdPeriodo.ToString(),
+                                      Text = r.NombrePeriodo,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdAsignatura.ToString(),
+                                      Text = r.NombreAsignatura,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                
+            };
+
+            return View(viewmodel);
         }
 
         // POST: NotasController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<ActionResult> Create(TblNotas notas)
         {
+            bool response = false;
             try
             {
-                return RedirectToAction(nameof(Index));
+                if (notas != null)
+                {
+                    response = await _Iservices.PostNotasAsync(notas);
+                    if (response)
+                    {
+                        TempData["Message"] = "Nota creada correctamente";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                }
+                return NoContent();
             }
             catch
             {
@@ -39,19 +151,107 @@ namespace WebColegio.Controllers
         }
 
         // GET: NotasController/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<ActionResult> Edit(int id)
         {
-            return View();
+            var v_alumNota = await _Iservices.V_alumnoNotas(id);
+            var notas = await _Iservices.GetNotasById(id);
+            if (id == 0)
+            {
+                return NotFound(); // si no existe
+            }
+
+            var viewmodel = new NotasViewModel
+            {
+                notas = notas,
+               
+                alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdAlumno.ToString(),
+                                      Text = r.Nombre+" "+r.Apellido ,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                tipoEvaluacionesSelectListItem = (await _Iservices.GetTipEvaluacionAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdTipoEvaluacion.ToString(),
+                                      Text = r.NombreTipEvaluacion,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdPeriodo.ToString(),
+                                      Text = r.NombrePeriodo,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdAsignatura.ToString(),
+                                      Text = r.NombreAsignatura,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+
+            };
+            return View(viewmodel);
         }
 
         // POST: NotasController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(NotasViewModel viewModel)
         {
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                if (viewModel == null || viewModel.notas == null)
+                {
+                    ModelState.AddModelError("", "Los datos de las notas del alumno son inválidos.");
+                    return View(viewModel);
+                }
+
+                if (!ModelState.IsValid)
+                {
+
+                    var actualizado = await _Iservices.UpdateNotas(viewModel.notas);
+
+                    if (actualizado)
+                    {
+                        TempData["Mensaje"] = "Nota actualizada correctamente.";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    ModelState.AddModelError("", "Error al actualizar la nota del alumno."); // si hay errores, devuelve a la vista con los datos
+                }
+
+                viewModel.tipoEvaluacionesSelectListItem = (await _Iservices.GetTipEvaluacionAsync())
+                                 .Select(r => new SelectListItem
+                                 {
+                                     Value = r.IdTipoEvaluacion.ToString(),
+                                     Text = r.NombreTipEvaluacion,
+                                     //Selected = r.IdPregunta == respuestas.IdPregunta
+                                 }).ToList();
+                     viewModel.periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdPeriodo.ToString(),
+                                      Text = r.NombrePeriodo,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList();
+                viewModel.asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdAsignatura.ToString(),
+                                      Text = r.NombreAsignatura,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList();
+
+               
+                return View(viewModel);
+
+
+
             }
             catch
             {

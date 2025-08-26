@@ -1,0 +1,103 @@
+﻿@model WebColegio.Models.ViewModel.NotasViewModel
+<script src="c:\users\usuario\.nuget\packages\datatables.net\2.3.2\contentfiles\any\any\wwwroot\js\datatables.min.js"></script>
+<script src="c:\users\usuario\.nuget\packages\datatables.net\2.3.2\contentfiles\any\any\wwwroot\js\datatables.js"></script>
+<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-mortarboard-fill"></i> Detalles de  Nota</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-1">
+                @* <img src="data:image/jpeg;base64,@Convert.ToBase64String(Alumnos)" class="img-fluid rounded-circle mb-3 ml-5" style="width: 150px; height: 150px" /> *@
+            </div>
+            <div class="col-3">
+                <h2>@Model.alumnoNotas.Nombre @Model.alumnoNotas.Apellido</h2>
+                
+                    <b>Dirección:</b>
+
+                    <span> @Model.alumnoNotas.Direccion</span>
+
+                
+               
+                    <br>
+                <b>Periodo: </b> <span>@Model.periodoEvaluacionsSelectListItem.FirstOrDefault(a => a.Value == Model.notas.IdPeriodo.ToString())?.Text</span>
+
+               
+                <br>
+               @*  <b>Estado Civil: </b> <span>@empleado.estadCivil</span> *@
+                
+                <b>Sexo: </b> <span>@Model.sexoSelectListItem.FirstOrDefault(a => a.Value == Model.alumnoNotas.IdSexo.ToString())?.Text</span>
+
+               
+                @* foreach (var religion in Model.religion.Where(x => x.idReligion == empleado.fkReligion))
+                {
+                    <br>
+                    <b>Religión: </b> <span>@religion.nombre</span>
+
+                } *@
+            </div>
+        </div>
+        <br />
+<table id="detalleNotas" class="table table-bordered display responsive nowrap">
+    <thead>
+        <tr>
+            <th>
+              Asignatura
+            </th>
+            <th>
+                Corte I
+            </th>
+            <th>
+                Corte II
+            </th>
+            <th>
+                Corte III
+            </th>
+            <th>
+                Corte IV
+            </th>
+            <th>
+                NF
+            </th>
+        </tr>
+
+    </thead>
+    <tbody>
+    
+    <tr>
+        
+						
+        <td>
+                        @Model.asignaturaSelectListItem.FirstOrDefault(a => a.Value == Model.notas.IdAsignatura.ToString())?.Text
+        </td>
+            
+        <td>
+                        @Model.notas.PrimerCorte
+        </td>
+        <td>
+                        @Model.notas.SegundoCorte
+        </td>
+        <td>
+                        @Model.notas.TercerCorte
+        </td>
+        <td>
+                        @Model.notas.CuartoCorte
+        </td>
+        <td>
+                        @Model.notas.NotaFinal
+        </td>
+    </tr>
+                
+</tbody>
+
+</table>
+
+    
+    </div>
+    </div>
+
+  
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Volver a la lista</a>
+</div>
