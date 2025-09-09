@@ -20,7 +20,7 @@
                 
                
                     <br>
-                <b>Periodo: </b> <span>@Model.periodoEvaluacionsSelectListItem.FirstOrDefault(a => a.Value == Model.notas.IdPeriodo.ToString())?.Text</span>
+                @* <b>Periodo: </b> <span>@Model.periodoEvaluacionsSelectListItem.FirstOrDefault(a => a.Value == Model.notas.IdPeriodo.ToString())?.Text</span> *@
 
                
                 <br>
@@ -63,31 +63,31 @@
 
     </thead>
     <tbody>
-    
+    @foreach(var nota in Model.listNotas){
     <tr>
         
 						
         <td>
-                        @Model.asignaturaSelectListItem.FirstOrDefault(a => a.Value == Model.notas.IdAsignatura.ToString())?.Text
+                          @Model.asignaturaSelectListItem.FirstOrDefault(a => a.Value == nota.IdAsignatura.ToString())?.Text 
         </td>
             
         <td>
-                        @Model.notas.PrimerCorte
+                        @nota.PrimerCorte
         </td>
         <td>
-                        @Model.notas.SegundoCorte
+                        @nota.SegundoCorte
         </td>
         <td>
-                        @Model.notas.TercerCorte
+                        @nota.TercerCorte
         </td>
         <td>
-                        @Model.notas.CuartoCorte
+                        @nota.CuartoCorte
         </td>
         <td>
-                        @Model.notas.NotaFinal
+                        @nota.NotaFinal
         </td>
     </tr>
-                
+    }            
 </tbody>
 
 </table>

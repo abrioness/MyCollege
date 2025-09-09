@@ -120,7 +120,7 @@ namespace WebColegio.Controllers
                     response = await _Iservices.PostAlumnosAsync(alumnos);
                     if(response)
                     {
-                        TempData["Message"] = "Alumno creado correctamente";
+                        TempData["Mensaje"] = "El registro del alumno se creado correctamente";
                         return RedirectToAction(nameof(Index));
                     }
                    

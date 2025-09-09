@@ -177,7 +177,14 @@
 @* <div>
     <a asp-action="Index">Back to List</a>
 </div> *@
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
 
+    <script src="~/seewtalert/sweetalert.all.min.js"></script>
+    <script src="~/seewtalert/sweetalertstyle.js"></script>
+    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
 <script>
         function capitalizeWords(input) {
             input.value = input.value
@@ -218,4 +225,43 @@
 
 
     });
+
+               function msg(mensaje){
+                   swal.fire({
+                           title:'Warning',
+                           text: mensaje,
+                           icon: 'warning',
+                           showCancelButton: true,
+                        confirmButtonText: 'Aceptar',
+                        cancelButtonText: 'Cancelar' // corregido el error tipográfico
+                       });}
+
+               function msgconfirm(mensaje) {
+                    Swal.fire({
+                        title: 'Información',
+                        text: mensaje,
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Aceptar',
+                        cancelButtonText: 'Cancelar'
+                    });
+                }
+
+
+
 </script>
+
+@if (TempData["Mensaje"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+               Swal.fire({
+                       title: '@(TempData["Tipo"]?.ToString() == "info" ? "Información" : "Warning")',
+                   text: '@TempData["Mensaje"]',
+                       icon: '@(TempData["Tipo"]?.ToString() == "info" ? "info" : "warning")',
+                   confirmButtonText: 'Aceptar'
+               });
+        });
+    </script>
+}
+}

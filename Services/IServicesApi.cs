@@ -29,9 +29,13 @@ namespace WebColegio.Services
         #region Metodos Get por Id
         Task<TblAlumno> GetAlumnoIdAsync(int id);
         Task<TblNotas> GetNotasById(int id);
+        Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
         #endregion
         #region Metodos de Busqueda
         Task<List<TblAlumno>> searchAlumnosAsync();
+        #endregion
+        #region Medotos de Validacion
+        Task<bool>ValidarNotas(int idAsignatura,int idPeriodoEva,int idAlumno);
         #endregion
 
     }

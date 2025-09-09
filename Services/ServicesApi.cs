@@ -390,6 +390,27 @@ namespace WebColegio.Services
 
         }
 
+        public async Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno)
+        {
+            List<TblNotas> notas = new List<TblNotas>();
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + "api/Notas/GetNotasAlumno/" + idAlumno);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblNotas>>(content);
+
+                    notas = resultado;
+                }
+                return notas;
+            }
+
+
+        }
+
         #endregion
         #region Metodos de Busqueda
         public async Task<List<TblAlumno>> searchAlumnosAsync()
@@ -517,6 +538,30 @@ namespace WebColegio.Services
             }
             return validar;
         }
+        //Metodo de busqueda de duplicidad de nota por asignatura y periodo de evaluacion
+        public async Task<bool> ValidarNotas(int idAsignatura, int idPeriodoEva, int idAlumno)
+        {
+            var existe = false;
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + $"api/Notas/ValidarDupNotas?idAsignatura={idAsignatura}&idPeridodEval={idPeriodoEva}&idAlumno={idAlumno}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<bool>(content);
+
+                    if (resultado != false)
+                    {
+                       return existe=true;
+                    }
+                }
+                return existe ;
+            }
+            
+        }
+        
         #endregion
         #region Generar Código Estudiante
         private async Task<string> GenerarCodigoAlumno()

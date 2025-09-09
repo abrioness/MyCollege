@@ -51,14 +51,14 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Details(int id)
         {
             var v_alumNota = await _Iservices.V_alumnoNotas(id);
-            var nota = await _Iservices.GetNotasById(id);   //_context.TblNotas.FirstOrDefault(n => n.Id == id);
+            List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(v_alumNota.IdAlumno);   //_context.TblNotas.FirstOrDefault(n => n.Id == id);
             //var asignatura = (await _Iservices.GetAsignaturaAsync())
             // .FirstOrDefault(a => a.IdAsignatura == nota.IdAsignatura);
 
 
             var viewModel = new NotasViewModel
             {
-                notas = nota,
+                listNotas = listnota,
                 alumnoNotas = v_alumNota,
            
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
@@ -83,7 +83,7 @@ namespace WebColegio.Controllers
                                   }).ToList(),
             };
 
-            if (nota == null)
+            if (listnota == null)
             {
                 return NotFound();
             }
@@ -130,14 +130,24 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Create(TblNotas notas)
         {
             bool response = false;
+            bool validarDuplicado= false;
             try
             {
+                validarDuplicado=await _Iservices.ValidarNotas(notas.IdAsignatura,notas.IdPeriodo,notas.IdAlumno);
+                if (validarDuplicado == true)
+                {
+                    TempData["Mensaje"] = "El Alumno ya Posee un Registro de Nota con la Asignatura Seleccionada.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
+                }
+
                 if (notas != null)
                 {
+                    
                     response = await _Iservices.PostNotasAsync(notas);
                     if (response)
                     {
-                        TempData["Message"] = "Nota creada correctamente";
+                        TempData["Mensaje"] = "Se agrego la Nota del Alumnon Correctamente.";
                         return RedirectToAction(nameof(Index));
                     }
 
@@ -149,7 +159,7 @@ namespace WebColegio.Controllers
                 return View();
             }
         }
-
+        
         // GET: NotasController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
@@ -279,5 +289,7 @@ namespace WebColegio.Controllers
                 return View();
             }
         }
+
+       
     }
 }
