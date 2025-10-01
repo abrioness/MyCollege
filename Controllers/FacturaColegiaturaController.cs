@@ -1,16 +1,40 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using WebColegio.Models;
+using WebColegio.Models.ViewModel;
+using WebColegio.Services;
 
 namespace WebColegio.Controllers
 {
     public class FacturaColegiaturaController : Controller
     {
-        // GET: FacturaColegiaturaController
-        public ActionResult Index()
+        private readonly IServicesApi _Iservices;
+        public FacturaColegiaturaController(IServicesApi services)
         {
-            return View();
+            _Iservices = services;
         }
 
+        // GET: FacturaColegiaturaController
+        public async Task<ActionResult> Index()
+        {
+            var _tipoColegiatura = await _Iservices.GetTipoColegiatuuraAsync();
+            var _estadoPago = await _Iservices.GetEstadoPagoAsync();
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _facturacion = await _Iservices.GetFacturacionAsync();
+
+            var viewModel = new ColeccionCatalogos
+            {
+
+                tipoColegiaturas = _tipoColegiatura,
+                estadoPagos=_estadoPago,
+                alumno=_alumnos,
+                facturacion=_facturacion
+        
+
+            };
+            return View(viewModel);
+            }
         // GET: FacturaColegiaturaController/Details/5
         public ActionResult Details(int id)
         {
@@ -18,19 +42,57 @@ namespace WebColegio.Controllers
         }
 
         // GET: FacturaColegiaturaController/Create
-        public ActionResult Create()
+        public async Task<ActionResult> Create()
         {
-            return View();
+            var viewModel = new FacturacionViewModel
+            {
+
+        tipoColegiaturas = (await _Iservices.GetTipoColegiatuuraAsync())
+        .Select(r => new SelectListItem
+        {
+            Value = r.IdTipoColegiatura.ToString(),
+            Text = r.NombreConcepto
+        }).ToList(),
+        estadoPagos = (await _Iservices.GetEstadoPagoAsync())
+        .Select(r => new SelectListItem
+        {
+            Value = r.IdEstadoPago.ToString(),
+            Text = r.EstadoPago
+        }).ToList(),
+
+            };
+            return View(viewModel);
         }
 
         // POST: FacturaColegiaturaController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<ActionResult> Create(FacturaColegiatura facturacion)
         {
+            bool response = false;
+            bool validarDuplicado = false;
             try
             {
-                return RedirectToAction(nameof(Index));
+                //validarDuplicado = await _Iservices.ValidarNotas(notas.IdAsignatura, notas.IdPeriodo, notas.IdAlumno);
+                //if (validarDuplicado == true)
+                //{
+                //    TempData["Mensaje"] = "El Alumno ya Posee un Registro de Nota con la Asignatura Seleccionada.";
+                //    TempData["Tipo"] = "warning";
+                //    return RedirectToAction("Create");
+                //}
+
+                if (facturacion != null)
+                {
+
+                    response = await _Iservices.PostFacturacionAsync(facturacion);
+                    if (response)
+                    {
+                        TempData["Mensaje"] = "Se registro el pago correctamente.";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                }
+                return NoContent();
             }
             catch
             {
@@ -63,6 +125,14 @@ namespace WebColegio.Controllers
         public ActionResult Delete(int id)
         {
             return View();
+        }
+
+
+        //arqueo
+        public async Task<IActionResult> Arqueo(int id)
+        {
+            var arqueo = await _Iservices.GetArqueoById(id); // Llama a tu API
+            return View(arqueo); // Retorna el ViewModel a la vista
         }
 
         // POST: FacturaColegiaturaController/Delete/5

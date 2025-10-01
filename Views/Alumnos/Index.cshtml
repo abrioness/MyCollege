@@ -15,6 +15,7 @@
 <table id="tablaAlumnos" class="display responsive nowrap" style="width:100%">
 	<thead>
 		<tr>
+		<th>Código Estudiante</th>
 		<th>Nombre</th>
 		<th>Apellido</th>
 		<th>Edad</th>
@@ -28,6 +29,7 @@
 	<tbody>
 		@foreach(var itemAlumno in Model.alumno){
 			<tr>
+				<td>@itemAlumno.CodigoEstudiante</td>
 				<th>
 					@itemAlumno.Nombre
 				</th>

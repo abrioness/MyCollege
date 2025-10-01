@@ -5,6 +5,7 @@
        public List<TipoEvaluacion> tipoEvaluaciones { get; set; } = new List<TipoEvaluacion>();
         public List<TblMaterias> materias { get; set; } = new List<TblMaterias>();
         public List<TblNotas> notas { get; set; } = new List<TblNotas>();
+        public List<FacturaColegiatura> facturacion { get; set; } = new List<FacturaColegiatura>();
         public List<TblAlumno> alumno { get; set; } = new List<TblAlumno>();
         public List<PeriodoEvaluacion> periodoEvaluacions { get; set; } = new List<PeriodoEvaluacion>();
         public List<Recintos> recintos { get; set; } = new List<Recintos>();
@@ -15,6 +16,12 @@
         public List<Grados> grados { get; set; } = new List<Grados>();
         public List<Modalidades> modalidades { get; set; } = new List<Modalidades>();
         public List<Asignaturas> asignaturas { get; set; } = new List<Asignaturas>();
+        public List<TipoColegiatura> tipoColegiaturas { get; set; } = new List<TipoColegiatura>();
+        public List<TblEstadoPago> estadoPagos { get; set; } = new List<TblEstadoPago>();
+
+        public List<TblPago> pagos { get; set; } = new List<TblPago>();
+        public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
+        public List<TblUsuarios> usuarios { get; set; } = new List<TblUsuarios>();
 
 
 

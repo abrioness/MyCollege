@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.FacturacionViewModel
+﻿@model WebColegio.Models.ViewModel.ReciboCajaViewModel
 @* 
 @{
     ViewData["Title"] = "Create";
@@ -7,75 +7,65 @@
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-coin"></i> Facturación</h4>
+            <h4 class="mb-0"><i class="bi bi-coin"></i> Registro de Pagos</h4>
         </div>
         <div class="card-body">
-        <form asp-action="Create" method="post" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
                     <div class="col-md-6">
-           @*  <div class="form-group">
+                        @*  <div class="form-group">
                 <label asp-for="IdFactura" class="control-label"></label>
                 <input asp-for="IdFactura" class="form-control" />
                 <span asp-validation-for="IdFactura" class="text-danger"></span>
             </div> *@
-                <div class="form-group">
-                    <label asp-for="Facturacion.IdAlumno">Nombre del Alumno</label>
-                    <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar alumno..." />
-                    <input type="hidden" id="IdAlumno" name="Facturacion.IdAlumno" />
-                </div>
-          
-            <div class="form-group">
-                    <label asp-for="Facturacion.IdTipoColegiatura" class="control-label">Tipo de Colegiatura</label>
-                    <select asp-for="Facturacion.IdTipoColegiatura" asp-items="Model.tipoColegiaturas" class="form-select" required>
-                        <option disabled selected>Seleccione el Tipo Colegiatura</option>
-                    </select>
-                    <span asp-validation-for="Facturacion.IdTipoColegiatura" class="text-danger"></span>
-            </div>
-                        <div class="col-md-4">
-                            <label asp-for="Facturacion.FechaEmision" class="control-label">Fecha de Emisión</label>
-                            <input type="date" asp-for="Facturacion.FechaEmision" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-                            
+                        <div class="form-group">
+                            <label asp-for="Pago.IdAlumno">Recibi De</label>
+                            <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar alumno..." />
+                            <input type="hidden" id="IdAlumno" name="Facturacion.IdAlumno" />
                         </div>
-                <div class="col-md-4">
-                    <label asp-for="Facturacion.FechaVencimiento" class="control-label">Fecha de Vencimiento</label>
-                    <input type="date" asp-for="Facturacion.FechaVencimiento" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-                    <span asp-validation-for="Facturacion.FechaVencimiento" class="text-danger"></span>
-                </div>
-            <div class="form-group">
-                    <label asp-for="Facturacion.MontoTotal" class="control-label">Monto Total</label>
-                    <input asp-for="Facturacion.MontoTotal" class="form-control" />
-                    <span asp-validation-for="Facturacion.MontoTotal" class="text-danger"></span>
-            </div>
-                        
-            </div>
 
-                        <div class="col-md-6">
-            <div class="form-group">
-                            <label asp-for="Facturacion.IdEstado" class="control-label"> Estado del Pago</label>
-                            <select asp-for="Facturacion.IdEstado" asp-items="Model.estadoPagos" class="form-select" required>
-                                <option disabled selected>Seleccione el Estado del Pago</option>
-                            </select>
-                            <span asp-validation-for="Facturacion.IdEstado" class="text-danger"></span>
+                        <div class="form-group">
+                            <label asp-for="ReciboCaja.NumeroRecibo" class="control-label">Número de Recibo</label>
+                            <input asp-for="ReciboCaja.NumeroRecibo" class="form-control" />
+                            <span asp-validation-for="ReciboCaja.NumeroRecibo" class="text-danger"></span>
                         </div>
-            <div class="form-group">
-                    <label asp-for="Facturacion.MesFacturado" class="control-label">Mes Facturado</label>
-                    <input asp-for="Facturacion.MesFacturado" class="form-control" />
-                    <span asp-validation-for="Facturacion.MesFacturado" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                    <label asp-for="Facturacion.AnyoFacturado" class="control-label">Año Facturado</label>
-                    <input asp-for="Facturacion.AnyoFacturado" class="form-control" />
-                    <span asp-validation-for="Facturacion.AnyoFacturado" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                    <label asp-for="Facturacion.Descripcion" class="control-label">Descripción</label>
-                    <input asp-for="Facturacion.Descripcion" class="form-control" />
-                    <span asp-validation-for="Facturacion.Descripcion" class="text-danger"></span>
-            </div>
-            </div>
-            </div>
-           <br/>
+                        <div class="col-md-4">
+                            <label asp-for="ReciboCaja.Serie" class="control-label">Serie del recibo</label>
+                            <input asp-for="ReciboCaja.Serie" class="form-control" />
+
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="ReciboCaja.Monto" class="control-label">La Cantidad de</label>
+                            <input  asp-for="ReciboCaja.Monto"  class="form-control" />
+                            <span asp-validation-for="ReciboCaja.Monto" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ReciboCaja.Concepto" class="control-label">En Concepto de</label>
+                            <input asp-for="ReciboCaja.Concepto" class="form-control" />
+                            <span asp-validation-for="ReciboCaja.Concepto" class="text-danger"></span>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="ReciboCaja.IdGrado" class="control-label"> Estado del Pago</label>
+                            <select asp-for="ReciboCaja.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
+                                <option disabled selected>Seleccione el Nivel</option>
+                            </select>
+                            <span asp-validation-for="ReciboCaja.IdGrado" class="text-danger"></span>
+                        </div>
+                        
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="ReciboCaja.FechaRegistro" class="control-label">Fecha de Registro</label>
+                        <input type="date" asp-for="ReciboCaja.FechaRegistro" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+                        <span asp-validation-for="ReciboCaja.FechaRegistro" class="text-danger"></span>
+                    </div>
+                </div>
+                <br />
 
                 <!-- Botones -->
                 <div class="col-12 text-end">
@@ -86,7 +76,7 @@
                         <i class="bi bi-arrow-left"></i> Volver
                     </a>
                 </div>
-        </form>
+            </form>
         </div>
     </div>
 </div>
@@ -129,7 +119,7 @@
             }
         });
 
-        
+
 
 
                function msg(mensaje){

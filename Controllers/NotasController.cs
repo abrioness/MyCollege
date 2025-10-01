@@ -122,7 +122,7 @@ namespace WebColegio.Controllers
             };
 
             return View(viewmodel);
-        }
+        }   
 
         // POST: NotasController/Create
         [HttpPost]

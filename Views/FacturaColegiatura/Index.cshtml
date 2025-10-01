@@ -1,0 +1,120 @@
+﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@* @{
+	ViewData["Title"] = "Index";
+} *@<script src="~/js/site.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+<div class="container mt-6" style="padding:20px;">
+	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+		<div class="card-header bg-primary text-white">
+			<h5 class="mb-0"><i class="bi bi-cash"></i> Facturación</h5>
+		</div>
+		<div class="card-body">
+
+
+			<table id="tablaFacturas" class="display responsive nowrap" style="width:100%">
+				<thead>
+					<tr>
+						<th>Alumno</th>
+						<th>Tipo de Pago</th>
+						<th>Fecha Emisión</th>
+						<th>Fecha Vencimiento</th>
+						<th>Estado del Pago</th>
+						<th>Mes Facturado</th>
+						<th>Año Facturado</th>
+						<th>Monto Total</th>						
+						@* <th>Editar</th> *@
+						
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var itemFactura in Model.facturacion)
+					{
+						<tr>
+
+							@foreach (var alumno in Model.alumno.Where(a => a.IdAlumno == itemFactura.IdAlumno))
+							{
+								<th>
+
+									@alumno.Nombre  @alumno.Apellido
+
+								</th>
+							}
+
+							@foreach (var tipColeg in Model.tipoColegiaturas.Where(a => a.IdTipoColegiatura ==itemFactura.IdTipoColegiatura ))
+							{
+								<th>
+
+									@tipColeg.NombreConcepto
+
+								</th>
+							}
+							
+							
+							<th>
+
+								@itemFactura.FechaEmision
+							</th>
+							<th>
+
+								@itemFactura.FechaVencimiento
+							</th>
+							@foreach (var estadoPago in Model.estadoPagos.Where(a => a.IdEstadoPago == itemFactura.IdEstado))
+							{
+								<th>
+
+									@estadoPago.EstadoPago
+
+								</th>
+							}
+							<th>
+
+								@itemFactura.MesFacturado
+							</th>
+							<th>
+
+								@itemFactura.AnyoFacturado
+							</th>
+							<th>
+
+							 C$	@itemFactura.MontoTotal
+							</th>
+							@*<td>
+								<a asp-action="Edit" asp-controller="Facturacion" asp-route-id="@itemFactura.IdFactura" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
+							</td>
+							 <td>
+								<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
+							</td> *@
+						</tr>
+					}
+				</tbody>
+
+			</table>
+		</div>
+	</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+			$('#tablaFacturas').DataTable({
+			responsive: true,
+			dom: 'Bfrtip', // Botones + filtro + tabla
+			buttons: [
+				{
+					extend: 'excelHtml5',
+					text: 'Exportar a Excel',
+					className: 'btn btn-success'
+				}
+			],
+			language: {
+				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+			}
+		});
+	});
+</script>

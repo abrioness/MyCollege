@@ -102,15 +102,16 @@
 
                         <!-- Facturación -->
                         <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseFacturacion"
-                               aria-expanded="false" aria-controls="collapseFacturacion">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
+                               aria-expanded="false" aria-controls="collapseRecibos">
                                 <i class="bi bi-cash"></i>
-                                <span>Facturación</span>
+                                <span>Registro de Pagos</span>
                             </a>
-                            <div id="collapseFacturacion" class="collapse">
+                            <div id="collapseRecibos" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
-                                    <a class="collapse-item" asp-controller="FacturaColegiatura" asp-action="Create">Facturar</a>
-                                    <a class="collapse-item" asp-controller="PagoColegiatura" asp-action="Create"> Colegiatura</a>
+                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Index">Lista de Recibos</a>
+                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Añadir Recibo</a>
+                                    @* <a class="collapse-item" asp-controller="PagoColegiatura" asp-action="Create"> Colegiatura</a> *@
                                 </div>
                             </div>
                         </li>
