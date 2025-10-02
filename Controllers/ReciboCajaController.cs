@@ -18,27 +18,69 @@ namespace WebColegio.Controllers
         // GET: ReciboCajaController
         public async Task<ActionResult> Index()
         {
-            var _alumnos = await _Iservices.GetAlumnosAsync();            
+            var _recibocaja  = await _Iservices.GetRecibosCajaAsync();            
             var _grados = await _Iservices.GetGradosAsync();
             var _usuario= await _Iservices.GetUsuariosAsync();
             var _pagos = await _Iservices.GetPagosAsync();
+            //var _estadoPago = await _Iservices.GetEstadoPagoAsync();
             
 
             var VieModelReciboCaja = new ColeccionCatalogos
             {
-                alumno = _alumnos,               
+                reciboCajas = _recibocaja,               
                 grados = _grados,
                 usuarios = _usuario,
-                pagos = _pagos
+                pagos = _pagos,
+                //estadoPagos=_estadoPago
             };
 
             return View(VieModelReciboCaja);
         }
+        // GET: ReciboCaja/Imprimir/5
+        public async Task<IActionResult> Imprimir(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var reciboCaja = await  _Iservices.GetReciboCajaById(id.Value);
+
+
+            if (reciboCaja == null)
+            {
+                return NotFound();
+            }
+
+            return View(reciboCaja);
+        }
 
         // GET: ReciboCajaController/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            return View();
+            
+            var listrecibos = await _Iservices.GetReciboCajaById(id);
+            var viewModel = new ReciboCajaViewModel
+            {
+                ReciboCaja = listrecibos,
+                
+
+                gradosSelectListItem = (await _Iservices.GetGradosAsync())
+        .Select(r => new SelectListItem
+        {
+            Value = r.IdGrado.ToString(),
+            Text = r.NombreGrado
+        }).ToList(),
+                
+            };
+
+            if (listrecibos == null)
+            {
+                return NotFound();
+            }
+
+            return View(viewModel);
+            
         }
 
         // GET: ReciboCajaController/Create
@@ -69,6 +111,13 @@ namespace WebColegio.Controllers
                                        Text = r.NombreUsuario,
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
+                gradosSelectListItem= (await _Iservices.GetGradosAsync())
+                                   .Select(r => new SelectListItem
+                                   {
+                                       Value = r.IdGrado.ToString(),
+                                       Text = r.NombreGrado,
+                                       //Selected = r.IdPregunta == respuestas.IdPregunta
+                                   }).ToList(),
 
             };
 
@@ -78,11 +127,11 @@ namespace WebColegio.Controllers
         // POST: ReciboCajaController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(TblReciboCaja recibo)
+        public async Task<ActionResult> Create(ReciboCajaViewModel recibo)
         {
             bool response = false;
             
-            bool validarDuplicado = false;
+            //bool validarDuplicado = false;
             try
             {
                 //validarDuplicado = await _Iservices.ValidarNotas(notas.IdAsignatura, notas.IdPeriodo, notas.IdAlumno);
@@ -96,7 +145,7 @@ namespace WebColegio.Controllers
                 if (recibo != null)
                 {
 
-                    response = await _Iservices.PostReciboCajaAsync(recibo);
+                    response = await _Iservices.PostReciboCajaAsync(recibo.ReciboCaja);
                     if (response)
                     {
                         TempData["Mensaje"] = "Se registro recibo de caja Correctamente.";

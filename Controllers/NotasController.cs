@@ -147,7 +147,7 @@ namespace WebColegio.Controllers
                     response = await _Iservices.PostNotasAsync(notas);
                     if (response)
                     {
-                        TempData["Mensaje"] = "Se agrego la Nota del Alumnon Correctamente.";
+                        TempData["Mensaje"] = "Se agrego la Nota del Alumno Correctamente.";
                         return RedirectToAction(nameof(Index));
                     }
 

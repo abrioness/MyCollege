@@ -38,9 +38,8 @@
 								</th>
 							} *@
 							<th>
-
-								@itemReciboCaja.NumeroRecibo
-
+								<a asp-action="Details" asp-controller="ReciboCaja" asp-route-id="@itemReciboCaja.IdRecibo" class="btn btn-sm btn-success">@itemReciboCaja.NumeroRecibo</a>
+								
 							</th>
 							<th>
 
@@ -57,15 +56,19 @@
 								@itemReciboCaja.Monto
 
 							</th>
+							<th>
 
-							@foreach (var conceptopago in Model.pagos.Where(a => a.IdPago == itemReciboCaja.IdPago))
+								@itemReciboCaja.Concepto
+
+							</th>
+							@* @foreach (var conceptopago in Model.pagos.Where(a => a.IdPago == itemReciboCaja.IdPago))
 							{
 								<th>
 
 									@conceptopago.Concepto
 
 								</th>
-							}
+							} *@
 							
 								<th>
 

@@ -42,7 +42,7 @@ namespace WebColegio.Services
         #region Metodos Get por Id
         Task<TblAlumno> GetAlumnoIdAsync(int id);
         Task<TblNotas> GetNotasById(int id);
-
+        Task<TblReciboCaja> GetReciboCajaById(int id);
         Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
         Task<ArqueoCajaViewModel> GetArqueoById(int id);
         #endregion

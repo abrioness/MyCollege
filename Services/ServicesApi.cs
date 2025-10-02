@@ -346,7 +346,7 @@ namespace WebColegio.Services
             List<TblReciboCaja> reciboCajas = new List<TblReciboCaja>();
             using (var httpclient = new HttpClient())
             {
-                var response = await httpclient.GetAsync(url + "api/RecibosCaja");
+                var response = await httpclient.GetAsync(url + "api/RecibosCajas");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -506,20 +506,20 @@ namespace WebColegio.Services
         {
             bool respuesta = false;
             // Asegurar datos mínimos requer
-            List<TblReciboCaja> reciboslist = await GetRecibosCajaAsync();
-            var ultimoNumero = reciboslist
-            .Where(r => r.Serie == "A")
-            .Max(r => (int?)r.NumeroRecibo) ?? 10000;
+            //List<TblReciboCaja> reciboslist = await GetRecibosCajaAsync();
+            //var ultimoNumero = reciboslist
+            //.Where(r => r.Serie == "A")
+            //.Max(r => (int?)r.NumeroRecibo) ?? 10000;
 
-            var nuevoNumero = ultimoNumero + 1;
-            if(nuevoNumero==null)
-            {
-                nuevoNumero = 10000 + 1;
-            }
-            recibo.NumeroRecibo = nuevoNumero;
+            //var nuevoNumero = ultimoNumero + 1;
+            //if(nuevoNumero==null)
+            //{
+            //    nuevoNumero = 10000 + 1;
+            //}
+            //recibo.NumeroRecibo = nuevoNumero;
             recibo.Activo = true;
             recibo.UsuarioRegistro = 1;
-            recibo.FechaRegistro = DateTime.Now;
+            recibo.FechaRegistro = recibo.FechaRegistro;
             try
             {
                 using (var httpClient = new HttpClient())
@@ -639,6 +639,31 @@ namespace WebColegio.Services
                 return arqueo!;
             }
         }
+
+        public async Task<TblReciboCaja> GetReciboCajaById(int id)
+        {
+            
+            // Suponiendo que tu API tiene un endpoint como:
+            // GET https://tuservidor/api/arqueo/{id}
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + $"api/RecibosCajas/"+id);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Error al obtener el recibo: {response.StatusCode}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Usar Newtonsoft.Json o System.Text.Json para deserializar
+                var recibocaja = JsonConvert.DeserializeObject<TblReciboCaja>(json);
+
+                return recibocaja!;
+            }
+        }
+
 
         #endregion
         #region Metodos de Busqueda
