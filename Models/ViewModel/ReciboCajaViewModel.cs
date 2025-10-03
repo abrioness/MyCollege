@@ -6,6 +6,7 @@ namespace WebColegio.Models.ViewModel
     {
         public TblReciboCaja ReciboCaja { get; set; }
         public TblPago Pago { get; set; }
+        public int SiguienteNumero { get; set; }
         public List<TblReciboCaja> reciboCajas { get; set; }
         public List<TblUsuarios> usuarios { get; set; }
         public List<SelectListItem> pagosSelectListItem { get; set; }

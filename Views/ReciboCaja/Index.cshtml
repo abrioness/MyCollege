@@ -22,7 +22,7 @@
 						<th>Concepto</th>						
 						<th>Fecha Emisión</th>
 						<th>Cajero</th>						
-					</tr>|
+					</tr>
 				</thead>
 				<tbody>
 					@foreach (var itemReciboCaja in Model.reciboCajas)
@@ -76,11 +76,11 @@
 
 								</th>
 							
-							@foreach (var cajero in Model.pagos.Where(a => a.UsuarioRegistro == itemReciboCaja.UsuarioRegistro))
+							@foreach (var cajero in Model.usuarios)
 							{
 								<th>
 
-									@cajero.UsuarioRegistro
+									@cajero.NombreUsuario
 
 								</th>
 							}

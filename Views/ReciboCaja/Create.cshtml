@@ -21,12 +21,12 @@
                     </div> *@
                         <div class="form-group">
                             <label asp-for="ReciboCaja.NumeroRecibo" class="control-label">Número de Recibo</label>
-                            @{
+                            @* @{
                                 var maxNumero = Model.reciboCajas?.Where(r => r.Serie == "A").Max(r => (int?)r.NumeroRecibo);
                                 var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
-                            }
+                            } *@
 
-                            <input asp-for="ReciboCaja.NumeroRecibo" value="@siguienteNumero" class="form-control" readonly />
+                            <input asp-for="ReciboCaja.NumeroRecibo" value="@Model.SiguienteNumero"  class="form-control" readonly />
                             <span asp-validation-for="ReciboCaja.NumeroRecibo" class="text-danger"></span>
                         </div>
 

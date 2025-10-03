@@ -86,8 +86,17 @@ namespace WebColegio.Controllers
         // GET: ReciboCajaController/Create
         public async Task<ActionResult> Create()
         {
+            var recibos = await _Iservices.GetRecibosCajaAsync();
+
+            var maxNumero = recibos
+                .Where(r => r.Serie == "A")
+                .Max(r => (int?)r.NumeroRecibo);
+
+            var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
+
             var viewmodel = new ReciboCajaViewModel
             {
+                SiguienteNumero = siguienteNumero,
 
                 alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
                                    .Select(r => new SelectListItem
