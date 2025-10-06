@@ -15,7 +15,8 @@ namespace WebColegio.Models
         public DateOnly FechaNacimiento { get; set; }
 
         public int Edad { get; set; }
-        public string CodigoEstudiante { get; set; } = null!;
+        public string? CodigoMINED { get; set; }
+        public string? CodigoAlumno { get; set; } 
         public string? Cedula { get; set; }
 
         public int IdGrado { get; set; }
@@ -37,8 +38,8 @@ namespace WebColegio.Models
 
         public string? NombrePadre { get; set; } 
 
-        public string? NombreTutor { get; set; } 
-
+        public string? NombreTutor { get; set; }
+        public string? CedulaTutor { get; set; }
         public string? Correo { get; set; }
 
         public bool Activo { get; set; }

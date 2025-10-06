@@ -2,8 +2,8 @@
 @* @{
 	ViewData["Title"] = "Index";
 } *@<script src="~/js/site.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
 <div class="container mt-6" style="padding:20px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
@@ -12,7 +12,7 @@
 		<div class="card-body">
 
 
-			<table id="tablaReciboCaja" class="display responsive nowrap" style="width:100%">
+			<table id="tablaReciboCaja" class="table table-striped table-bordered nowrap" style="width:100%">
 				<thead>
 					<tr>
 						<th>Número de Recibo</th>
@@ -37,30 +37,30 @@
 
 								</th>
 							} *@
-							<th>
+							<td>
 								<a asp-action="Details" asp-controller="ReciboCaja" asp-route-id="@itemReciboCaja.IdRecibo" class="btn btn-sm btn-success">@itemReciboCaja.NumeroRecibo</a>
 								
-							</th>
-							<th>
+							</td>
+							<td>
 
 								@itemReciboCaja.Serie
 
-							</th>
-							<th>
+							</td>
+							<td>
 
 								@itemReciboCaja.RecibeDe
 
-							</th>
-							<th>
+							</td>
+							<td>
 
 								@itemReciboCaja.Monto
 
-							</th>
-							<th>
+							</td>
+							<td>
 
 								@itemReciboCaja.Concepto
 
-							</th>
+							</td>
 							@* @foreach (var conceptopago in Model.pagos.Where(a => a.IdPago == itemReciboCaja.IdPago))
 							{
 								<th>
@@ -70,19 +70,19 @@
 								</th>
 							} *@
 							
-								<th>
+								<td>
 
 									@itemReciboCaja.FechaRegistro
 
-								</th>
+								</td>
 							
 							@foreach (var cajero in Model.usuarios)
 							{
-								<th>
+								<td>
 
 									@cajero.NombreUsuario
 
-								</th>
+								</td>
 							}
 							
 

@@ -20,7 +20,7 @@
         <form asp-action="Create" method="post" enctype="multipart/form-data" >
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
            <div class="row">
-               <div class="col-lg-6">
+               <div class="col-lg-4">
                             <div class="form-group">
                                 <label asp-for="notas.IdAlumno">Nombre del Alumno</label>
                                 <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar alumno..." />
@@ -28,19 +28,19 @@
                             </div>
            
                 <div class="form-group">
-                    <label asp-for="notas.IdTipoEvaluacion" class="control-label">Tipo de Evaluación</label>
-                                
-                                    <select asp-for="notas.IdTipoEvaluacion" asp-items="Model.tipoEvaluacionesSelectListItem" class="form-select" required>
+                    <label asp-for="notas.IdModalidad" class="control-label">Modalidad</label>
+
+                            <select asp-for="notas.IdModalidad" asp-items="Model.modalidadSelectListItem" class="form-select" required>
                                         <option disabled selected>Seleccione la Evaluación</option>
                                     </select>
-                                    <span asp-validation-for="notas.IdTipoEvaluacion" class="text-danger"></span>
+                            <span asp-validation-for="notas.IdModalidad" class="text-danger"></span>
                 </div>
             <div class="form-group">
-                                <label asp-for="notas.IdPeriodo" class="control-label">Periodo de Evaluación</label>
-                                <select asp-for="notas.IdPeriodo" asp-items="Model.periodoEvaluacionsSelectListItem" class="form-select" required>
+                                <label asp-for="notas.IdGrado" class="control-label">Nivel</label>
+                                <select asp-for="notas.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
                                     <option disabled selected>Seleccione la Evaluación</option>
                                 </select>
-                                <span asp-validation-for="notas.IdPeriodo" class="text-danger"></span>
+                                <span asp-validation-for="notas.IdGrado" class="text-danger"></span>
                 
             </div>
                     <div class="form-group">
@@ -56,39 +56,84 @@
                                 @* <span asp-validation-for="Descripcion" class="text-danger"></span> *@
                             </div>
                             </div>
-                <div class="col-lg-6">
+                <div class="col-lg-4">
+                        <div class="form-group">
+                            <label asp-for="notas.Acumulado1" class="control-label">Acumulado Primer Corte</label>
+                            <input asp-for="notas.Acumulado1" id="acumulado1" class="form-control" />
+                            <span asp-validation-for="notas.Acumulado1" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="notas.Examen1" class="control-label">Examen Primer Corte</label>
+                            <input asp-for="notas.Examen1" id="examen1" class="form-control" />
+                            <span asp-validation-for="notas.Examen1" class="text-danger"></span>
+                        </div>
             <div class="form-group">
                         <label asp-for="notas.PrimerCorte" class="control-label">Primer Corte</label>
-                                <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control" />
+                            <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control"  />
                                 <span asp-validation-for="notas.PrimerCorte" class="text-danger"></span>
             </div>
-                        
+                        <div class="form-group">
+                            <label asp-for="notas.Acumulado2" class="control-label">Acumulado Segundo Corte</label>
+                            <input asp-for="notas.Acumulado2" id="acumulado2" class="form-control" />
+                            <span asp-validation-for="notas.Acumulado2" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="notas.Examen2" class="control-label">Examen Segundo Corte</label>
+                            <input asp-for="notas.Examen2" id="examen2" class="form-control" />
+                            <span asp-validation-for="notas.Examen2" class="text-danger"></span>
+                        </div>
                         
              <div class="form-group">
                                 <label asp-for="notas.SegundoCorte" class="control-label">Segundo Corte</label>
-                                <input asp-for="notas.SegundoCorte" id="segundoCorte" class="form-control" />
+                            <input asp-for="notas.SegundoCorte" id="segundoCorte" class="form-control"  />
                                 <span asp-validation-for="notas.SegundoCorte" class="text-danger"></span>
             </div>
-                    <div class="form-group">
-                                <label asp-for="notas.TercerCorte" class="control-label">Tercer Corte</label>
-                                <input asp-for="notas.TercerCorte" id="tercerCorte" class="form-control" />
-                                <span asp-validation-for="notas.TercerCorte" class="text-danger"></span>
+                        
                     </div>
+                        <div class="col-lg-4">
+                        <div class="form-group">
+                            <label asp-for="notas.Acumulado3" class="control-label">Acumulado Tercer Corte</label>
+                            <input asp-for="notas.Acumulado3" id="acumulado3" class="form-control" />
+                            <span asp-validation-for="notas.Acumulado3" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="notas.Examen3" class="control-label">Examen Tercer Corte</label>
+                            <input asp-for="notas.Examen3" id="examen3" class="form-control" />
+                            <span asp-validation-for="notas.Examen3" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="notas.TercerCorte" class="control-label">Tercer Corte</label>
+                            <input asp-for="notas.TercerCorte" id="tercerCorte" class="form-control"  />
+                            <span asp-validation-for="notas.TercerCorte" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="notas.Acumulado4" class="control-label">Acumulado Cuarto Corte</label>
+                            <input asp-for="notas.Acumulado4" id="acumulado4" class="form-control" />
+                            <span asp-validation-for="notas.Acumulado4" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="notas.Examen4" class="control-label">Examen Cuarto Corte</label>
+                            <input asp-for="notas.Examen4" id="examen4" class="form-control" />
+                            <span asp-validation-for="notas.Examen4" class="text-danger"></span>
+                        </div>
                     <div class="form-group">
                                 <label asp-for="notas.CuartoCorte" class="control-label">Cuarto Corte</label>
-                                <input asp-for="notas.CuartoCorte" id="cuartoCorte" class="form-control" />
+                            <input asp-for="notas.CuartoCorte" id="cuartoCorte" class="form-control"  />
                                 <span asp-validation-for="notas.CuartoCorte" class="text-danger"></span>
                     </div>
-                    <div class="form-group">
-                                <label asp-for="notas.NotaFinal" class="control-label">Nota Final</label>
-                                <input asp-for="notas.NotaFinal" id="notaFinal" class="form-control" disabled />
-                        @* <span asp-validation-for="CuartoCorte" class="text-danger"></span> *@
-                    </div>
-            
-                        
-            <br />
+
+
+
+                        <div class="form-group">
+                            <label asp-for="notas.NotaFinal" class="control-label">Nota Final</label>
+                            <input asp-for="notas.NotaFinal" id="notaFinal" class="form-control" disabled />
+                            @* <span asp-validation-for="CuartoCorte" class="text-danger"></span> *@
+                        </div>
 						</div>
+                    
 					</div>
+
+                
                     <br />
                     <!-- Botones -->
                     <div class="col-12 text-end">
@@ -146,20 +191,42 @@
     
         $(function () {
             function calcularNotaFinal() {
+                let acu1= parseInt($("#acumulado1").val());
+                let acu2=parseInt($("#acumulado2").val());
+                let acu3=parseInt($("#acumulado3").val());
+                let acu4=parseInt($("#acumulado4").val());
+
+                let exam1=parseInt($("#examen1").val());
+                let exam2=parseInt($("#examen2").val());
+                let exam3=parseInt($("#examen3").val());
+                let exam4=parseInt($("#examen4").val());
+
+                let pc1=(acu1 + exam1);
+                
+                let pc2=acu2 + exam2;
+                let pc3=acu3 + exam3;
+                let pc4=acu4 + exam4;
+                $("#primerCorte").val(pc1.toFixed(1));
+                 $("#segundoCorte").val(pc2.toFixed(1));
+                $("#tercerCorte").val(pc3.toFixed(1));
+                $("#cuartoCorte").val(pc4.toFixed(1));
                 let t1 = parseFloat($("#primerCorte").val()) || 0;
                 let t2 = parseFloat($("#segundoCorte").val()) || 0;
-                let t3 = parseFloat($("#tercerCorte").val()) || 0;
-                let t4 = parseFloat($("#cuartoCorte").val()) || 0;
+                let t3 =parseFloat($("#tercerCorte").val()) || 0;
+                let t4 =parseFloat($("#cuartoCorte").val()) || 0;
 
+
+                
                 // Aquí defines la fórmula de la nota final
                 // Ejemplo: promedio simple
                 let notaFinal = (t1 + t2  + t3 + t4) /4;
 
                 $("#notaFinal").val(notaFinal.toFixed(2));
-            }
 
+            }
+            //$("#","#segundoCorte","#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
             // Recalcular cada vez que cambie un valor
-            $("#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
+            $("#primerCorte,#segundoCorte,#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
         });
        
     

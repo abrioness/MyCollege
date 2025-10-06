@@ -1,9 +1,10 @@
 ﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
 @* @{
 	ViewData["Title"] = "Index";
-} *@<script src="~/js/site.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+} *@
+<script src="~/js/site.js"></script>
+@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
 <div class="container mt-6" style="padding:20px;">
 <div class="card shadow-lg p-3 mb-5 bg-white rounded">
 	<div class="card-header bg-primary text-white">
@@ -12,19 +13,19 @@
 	<div class="card-body">
 
 
-		<table id="tablaNotas" class="display responsive nowrap" style="width:100%">
+			<table id="tablaNotas" class="table table-striped table-bordered nowrap" style="width:100%"> @* class="display responsive nowrap" style="width:100%"> *@
 			<thead>
 				<tr>
 					<th>Alumno</th>
-					<th>Tipo de Evaluación</th>
-					<th>Periodo</th>
+					<th>Modalidad</th>
+					<th>Nivel</th>
 					<th>Asignatura</th>
 					<th>I Corte</th>
 					<th>II Corte</th>
 					<th>III Corte</th>
 					<th>IV Corte</th>
-					<th>Nota Fiinal</th>
-					<th>Editar</th>
+					<th>Nota Final</th>
+					@* <th>Editar</th> *@
 					<th>Detalle</th>
 				</tr>
 			</thead>
@@ -35,62 +36,62 @@
 						
 							@foreach (var alumno in Model.alumno.Where(a => a.IdAlumno == itemNotas.IdAlumno))
 							{
-							<th>
+							<td>
 
-								@alumno.Nombre  @alumno.Apellido
+							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-info">	@alumno.Nombre  @alumno.Apellido</a>
 
-							</th>
+							</td>
 							}
 
-						@foreach (var evaluacion in Model.tipoEvaluaciones.Where(a => a.IdTipoEvaluacion == itemNotas.IdTipoEvaluacion))
+						@foreach (var Modalidad in Model.modalidades.Where(a => a.IdModalidad == itemNotas.IdModalidad))
 						{
-							<th>
+							<td>
 
-								@evaluacion.NombreTipEvaluacion
+									@Modalidad.Modalidad
 
-							</th>
+							</td>
 						}
-						@foreach (var periodo in Model.periodoEvaluacions.Where(a => a.IdPeriodo == itemNotas.IdPeriodo))
+						@foreach (var Nivel in Model.grados.Where(a => a.IdGrado == itemNotas.IdGrado))
 						{
-							<th>
+							<td>
 
-								@periodo.NombrePeriodo
+								@Nivel.NombreGrado
 
-							</th>
+							</td>
 						}
 						@foreach (var asignatura in Model.asignaturas.Where(a => a.IdAsignatura == itemNotas.IdAsignatura))
 						{
-							<th>
+							<td>
 
 								@asignatura.NombreAsignatura
 
-							</th>
+							</td>
 						}
-						<th>
+						<td>
 
 								@itemNotas.PrimerCorte
-						</th>
-						<th>
+						</td>
+						<td>
 
 							@itemNotas.SegundoCorte
-						</th>
-						<th>
+						</td>
+						<td>
 
 							@itemNotas.TercerCorte
-						</th>
-						<th>
+						</td>
+						<td>
 
 							@itemNotas.CuartoCorte
-						</th>
-						<th>
+						</td>
+						<td>
 
 							@itemNotas.NotaFinal
-						</th>
-						
-						
-						<td>
-							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
 						</td>
+						
+						
+						@* <td>
+							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
+						</td> *@
 						<td>
 							<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
 						</td>

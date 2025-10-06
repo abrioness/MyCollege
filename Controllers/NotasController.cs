@@ -24,16 +24,20 @@ namespace WebColegio.Controllers
             var _tipoEvaluacion = await _Iservices.GetTipEvaluacionAsync();            
             var _periodo = await _Iservices.GetPeriodoEvaluacionAsync();
             var _asignatura = await _Iservices.GetAsignaturaAsync();
-            
+            var _modalidad = await _Iservices.GetModalidadesAsync();
+            var _grados = await _Iservices.GetGradosAsync();
+
 
             var VieModelNotas = new ColeccionCatalogos
             {
-                notas=_notas,
+                notas = _notas,
                 alumno = _alumnos,
-                tipoEvaluaciones = _tipoEvaluacion,               
+                tipoEvaluaciones = _tipoEvaluacion,
                 periodoEvaluacions = _periodo,
                 asignaturas = _asignatura,
-                
+                modalidades = _modalidad,
+                grados = _grados
+
             };
             if(VieModelNotas==null)
             {
@@ -181,18 +185,18 @@ namespace WebColegio.Controllers
                                       Text = r.Nombre+" "+r.Apellido ,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
-                tipoEvaluacionesSelectListItem = (await _Iservices.GetTipEvaluacionAsync())
+                modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
                                   .Select(r => new SelectListItem
                                   {
-                                      Value = r.IdTipoEvaluacion.ToString(),
-                                      Text = r.NombreTipEvaluacion,
+                                      Value = r.IdModalidad.ToString(),
+                                      Text = r.Modalidad,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
-                periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+               gradosSelectListItem = (await _Iservices.GetGradosAsync())
                                   .Select(r => new SelectListItem
                                   {
-                                      Value = r.IdPeriodo.ToString(),
-                                      Text = r.NombrePeriodo,
+                                      Value = r.IdGrado.ToString(),
+                                      Text = r.NombreGrado,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())

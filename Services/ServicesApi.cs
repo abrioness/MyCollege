@@ -398,7 +398,7 @@ namespace WebColegio.Services
                 alumnos.UsuarioRegistro = 1;
                 alumnos.FechaRegistro = DateTime.Now;
                 
-                alumnos.CodigoEstudiante =await GenerarCodigoAlumno();
+                alumnos.CodigoAlumno =await GenerarCodigoAlumno();
 
                 using (var httpClient = new HttpClient())
                 {
@@ -735,7 +735,8 @@ namespace WebColegio.Services
             existingAlumno.Apellido = alumno.Apellido;
             existingAlumno.FechaNacimiento = alumno.FechaNacimiento;
             existingAlumno.Edad = alumno.Edad;
-            existingAlumno.CodigoEstudiante = alumno.CodigoEstudiante;
+            existingAlumno.CodigoAlumno = alumno.CodigoAlumno;
+            existingAlumno.CodigoMINED = alumno.CodigoMINED;
             existingAlumno.Cedula = alumno.Cedula;
             existingAlumno.IdGrado = alumno.IdGrado;
             existingAlumno.IdTurno = alumno.IdTurno;
@@ -796,6 +797,9 @@ namespace WebColegio.Services
         public async Task<bool> ValidarNotas(int idAsignatura, int idPeriodoEva, int idAlumno)
         {
             var existe = false;
+
+
+
             using (var httpclient = new HttpClient())
             {
 
@@ -806,7 +810,7 @@ namespace WebColegio.Services
                     var content = await response.Content.ReadAsStringAsync();
                     var resultado = JsonConvert.DeserializeObject<bool>(content);
 
-                    if (resultado != false)
+                    if (resultado)
                     {
                        return existe=true;
                     }

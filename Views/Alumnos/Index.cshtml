@@ -2,8 +2,9 @@
 @* @{
 	ViewData["Title"] = "Index";
 } *@
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" />
+<script src="~/js/site.js"></script>
+@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
 <div class="container mt-6" style="padding:50px;">
 <div class="card shadow-lg p-3 mb-5 bg-white rounded" style="padding-top:50px;">
 	<div class="card-header bg-primary text-white">
@@ -12,10 +13,11 @@
 	<div class="card-body">
 
 
-<table id="tablaAlumnos" class="display responsive nowrap" style="width:100%">
+			<table id="tablaAlumnos" class="table table-striped table-bordered nowrap" style="width:100%">
 	<thead>
 		<tr>
-		<th>Código Estudiante</th>
+		<th>Código Alumno</th>
+						<th>Código MINED</th>
 		<th>Nombre</th>
 		<th>Apellido</th>
 		<th>Edad</th>
@@ -23,51 +25,56 @@
 		<th>Grado</th>
 		<th>Turno</th> 
 		<th>Sexo</th>
-		<th>Editar</th>
+		@* <th>Editar</th> *@
 		</tr>
 	</thead>
 	<tbody>
 		@foreach(var itemAlumno in Model.alumno){
 			<tr>
-				<td>@itemAlumno.CodigoEstudiante</td>
-				<th>
+				<td>
+								<a asp-action="Edit" asp-controller="Alumnos" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-info">	@itemAlumno.CodigoAlumno</a>
+					</td>
+							<td>
+								@itemAlumno.CodigoMINED
+							</td>
+				<td>
 					@itemAlumno.Nombre
-				</th>
-				<th>
+				</td>
+				<td>
 					@itemAlumno.Apellido
-				</th>
-				<th>
+				</td>
+				<td>
 					@itemAlumno.Edad
-				</th>
-				<th>
+				</td>
+				<td>
 					@itemAlumno.Cedula
-				</th>
+				</td>
 				@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
 				{
-					<th>
+					<td>
 					
 						@grado.NombreGrado
 
-					</th>
+					</td>
 				}
 				@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemAlumno.IdTurno))
 				{
-					<th>
+					<td>
 						@turno.NombreTurno
 
-					</th>
+					</td>
 				}
 				@foreach (var sexo in Model.sexos.Where(a => a.IdSexo == itemAlumno.IdSexo))
 				{
-					<th>
+					<td>
 
 						@sexo.Sexo
 
-					</th>
+					</td>
 				}
-				<td>
+				@* <td>
 								<a asp-action="Edit" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
-				</td>
+				</td> *@
     </tr>
 		}
 	</tbody>

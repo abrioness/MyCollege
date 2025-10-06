@@ -20,12 +20,18 @@
                             <input type="hidden" asp-for="alumnos.IdAlumno" class="form-control" />
 
                         </div>
-                        <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="alumnos.CodigoAlumno" class="control-label">Código del Estudiante</label>
+                            <input asp-for="alumnos.CodigoAlumno" id="CodigoEstudiante" class="form-control" />
+                            
+                        </div>
+                       
+                        <div class="form-group">
                             <label asp-for="alumnos.Nombre" class="control-label">Nombre</label>
                             <input asp-for="alumnos.Nombre" id="Nombre" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Nombre del Alumno" />
                             <span validation-for="alumnos.Nombre" class="text-danger"></span>
                         </div>
-                        <div class="col-md-6">
+                        <div class="form-group">
                             <label asp-for="alumnos.Apellido" class="control-label">Apellido</label>
                             <input asp-for="alumnos.Apellido" id="Apellido" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Apellido del Alumno" />
                             <span asp-validation-for="alumnos.Apellido" class="text-danger"></span>
@@ -41,7 +47,7 @@
                             <span asp-validation-for="alumnos.Edad" class="text-danger"></span>
                         </div>
 
-                        <div class="col-auto">
+                        <div class="form-group">
                             <label asp-for="alumnos.Cedula" class="">Cedula</label>
                             <input type="text" id="cedula" class="form-control" asp-for="alumnos.Cedula" placeholder="Cedula" maxlength="16" />
 
@@ -62,14 +68,7 @@
 
                             <span asp-validation-for="alumnos.IdGrupo" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
-                            <label asp-for="alumnos.IdGrado" class="control-label">Grado</label>
-                            <select asp-for="alumnos.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione el Grado</option>
-                            </select>
-
-                            <span asp-validation-for="alumnos.IdGrado" class="text-danger"></span>
-                        </div>
+                        
                         <div class="form-group">
                             <label asp-for="alumnos.IdTurno" class="control-label">Turno</label>
                             <select asp-for="alumnos.IdTurno" asp-items="Model.turnosSelectListItem" class="form-select" required>
@@ -78,15 +77,32 @@
 
                             <span asp-validation-for="alumnos.IdTurno" class="text-danger"></span>
                         </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.Correo" class="control-label">Correo</label>
+                            <input asp-for="alumnos.Correo" class="form-control" />
+                            @* <span asp-validation-for="Correo" class="text-danger"></span> *@
+                        </div>
                     </div>
                     <div class="col-md-6">
-
+                        <div class="form-group">
+                            <label asp-for="alumnos.CodigoMINED" class="control-label">Código MINED</label>
+                            <input asp-for="alumnos.CodigoMINED" id="Nombre" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el código MINED" />
+                            <span validation-for="alumnos.CodigoMINED" class="text-danger"></span>
+                        </div>
                         <div class="form-group">
                             <label asp-for="alumnos.IdModalidad" class="control-label">Modalidad</label>
                             <select asp-for="alumnos.IdModalidad" asp-items="Model.modalidadesSelectListItem" class="form-select" required>
                                 <option disabled selected>Seleccione la Modalidad</option>
                             </select>
                             <span asp-validation-for="alumnos.IdModalidad" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.IdGrado" class="control-label">Grado</label>
+                            <select asp-for="alumnos.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
+                                <option disabled selected>Seleccione el Grado</option>
+                            </select>
+
+                            <span asp-validation-for="alumnos.IdGrado" class="text-danger"></span>
                         </div>
 
                         <div class="form-group">
@@ -127,10 +143,11 @@
                             @* <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span>  *@
                         </div>
                         <div class="form-group">
-                            <label asp-for="alumnos.Correo" class="control-label">Correo</label>
-                            <input asp-for="alumnos.Correo" class="form-control" />
-                            @* <span asp-validation-for="Correo" class="text-danger"></span> *@
+                            <label asp-for="alumnos.CedulaTutor" class="control-label">Cedula del Tutor</label>
+                            <input asp-for="alumnos.CedulaTutor" class="form-control" />
+                            @* <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span>  *@
                         </div>
+                        
                        
                     </div>
                 </div>
@@ -149,6 +166,8 @@
         </div>
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script>
         function capitalizeWords(input) {
             input.value = input.value

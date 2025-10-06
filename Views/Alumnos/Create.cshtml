@@ -18,7 +18,16 @@
              <div class="row">
                  <div class="col-md-6">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
+                        <div class="col-md-6">
+                            <label asp-for="alumnos.CodigoAlumno" class="control-label">Código del Estudiante</label>
+                            <input asp-for="alumnos.CodigoAlumno" id="CodigoEstudiante" class="form-control" readonly />
+                            <span validation-for="alumnos.CodigoAlumno" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="alumnos.CodigoMINED" class="control-label">Código MINED</label>
+                            <input asp-for="alumnos.CodigoMINED" id="Nombre" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el código MINED" />
+                            <span validation-for="alumnos.CodigoMINED" class="text-danger"></span>
+                        </div>
              <div class="col-md-6">
                   <label asp-for="alumnos.Nombre" class="control-label">Nombre</label>
                   <input asp-for="alumnos.Nombre" id="Nombre" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Nombre del Alumno" />
