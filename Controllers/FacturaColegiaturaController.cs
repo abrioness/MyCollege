@@ -129,10 +129,10 @@ namespace WebColegio.Controllers
 
 
         //arqueo
-        public async Task<IActionResult> Arqueo(int id)
+        public async Task<IActionResult> ArqueoCaja(int id)
         {
-            var arqueo = await _Iservices.GetArqueoById(id); // Llama a tu API
-            return View(arqueo); // Retorna el ViewModel a la vista
+            //var arqueo = await _Iservices.GetArqueoById(id); // Llama a tu API
+            return View(); // Retorna el ViewModel a la vista
         }
 
         // POST: FacturaColegiaturaController/Delete/5

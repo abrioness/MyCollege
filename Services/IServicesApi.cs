@@ -26,6 +26,8 @@ namespace WebColegio.Services
         Task<List<TblUsuarios>> GetUsuariosAsync();
         Task<List<TblPago>> GetPagosAsync();
         Task<List<TblReciboCaja>> GetRecibosCajaAsync();
+        Task<List<Productos>> GetProductosAsync();
+        Task<List<TblInventario>> GetInventarioAsync();
         #endregion
         #region Metodos Post
         Task<bool> PostAlumnosAsync(TblAlumno alumnos);
@@ -34,6 +36,9 @@ namespace WebColegio.Services
         
         //Task<bool> PostPagosAsync(PagosViewModel pagos);
         Task<bool> PostReciboCajaAsync(TblReciboCaja reciboCaja);
+        Task<bool> PostInventarioAsync(TblInventario inventario);
+        Task<bool> PostProductosAsync(Productos producto);
+
         #endregion
         #region Metodos Put
         Task<bool> UpdateAlumnos(TblAlumno alumno);

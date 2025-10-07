@@ -68,11 +68,11 @@
 </head>
 <body>
     <div class="titulo">
-        <h3>@Model.Colegio</h3>
+        @* <h3>@Model.Colegio</h3> *@
         <div class="subtitulo">
             <p>ARQUEO DE CAJA</p>
-            <p>Serie: @Model.Serie &nbsp;&nbsp; Nº: @Model.Numero</p>
-            <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p>
+           @*  <p>Serie: @Model.Serie &nbsp;&nbsp; Nº: @Model.Numero</p>
+            <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p> *@
         </div>
     </div>
 
@@ -88,7 +88,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var i in Model.Ingresos)
+           @*  @foreach (var i in Model.Ingresos)
             {
                 <tr>
                     <td>@i.Concepto</td>
@@ -96,10 +96,10 @@
                     <td style="text-align:center">@i.Cantidad</td>
                     <td style="text-align:right">@i.Monto.ToString("C")</td>
                 </tr>
-            }
+            } *@
         </tbody>
     </table>
-    <p class="totales">Total Ingresos: @Model.TotalIngresos.ToString("C")</p>
+    @* <p class="totales">Total Ingresos: @Model.TotalIngresos.ToString("C")</p> *@
 
     <!-- Egresos -->
     <h4>Egresos</h4>
@@ -111,16 +111,16 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var e in Model.Egresos)
+           @*  @foreach (var e in Model.Egresos)
             {
                 <tr>
                     <td>@e.Detalle</td>
                     <td style="text-align:right">@e.Monto.ToString("C")</td>
                 </tr>
-            }
+            } *@
         </tbody>
     </table>
-    <p class="totales">Total Egresos: @Model.TotalEgresos.ToString("C")</p>
+    @* <p class="totales">Total Egresos: @Model.TotalEgresos.ToString("C")</p> *@
 
     <!-- Detalle de Dinero en Córdobas -->
     <h4>Detalle de Dinero (Córdobas)</h4>
@@ -133,14 +133,14 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var d in Model.DetalleCordobas)
+           @*  @foreach (var d in Model.DetalleCordobas)
             {
                 <tr>
                     <td style="text-align:center">@d.Cantidad</td>
                     <td style="text-align:right">C$ @d.Denominacion</td>
                     <td style="text-align:right">@d.Monto.ToString("C")</td>
                 </tr>
-            }
+            } *@
         </tbody>
     </table>
 
@@ -155,19 +155,19 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var d in Model.DetalleDolares)
+           @*  @foreach (var d in Model.DetalleDolares)
             {
                 <tr>
                     <td style="text-align:center">@d.Cantidad</td>
                     <td style="text-align:right">$ @d.Denominacion</td>
                     <td style="text-align:right">@d.Monto.ToString("C")</td>
                 </tr>
-            }
+            } *@
         </tbody>
     </table>
 
     <p class="totales">
-        Total en Letras: <u>@Model.TotalEnLetras</u>
+        @* Total en Letras: <u>@Model.TotalEnLetras</u> *@
     </p>
 
     <!-- Firmas -->

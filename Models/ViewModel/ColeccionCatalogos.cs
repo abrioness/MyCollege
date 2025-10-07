@@ -22,6 +22,7 @@
         public List<TblPago> pagos { get; set; } = new List<TblPago>();
         public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
         public List<TblUsuarios> usuarios { get; set; } = new List<TblUsuarios>();
+        public List<Productos> producto { get; set; } = new List<Productos>();
 
 
 

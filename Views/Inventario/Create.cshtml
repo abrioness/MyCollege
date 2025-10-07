@@ -1,0 +1,209 @@
+﻿  @model WebColegio.Models.ViewModel.InventarioViewModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+@*<div class="content">
+     <div class="modal-body">
+        <span class="h5 mb-1">Bienvenido: @TempData["nombreusuario"] </span>
+    </div> *@
+
+
+
+
+<div class="container mt-6">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-pencil"></i> Registro del Inventario</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        @* <div class="form-group">
+                            <label asp-for="Inventario.i">Nombre del Alumno</label>
+                            <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar alumno..." />
+                            <input type="hidden" id="IdAlumno" name="notas.IdAlumno" />
+                        </div> *@
+
+                        <div class="form-group">
+                            <label asp-for="Inventario.IdProducto" class="control-label">Producto</label>
+
+                            <select asp-for="Inventario.IdProducto" asp-items="Model.ListaProductos" class="form-select" required>
+                                <option disabled selected>Seleccione la Evaluación</option>
+                            </select>
+                            <span asp-validation-for="Inventario.IdProducto" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Inventario.TipoMovimiento" class="control-label">Tipo de Movimiento</label>
+                            <input asp-for="Inventario.TipoMovimiento" id="acumulado1" class="form-control" />
+                            <span asp-validation-for="Inventario.TipoMovimiento" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Inventario.Cantidad" class="control-label">Cantidad</label>
+                            <input asp-for="Inventario.Cantidad" id="Cantidad" class="form-control" />
+                            <span asp-validation-for="Inventario.Cantidad" class="text-danger"></span>
+                        </div>
+                        
+                    </div>
+                    <div class="col-lg-4">
+                        
+                         <div class="form-group">
+                        <label asp-for="Inventario.FechaMovimiento" class="control-label">Fecha de Movimiento</label>
+                        <input type="date" asp-for="Inventario.FechaMovimiento" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+                        <span asp-validation-for="Inventario.FechaMovimiento" class="text-danger"></span>
+                    </div>
+                        <div class="form-group">
+                            <label asp-for="Inventario.ReferenciaDocumento" class="control-label">Referencia del Documento</label>
+                            <input asp-for="Inventario.ReferenciaDocumento" id="acumulado2" class="form-control" />
+                            <span asp-validation-for="Inventario.ReferenciaDocumento" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Inventario.Descripcion" class="control-label">Descripción</label>
+                            <input asp-for="Inventario.Descripcion" id="examen2" class="form-control" />
+                            @* <span asp-validation-for="Inventario.Descripcion" class="text-danger"></span> *@
+                        </div>
+
+                        
+                    </div>
+
+                </div>
+
+
+                <br />
+                <!-- Botones -->
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+@* </div> *@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* <div>
+    <a asp-action="Index">Back to List</a>
+</div> *@
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+    <script src="~/seewtalert/sweetalert.all.min.js"></script>
+    <script src="~/seewtalert/sweetalertstyle.js"></script>
+    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+
+   @*  <script>
+        $("#AlumnoNombre").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "https://localhost:7008/api/Alumnos/buscar",
+                    data: { q: request.term },
+                    success: function (data) {
+                         console.log("Respuesta API:", data); // 👈 debug
+                        response($.map(data, function (item) {
+                            return {
+                                label: item.nombreCompleto,
+                                value: item.nombreCompleto,
+                                id: item.id
+                            };
+                        }));
+                    }
+                });
+            },
+            minLength: 2, // empieza a buscar desde 2 letras
+            select: function (event, ui) {
+                $("#IdAlumno").val(ui.item.id); // Guardamos el ID del alumno
+            }
+        });
+
+        $(function () {
+            function calcularNotaFinal() {
+                let acu1= parseInt($("#acumulado1").val());
+                let acu2=parseInt($("#acumulado2").val());
+                let acu3=parseInt($("#acumulado3").val());
+                let acu4=parseInt($("#acumulado4").val());
+
+                let exam1=parseInt($("#examen1").val());
+                let exam2=parseInt($("#examen2").val());
+                let exam3=parseInt($("#examen3").val());
+                let exam4=parseInt($("#examen4").val());
+
+                let pc1=(acu1 + exam1);
+
+                let pc2=acu2 + exam2;
+                let pc3=acu3 + exam3;
+                let pc4=acu4 + exam4;
+                $("#primerCorte").val(pc1.toFixed(1));
+                 $("#segundoCorte").val(pc2.toFixed(1));
+                $("#tercerCorte").val(pc3.toFixed(1));
+                $("#cuartoCorte").val(pc4.toFixed(1));
+                let t1 = parseFloat($("#primerCorte").val()) || 0;
+                let t2 = parseFloat($("#segundoCorte").val()) || 0;
+                let t3 =parseFloat($("#tercerCorte").val()) || 0;
+                let t4 =parseFloat($("#cuartoCorte").val()) || 0;
+
+
+
+                // Aquí defines la fórmula de la nota final
+                // Ejemplo: promedio simple
+                let notaFinal = (t1 + t2  + t3 + t4) /4;
+
+                $("#notaFinal").val(notaFinal.toFixed(2));
+
+            }
+            //$("#","#segundoCorte","#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
+            // Recalcular cada vez que cambie un valor
+            $("#primerCorte,#segundoCorte,#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
+        });
+
+
+               function msg(mensaje){
+                   swal.fire({
+                           title:'Warning',
+                           text: mensaje,
+                           icon: 'warning',
+                           showCancelButton: true,
+                        confirmButtonText: 'Aceptar',
+                        cancelButtonText: 'Cancelar' // corregido el error tipográfico
+                       });}
+
+               function msgconfirm(mensaje) {
+                    Swal.fire({
+                        title: 'Información',
+                        text: mensaje,
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Aceptar',
+                        cancelButtonText: 'Cancelar'
+                    });
+                }
+
+
+
+    </script> *@
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                   Swal.fire({
+                           title: '@(TempData["Tipo"]?.ToString() == "info" ? "Información" : "Warning")',
+                       text: '@TempData["Mensaje"]',
+                           icon: '@(TempData["Tipo"]?.ToString() == "info" ? "info" : "warning")',
+                       confirmButtonText: 'Aceptar'
+                   });
+            });
+        </script>
+    }
+}
+
