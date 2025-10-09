@@ -376,7 +376,26 @@ namespace WebColegio.Services
                 return ValumnoNotas;
             }
         }
+        //Get de Login
+        public async Task<TblUsuarios> GetLogin(string usuario)
+        {
 
+            using (var httpClient = new HttpClient())
+            {
+                var login = new TblUsuarios();
+
+                var response = await httpClient.GetAsync(url + $"api/Usuarios/obtenerUsuario?login={usuario}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadAsStringAsync();
+                    var respuesta = JsonConvert.DeserializeObject<TblUsuarios>(data);
+                    login = respuesta;
+                }
+                return login;
+            }
+
+
+        }
 
         #endregion
         #region Metodos Post
@@ -841,6 +860,21 @@ namespace WebColegio.Services
             }
 
         }
+
+        public async Task<bool> validarUsuarios(string login)//, int idtematica)
+        {
+
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
 
         #endregion
 
