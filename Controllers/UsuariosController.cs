@@ -40,44 +40,44 @@ namespace WebColegio.Controllers
         // POST: UsuariosController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        
-        public async Task<ActionResult> Create(UsuarioViewModel viewmodel)
-        {
-            try
-            {
 
-                bool existeLogin;
-                string nombre = viewmodel.usuarios.Login;
-                string password = viewmodel.Password;
-                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
-                byte[] passwordBytes = Encoding.UTF8.GetBytes(hashedPassword);
+        //public async Task<ActionResult> Create(UsuarioViewModel viewmodel)
+        //{
+        //    try
+        //    {
 
-                existeLogin = await _Iservices.validarUsuarios(nombre);//validar si existe el usuario
+        //        bool existeLogin;
+        //        string nombre = viewmodel.usuarios.Login;
+        //        string password = viewmodel.Password;
+        //        string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+        //        byte[] passwordBytes = Encoding.UTF8.GetBytes(hashedPassword);
 
-                if (existeLogin)
-                {
-                    TempData["Mensaje"] = "El usuario ya se encuentra registrado.";
-                    return BadRequest();
-                }
+        //        existeLogin = await _Iservices.validarUsuarios(nombre);//validar si existe el usuario
 
-                else
-                {
+        //        if (existeLogin)
+        //        {
+        //            TempData["Mensaje"] = "El usuario ya se encuentra registrado.";
+        //            return BadRequest();
+        //        }
 
-                    viewmodel.usuarios.Login = nombre;
-                    viewmodel.usuarios.Password = passwordBytes;
-                    viewmodel.usuarios.UsuarioRegistro = 1;
-                    viewmodel.usuarios.FechaRegistro = DateTime.Now;
-                    viewmodel.usuarios.Activo = true;
+        //        else
+        //        {
 
-                    _IService.PostUsuarios(viewmodel.usuarios);
-                }
-                return RedirectToAction("Index", "Contenidos");
-            }
-            catch
-            {
-                return View();
-            }
+        //            viewmodel.usuarios.Login = nombre;
+        //            viewmodel.usuarios.Password = passwordBytes;
+        //            viewmodel.usuarios.UsuarioRegistro = 1;
+        //            viewmodel.usuarios.FechaRegistro = DateTime.Now;
+        //            viewmodel.usuarios.Activo = true;
 
+        //            _IService.PostUsuarios(viewmodel.usuarios);
+        //        }
+        //        return RedirectToAction("Index", "Contenidos");
+        //    }
+        //    catch
+        //    {
+        //        return View();
+        //    }
+        //}
         // GET: UsuariosController/Edit/5
         public ActionResult Edit(int id)
         {

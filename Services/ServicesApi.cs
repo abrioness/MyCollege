@@ -357,7 +357,87 @@ namespace WebColegio.Services
             }
         }
 
+        public async Task<List<Productos>> GetProductosAsync()
+        {
+            List<Productos> productos = new List<Productos>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TblProductos");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<Productos>>(content);
+                    productos = resultado;
+                }
+                return productos;
+            }
 
+        }
+
+        public async Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync()
+        {
+            List<CatTipoMovimiento> tipoMovimientos = new List<CatTipoMovimiento>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TipoMovimientos");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<CatTipoMovimiento>>(content);
+                    tipoMovimientos = resultado;
+                }
+                return tipoMovimientos;
+            }
+
+        }
+        public async Task<List<CatTipoRecibo>> GetTipoReciboAsync()
+        {
+            List<CatTipoRecibo> tipoRecibo = new List<CatTipoRecibo>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TipoRecibos");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<CatTipoRecibo>>(content);
+                    tipoRecibo = resultado;
+                }
+                return tipoRecibo;
+            }
+
+        }
+        public async Task<List<CatMetodoPago>> GetMetodoPagoAsync()
+        {
+            List<CatMetodoPago> metodoPago = new List<CatMetodoPago>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TblMetodoPago");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<CatMetodoPago>>(content);
+                    metodoPago = resultado;
+                }
+                return metodoPago;
+            }
+
+        }
+        public  async Task<List<TblInventario>> GetInventarioAsync()
+        {
+            List<TblInventario> inventario = new List<TblInventario>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/Inventario");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblInventario>>(content);
+                    inventario = resultado;
+                }
+                return inventario;
+            }
+
+        }
         public async Task<TblAlumno> V_alumnoNotas(int idnota)
         {
             var ValumnoNotas = new TblAlumno();
@@ -474,11 +554,52 @@ namespace WebColegio.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Excepción en PostAlumnosAsync: " + ex.Message);
+                Debug.WriteLine("Excepción en PostNotasAsync: " + ex.Message);
             }
 
             return respuesta;
         }
+
+        public async Task<bool> PostPagosAsync(TblPago pagos)
+        {
+            bool respuesta = false;
+
+            // Asegurar datos mínimos requeridos
+            pagos.Activo = true;
+            pagos.UsuarioRegistro = 1;
+            pagos.FechaRegistro = DateTime.Now;
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Serializar el objeto alumno
+                    string jsonPagos = JsonConvert.SerializeObject(pagos);
+                    var content = new StringContent(jsonPagos, Encoding.UTF8, "application/json");
+
+                    // Enviar POST
+                    var response = await httpClient.PostAsync(url + "api/Pagos", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        respuesta = true;
+                    }
+                    else
+                    {
+                        // Para debug: mostrar mensaje de error
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en POST: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostPagosAsync: " + ex.Message);
+            }
+
+            return respuesta;
+        }
+
         //POST de FACTURACION
         public async Task<bool> PostFacturacionAsync(FacturaColegiatura factura)
         {
@@ -565,6 +686,86 @@ namespace WebColegio.Services
             catch (Exception ex)
             {
                 Debug.WriteLine("Excepción en PostAlumnosAsync: " + ex.Message);
+            }
+
+            return respuesta;
+        }
+
+        public async Task<bool> PostInventarioAsync(TblInventario inventario)
+        {
+            bool respuesta = false;
+
+            // Asegurar datos mínimos requeridos
+            inventario.Activo = true;
+            inventario.UsuarioRegistro = 1;
+            inventario.FechaRegistro = DateTime.Now;
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Serializar el objeto alumno
+                    string jsonInventario = JsonConvert.SerializeObject(inventario);
+                    var content = new StringContent(jsonInventario, Encoding.UTF8, "application/json");
+
+                    // Enviar POST
+                    var response = await httpClient.PostAsync(url + "api/Inventario", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        respuesta = true;
+                    }
+                    else
+                    {
+                        // Para debug: mostrar mensaje de error
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en POST: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostInventarioAsync: " + ex.Message);
+            }
+
+            return respuesta;
+        }
+
+        public async Task<bool> PostProductosAsync(Productos product)
+        {
+            bool respuesta = false;
+
+            // Asegurar datos mínimos requeridos
+            product.Activo = true;
+            product.UsuarioRegistro = 1;
+            product.FechaRegistro = DateTime.Now;
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Serializar el objeto alumno
+                    string jsonProduct = JsonConvert.SerializeObject(product);
+                    var content = new StringContent(jsonProduct, Encoding.UTF8, "application/json");
+
+                    // Enviar POST
+                    var response = await httpClient.PostAsync(url + "api/TblProductos", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        respuesta = true;
+                    }
+                    else
+                    {
+                        // Para debug: mostrar mensaje de error
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en POST: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostProductosAsync: " + ex.Message);
             }
 
             return respuesta;
@@ -683,6 +884,7 @@ namespace WebColegio.Services
             }
         }
 
+       
 
         #endregion
         #region Metodos de Busqueda

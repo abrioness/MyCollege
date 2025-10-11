@@ -1,22 +1,24 @@
 ﻿namespace WebColegio.Models
 {
-    public class TblInventario
+    public class CatDetalleVentas
     {
-        public int IdInventario { get; set; }
+        public int IdDetaVentas { get; set; }
 
-        //public int IdMovimiento { get; set; }
+        public int IdVenta { get; set; }
 
         public int IdProducto { get; set; }
 
-        public string TipoMovimiento { get; set; } = null!;
-
         public int Cantidad { get; set; }
 
-        public DateTime FechaMovimiento { get; set; }
+        public decimal PrecioUniVenta { get; set; }
 
-        public string? ReferenciaDocumento { get; set; }
+        public decimal? SubtoralLinea { get; set; }
 
-        public string? Descripcion { get; set; }
+        public decimal? DescuentoLinea { get; set; }
+
+        public decimal? ImpuestoLinea { get; set; }
+
+        public decimal? TotalLinea { get; set; }
 
         public bool Activo { get; set; }
 
@@ -27,6 +29,5 @@
         public int? UsuarioActualiza { get; set; }
 
         public DateTime? FechaActualiza { get; set; }
-
     }
 }

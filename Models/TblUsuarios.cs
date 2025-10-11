@@ -6,13 +6,15 @@
 
         public string NombreUsuario { get; set; } = null!;
 
-        public byte[] Password { get; set; }
+        public byte[] Password { get; set; } = null!;
 
         public string? Correo { get; set; }
 
         public string NombreCompleto { get; set; } = null!;
 
         public string? Cedula { get; set; }
+
+        public int IdRol { get; set; }
 
         public bool Bloqueo { get; set; }
 

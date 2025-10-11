@@ -43,7 +43,7 @@ namespace APP_WEB_HISTORIANIC.Controllers
         }
         
         [HttpPost]
-        public async Task<IActionResult> Login(string Login,byte Password)
+        public async Task<IActionResult> Login(string Login,string Password)
         {
             // Buscar usuario por cédula
             var usuario = await _IService.GetLogin(Login);
@@ -66,7 +66,7 @@ namespace APP_WEB_HISTORIANIC.Controllers
             }
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, usuario.Login),
+                new Claim(ClaimTypes.Name, usuario.NombreUsuario),
                 new Claim(ClaimTypes.Role, usuario.IdRol.ToString())  // 👈 Aquí se asigna el rol desde BD   
             };
 

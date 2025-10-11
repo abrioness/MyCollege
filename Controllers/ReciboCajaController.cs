@@ -106,10 +106,10 @@ namespace WebColegio.Controllers
                                        
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
-                pagosSelectListItem = (await _Iservices.GetPagosAsync())
+                tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
                                    .Select(r => new SelectListItem
                                    {
-                                       Value = r.IdPago.ToString(),
+                                       Value = r.IdTipoMovimiento.ToString(),
                                        Text = r.Concepto,
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),

@@ -6,9 +6,14 @@ namespace WebColegio.Models
     {
         public TblReciboCaja ReciboCaja { get; set; }
         public TblPago Pago { get; set; }
+        public List<TblPago> listPagos {get;set;}
         public List<SelectListItem> reciboCajas { get; set; }
         public List<SelectListItem> pagosSelectListItem { get; set; }
         public List<SelectListItem> alumnosSelectListItem { get; set; }
         public List<SelectListItem> usuariosSelectListItem { get; set; }
+
+        public List<SelectListItem> tipoMovimientoSelectListItem { get; set; }
+        public List<SelectListItem> tipoRecibosSelectListItem { get; set; }
+        public List<SelectListItem> metodoPagoSelectListItem { get; set; }
     }
 }

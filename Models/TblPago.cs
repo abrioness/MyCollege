@@ -8,17 +8,26 @@
 
         public decimal Monto { get; set; }
 
-        public string Concepto { get; set; } = null!;
+        public int Concepto { get; set; }
+        public string MesPagado { get; set; }
+
+        public int? Mora { get; set; }
 
         public int IdMetodoPago { get; set; }
-        public long Activo { get; set; }
+
+        public int IdTipoMovimiento { get; set; }
+
+
+        public int IdTipoRecibo { get; set; }
+
+        public bool Activo { get; set; }
 
         public int UsuarioRegistro { get; set; }
 
         public DateTime FechaRegistro { get; set; }
 
-        public int? UsuarioActualiza { get; set; }
+        public int? UsuarioActualizo { get; set; }
 
-        public DateTime? FechaActualiza { get; set; }
+        public DateTime? FechaActualizo { get; set; }
     }
 }

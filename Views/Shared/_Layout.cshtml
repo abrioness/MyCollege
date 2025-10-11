@@ -88,7 +88,7 @@
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
                                aria-expanded="false" aria-controls="collapseNotas">
                                 <i class="bi bi-pencil-square"></i>
-                                <span>Registro Acdemico</span>
+                                <span>Registro Académico</span>
                             </a>
                             <div id="collapseNotas" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
@@ -113,6 +113,55 @@
                                     <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Caja</a>
                                     @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
                                     
+                                </div>
+                            </div>
+                        </li>
+                        <!-- Inventario -->
+                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseInventario"
+                               aria-expanded="false" aria-controls="collapseInventario">
+                                <i class="bi bi-clipboard-check"></i>
+                                <span>Registro de Inventario</span>
+                            </a>
+                            <div id="collapseInventario" class="collapse">
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    <a class="collapse-item" asp-controller="Inventario" asp-action="Index">Lista de Inventario</a>
+                                    <a class="collapse-item" asp-controller="Inventario" asp-action="Create">Inventario</a>
+                                    <a class="collapse-item" asp-controller="FacturaColegiatura" asp-action="ArqueoCaja">Arqueo</a>
+
+                                </div>
+                            </div>
+                        </li>
+                        <!-- productos -->
+                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
+                               aria-expanded="false" aria-controls="collapseProducto">
+                                <i class="bi bi-handbag"></i>
+                                <span>Registro de Productos</span>
+                            </a>
+                            <div id="collapseProducto" class="collapse">
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    <a class="collapse-item" asp-controller="Producto" asp-action="Index">Lista de Productos</a>
+                                    <a class="collapse-item" asp-controller="Producto" asp-action="Create">Producto</a>
+                                    @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
+
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- pagos -->
+                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
+                               aria-expanded="false" aria-controls="collapsePago">
+                                <i class="bi bi-coin"></i>
+                                <span>Registro de Pagos</span>
+                            </a>
+                            <div id="collapsePago" class="collapse">
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="Index">Lista de Pagos</a>
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="Create">Crear Pago</a>
+                                    @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
+
                                 </div>
                             </div>
                         </li>

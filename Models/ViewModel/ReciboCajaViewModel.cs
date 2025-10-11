@@ -14,6 +14,7 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> alumnosSelectListItem { get; set; }
         public List<SelectListItem> usuariosSelectListItem { get; set; }
         public List<SelectListItem> gradosSelectListItem { get; set; }
+        public List<SelectListItem> tipoMovimientoSelectListItem { get; set; }
 
     }
 }
