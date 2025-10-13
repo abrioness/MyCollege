@@ -59,17 +59,17 @@
                 <div class="col-lg-4">
                         <div class="form-group">
                             <label asp-for="notas.Acumulado1" class="control-label">Acumulado Primer Corte</label>
-                            <input asp-for="notas.Acumulado1" id="acumulado1" class="form-control" />
+                            <input type="number" asp-for="notas.Acumulado1" id="acumulado1" class="form-control"  />
                             <span asp-validation-for="notas.Acumulado1" class="text-danger"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="notas.Examen1" class="control-label">Examen Primer Corte</label>
-                            <input asp-for="notas.Examen1" id="examen1" class="form-control" />
+                            <input type="number" asp-for="notas.Examen1" id="examen1" class="form-control" />
                             <span asp-validation-for="notas.Examen1" class="text-danger"></span>
                         </div>
             <div class="form-group">
                         <label asp-for="notas.PrimerCorte" class="control-label">Primer Corte</label>
-                            <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control"  />
+                            <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control" readonly />
                                 <span asp-validation-for="notas.PrimerCorte" class="text-danger"></span>
             </div>
                         <div class="form-group">
@@ -150,7 +150,7 @@
     </div>
 </div>
 @* </div> *@
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 
 @* <div>
     <a asp-action="Index">Back to List</a>
@@ -164,8 +164,9 @@
     <script src="~/seewtalert/sweetalert.all.min.js"></script>
     <script src="~/seewtalert/sweetalertstyle.js"></script>
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+            
         $("#AlumnoNombre").autocomplete({
             source: function (request, response) {
                 $.ajax({
@@ -188,48 +189,66 @@
                 $("#IdAlumno").val(ui.item.id); // Guardamos el ID del alumno
             }
         });
-    
-        $(function () {
+        
+         $(function () {
+        function calcularCorte1() {
+          let acu1 = parseFloat($("#acumulado1").val()) || 0;
+          let exam1 = parseFloat($("#examen1").val()) || 0;
+          let pc1 = acu1 + exam1;
+          $("#primerCorte").val(pc1.toFixed(1));
+
+        }
+        function calcularCorte2() {
+          let acu2 = parseFloat($("#acumulado2").val()) || 0;
+          let exam2 = parseFloat($("#examen2").val()) || 0;
+          let pc2 = acu2 + exam2;
+          $("#segundoCorte").val(pc2.toFixed(1));
+
+        }
+        function calcularCorte2() {
+          let acu3 = parseFloat($("#acumulado3").val()) || 0;
+          let exam3 = parseFloat($("#examen3").val()) || 0;
+          let pc3 = acu3 + exam3;
+          $("#tercerCorte").val(pc3.toFixed(1));
+
+
+        }
+        function calcularCorte4() {
+          let acu4 = parseFloat($("#acumulado4").val()) || 0;
+          let exam4 = parseFloat($("#examen4").val()) || 0;
+          let pc4 = acu4 + exam4;
+          $("#cuartoCorte").val(pc4.toFixed(1));
+
+        }
+
             function calcularNotaFinal() {
-                let acu1= parseInt($("#acumulado1").val());
-                let acu2=parseInt($("#acumulado2").val());
-                let acu3=parseInt($("#acumulado3").val());
-                let acu4=parseInt($("#acumulado4").val());
 
-                let exam1=parseInt($("#examen1").val());
-                let exam2=parseInt($("#examen2").val());
-                let exam3=parseInt($("#examen3").val());
-                let exam4=parseInt($("#examen4").val());
-
-                let pc1=(acu1 + exam1);
-                
-                let pc2=acu2 + exam2;
-                let pc3=acu3 + exam3;
-                let pc4=acu4 + exam4;
-                $("#primerCorte").val(pc1.toFixed(1));
-                 $("#segundoCorte").val(pc2.toFixed(1));
-                $("#tercerCorte").val(pc3.toFixed(1));
-                $("#cuartoCorte").val(pc4.toFixed(1));
                 let t1 = parseFloat($("#primerCorte").val()) || 0;
                 let t2 = parseFloat($("#segundoCorte").val()) || 0;
                 let t3 =parseFloat($("#tercerCorte").val()) || 0;
                 let t4 =parseFloat($("#cuartoCorte").val()) || 0;
 
 
-                
+
                 // Aquí defines la fórmula de la nota final
                 // Ejemplo: promedio simple
                 let notaFinal = (t1 + t2  + t3 + t4) /4;
 
                 $("#notaFinal").val(notaFinal.toFixed(2));
 
-            }
-            //$("#","#segundoCorte","#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
+                  //$("#","#segundoCorte","#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
             // Recalcular cada vez que cambie un valor
+
             $("#primerCorte,#segundoCorte,#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
+
+                  $("#acumulado1, #examen1").on("input", calcularCorte1);
+                 $("#acumulado2, #examen2").on("input", calcularCorte2);
+                  $("#acumulado3, #examen3").on("input", calcularCorte3);
+                  $("#acumulado4, #examen4").on("input", calcularCorte4);
         });
-       
-    
+        
+            
+          
                function msg(mensaje){
                    swal.fire({
                            title:'Warning',
@@ -251,7 +270,7 @@
                     });
                 }
 
-   
+      
 
     </script>
    

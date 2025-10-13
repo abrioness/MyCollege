@@ -30,11 +30,14 @@ namespace WebColegio.Services
         Task<TblUsuarios> GetLogin(string usuario);
 
         Task<List<Productos>> GetProductosAsync();
+        Task<List<CategoriaProducto>> GetCategoriaProductoAsync();
         Task<List<TblInventario>> GetInventarioAsync();
 
         Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync();
         Task<List<CatTipoRecibo>> GetTipoReciboAsync();
         Task<List<CatMetodoPago>> GetMetodoPagoAsync();
+        Task<List<CatDiscapacidad>> GetDiscapacidadAsync();
+        Task<List<CatMovInventario>> GetMovInventarioAsync();
         #endregion
         #region Metodos Post
         Task<bool> PostAlumnosAsync(TblAlumno alumnos);
@@ -58,7 +61,8 @@ namespace WebColegio.Services
         Task<TblReciboCaja> GetReciboCajaById(int id);
         Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
         Task<ArqueoCajaViewModel> GetArqueoById(int id);
-        
+        Task<TblPago> GetPagoById(int id);
+
         #endregion
         #region Metodos de Busqueda
         Task<List<TblAlumno>> searchAlumnosAsync();
@@ -66,6 +70,12 @@ namespace WebColegio.Services
         #region Medotos de Validacion
         Task<bool>ValidarNotas(int idAsignatura,int idPeriodoEva,int idAlumno);
         Task<bool> ValidarFacturas(int idTipoColegiatura, int idEstadoPago, int idAlumno, string mesFacturado, string anyoFacturado);
+        Task<bool> ValidarProductos(string codigo, int categoria);
+        Task<bool> ValidarAlumnoDuplicado(string codigo, string nombre, string apellido);
+        #endregion
+
+        #region Metodos para Genear Códigos
+        Task<string> GenerarCodigoAlumno();
         #endregion
 
     }

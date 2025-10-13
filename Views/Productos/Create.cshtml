@@ -1,0 +1,167 @@
+﻿@model WebColegio.Models.ViewModel.productoViewModel
+@* @{
+    ViewData["Title"] = "Create";
+} *@
+@*<div class="content">
+     <div class="modal-body">
+        <span class="h5 mb-1">Bienvenido: @TempData["nombreusuario"] </span>
+    </div> *@
+
+
+
+
+<div class="container mt-6">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-pencil"></i> Registro de Productos</h4>
+        </div>
+        <div class="card-body">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" >
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+           <div class="row">
+               <div class="col-lg-4">
+                   @*          <div class="form-group">
+                                <label asp-for="notas.IdAlumno">Nombre del Alumno</label>
+                                <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar alumno..." />
+                                <input type="hidden" id="IdAlumno" name="notas.IdAlumno" />
+                            </div> *@
+                    
+                        
+                        <div class="form-group">
+                            <label asp-for="tblproducto.CodigoBarra" class="control-label">Código de Producto</label>
+                            <input  asp-for="tblproducto.CodigoBarra" id="CodigoProducto" value="@Model.SiguienteCodigo" class="form-control"  />
+                            <span asp-validation-for="tblproducto.CodigoBarra" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.NombreProducto" class="control-label">Nombre Del Producto</label>
+                            <input asp-for="tblproducto.NombreProducto" id="NombreProducto" class="form-control text-uppercase" />
+                            <span asp-validation-for="tblproducto.NombreProducto" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.Descripcion" class="control-label">Descripción</label>
+                            <input type="text" asp-for="tblproducto.Descripcion" id="Descripcion" class="form-control" />
+                          
+                        </div>
+                <div class="form-group">
+                            <label asp-for="tblproducto.IdCateProducto" class="control-label">Categoría del Producto</label>
+                            <select asp-for="tblproducto.IdCateProducto" asp-items="Model.listCategoriaProducto" class="form-select" required>
+                                        <option disabled selected>Seleccione una Opción</option>
+                                    </select>
+                            <span asp-validation-for="tblproducto.IdCateProducto" class="text-danger"></span>
+                </div>
+           
+                    
+                            </div>
+                <div class="col-lg-4">
+                        <div class="form-group">
+                            <label asp-for="tblproducto.CostoUnitario" class="control-label">Costo Unitario</label>
+                            <input type="number" asp-for="tblproducto.CostoUnitario" id="costoUnitario" class="form-control" />
+                            @* <span asp-validation-for="tblproducto.CostoUnitario" class="text-danger"></span> *@
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.PrecioVenta" class="control-label">Precio de Venta</label>
+                            <input type="number" asp-for="tblproducto.PrecioVenta" id="precioVenta" class="form-control" />
+                            
+                        </div>
+            <div class="form-group">
+                            <label asp-for="tblproducto.StockActual" class="control-label">Stock Actual</label>
+                            <input asp-for="tblproducto.StockActual" id="stockActual" class="form-control"  />
+                            <span asp-validation-for="tblproducto.StockActual" class="text-danger"></span>
+            </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.StockMinimo" class="control-label">Stock Minimo</label>
+                            <input asp-for="tblproducto.StockMinimo" id="stockMinimo" class="form-control" />
+                            
+                        </div>
+                        
+                    </div>
+                        @* <div class="col-lg-4"> *@
+                        
+
+                    </div>
+
+
+                    <br />
+                    <!-- Botones -->
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+
+        </form>
+        </div>
+    </div>
+</div>
+@* </div> *@
+
+
+@* <div>
+    <a asp-action="Index">Back to List</a>
+</div> *@
+
+@section Scripts {
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+        <script src="~/seewtalert/sweetalert.all.min.js"></script>
+        <script src="~/seewtalert/sweetalertstyle.js"></script>
+        <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+
+        <script>
+        document.getElementById("NombreProducto").addEventListener("change", function () {
+            const nombre = this.value.trim().toUpperCase();
+
+            if (nombre.length === 0) {
+                document.getElementById("CodigoProducto").value = "";
+                return;
+            }
+
+            // Quitar tildes
+            const sinAcentos = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            // Dividir por espacios
+            const palabras = sinAcentos.split(" ").filter(p => p.length > 0);
+
+            let codigoBase = "";
+
+            // Si tiene 2 o más palabras → tomar 3 primeras letras de la 1ra + 3 de la 2da
+            if (palabras.length >= 2) {
+                codigoBase = palabras[0].substring(0, 3) + palabras[1].substring(0, 3);
+            }
+            // Si solo hay una palabra → tomar 6 primeras letras
+            else {
+                codigoBase = palabras[0].substring(0, 6);
+            }
+
+            codigoBase = codigoBase.toUpperCase();
+
+            // Agregar número (esto puedes cambiarlo por el correlativo real)
+            const numero = document.getElementById("CodigoProducto").value;
+
+            document.getElementById("CodigoProducto").value = `${codigoBase}-${numero}`;
+        });
+    </script>
+    
+    </script>
+    @if (TempData["Mensaje"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                   Swal.fire({
+                           title: '@(TempData["Tipo"]?.ToString() == "warning" ? "Error" : "Informacion")',
+                       text: '@TempData["Mensaje"]',
+                           icon: '@(TempData["Tipo"]?.ToString() == "info" ? "Información" : "warning")',
+                       confirmButtonText: 'Aceptar'
+                   });
+            });
+        </script>
+    }
+    
+}

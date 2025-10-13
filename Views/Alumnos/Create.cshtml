@@ -1,17 +1,17 @@
 ﻿@model WebColegio.Models.ViewModel.AlumnosViewModel
 
-@{
+@* @{
     ViewData["Title"] = "Create";
     
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-}
+} *@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
 
 <div class="container mt-6" style="padding:50px;">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro de Alumnos</h4>
+            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro del Estudiante</h4>
         </div>
         <div class="card-body">
             <form asp-action="Create" method="post" enctype="multipart/form-data" class="row g-3">
@@ -20,8 +20,8 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                         <div class="col-md-6">
                             <label asp-for="alumnos.CodigoAlumno" class="control-label">Código del Estudiante</label>
-                            <input asp-for="alumnos.CodigoAlumno" id="CodigoEstudiante" class="form-control" readonly />
-                            <span validation-for="alumnos.CodigoAlumno" class="text-danger"></span>
+                            <input asp-for="alumnos.CodigoAlumno" value="@Model.codigoestudiante" class="form-control" readonly />
+                            
                         </div>
                         <div class="col-md-6">
                             <label asp-for="alumnos.CodigoMINED" class="control-label">Código MINED</label>
@@ -66,7 +66,7 @@
                     <div class="form-group">
                         <label asp-for="alumnos.IdGrupo" class="control-label">Grupo</label>
                             <select asp-for="alumnos.IdGrupo" asp-items="Model.gruposSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione el Sexo</option>
+                                <option disabled selected>Seleccione el Grupo</option>
                             </select>
 
                             <span asp-validation-for="alumnos.IdGrupo" class="text-danger"></span>
@@ -74,7 +74,7 @@
                     <div class="form-group">
                         <label asp-for="alumnos.IdGrado" class="control-label">Grado</label>
                             <select asp-for="alumnos.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione el Sexo</option>
+                                <option disabled selected>Seleccione el Grado</option>
                             </select>
 
                             <span asp-validation-for="alumnos.IdGrado" class="text-danger"></span>
@@ -87,16 +87,17 @@
 
               <span asp-validation-for="alumnos.IdTurno" class="text-danger"></span>
             </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.IdModalidad" class="control-label">Modalidad</label>
+                            <select asp-for="alumnos.IdModalidad" asp-items="Model.modalidadesSelectListItem" class="form-select" required>
+                                <option disabled selected>Seleccione la Modalidad</option>
+                            </select>
+                            <span asp-validation-for="alumnos.IdModalidad" class="text-danger"></span>
+                        </div>
                 </div>
                 <div class="col-md-6">
 
-            <div class="form-group">
-                <label asp-for="alumnos.IdModalidad" class="control-label">Modalidad</label>
-                 <select asp-for="alumnos.IdModalidad" asp-items="Model.modalidadesSelectListItem" class="form-select" required>
-                   <option disabled selected>Seleccione la Modalidad</option>
-                  </select>
-                 <span asp-validation-for="alumnos.IdModalidad" class="text-danger"></span>
-            </div>
+            
                 
             <div class="form-group">
                 <label asp-for="alumnos.IdRecinto" class="control-label">Recinto</label>
@@ -116,55 +117,55 @@
                 <span asp-validation-for="alumnos.Direccion" class="text-danger"></span> 
             </div>
             <div class="form-group">
-                <label asp-for="alumnos.Telefono" class="control-label">Telefono</label>
+                <label asp-for="alumnos.Telefono" class="control-label">Teléfono</label>
                 <input asp-for="alumnos.Telefono" class="form-control" />
                 <span asp-validation-for="alumnos.Telefono" class="text-danger"></span> 
             </div>
             <div class="form-group">
-                <label asp-for="alumnos.NombreMadre" class="control-label">Nombre Madre</label>
+                <label asp-for="alumnos.NombreMadre" class="control-label">Nombre de la Madre</label>
                  <input asp-for="alumnos.NombreMadre" class="form-control" />
                  <span asp-validation-for="alumnos.NombreMadre" class="text-danger"></span> 
             </div>
             <div class="form-group">
-                            <label asp-for="alumnos.NombrePadre" class="control-label">Nombre Padre</label>
-                <input name="alumnos.NombrePadre" class="form-control" />
+                            <label asp-for="alumnos.NombrePadre" class="control-label">Nombre del Padre</label>
+                            <input asp-for="alumnos.NombrePadre" class="form-control" />
                  <span asp-validation-for="alumnos.NombrePadre" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="alumnos.NombreTutor" class="control-label">Nombre Tutor</label>
-                <input name="alumnos.NombreTutor" class="form-control" />
-                @* <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span>  *@
+                            <input asp-for="alumnos.NombreTutor" class="form-control" />
+                <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span> 
             </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.CedulaTutor" class="control-label">Cedula del Tutor</label>
+                            <input asp-for="alumnos.CedulaTutor" class="form-control" />
+                            <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span> 
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.ContactoTutor" class="control-label">Contacto del Tutor</label>
+                            <input asp-for="alumnos.ContactoTutor" class="form-control" />
+                            <span asp-validation-for="alumnos.ContactoTutor" class="text-danger"></span> 
+                        </div>
             <div class="form-group">
                 <label asp-for="alumnos.Correo" class="control-label">Correo</label>
                 <input asp-for="alumnos.Correo" class="form-control" />
                 @* <span asp-validation-for="Correo" class="text-danger"></span> *@
             </div>
-           @*  <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Activo" /> @Html.DisplayNameFor(model => model.Activo)
-                </label>
-            </div> *@
-           @*  <div class="form-group">
-                <label asp-for="UsuarioRegistro" class="control-label"></label>
-                <input asp-for="UsuarioRegistro" class="form-control" />
-                <span asp-validation-for="UsuarioRegistro" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="FechaRegistro" class="control-label"></label>
-                <input asp-for="FechaRegistro" class="form-control" />
-                <span asp-validation-for="FechaRegistro" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UsuarioActualiza" class="control-label"></label>
-                <input asp-for="UsuarioActualiza" class="form-control" />
-                <span asp-validation-for="UsuarioActualiza" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="FechaActualiza" class="control-label"></label>
-                <input asp-for="FechaActualiza" class="form-control" />
-                <span asp-validation-for="FechaActualiza" class="text-danger"></span>
-            </div> *@
+
+                        
+                        <div class="form-group">
+                            <label asp-for="alumnos.IdDiscapacidad" class="control-label">Discapacidad</label>
+                            <select asp-for="alumnos.IdDiscapacidad" asp-items="Model.discapacidadSelectListItem" class="form-select" required>
+                                <option disabled selected>Seleccione la Discapacidad</option>
+                            </select>
+                            <span asp-validation-for="alumnos.IdDiscapacidad" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.Observaciones" class="control-label">Observaciones</label>
+                            <textarea asp-for="alumnos.Observaciones" class="form-control" ></textarea>
+
+                        </div>
+           
                 </div>
             </div>
             <br />

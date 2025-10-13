@@ -28,6 +28,9 @@
         public List<CatTipoRecibo> tipoRecibo { get; set; } = new List<CatTipoRecibo>();
         public List<CatMetodoPago> metodoPago { get; set; } = new List<CatMetodoPago>();
 
+        public List<CategoriaProducto> categoriasProducto { get;  set; } = new List<CategoriaProducto>();
+        public List<CatDiscapacidad> discapacidad { get; set; } = new List<CatDiscapacidad>();
+        public List<CatMovInventario> movinventario { get; set; } = new List<CatMovInventario>();
 
 
     }

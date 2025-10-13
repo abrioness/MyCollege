@@ -40,8 +40,10 @@ namespace WebColegio.Models
 
         public string? NombreTutor { get; set; }
         public string? CedulaTutor { get; set; }
+        public string? ContactoTutor { get; set; }
         public string? Correo { get; set; }
-
+        public string? Observaciones { get; set; }
+        public int? IdDiscapacidad { get; set; }
         public bool Activo { get; set; }
 
         public int UsuarioRegistro { get; set; }

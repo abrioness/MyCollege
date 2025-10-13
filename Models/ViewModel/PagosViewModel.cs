@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace WebColegio.Models
+namespace WebColegio.Models.ViewModel
 {
     public class PagosViewModel
     {

@@ -1,10 +1,9 @@
 ﻿namespace WebColegio.Models
 {
-    public class CatTipoRecibo
+    public class CatMovInventario
     {
-        public int IdTipoRecibo { get; set; }
-        public string TipoRecibo { get; set; } = null!;
-        public string? Descripcion { get; set; }
+        public int IdMovInventario { get; set; }
+        public string MovimientoInventario { get; set; }
         public bool Activo { get; set; }
         public int UsuarioRegistro { get; set; }
         public DateTime FechaRegistro { get; set; }

@@ -21,21 +21,25 @@ namespace WebColegio.Controllers
 
                 var _alumnos = await _Iservices.GetAlumnosAsync();
                 var _sexos = await _Iservices.GetSexosAsync();
-                //var _grupos = await _Iservices.GetGruposAsync();
+                var _grupos = await _Iservices.GetGruposAsync();
                 var _grados = await _Iservices.GetGradosAsync();
                 var _turnos = await _Iservices.GetTurnosAsync();
-                //var _modalidades = await _Iservices.GetModalidadesAsync();
-                //var _recintos = await _Iservices.GetRecintosAsync();
+                var _modalidades = await _Iservices.GetModalidadesAsync();
+                var _recintos = await _Iservices.GetRecintosAsync();
+            var _discapacidad = await _Iservices.GetDiscapacidadAsync();
 
                 var VieModelAlumnos = new ColeccionCatalogos
                 {
                     alumno = _alumnos,
                     sexos = _sexos,
-                    //grupos = _grupos,
+                    grupos = _grupos,
                     grados = _grados,
                     turnos = _turnos,
-                    //modalidades = _modalidades,
-                    //recintos = _recintos
+                    modalidades = _modalidades,
+                    recintos = _recintos,
+                    discapacidad=_discapacidad,
+
+                    
                 };
 
                 return View(VieModelAlumnos);
@@ -53,10 +57,10 @@ namespace WebColegio.Controllers
         // GET: AlumnosController/Create
         public async Task<ActionResult> Create()
         {
-            
+
             var viewmodel = new AlumnosViewModel
             {
-
+                codigoestudiante = await _Iservices.GenerarCodigoAlumno(),
                 sexosSelectListItem = (await _Iservices.GetSexosAsync())
                               .Select(r => new SelectListItem
                               {
@@ -99,6 +103,13 @@ namespace WebColegio.Controllers
                                   Value = r.IdRecinto.ToString(),
                                   Text = r.Recinto,
                                   //Selected = r.IdPregunta == respuestas.IdPregunta
+                              }).ToList(),
+                discapacidadSelectListItem = (await _Iservices.GetDiscapacidadAsync())
+                              .Select(r => new SelectListItem
+                              {
+                                  Value = r.Id_Discapacidad.ToString(),
+                                  Text = r.Discapacidad,
+                                  //Selected = r.IdPregunta == respuestas.IdPregunta
                               }).ToList()
             };
 
@@ -107,21 +118,27 @@ namespace WebColegio.Controllers
 
         // POST: AlumnosController/Create
         [HttpPost]
-        //[ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(TblAlumno alumnos)
         {
             bool response = false;
+            bool existe = false;
             try
             {
+                existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoAlumno, alumnos.Nombre, alumnos.Apellido);
+                if (existe)
+                {
+                    TempData["Mensaje"] = "Ya existe un alumno con el mismo Código";
+                    return RedirectToAction("Create", "Alumnos");
+                }
                 if (alumnos != null)
                 {
-                                  
-
+                     
                     response = await _Iservices.PostAlumnosAsync(alumnos);
                     if(response)
                     {
-                        TempData["Mensaje"] = "El registro del alumno se a creado correctamente";
-                        return RedirectToAction(nameof(Index));
+                        TempData["Mensaje"] = "El registro del alumno se guardo correctamente";
+                        return RedirectToAction("Create","Alumnos");
                     }
                    
                 }

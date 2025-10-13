@@ -374,6 +374,55 @@ namespace WebColegio.Services
 
         }
 
+        public async Task<List<CatDiscapacidad>> GetDiscapacidadAsync()
+        {
+            List<CatDiscapacidad> discapacidad = new List<CatDiscapacidad>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/CatDiscapacidad");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<CatDiscapacidad>>(content);
+                    discapacidad = resultado;
+                }
+                return discapacidad;
+            }
+
+        }
+        public async Task<List<CatMovInventario>> GetMovInventarioAsync()
+        {
+            List<CatMovInventario> movInventario = new List<CatMovInventario>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/CatMovimientoInventario");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<CatMovInventario>>(content);
+                    movInventario = resultado;
+                }
+                return movInventario;
+            }
+
+        }
+        public async Task<List<CategoriaProducto>> GetCategoriaProductoAsync()
+        {
+            List<CategoriaProducto> categoriaProducto = new List<CategoriaProducto>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/CategoriaProducto");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<CategoriaProducto>>(content);
+                    categoriaProducto = resultado;
+                }
+                return categoriaProducto;
+            }
+
+        }
+
         public async Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync()
         {
             List<CatTipoMovimiento> tipoMovimientos = new List<CatTipoMovimiento>();
@@ -482,22 +531,16 @@ namespace WebColegio.Services
         public async Task<bool> PostAlumnosAsync(TblAlumno alumnos)
         {
             bool respuesta = false;
-            bool validarDuplicado = await ValidarAlumnoDuplicado(alumnos);
-            if (validarDuplicado)
-            {
-                return respuesta;
-            }
-
-            else
-            {
-
+            //alumnos.CodigoAlumno = await GenerarCodigoAlumno();
+           
+            
 
                 // Asegurar datos mínimos requeridos
                 alumnos.Activo = true;
                 alumnos.UsuarioRegistro = 1;
                 alumnos.FechaRegistro = DateTime.Now;
                 
-                alumnos.CodigoAlumno =await GenerarCodigoAlumno();
+               
 
                 using (var httpClient = new HttpClient())
                 {
@@ -515,7 +558,7 @@ namespace WebColegio.Services
                     return respuesta;
                 }
 
-            } 
+            
             
            
         }
@@ -859,6 +902,28 @@ namespace WebColegio.Services
                 return arqueo!;
             }
         }
+        public async Task<TblPago> GetPagoById(int id)
+        {
+            // Suponiendo que tu API tiene un endpoint como:
+            // GET https://tuservidor/api/arqueo/{id}
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync($"api/Pagos/{id}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Error al obtener el arqueo: {response.StatusCode}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Usar Newtonsoft.Json o System.Text.Json para deserializar
+                var pago = JsonConvert.DeserializeObject<TblPago>(json);
+
+                return pago!;
+            }
+        }
 
         public async Task<TblReciboCaja> GetReciboCajaById(int id)
         {
@@ -998,21 +1063,28 @@ namespace WebColegio.Services
         #endregion
 
         #region Metodos de Validaciones
-        private async Task<bool> ValidarAlumnoDuplicado(TblAlumno alumno)
+        
+        public async Task<bool> ValidarAlumnoDuplicado(string codigo,string nombre,string apellido)
         {
-            bool validar = false;
-            var existeAlumno = await GetAlumnosAsync();
-            bool existe =  existeAlumno.Any(a =>
-           a.Nombre == alumno.Nombre &&
-           a.Apellido == alumno.Apellido &&
-           a.FechaNacimiento == alumno.FechaNacimiento);
+            var existe = false;
 
-            if (existe)
+            using (var httpclient = new HttpClient())
             {
 
-                return validar = true;
+                var response = await httpclient.GetAsync(url + $"api/Alumnos/existeAlumno?codigo={codigo}&nombre={nombre}&apellido={apellido}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<bool>(content);
+
+
+                    return existe = resultado;
+
+                }
+                return existe;
             }
-            return validar;
+
         }
         //Metodo de busqueda de duplicidad de nota por asignatura y periodo de evaluacion
         public async Task<bool> ValidarNotas(int idAsignatura, int idPeriodoEva, int idAlumno)
@@ -1076,12 +1148,33 @@ namespace WebColegio.Services
                 return false;
             }
         }
+        public async Task<bool> ValidarProductos(string codigo, int categoria)
+        {
+            var existe = false;
 
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + $"api/TblProductos/existeProducto?codigo={codigo}&categoriaProd={categoria}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<bool>(content);
+
+                   
+                        return existe=resultado;
+                    
+                }
+                return existe;
+            }
+
+        }
 
         #endregion
 
         #region Generar Código Estudiante
-        private async Task<string> GenerarCodigoAlumno()
+        public async Task<string> GenerarCodigoAlumno()
         {
             // Obtiene el último alumno insertado
             var alumnosList = await GetAlumnosAsync();

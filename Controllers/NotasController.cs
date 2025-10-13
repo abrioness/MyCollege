@@ -122,7 +122,22 @@ namespace WebColegio.Controllers
                                       Text = r.NombreAsignatura,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
-                
+
+                modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdModalidad.ToString(),
+                                      Text = r.Modalidad,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+              gradosSelectListItem = (await _Iservices.GetGradosAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdGrado.ToString(),
+                                      Text = r.NombreGrado,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+
             };
 
             return View(viewmodel);

@@ -18,7 +18,7 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Index()
         {
 
-           
+            var _pagos = await _Iservices.GetPagosAsync();
             var _alumnos = await _Iservices.GetAlumnosAsync();
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             var _tipoRecibo = await _Iservices.GetTipoReciboAsync();
@@ -29,7 +29,7 @@ namespace WebColegio.Controllers
 
             var VieModelNotas = new ColeccionCatalogos
             {
-                
+                pagos=_pagos,
                 alumno = _alumnos,
                 tipoMovimiento = _tipoMovimiento,
                 tipoRecibo = _tipoRecibo,
@@ -61,7 +61,7 @@ namespace WebColegio.Controllers
         {
             var viewmodel = new PagosViewModel
             {
-
+                
                tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
                                    .Select(r => new SelectListItem
                                    {
@@ -93,7 +93,7 @@ namespace WebColegio.Controllers
         // POST: PagosController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(TblPago pagos)
+        public async Task<ActionResult> Create(PagosViewModel pagos)
         {
             bool response = false;
             bool validarDuplicado = false;
@@ -110,11 +110,11 @@ namespace WebColegio.Controllers
                 if (pagos != null)
                 {
 
-                    response = await _Iservices.PostPagosAsync(pagos);
+                    response = await _Iservices.PostPagosAsync(pagos.Pago);
                     if (response)
                     {
-                        TempData["Mensaje"] = "Se Realizo Correctamente el Pago.";
-                        return RedirectToAction(nameof(Index));
+                        TempData["Mensaje"] = "Se Guardo Correctamente el Pago.";
+                       return RedirectToAction(nameof(Index));
                     }
 
                 }
