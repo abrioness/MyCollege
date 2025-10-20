@@ -9,8 +9,6 @@
     </div> *@
 
 
-
-
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
@@ -30,7 +28,7 @@
                         <div class="form-group">
                             <label asp-for="Pago.IdTipoMovimiento" class="control-label">Concepto</label>
 
-                            <select asp-for="Pago.IdTipoMovimiento" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
+                            <select asp-for="Pago.IdTipoMovimiento" id="tipoMovimiento" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
                                 <option disabled selected>Seleccione un Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdTipoMovimiento" class="text-danger"></span>
@@ -46,7 +44,7 @@
                         <div class="form-group">
                             <label asp-for="Pago.IdMetodoPago" class="control-label">Metod Pago</label>
                             <select asp-for="Pago.IdMetodoPago" asp-items="Model.metodoPagoSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione una Opción</option>
+                                <option value="">Seleccione una Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdMetodoPago" class="text-danger"></span>
                         </div>
@@ -59,19 +57,67 @@
                             <input asp-for="Pago.Monto" id="monto" class="form-control" />
                             <span asp-validation-for="Pago.Monto" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
+						@*<div class="form-group">
                             <label asp-for="Pago.Mora" class="control-label">Mora</label>
-                            <input asp-for="Pago.Mora" id="examen1" class="form-control" />
-                            @* <span asp-validation-for="Pago.Mora" class="text-danger"></span> *@
+                            <input asp-for="Pago.Mora" id="Mora" class="form-control" />
+                           <span asp-validation-for="Pago.Mora" class="text-danger"></span>
+                        </div> *@
+						
+                        <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
+                        <br />
+                        <div class="form-group" id="mesPagado">
+                            <label>Meses a pagar</label>
+                            <div id="mesesSeleccionadosContainer" class="mb-2">
+                                <!-- Aquí se mostrarán los meses elegidos -->
+                            </div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMeses">
+                                Seleccionar meses
+                            </button>
+
+                            <!-- Campo oculto que enviará los IDs -->
+                            <input type="hidden" id="MesesSeleccionados" name="MesesSeleccionados" />
                         </div>
-                        <div class="form-group">
-                            <label asp-for="Pago.MesPagado" class="control-label">Mes a Pagar</label>
-                            <input asp-for="Pago.MesPagado" class="form-control" />
-                            <span asp-validation-for="Pago.MesPagado" class="text-danger"></span>
                         </div>
-                        
-                        
-                    </div>
+                        <!-- Modal -->
+                        <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Seleccionar meses</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            @foreach (var itemMeses in Model.meses)
+                                            {
+                                                
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="form-check">
+                                                        <input type="checkbox"
+                                                               name="MesesSeleccionados"
+                                                               
+                                                               value="@itemMeses.IdMes"
+                                                               class="form-check-input" id="mes_@itemMeses.IdMes" />
+                                                        <label class="form-check-label" for="mes_@itemMeses.IdMes">
+                                                            @itemMeses.Mes
+                                                        </label>
+                                                        @* <input type="hidden" asp-for="@itemMeses.IdMes" /> *@
+                                                        @* <input type="hidden" asp-for="mesesSelectListItem[i].Value" /> *@
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                        <button type="button" class="btn btn-primary" onclick="confirmarMeses()">Confirmar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    
 
                 </div>
 
@@ -80,7 +126,7 @@
                 <!-- Botones -->
                 <div class="col-12 text-end">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Guardar
+                        <i class="bi bi-save"></i> Procesar Pago
                     </button>
                     <a asp-action="Index" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
@@ -91,12 +137,6 @@
         </div>
     </div>
 </div>
-@* </div> *@
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-@* <div>
-    <a asp-action="Index">Back to List</a>
-</div> *@
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -106,8 +146,25 @@
     <script src="~/seewtalert/sweetalert.all.min.js"></script>
     <script src="~/seewtalert/sweetalertstyle.js"></script>
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+
+            $(document).ready(function() {
+            // Reemplaza 1 y 2 por los valores reales de tu base de datos
+            $('#tipoMovimiento').change(function() {
+                const tipoMovimientoId = parseInt($('#tipoMovimiento').val());
+
+                // Ajusta estos números según tus tipos de movimiento
+                if (tipoMovimientoId === 1) { // 1 = Matrícula
+                    $('#mesPagado').show();
+                } else {
+                    $('#mesPagado').hide();
+                }
+            }).trigger('change');
+        });
+       
+
+
         $("#AlumnoNombre").autocomplete({
             source: function (request, response) {
                 $.ajax({
@@ -131,47 +188,6 @@
             }
         });
 
-        // $(function () {
-        //     function calcularNotaFinal() {
-        //         let acu1= parseInt($("#acumulado1").val());
-        //         let acu2=parseInt($("#acumulado2").val());
-        //         let acu3=parseInt($("#acumulado3").val());
-        //         let acu4=parseInt($("#acumulado4").val());
-
-        //         let exam1=parseInt($("#examen1").val());
-        //         let exam2=parseInt($("#examen2").val());
-        //         let exam3=parseInt($("#examen3").val());
-        //         let exam4=parseInt($("#examen4").val());
-
-        //         let pc1=(acu1 + exam1);
-
-        //         let pc2=acu2 + exam2;
-        //         let pc3=acu3 + exam3;
-        //         let pc4=acu4 + exam4;
-        //         $("#primerCorte").val(pc1.toFixed(1));
-        //          $("#segundoCorte").val(pc2.toFixed(1));
-        //         $("#tercerCorte").val(pc3.toFixed(1));
-        //         $("#cuartoCorte").val(pc4.toFixed(1));
-        //         let t1 = parseFloat($("#primerCorte").val()) || 0;
-        //         let t2 = parseFloat($("#segundoCorte").val()) || 0;
-        //         let t3 =parseFloat($("#tercerCorte").val()) || 0;
-        //         let t4 =parseFloat($("#cuartoCorte").val()) || 0;
-
-
-
-        //         // Aquí defines la fórmula de la nota final
-        //         // Ejemplo: promedio simple
-        //         let notaFinal = (t1 + t2  + t3 + t4) /4;
-
-        //         $("#notaFinal").val(notaFinal.toFixed(2));
-
-        //     }
-        //     //$("#","#segundoCorte","#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
-        //     // Recalcular cada vez que cambie un valor
-        //     $("#primerCorte,#segundoCorte,#tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
-        // });
-
-
                function msg(mensaje){
                    swal.fire({
                            title:'Warning',
@@ -193,20 +209,91 @@
                     });
                 }
 
+        document.getElementById("mesPagado").addEventListener("change", function () {
+            const nombre = this.value.trim().toUpperCase();
 
+            if (nombre.length === 0) {
+                document.getElementById("Mora").value = "";
+                return;
+            }
+
+            // Quitar tildes
+            const sinAcentos = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            // Dividir por espacios
+            const palabras = sinAcentos.split(" ").filter(p => p.length > 0);
+
+            let codigoBase = "";
+
+            // Si tiene 2 o más palabras → tomar 3 primeras letras de la 1ra + 3 de la 2da
+            if (palabras.length >= 2) {
+                codigoBase = palabras[0].substring(0, 3) + palabras[1].substring(0, 3);
+            }
+            // Si solo hay una palabra → tomar 6 primeras letras
+            else {
+                codigoBase = palabras[0].substring(0, 6);
+            }
+
+            codigoBase = codigoBase.toUpperCase();
+
+            // Agregar número (esto puedes cambiarlo por el correlativo real)
+            const numero = document.getElementById("CodigoProducto").value;
+
+            document.getElementById("CodigoProducto").value = `${codigoBase}-${numero}`;
+        });
+
+          function confirmarMeses() {
+            let seleccionados = [];
+            let nombres = [];
+
+            document.querySelectorAll('#modalMeses input[type="checkbox"]:checked').forEach(chk => {
+                seleccionados.push(chk.value);
+                nombres.push(chk.nextElementSibling.textContent);
+            });
+
+            // Guardar IDs en el campo oculto
+            document.getElementById('MesesSeleccionados').value = seleccionados.join(',');
+
+            // Mostrar nombres en la vista principal
+            let contenedor = document.getElementById('mesesSeleccionadosContainer');
+            contenedor.innerHTML = '';
+
+            nombres.forEach(nombre => {
+                let badge = document.createElement('span');
+                badge.className = 'badge bg-success me-1';
+                badge.textContent = nombre;
+                contenedor.appendChild(badge);
+            });
+
+               // ✅ Cerrar correctamente la modal y eliminar el fondo bloqueante
+        const modalElement = document.getElementById('modalMeses');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        modalInstance.hide();
+
+        // Esperar un pequeño tiempo y eliminar el backdrop manualmente si quedara
+        setTimeout(() => {
+            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('padding-right');
+        }, 300);
+        }
 
     </script>
+
+   
 
     @if (TempData["Mensaje"] != null)
     {
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                   Swal.fire({
-                           title: '@(TempData["Tipo"]?.ToString() == "info" ? "Información" : "Warning")',
-                       text: '@TempData["Mensaje"]',
-                           icon: '@(TempData["Tipo"]?.ToString() == "info" ? "info" : "warning")',
-                       confirmButtonText: 'Aceptar'
-                   });
+                Swal.fire({
+                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+                 TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+                 "Información")',
+                    text: '@TempData["Mensaje"]',
+                    icon: '@TempData["Tipo"]',
+                    confirmButtonText: 'Aceptar'
+                });
             });
         </script>
     }

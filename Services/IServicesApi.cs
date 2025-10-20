@@ -36,6 +36,7 @@ namespace WebColegio.Services
         Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync();
         Task<List<CatTipoRecibo>> GetTipoReciboAsync();
         Task<List<CatMetodoPago>> GetMetodoPagoAsync();
+        Task<List<TblCatMeses>> GetMesesAsync();
         Task<List<CatDiscapacidad>> GetDiscapacidadAsync();
         Task<List<CatMovInventario>> GetMovInventarioAsync();
         #endregion

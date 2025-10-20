@@ -31,6 +31,8 @@
         public List<CategoriaProducto> categoriasProducto { get;  set; } = new List<CategoriaProducto>();
         public List<CatDiscapacidad> discapacidad { get; set; } = new List<CatDiscapacidad>();
         public List<CatMovInventario> movinventario { get; set; } = new List<CatMovInventario>();
+        public List<TblInventario> inventario { get; set; } = new List<TblInventario>();
+        public List<TblCatMeses> meses { get; set; } = new List<TblCatMeses>();
 
 
     }

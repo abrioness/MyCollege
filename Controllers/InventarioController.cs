@@ -23,9 +23,13 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Index()
         {
             var _listProducto= await _Iservices.GetProductosAsync();
+            var _inventario = await _Iservices.GetInventarioAsync();
+            var _movInvebtario = await _Iservices.GetMovInventarioAsync();
             var viewModel = new ColeccionCatalogos
             {
+                inventario = _inventario,
                 producto = _listProducto,
+                movinventario=_movInvebtario
             };
 
             return View(viewModel);
@@ -48,6 +52,14 @@ namespace WebColegio.Controllers
                                  {
                                      Value = r.IdProducto.ToString(),
                                      Text = r.NombreProducto,
+                                     //Selected = r.IdPregunta == respuestas.IdPregunta
+                                 }).ToList(),
+
+                ListaMovInventario = (await _Iservices.GetMovInventarioAsync())
+                                 .Select(r => new SelectListItem
+                                 {
+                                     Value = r.IdMovInventario.ToString(),
+                                     Text = r.MovimientoInventario,
                                      //Selected = r.IdPregunta == respuestas.IdPregunta
                                  }).ToList(),
 
@@ -80,7 +92,11 @@ namespace WebColegio.Controllers
                         TempData["Mensaje"] = "Se registro el inventario Correctamente.";
                         return RedirectToAction(nameof(Index));
                     }
-
+                    else
+                    {
+                        TempData["Mensaje"] = "Erro al guardar el inventario.";
+                        return RedirectToAction(nameof(Index));
+                    }
                 }
                 return NoContent();
             }

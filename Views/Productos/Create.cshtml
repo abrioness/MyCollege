@@ -111,8 +111,8 @@
         <script src="~/seewtalert/sweetalert.all.min.js"></script>
         <script src="~/seewtalert/sweetalertstyle.js"></script>
         <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <script>
         document.getElementById("NombreProducto").addEventListener("change", function () {
@@ -147,19 +147,25 @@
 
             document.getElementById("CodigoProducto").value = `${codigoBase}-${numero}`;
         });
+
+
+
+
     </script>
     
-    </script>
+  
     @if (TempData["Mensaje"] != null)
     {
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                   Swal.fire({
-                           title: '@(TempData["Tipo"]?.ToString() == "warning" ? "Error" : "Informacion")',
-                       text: '@TempData["Mensaje"]',
-                           icon: '@(TempData["Tipo"]?.ToString() == "info" ? "Información" : "warning")',
-                       confirmButtonText: 'Aceptar'
-                   });
+                Swal.fire({
+                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+                     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+                     "Información")',
+                    text: '@TempData["Mensaje"]',
+                    icon: '@TempData["Tipo"]',
+                    confirmButtonText: 'Aceptar'
+                });
             });
         </script>
     }

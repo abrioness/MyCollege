@@ -9,7 +9,7 @@
         public decimal Monto { get; set; }
 
         //public int Concepto { get; set; }
-        public string MesPagado { get; set; }
+        public int IdMes { get; set; }
 
         public int? Mora { get; set; }
 

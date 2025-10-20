@@ -1,5 +1,111 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@* @{
+	ViewData["Title"] = "Index";
+} *@
+<script src="~/js/site.js"></script>
+@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
+<div class="container mt-6" style="padding:20px;">
+	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+		<div class="card-header bg-primary text-white">
+			<h5 class="mb-0"><i class="bi bi-cash-fill"></i> Inventario</h5>
+		</div>
+		<div class="card-body">
+
+
+			<table id="tablaInventario" class="table table-striped table-bordered nowrap" style="width:100%">
+				@* class="display responsive nowrap" style="width:100%"> *@
+				<thead>
+					<tr>
+						<th>Código del Producto</th>
+						<th>Nombre del Producto</th>						
+						<th>Stock Actual</th>
+						<th>Descripción</th>
+						<th>Cantidad</th>
+						<th>Tipo Movimiento</th>
+					
+
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var itemInventario in Model.inventario)
+					{
+						<tr>
+
+							@foreach (var producto in Model.producto.Where(a => a.IdProducto == itemInventario.IdProducto))
+							{
+								<td>
+
+									<a asp-action="Create" asp-controller="Inventario" asp-route-id="@itemInventario.IdProducto" class="btn btn-sm btn-info">	@producto.CodigoBarra  </a>
+
+								</td>
+							
+							
+								<td>
+
+										@producto.NombreProducto
+
+								</td>
+							
+
+							<td>
+								@producto.StockActual
+								</td>
+							}
+							<td>
+
+								@itemInventario.Descripcion
+								</td>
+							<td>
+
+								@itemInventario.Cantidad
+
+							</td>
+							@foreach (var movinventario in Model.movinventario.Where(a => a.IdMovInventario == itemInventario.TipoMovimiento))
+							{
+							<td>
+
+								@movinventario.MovimientoInventario
+							
+								</td>
+							}
+							
+							@* <td>
+							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
+						</td> 
+							<td>
+								<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
+							</td>*@
+						</tr>
+					}
+				</tbody>
+
+			</table>
+		</div>
+	</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+			$('#tablaInventario').DataTable({
+			responsive: true,
+			dom: 'Bfrtip', // Botones + filtro + tabla
+			buttons: [
+				{
+					extend: 'excelHtml5',
+					text: 'Exportar a Excel',
+					className: 'btn btn-success'
+				}
+			],
+			language: {
+				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+			}
+		});
+	});
+</script>

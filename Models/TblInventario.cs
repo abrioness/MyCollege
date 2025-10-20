@@ -8,8 +8,7 @@
 
         public int IdProducto { get; set; }
 
-        public string TipoMovimiento { get; set; } = null!;
-
+        public int TipoMovimiento { get; set; } 
         public int Cantidad { get; set; }
 
         public DateTime FechaMovimiento { get; set; }

@@ -471,6 +471,22 @@ namespace WebColegio.Services
             }
 
         }
+        public async Task<List<TblCatMeses>> GetMesesAsync()
+        {
+            List<TblCatMeses> meses = new List<TblCatMeses>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/CatMeses");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblCatMeses>>(content);
+                    meses = resultado;
+                }
+                return meses;
+            }
+
+        }
         public  async Task<List<TblInventario>> GetInventarioAsync()
         {
             List<TblInventario> inventario = new List<TblInventario>();
@@ -608,9 +624,9 @@ namespace WebColegio.Services
             bool respuesta = false;
 
             // Asegurar datos mínimos requeridos
-            pagos.Activo = true;
-            pagos.UsuarioRegistro = 1;
-            pagos.FechaRegistro = DateTime.Now;
+            //pagos.Activo = true;
+            //pagos.UsuarioRegistro = 1;
+            //pagos.FechaRegistro = DateTime.Now;
 
             try
             {
