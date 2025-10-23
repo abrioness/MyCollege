@@ -189,8 +189,8 @@
 
         <div class="campo">
             <div class="campo-label">Tipo de Movimiento</div>
-            <div class="campo-valor">@Model.ReciboCaja.TipoMovimiento <div class="campo-label">Tipo Movimiento</div>
-            <div class="campo-valor">@Model.ReciboCaja.TipoMovimiento </div>.TipoMovimiento</div>
+            <div class="campo-valor">@Model.ReciboCaja.IdMetodoPago <div class="campo-label">Tipo Movimiento</div>
+            <div class="campo-valor">@Model.ReciboCaja.IdMetodoPago </div>.TipoMovimiento</div>
         </div>
 
         <div class="campo">
@@ -204,7 +204,7 @@
 
         <div class="campo">
             <div class="campo-label">En concepto de:</div>
-            <div class="campo-valor concepto-lines">@Model.ReciboCaja.Concepto</div>
+            <div class="campo-valor concepto-lines">@Model.ReciboCaja.IdTipoMovimiento</div>
         </div>
         @{
             var fecha = Model.ReciboCaja.FechaRegistro ?? DateTime.Now;
@@ -213,21 +213,21 @@
         <div class="fecha">
             Managua: @fecha.Day de
             @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(fecha.Month)
-            del 20@fecha.ToString("yy")
+            del 20@{@fecha.ToString("yy")}
         </div>
 
         <!-- Firma y sello -->
         <div class="firma-section">
             <div class="firma-line"></div>
             <div class="firma-text">Firma y Sello del cajero</div>
-            <div class="firma-text">@Model.ReciboCaja.UsuarioRegistro</div>
+            <div class="firma-text">@Model.reciboCajas.FirstOrDefault(a=>a.UsuarioRegistro==Model.ReciboCaja.UsuarioRegistro)</div>
         </div>
 
         <!-- Referencia -->
-        <div class="referencia">
+        @* <div class="referencia">
             ref.: Barros, Copaz América<br />
             208. 50J. (2) 10.001-11.000 15/08/025
-        </div>
+        </div> *@
     </div>
 
     <!-- Botón de impresión (solo visible en navegador) -->

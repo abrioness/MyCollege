@@ -28,6 +28,8 @@ namespace WebColegio.Models
         public int? IdRecinto { get; set; }
         public int? IdSexo { get; set; }
 
+        public int IdPeriodo { get; set; }
+
         public int IdGrupo { get; set; }
 
         public string? Direccion { get; set; }

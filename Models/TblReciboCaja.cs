@@ -12,9 +12,10 @@
         public string Serie { get; set; } = null!;
 
         public int NumeroRecibo { get; set; }
-        public string Concepto { get; set; } = null!;
+        public int IdMetodoPago { get; set; }
+        public int IdPago { get; set; }
         public int IdGrado { get; set; }
-        public string TipoMovimiento { get; set; } = null!;
+        public int IdTipoMovimiento { get; set; } 
         public bool? Activo { get; set; }
 
         public int? UsuarioRegistro { get; set; }

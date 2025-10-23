@@ -56,11 +56,15 @@
 								@itemReciboCaja.Monto
 
 							</td>
-							<td>
+							@foreach (var itemTipoMovimiento in Model.tipoMovimiento.Where(a=>a.IdTipoMovimiento==itemReciboCaja.IdTipoMovimiento))
+							{
 
-								@itemReciboCaja.Concepto
+								<td>
+
+									@itemTipoMovimiento.IdTipoMovimiento
 
 							</td>
+							}
 							@* @foreach (var conceptopago in Model.pagos.Where(a => a.IdPago == itemReciboCaja.IdPago))
 							{
 								<th>

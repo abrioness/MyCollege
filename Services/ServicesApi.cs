@@ -487,6 +487,23 @@ namespace WebColegio.Services
             }
 
         }
+
+        public async Task<List<CatPeriodo>> GetPeriodoAsync()
+        {
+            List<CatPeriodo> periodo = new List<CatPeriodo>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/CatPeriodo");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<CatPeriodo>>(content);
+                    periodo = resultado;
+                }
+                return periodo;
+            }
+
+        }
         public  async Task<List<TblInventario>> GetInventarioAsync()
         {
             List<TblInventario> inventario = new List<TblInventario>();
@@ -903,7 +920,7 @@ namespace WebColegio.Services
             using (var httpclient = new HttpClient())
             {
 
-                var response = await httpclient.GetAsync($"api/arqueo/{id}");
+                var response = await httpclient.GetAsync(url+$"api/arqueo/"+id);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -925,7 +942,7 @@ namespace WebColegio.Services
             using (var httpclient = new HttpClient())
             {
 
-                var response = await httpclient.GetAsync($"api/Pagos/{id}");
+                var response = await httpclient.GetAsync(url+$"api/Pagos/"+id);
 
                 if (!response.IsSuccessStatusCode)
                 {

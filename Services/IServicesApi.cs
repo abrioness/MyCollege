@@ -37,6 +37,7 @@ namespace WebColegio.Services
         Task<List<CatTipoRecibo>> GetTipoReciboAsync();
         Task<List<CatMetodoPago>> GetMetodoPagoAsync();
         Task<List<TblCatMeses>> GetMesesAsync();
+        Task<List<CatPeriodo>> GetPeriodoAsync();
         Task<List<CatDiscapacidad>> GetDiscapacidadAsync();
         Task<List<CatMovInventario>> GetMovInventarioAsync();
         #endregion
@@ -63,6 +64,7 @@ namespace WebColegio.Services
         Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
         Task<ArqueoCajaViewModel> GetArqueoById(int id);
         Task<TblPago> GetPagoById(int id);
+        
 
         #endregion
         #region Metodos de Busqueda

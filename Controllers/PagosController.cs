@@ -30,7 +30,7 @@ namespace WebColegio.Controllers
             //var _grados = await _Iservices.GetGradosAsync();
 
 
-            var VieModelNotas = new ColeccionCatalogos
+            var VieModelPagos = new ColeccionCatalogos
             {
                 pagos=_pagos,
                 alumno = _alumnos,
@@ -42,18 +42,54 @@ namespace WebColegio.Controllers
                 //grados = _grados    
 
             };
-            if (VieModelNotas == null)
+            if (VieModelPagos == null)
             {
                 TempData["Message"] = "No hay notas registradas";
                 return View("NotFound"); // Redirige a una vista de error o no encontrado
             }
             else
             {
-                TempData["Message"] = "Notas encontradas";
-                return View(VieModelNotas);
+                TempData["Message"] = "Pagos encontrados";
+                return View(VieModelPagos);
             }
         }
+        public async Task<ActionResult> EstadoCuenta()
+        {
 
+            var _pagos = await _Iservices.GetPagosAsync();
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
+            var _tipoRecibo = await _Iservices.GetTipoReciboAsync();
+            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
+            var _meses = await _Iservices.GetMesesAsync();
+            var _notas = await _Iservices.GetNotasAsync();
+            var _periodo = await _Iservices.GetPeriodoAsync();
+            var _grados = await _Iservices.GetGradosAsync();
+
+
+            var VieModelEstadoCuenta = new ColeccionCatalogos
+            {
+                pagos = _pagos,
+                alumno = _alumnos,
+                tipoMovimiento = _tipoMovimiento,
+                tipoRecibo = _tipoRecibo,
+                metodoPago = _metodoPago,
+                meses = _meses,
+                periodo = _periodo,
+                grados = _grados    
+
+            };
+            if (VieModelEstadoCuenta == null)
+            {
+                TempData["Message"] = "No hay estado de cuenta registradas";
+                return View("NotFound"); // Redirige a una vista de error o no encontrado
+            }
+            else
+            {
+                TempData["Message"] = "Estado de Cuenta encontradas";
+                return View(VieModelEstadoCuenta);
+            }
+        }
         // GET: PagosController/Details/5
         public ActionResult Details(int id)
         {
@@ -88,12 +124,13 @@ namespace WebColegio.Controllers
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
                 meses = await _Iservices.GetMesesAsync(),
-                                   //.Select(r => new SelectListItem
-                                   //{
-                                   //    Value = r.IdMes.ToString(),
-                                   //    Text = r.Mes,
-                                   //    //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   //}).ToList(),
+                periodo = await _Iservices.GetPeriodoAsync(),
+                //.Select(r => new SelectListItem
+                //{
+                //    Value = r.IdMes.ToString(),
+                //    Text = r.Mes,
+                //    //Selected = r.IdPregunta == respuestas.IdPregunta
+                //}).ToList(),
 
 
             };
@@ -126,6 +163,8 @@ namespace WebColegio.Controllers
                     {
                         var ids = MesesSeleccionados.Split(',').Select(int.Parse).ToList();
                         var listpagos = await _Iservices.GetPagosAsync();
+                        var año=await _Iservices.GetPeriodoAsync();
+                        int periodo= año.Max(p => p.Periodo);
                         bool aplicoMora = false;
                         bool duplicado = false;
                         //total = ids * mensualidad;
@@ -148,24 +187,38 @@ namespace WebColegio.Controllers
                                     TempData["Tipo"] = "warning";
                                     continue;
                                 }
+                            var todosLosMeses = Enumerable.Range(1, 12); // o hasta el mes actual
 
-                                // 2️⃣ Verificar si hay mora (mes anterior sin pagar)
-                                bool tienePendientes = listpagos
-                                    .Any(p => p.IdAlumno == pagos.Pago.IdAlumno
-                                                && p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento
-                                                && p.IdMes < idMes) == false;
+                            
+                            // 2️⃣ Verificar si hay mora (mes anterior sin pagar)
+                            //bool tienePendientes = listpagos
+                            //        .Any(p => p.IdAlumno == pagos.Pago.IdAlumno
+                            //                    && p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento
+                            //                    && p.IdMes < idMes) == false;
 
-                                
+                            int anioActual = pagos.Pago.IdPeriodo;
 
-                                if (tienePendientes)
+                            int mesesPendientes = Enumerable
+                                .Range(1, 12)
+                                .Count(m => !listpagos.Any(p =>
+                                    p.IdAlumno == pagos.Pago.IdAlumno &&
+                                    p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
+                                    p.IdPeriodo == anioActual &&
+                                    p.IdMes != m));
+
+                            if (mesesPendientes>0)
                                 {
-                                    pagos.Mora = 10; // Aplica mora fija de 10
-                                    aplicoMora = true;
+                                
+                                int totalMora = 10 * mesesPendientes;
+
+                                pagos.Mora = totalMora; // Aplica mora fija de 10
+                                aplicoMora = true;
                                 }
                                 else
                                 {
                                     pagos.Mora = 0; // Aplica mora fija de 10
-                                    aplicoMora = true;
+
+                                    aplicoMora = false;
                                 }
 
                                 // ejemplo: crear un pago por cada mes
@@ -233,6 +286,8 @@ namespace WebColegio.Controllers
                 return View();
             }
         }
+
+
 
         // GET: PagosController/Edit/5
         public ActionResult Edit(int id)

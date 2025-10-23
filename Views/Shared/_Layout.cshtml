@@ -105,12 +105,13 @@
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
                                aria-expanded="false" aria-controls="collapseRecibos">
                                 <i class="bi bi-cash"></i>
-                                <span>Registro de Pagos</span>
+                                <span>Registro de Recibo</span>
                             </a>
                             <div id="collapseRecibos" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Index">Lista de Recibos</a>
-                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Agregar Caja</a>
+                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Agregar Recibo</a>
+                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja">Ver Arqueo</a>
                                     @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
                                     
                                 </div>
@@ -127,7 +128,7 @@
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     <a class="collapse-item" asp-controller="Inventario" asp-action="Index">Lista de Inventario</a>
                                     <a class="collapse-item" asp-controller="Inventario" asp-action="Create">Agregar Inventario</a>
-                                    <a class="collapse-item" asp-controller="FacturaColegiatura" asp-action="ArqueoCaja">Arqueo</a>
+                                    
 
                                 </div>
                             </div>
@@ -159,8 +160,8 @@
                             <div id="collapsePago" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     <a class="collapse-item" asp-controller="Pagos" asp-action="Index">Lista de Pagos</a>
-                                    <a class="collapse-item" asp-controller="Pagos" asp-action="Create">Crear Pago</a>
-                                    @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="Create">Agregar Pago</a>
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta">Estado Cuenta del Alumno</a>
 
                                 </div>
                             </div>

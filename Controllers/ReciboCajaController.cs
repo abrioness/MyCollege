@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
@@ -84,7 +86,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: ReciboCajaController/Create
-        public async Task<ActionResult> Create()
+        public async Task<ActionResult> Create(int id)
         {
             var recibos = await _Iservices.GetRecibosCajaAsync();
 
@@ -93,42 +95,62 @@ namespace WebColegio.Controllers
                 .Max(r => (int?)r.NumeroRecibo);
 
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
+            var verpago = await _Iservices.GetPagoById(id);
 
-            var viewmodel = new ReciboCajaViewModel
+            if (verpago == null)
+            {
+                TempData["Mensaje"] = "El pago no existe.";
+                return RedirectToAction("Index");
+            }
+
+            var viewmodel = new ReciboPagoViewModel
             {
                 SiguienteNumero = siguienteNumero,
+                IdPago = verpago.IdPago,
+                IdAlumno = verpago.IdAlumno,
+                IdMes = verpago.IdMes,
+                IdGrado = verpago.IdGrado,
+                IdPeriodo = verpago.IdPeriodo,
+                IdMetodoPago=verpago.IdMetodoPago,
+                TipoMovimiento=verpago.IdTipoMovimiento,
+                TipoRecibo=verpago.IdTipoRecibo,
+                Mora=verpago.Mora,
+                Serie = "A",
+                FechaPago = DateTime.Now,
+                Monto = verpago.Monto
+                
+                 
+        //alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
+        //                   .Select(r => new SelectListItem
+        //                   {
+        //                       Value = r.IdAlumno.ToString(),
+        //                       Text = r.Nombre + r.Apellido,
 
-                alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdAlumno.ToString(),
-                                       Text = r.Nombre + r.Apellido,
-                                       
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
-                tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdTipoMovimiento.ToString(),
-                                       Text = r.Concepto,
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
-                usuariosSelectListItem = (await _Iservices.GetUsuariosAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdUsuario.ToString(),
-                                       Text = r.NombreUsuario,
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
-                gradosSelectListItem= (await _Iservices.GetGradosAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdGrado.ToString(),
-                                       Text = r.NombreGrado,
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
+        //                       //Selected = r.IdPregunta == respuestas.IdPregunta
+        //                   }).ToList(),
+        //tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
+        //                   .Select(r => new SelectListItem
+        //                   {
+        //                       Value = r.IdTipoMovimiento.ToString(),
+        //                       Text = r.Concepto,
+        //                       //Selected = r.IdPregunta == respuestas.IdPregunta
+        //                   }).ToList(),
+        //usuariosSelectListItem = (await _Iservices.GetUsuariosAsync())
+        //                   .Select(r => new SelectListItem
+        //                   {
+        //                       Value = r.IdUsuario.ToString(),
+        //                       Text = r.NombreUsuario,
+        //                       //Selected = r.IdPregunta == respuestas.IdPregunta
+        //                   }).ToList(),
+        //gradosSelectListItem= (await _Iservices.GetGradosAsync())
+        //                   .Select(r => new SelectListItem
+        //                   {
+        //                       Value = r.IdGrado.ToString(),
+        //                       Text = r.NombreGrado,
+        //                       //Selected = r.IdPregunta == respuestas.IdPregunta
+        //                   }).ToList(),
 
-            };
+    };
 
             return View(viewmodel);
         }
@@ -136,7 +158,7 @@ namespace WebColegio.Controllers
         // POST: ReciboCajaController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(ReciboCajaViewModel recibo)
+        public async Task<ActionResult> Create(ReciboPagoViewModel recibo)
         {
             bool response = false;
             
@@ -189,6 +211,117 @@ namespace WebColegio.Controllers
             {
                 return View();
             }
+        }
+        //Arqueo de Caja
+
+        public async Task<ActionResult> ArqueoCaja(DateTime fecha)
+        {
+            // Inicializar el viewmodel del arqueo
+            var arqueo = new ArqueoCajaViewModel
+            {
+                Colegio = "Colegio Ejemplo",
+                Serie = "A",
+                Fecha = fecha
+            };
+           
+            // 1️⃣ Obtener los pagos del día (ingresos y egresos)
+            var pagosDelDia = await _Iservices.GetPagosAsync();
+            pagosDelDia=pagosDelDia
+                .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)
+                .ToList();
+
+            // 2️⃣ Obtener los tipos movimientos relacionados
+            var tipmov = await _Iservices.GetTipoMovimientoAsync();
+            tipmov = tipmov
+                .Where(r => r.Activo == true && r.Concepto!=string.Empty)
+                .ToList();
+            // 2️⃣ Obtener los metodo pago relacionados
+            var metpago = await _Iservices.GetMetodoPagoAsync();
+            metpago = metpago
+                .Where(r => r.Activo == true && r.MetodoPago != string.Empty)
+                .ToList();
+
+            // 2️⃣ Obtener los recibos relacionados
+            var recibos = await _Iservices.GetRecibosCajaAsync();
+            recibos = recibos
+                .Where(r => r.Activo == true && r.NumeroRecibo > 0)
+                .ToList();
+            // 3️⃣ Armar los ingresos
+            arqueo.Ingresos = (
+                    from p in pagosDelDia
+                    join r in recibos on p.IdPago equals r.IdPago into pr
+                    from r in pr.DefaultIfEmpty()
+
+                    join tm in tipmov on p.IdTipoMovimiento equals tm.IdTipoMovimiento into tmm
+                    from tm in tmm.DefaultIfEmpty()
+
+                    join mp in metpago on p.IdMetodoPago equals mp.IdMetodoPago into mpp
+                    from mp in mpp.DefaultIfEmpty()
+
+                    where r != null && p.IdTipoMovimiento == r.IdTipoMovimiento // 1 = Ingreso
+                    group new { p, r, tm, mp } by new
+                    {
+                        Concepto = tm != null ? tm.Concepto : "Sin concepto",
+                        Recibo = r != null ? r.NumeroRecibo.ToString() : "N/A",
+
+                        MetodoPago = mp != null ? mp.MetodoPago : "No especificado"
+                    }
+                    into g
+                    select new IngresoDto
+                    {
+                        Concepto = g.Key.Concepto,
+                        Recibo = g.Key.Recibo,
+                        Cantidad = g.Count(),
+                        Monto = g.Sum(x => x.p.Monto)
+                    }
+                ).ToList();
+
+
+            // 4️⃣ Armar los egresos
+            arqueo.Egresos = (from p in pagosDelDia
+                              where p.IdTipoMovimiento == 2 // suponiendo 2 = egreso
+                              group p by p.IdTipoMovimiento into g
+                              select new EgresoDto
+                              {
+                                  Detalle = "Egreso varios",
+                                  Monto = g.Sum(x => x.Monto)
+                              }).ToList();
+
+            // 5️⃣ Totales
+            arqueo.TotalIngresos = arqueo.Ingresos.Sum(x => x.Monto);
+            arqueo.TotalEgresos = arqueo.Egresos.Sum(x => x.Monto);
+            arqueo.TotalEfectivo = arqueo.TotalIngresos - arqueo.TotalEgresos;
+
+            // 6️⃣ (Opcional) Detalle por denominación (si lo llenas manualmente desde vista)
+            arqueo.DetalleCordobas = new List<DetalleCordoba>();
+            arqueo.DetalleDolares = new List<DetalleDolar>();
+
+            arqueo.TotalCordobas = arqueo.DetalleCordobas.Sum(x => x.Monto);
+            arqueo.TotalDolares = arqueo.DetalleDolares.Sum(x => x.Monto);
+
+            // 7️⃣ Equivalente (si deseas calcular en una sola moneda)
+            decimal tipoCambio = 36.50m; // ejemplo
+            arqueo.EquivalenteCordobas = arqueo.TotalDolares * tipoCambio + arqueo.TotalCordobas;
+
+            // 8️⃣ Convertir total en letras
+            arqueo.TotalEnLetras = NumeroALetras(arqueo.TotalEfectivo);
+
+            return View(arqueo);
+        }
+
+
+
+        //Convertir de numero a letras
+        //private string NumeroEnLetras(decimal numero)
+        //{
+        //    return new System.Globalization.CultureInfo("es-NI")
+        //        .TextInfo.ToTitleCase($"{numero:N2} córdobas".ToLower());
+        //}
+
+        private string NumeroALetras(decimal numero)
+        {
+            return Humanizer.NumberToWordsExtension.ToWords((long)numero, new System.Globalization.CultureInfo("es"))
+                .ToUpper() + " CÓRDOBAS";
         }
 
         // GET: ReciboCajaController/Delete/5

@@ -34,6 +34,6 @@
         public List<TblInventario> inventario { get; set; } = new List<TblInventario>();
         public List<TblCatMeses> meses { get; set; } = new List<TblCatMeses>();
 
-
+        public List<CatPeriodo> periodo { get; set; } = new List<CatPeriodo>();
     }
 }

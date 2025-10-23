@@ -26,5 +26,6 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> mesesSelectListItem { get; set; } = new();
 
         public List<TblCatMeses> meses { get; set; } = new List<TblCatMeses>();
+        public List<CatPeriodo> periodo { get; set; } = new List<CatPeriodo>();
     }
 }
