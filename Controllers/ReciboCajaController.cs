@@ -62,17 +62,18 @@ namespace WebColegio.Controllers
         {
             
             var listrecibos = await _Iservices.GetReciboCajaById(id);
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
+            var _grados = await _Iservices.GetGradosAsync();
+            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
             var viewModel = new ReciboCajaViewModel
             {
-                ReciboCaja = listrecibos,
-                
-
-                gradosSelectListItem = (await _Iservices.GetGradosAsync())
-        .Select(r => new SelectListItem
-        {
-            Value = r.IdGrado.ToString(),
-            Text = r.NombreGrado
-        }).ToList(),
+                ReciboCaja = listrecibos,                
+                alumnos=_alumnos,
+                metodoPago=_metodoPago,
+                tipoMovimiento=_tipoMovimiento,
+                cantidadEnLetras= NumeroALetras(listrecibos.Monto),
+                grados=_grados
                 
             };
 
@@ -97,27 +98,35 @@ namespace WebColegio.Controllers
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
             var verpago = await _Iservices.GetPagoById(id);
 
+            var listrecibos = await _Iservices.GetReciboCajaById(id);
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
+            var _grados = await _Iservices.GetGradosAsync();
+            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
+            var viewModel = new ReciboCajaViewModel
+            {
+                SiguienteNumero = siguienteNumero,
+                Pago = verpago,
+                ReciboCaja = listrecibos,
+                alumnos = _alumnos,
+                metodoPago = _metodoPago,
+                tipoMovimiento = _tipoMovimiento,
+                cantidadEnLetras = NumeroALetras(listrecibos.Monto),
+                grados = _grados
+
+            };
+
             if (verpago == null)
             {
                 TempData["Mensaje"] = "El pago no existe.";
                 return RedirectToAction("Index");
             }
 
-            var viewmodel = new ReciboPagoViewModel
-            {
-                SiguienteNumero = siguienteNumero,
-                IdPago = verpago.IdPago,
-                IdAlumno = verpago.IdAlumno,
-                IdMes = verpago.IdMes,
-                IdGrado = verpago.IdGrado,
-                IdPeriodo = verpago.IdPeriodo,
-                IdMetodoPago=verpago.IdMetodoPago,
-                TipoMovimiento=verpago.IdTipoMovimiento,
-                TipoRecibo=verpago.IdTipoRecibo,
-                Mora=verpago.Mora,
-                Serie = "A",
-                FechaPago = DateTime.Now,
-                Monto = verpago.Monto
+            //var viewmodel = new ReciboCajaViewModel
+            //{
+            //    SiguienteNumero = siguienteNumero,
+            //    Pago=verpago
+                
                 
                  
         //alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
@@ -150,9 +159,9 @@ namespace WebColegio.Controllers
         //                       //Selected = r.IdPregunta == respuestas.IdPregunta
         //                   }).ToList(),
 
-    };
+    //};
 
-            return View(viewmodel);
+            return View(viewModel);
         }
 
         // POST: ReciboCajaController/Create

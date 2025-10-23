@@ -30,28 +30,33 @@
                             <span asp-validation-for="ReciboCaja.NumeroRecibo" class="text-danger"></span>
                         </div>
 
-
+                        @{
+                            var alumno = Model.alumnos?.FirstOrDefault(a => a.IdAlumno == Model.ReciboCaja.IdAlumno);
+                        }
                         <div class="form-group">
-                            <label asp-for="ReciboCaja.RecibeDe">Recibi De</label>
-                            <input type="text" id="AlumnoNombre" name="ReciboCaja.RecibeDe" class="form-control" placeholder="Buscar alumno..." />
-                            <input type="hidden" id="IdAlumno" name="" />
+                            <label class="control-label">Recibi De</label>
+                            <input type="text" value="@alumno?.Nombre @alumno?.Apellido" class="form-control" readonly />
+                            <input type="hidden" asp-for="ReciboCaja.IdAlumno" name="" />
                         </div>
                         
-                        
-                            <div class="form-group">
+                        @{
+                            var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.ReciboCaja.IdGrado);
+                        }
+                        <div class="form-group">
+                            <label class="control-label">Nivel</label>
 
-                                <label asp-for="ReciboCaja.IdGrado" class="control-label">Nivel</label>
-                                <select asp-for="ReciboCaja.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
-                                    <option disabled selected>Seleccione el Nivel</option>
-                                </select>
-                                <span asp-validation-for="ReciboCaja.IdGrado" class="text-danger"></span>
-                            </div>
+                            <!-- Muestra el nombre -->
+                            <input type="text" class="form-control" value="@grado?.NombreGrado" readonly />
+
+                            <!-- Campo oculto que sí se envía al servidor -->
+                            <input type="hidden" asp-for="ReciboCaja.IdGrado" />
+                        </div>
 
                        
                        
                         <div class="form-group">
                             <label asp-for="ReciboCaja.Monto" class="control-label">La Cantidad de:</label>
-                            <input  asp-for="ReciboCaja.Monto"  class="form-control" />
+                            <input asp-for="ReciboCaja.Monto" class="form-control" readonly />
                             <span asp-validation-for="ReciboCaja.Monto" class="text-danger"></span>
                         </div>
                         
@@ -64,22 +69,28 @@
                         <input asp-for="ReciboCaja.Serie" value="A" class="form-control" readonly />
 
                     </div>
-
+                        @{
+                            var metodopago = Model.metodoPago?.FirstOrDefault(a => a.IdMetodoPago == Model.ReciboCaja.IdMetodoPago);
+                        }
                         <div class="form-group">
-                            <label asp-for="ReciboCaja.IdMetodoPago" class="control-label">Tipo de Movimiento</label>
-                            <input asp-for="ReciboCaja.IdMetodoPago" class="form-control" />
+                            <label  class="control-label">Metodo de Pago</label>
+                            <input type="text" value="@metodopago?.IdMetodoPago" class="form-control" readonly />
+                            <input type="hidden" asp-for="ReciboCaja.IdMetodoPago" />
                             @* <span asp-validation-for="ReciboCaja.TipoMovimiento" class="text-danger"></span> *@
                         </div>
-
+                        @{
+                            var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.ReciboCaja.IdTipoMovimiento);
+                        }
                         <div class="form-group">
-                            <label asp-for="ReciboCaja.IdTipoMovimiento" class="control-label">En Concepto de</label>
-                            <input asp-for="ReciboCaja.IdTipoMovimiento" class="form-control" />
+                            <label  class="control-label">En Concepto de</label>
+                            <input type="text" value="@tipoMovimiento?.IdTipoMovimiento" class="form-control" readonly />
+                            <input type="hidden" asp-for="ReciboCaja.IdTipoMovimiento" />
                             @* <span asp-validation-for="ReciboCaja.IdTipoMovimiento" class="text-danger"></span> *@
                         </div>
 
                 <div class="form-group">
                         <label asp-for="ReciboCaja.FechaRegistro" class="control-label">Fecha de Registro</label>
-                        <input type="date" asp-for="ReciboCaja.FechaRegistro" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+                            <input type="date" asp-for="ReciboCaja.FechaRegistro" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" readonly />
                         <span asp-validation-for="ReciboCaja.FechaRegistro" class="text-danger"></span>
                     </div>
                 </div>
@@ -89,7 +100,7 @@
                 <!-- Botones -->
                 <div class="col-12 text-end">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Guardar
+                        🖨️ Imprimir Recibo
                     </button>
                     <a asp-action="Index" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver

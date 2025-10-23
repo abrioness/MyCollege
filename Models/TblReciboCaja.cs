@@ -7,7 +7,7 @@
 
         //public int? IdPago { get; set; }
         public decimal Monto { get; set; }
-        public string RecibeDe { get; set; } = null!;
+        public int IdAlumno { get; set; } 
 
         public string Serie { get; set; } = null!;
 

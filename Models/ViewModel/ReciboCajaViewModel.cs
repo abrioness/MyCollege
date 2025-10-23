@@ -4,19 +4,22 @@ namespace WebColegio.Models.ViewModel
 {
     public class ReciboCajaViewModel
     {
-        public TblReciboCaja ReciboCaja { get; set; }
-        public TblPago Pago { get; set; }
-
-        
+        public TblReciboCaja ReciboCaja { get; set; } = new TblReciboCaja();
+        public TblPago Pago { get; set; }= new TblPago();
+        public List<TblAlumno> alumnos { get; set; } = new List<TblAlumno>();
+        public List<CatTipoMovimiento> tipoMovimiento { get; set; } = new List<CatTipoMovimiento>();
+        public List<CatMetodoPago> metodoPago { get; set; } = new List<CatMetodoPago>();
+        public List<Grados> grados { get; set; } = new List<Grados>();
         public int SiguienteNumero { get; set; }
-        public List<TblReciboCaja> reciboCajas { get; set; }
-        public List<TblUsuarios> usuarios { get; set; }
-        public List<SelectListItem> pagosSelectListItem { get; set; }
-        public List<SelectListItem> estadoPagoSelectListItem { get; set; }
-        public List<SelectListItem> alumnosSelectListItem { get; set; }
-        public List<SelectListItem> usuariosSelectListItem { get; set; }
-        public List<SelectListItem> gradosSelectListItem { get; set; }
-        public List<SelectListItem> tipoMovimientoSelectListItem { get; set; }
+        public string cantidadEnLetras { get; set; } = null!;
+        public List<TblReciboCaja> reciboCajas { get; set; }= new List<TblReciboCaja>();
+        public List<TblUsuarios> usuarios { get; set; } = new List<TblUsuarios>();
+        public List<SelectListItem> pagosSelectListItem { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> estadoPagoSelectListItem { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> alumnosSelectListItem { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> usuariosSelectListItem { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> gradosSelectListItem { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> tipoMovimientoSelectListItem { get; set; } = new List<SelectListItem>();
 
     }
 
@@ -28,8 +31,8 @@ namespace WebColegio.Models.ViewModel
         public int IdGrado { get; set; }
         public int IdPeriodo { get; set; }
         public int IdMetodoPago { get; set; }
-        public int TipoMovimiento { get; set; }
-        public int TipoRecibo { get; set; }
+        public int IdTipoMovimiento { get; set; }
+        public int IdTipoRecibo { get; set; }
         public int? Mora { get; set; }
         public string Serie { get; set; }
         public int SiguienteNumero { get; set; }

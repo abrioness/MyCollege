@@ -17,9 +17,9 @@
 					<tr>
 						<th>Número de Recibo</th>
 						<th>Serie de Recibo</th>
-						<th>Recibi De</th>
-						<th>Cantidad</th>
-						<th>Concepto</th>						
+						<th>Nombre Alumno</th>
+						<th>Monto</th>
+						<th>Tipo de Movimiento</th>						
 						<th>Fecha Emisión</th>
 						<th>Cajero</th>						
 					</tr>
@@ -38,7 +38,7 @@
 								</th>
 							} *@
 							<td>
-								<a asp-action="Details" asp-controller="ReciboCaja" asp-route-id="@itemReciboCaja.IdRecibo" class="btn btn-sm btn-success">@itemReciboCaja.NumeroRecibo</a>
+								<a asp-action="Create" asp-controller="ReciboCaja" asp-route-id="@itemReciboCaja.IdRecibo" class="btn btn-sm btn-success">@itemReciboCaja.NumeroRecibo</a>
 								
 							</td>
 							<td>
@@ -47,8 +47,13 @@
 
 							</td>
 							<td>
+							@{
+								var alumno = Model.alumno
+								.FirstOrDefault(a => a.IdAlumno == itemReciboCaja.IdAlumno);
+							}
+							@(alumno != null ? alumno.Nombre + alumno.Apellido : "Sin Tipo")
+							
 
-								@itemReciboCaja.RecibeDe
 
 							</td>
 							<td>
@@ -56,15 +61,13 @@
 								@itemReciboCaja.Monto
 
 							</td>
-							@foreach (var itemTipoMovimiento in Model.tipoMovimiento.Where(a=>a.IdTipoMovimiento==itemReciboCaja.IdTipoMovimiento))
-							{
-
-								<td>
-
-									@itemTipoMovimiento.IdTipoMovimiento
-
+							<td>
+								@{
+									var tipoMov = Model.tipoMovimiento
+									.FirstOrDefault(a => a.IdTipoMovimiento == itemReciboCaja.IdTipoMovimiento);
+								}
+								@(tipoMov != null ? tipoMov.Concepto : "Sin Tipo")
 							</td>
-							}
 							@* @foreach (var conceptopago in Model.pagos.Where(a => a.IdPago == itemReciboCaja.IdPago))
 							{
 								<th>
@@ -79,15 +82,14 @@
 									@itemReciboCaja.FechaRegistro
 
 								</td>
-							
-							@foreach (var cajero in Model.usuarios)
-							{
-								<td>
 
-									@cajero.NombreUsuario
-
-								</td>
-							}
+							<td>
+								@{
+									var usuario = Model.usuarios
+									.FirstOrDefault(a => a.IdUsuario == itemReciboCaja.UsuarioRegistro);
+								}
+								@(usuario != null ? usuario.NombreUsuario : "Sin Usuario")
+							</td>
 							
 
 							@* <td>
