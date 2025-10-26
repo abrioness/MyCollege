@@ -78,6 +78,15 @@
             margin-bottom: 4mm;
         }
 
+        .insignia {
+            
+            align-items:flex-start;
+            
+            display: flex;
+           
+
+        }
+
         .campo {
             margin-bottom: 3mm;
             display: flex;
@@ -169,13 +178,21 @@
 </head>
 <body>
     <div class="recibo-container">
+
+        
         <!-- Encabezado -->
         <div class="header">
+
+            <div class="insignia">
+                <img src="~/image/colegiosanfrancisco.png" style="width:10%;" />
+            </div>
             <div class="colegio-nombre">COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</div>
+            
             <div class="vicaria">VICARIA DE EDUCACIÓN CATÓLICA</div>
             <div class="direccion">Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</div>
+            
         </div>
-
+       
         <!-- Título del recibo -->
         <div class="recibo-titulo">RECIBO DE CAJA</div>
         <!-- Serie de recibo -->
@@ -238,6 +255,11 @@
                 @fecha.ToString("yy")
             }
         </div>
+        <div class="firma-section">
+            <div class="firma-line"></div>
+            <div class="firma-text">Firma y Sello del cajero</div>
+            <div class="firma-text">@Model.reciboCajas.FirstOrDefault(a => a.UsuarioRegistro == Model.ReciboCaja.UsuarioRegistro)</div>
+        </div>
     </div>
 
        @* <div class="campo">
@@ -247,11 +269,7 @@
        
 
         <!-- Firma y sello -->
-        <div class="firma-section">
-            <div class="firma-line"></div>
-            <div class="firma-text">Firma y Sello del cajero</div>
-            <div class="firma-text">@Model.reciboCajas.FirstOrDefault(a=>a.UsuarioRegistro==Model.ReciboCaja.UsuarioRegistro)</div>
-        </div>
+        
 
         <!-- Referencia -->
         @* <div class="referencia">

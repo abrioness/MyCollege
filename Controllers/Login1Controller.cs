@@ -1,19 +1,22 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using WebColegio.Models;
 using WebColegio.Services;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace WebColegio.Controllers
 {
-    public class LoginController : Controller
+    public class Login1Controller : Controller
     {
-        // GET: LoginController
+
         private readonly IServicesApi _IService;
 
-        public LoginController(IServicesApi iservices)
+        public Login1Controller(IServicesApi iservices)
         {
             _IService = iservices;
         }
@@ -38,17 +41,17 @@ namespace WebColegio.Controllers
 
             return View();
         }
-
+        
         [HttpPost]
-        public async Task<IActionResult> Login(string Login, string Password)
+        public async Task<IActionResult> Login(string Login,string Password)
         {
             // Buscar usuario por cédula
             var usuario = await _IService.GetLogin(Login);
 
-            if (usuario == null)
+            if (usuario== null)
             {
-                TempData["Mensaje"] = "Usuario o Contraseña Icorrecta!";
-                return RedirectToAction("Index", "Login");
+                TempData["Mensaje"]="Usuario o Contraseña Icorrecta!";
+                return RedirectToAction("Index","Login");
             }
 
             // Convertir contraseña guardada en byte[] a string (hash)
@@ -79,7 +82,7 @@ namespace WebColegio.Controllers
             return RedirectToAction("Index", "Estadisticas");
 
 
-        }
+         }
 
         //public async Task<string> buscarusuarioLogin(string Login)
         //{
@@ -122,7 +125,7 @@ namespace WebColegio.Controllers
         //[HttpPost]
         //public async Task<IActionResult> CambiarPassword(string Login, string NuevaPassword, string ConfirmarPassword)
         //{
-
+            
 
         //    if (string.IsNullOrEmpty(NuevaPassword) || NuevaPassword != ConfirmarPassword)
         //    {
@@ -150,12 +153,13 @@ namespace WebColegio.Controllers
 
         //[HttpPost]
         public async Task<IActionResult> Logout()
-        {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
+      {
+         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+         
             // Limpiar toda la sesión manualmente
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Login");
-        }
+     }
+
     }
 }

@@ -24,8 +24,10 @@ namespace WebColegio.Controllers
             var _grados = await _Iservices.GetGradosAsync();
             var _usuario= await _Iservices.GetUsuariosAsync();
             var _pagos = await _Iservices.GetPagosAsync();
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             //var _estadoPago = await _Iservices.GetEstadoPagoAsync();
-            
+
 
             var VieModelReciboCaja = new ColeccionCatalogos
             {
@@ -33,6 +35,8 @@ namespace WebColegio.Controllers
                 grados = _grados,
                 usuarios = _usuario,
                 pagos = _pagos,
+                alumno=_alumnos,
+                tipoMovimiento=_tipoMovimiento
                 //estadoPagos=_estadoPago
             };
 
@@ -233,7 +237,7 @@ namespace WebColegio.Controllers
                 Fecha = fecha
             };
            
-            // 1️⃣ Obtener los pagos del día (ingresos y egresos)
+            // 1️⃣ Obtener los pagos del día (ingresos y egresos)0
             var pagosDelDia = await _Iservices.GetPagosAsync();
             pagosDelDia=pagosDelDia
                 .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)

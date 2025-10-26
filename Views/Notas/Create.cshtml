@@ -157,120 +157,122 @@
 </div> *@
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-
-
+        <!-- Tus otros scripts -->
     <script src="~/seewtalert/sweetalert.all.min.js"></script>
     <script src="~/seewtalert/sweetalertstyle.js"></script>
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-    
-     <script>
 
-        $(function(){
+    <script>
+
+        // VERIFICAR QUE JQUERY UI ESTÉ CARGADO
+        console.log("jQuery version:", $.fn.jquery);
+        console.log("jQuery UI autocomplete:", $.ui ? "Cargado" : "No cargado");
+        // FUNCIONES DE CÁLCULO (definidas globalmente dentro del script)
+        function calcularCorte1() {
+            let acu1 = parseFloat($("#acumulado1").val()) || 0;
+            let exam1 = parseFloat($("#examen1").val()) || 0;
+            let pc1 = acu1 + exam1;
+            $("#primerCorte").val(pc1.toFixed(1));
+            calcularNotaFinal();
+        }
+
+        function calcularCorte2() {
+            let acu2 = parseFloat($("#acumulado2").val()) || 0;
+            let exam2 = parseFloat($("#examen2").val()) || 0;
+            let pc2 = acu2 + exam2;
+            $("#segundoCorte").val(pc2.toFixed(1));
+            calcularNotaFinal();
+        }
+
+        function calcularCorte3() {
+            let acu3 = parseFloat($("#acumulado3").val()) || 0;
+            let exam3 = parseFloat($("#examen3").val()) || 0;
+            let pc3 = acu3 + exam3;
+            $("#tercerCorte").val(pc3.toFixed(1));
+            calcularNotaFinal();
+        }
+
+        function calcularCorte4() {
+            let acu4 = parseFloat($("#acumulado4").val()) || 0;
+            let exam4 = parseFloat($("#examen4").val()) || 0;
+            let pc4 = acu4 + exam4;
+            $("#cuartoCorte").val(pc4.toFixed(1));
+            calcularNotaFinal();
+        }
+
+        function calcularNotaFinal() {
+            let t1 = parseFloat($("#primerCorte").val()) || 0;
+            let t2 = parseFloat($("#segundoCorte").val()) || 0;
+            let t3 = parseFloat($("#tercerCorte").val()) || 0;
+            let t4 = parseFloat($("#cuartoCorte").val()) || 0;
+
+            let notaFinal = (t1 + t2 + t3 + t4) / 4;
+            $("#notaFinal").val(notaFinal.toFixed(2));
+        }
+
+        // INITIALIZATION - Separar autocomplete de los cálculos
+        $(document).ready(function() {
+            // 1. INICIALIZAR AUTOCOMPLETE
             $("#AlumnoNombre").autocomplete({
-            source: function (request, response) {
-                $.ajax({
-                    url: "https://localhost:7008/api/Alumnos/buscar",
-                    data: { q: request.term },
-                    success: function (data) {
-                        console.log("Respuesta API:", data);
-                        response($.map(data, function (item) {
-                            return {
-                                label: item.nombreCompleto,
-                                value: item.nombreCompleto,
-                                id: item.id
-                            };
-                        }));
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Error al obtener alumnos:", error);
-                        response([]);
-                    }
-                });
-            },
-            minLength: 2,
-            select: function (event, ui) {
-                $("#IdAlumno").val(ui.item.id);
-            }
-        });
-        
-      
-            function calcularCorte1() {
-                let acu1 = parseFloat($("#acumulado1").val()) || 0;
-                let exam1 = parseFloat($("#examen1").val()) || 0;
-                let pc1 = acu1 + exam1;
-                $("#primerCorte").val(pc1.toFixed(1));
-                calcularNotaFinal(); // Recalcular nota final
-            }
+                source: function (request, response) {
+                    $.ajax({
+                        url: "https://localhost:7008/api/Alumnos/buscar",
+                        data: { q: request.term },
+                        success: function (data) {
+                            console.log("Respuesta API:", data);
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item.nombreCompleto,
+                                    value: item.nombreCompleto,
+                                    id: item.id
+                                };
+                            }));
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error al obtener alumnos:", error);
+                            response([]);
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function (event, ui) {
+                    $("#IdAlumno").val(ui.item.id);
+                }
+            });
 
-            function calcularCorte2() {
-                let acu2 = parseFloat($("#acumulado2").val()) || 0;
-                let exam2 = parseFloat($("#examen2").val()) || 0;
-                let pc2 = acu2 + exam2;
-                $("#segundoCorte").val(pc2.toFixed(1));
-                calcularNotaFinal(); // Recalcular nota final
-            }
-
-            function calcularCorte3() { // Corregido: era calcularCorte2 duplicado
-                let acu3 = parseFloat($("#acumulado3").val()) || 0;
-                let exam3 = parseFloat($("#examen3").val()) || 0;
-                let pc3 = acu3 + exam3;
-                $("#tercerCorte").val(pc3.toFixed(1));
-                calcularNotaFinal(); // Recalcular nota final
-            }
-
-            function calcularCorte4() {
-                let acu4 = parseFloat($("#acumulado4").val()) || 0;
-                let exam4 = parseFloat($("#examen4").val()) || 0;
-                let pc4 = acu4 + exam4;
-                $("#cuartoCorte").val(pc4.toFixed(1));
-                calcularNotaFinal(); // Recalcular nota final
-            }
-
-            function calcularNotaFinal() {
-                let t1 = parseFloat($("#primerCorte").val()) || 0;
-                let t2 = parseFloat($("#segundoCorte").val()) || 0;
-                let t3 = parseFloat($("#tercerCorte").val()) || 0;
-                let t4 = parseFloat($("#cuartoCorte").val()) || 0;
-
-                // Aquí defines la fórmula de la nota final
-                // Ejemplo: promedio simple
-                let notaFinal = (t1 + t2 + t3 + t4) / 4;
-                $("#notaFinal").val(notaFinal.toFixed(2));
-            }
-
-            // Event listeners FUERA de las funciones
+            // 2. CONFIGURAR EVENTOS DE CÁLCULO
             $("#acumulado1, #examen1").on("input", calcularCorte1);
             $("#acumulado2, #examen2").on("input", calcularCorte2);
             $("#acumulado3, #examen3").on("input", calcularCorte3);
             $("#acumulado4, #examen4").on("input", calcularCorte4);
 
-            // También escuchar cambios en los cortes directamente
+            // Eventos para cambios directos en cortes
             $("#primerCorte, #segundoCorte, #tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
 
-            // Calcular valores iniciales si existen
+            // 3. CALCULAR VALORES INICIALES
             calcularCorte1();
             calcularCorte2();
             calcularCorte3();
             calcularCorte4();
             calcularNotaFinal();
         });
+    </script>
 
-    </script>
-   
-@if (TempData["Mensaje"] != null)
-{
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-               Swal.fire({
-                       title: '@(TempData["Tipo"]?.ToString() == "info" ? "Información" : "Warning")',
-                   text: '@TempData["Mensaje"]',
-                       icon: '@(TempData["Tipo"]?.ToString() == "info" ? "info" : "warning")',
-                   confirmButtonText: 'Aceptar'
-               });
-        });
-    </script>
-}
+    @if (TempData["Mensaje"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                Swal.fire({
+                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+     "Información")',
+                    text: '@TempData["Mensaje"]',
+                    icon: '@TempData["Tipo"]',
+                    confirmButtonText: 'Aceptar'
+                });
+            });
+        </script>
+    }
 }

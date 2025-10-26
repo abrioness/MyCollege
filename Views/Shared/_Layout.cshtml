@@ -52,14 +52,14 @@
         int variable = 1;
     }
      <div class="d-flex" style="min-height: 150vh;">
-        <nav class="text-blue bg-success p-3" id="sidebar" style="width:250px;">
-            <div class="container-fluid mt-1" style="width:125px;margin-left:1px">
-                @* <a class="navbar-brand" asp-area="" asp-page="/Index">Inicio</a> *@
+        <nav class="text-blue bg-success p-3" id="sidebar" style="width:200px;">
+			@* <div class="container-fluid mt-1" style="width:125px;margin-left:1px">
+                <a class="navbar-brand" asp-area="" asp-page="/Index">Inicio</a> 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
                         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-
+*@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background-color: yellow;width:180px;">
 
@@ -88,7 +88,7 @@
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
                                aria-expanded="false" aria-controls="collapseNotas">
                                 <i class="bi bi-pencil-square"></i>
-                                <span>Registro Académico</span>
+                                <span>Notas</span>
                             </a>
                             <div id="collapseNotas" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
@@ -104,13 +104,13 @@
                         <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
                                aria-expanded="false" aria-controls="collapseRecibos">
-                                <i class="bi bi-cash"></i>
-                                <span>Registro de Recibo</span>
+                            <i class="bi bi-stickies"></i>
+                                <span>Recibo</span>
                             </a>
                             <div id="collapseRecibos" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Index">Lista de Recibos</a>
-                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Agregar Recibo</a>
+                                    @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Agregar Recibo</a> *@
                                     <a class="collapse-item" asp-controller="ReciboCaja" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja">Ver Arqueo</a>
                                     @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
                                     
@@ -122,7 +122,7 @@
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseInventario"
                                aria-expanded="false" aria-controls="collapseInventario">
                                 <i class="bi bi-clipboard-check"></i>
-                                <span>Registro de Inventario</span>
+                                <span>Inventario</span>
                             </a>
                             <div id="collapseInventario" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
@@ -137,14 +137,14 @@
                         <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
                                aria-expanded="false" aria-controls="collapseProducto">
-                                <i class="bi bi-handbag"></i>
-                                <span>Registro de Productos</span>
+                                <i class="bi bi-cart4"></i>
+                                <span>Productos</span>
                             </a>
                             <div id="collapseProducto" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     <a class="collapse-item" asp-controller="Productos" asp-action="Index">Lista de Productos</a>
                                     <a class="collapse-item" asp-controller="Productos" asp-action="Create">Agregar Producto</a>
-                                    @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
+                                    @* <a class="collapse-item" asp-controller="Login" asp-action="Login">Sesión</a> *@
 
                                 </div>
                             </div>
@@ -154,14 +154,14 @@
                         <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
                                aria-expanded="false" aria-controls="collapsePago">
-                                <i class="bi bi-coin"></i>
-                                <span>Registro de Pagos</span>
+                                <i class="bi bi-cash-coin"></i>
+                                <span>Pagos</span>
                             </a>
                             <div id="collapsePago" class="collapse">
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     <a class="collapse-item" asp-controller="Pagos" asp-action="Index">Lista de Pagos</a>
                                     <a class="collapse-item" asp-controller="Pagos" asp-action="Create">Agregar Pago</a>
-                                    <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta">Estado Cuenta del Alumno</a>
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta">Estado de Cuenta</a>
 
                                 </div>
                             </div>
@@ -169,7 +169,7 @@
 
                     </ul>
                 </div>
-            </div>
+            @* </div> *@
         </nav>
 
 
@@ -229,65 +229,7 @@
         @await RenderSectionAsync("Scripts", required: false)
 
 
-	@*   <!-- jQuery -->
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-        <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-
-        <!-- DataTables JS -->
-        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-        <script src="https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"></script>
-        <!-- Opcional: Bootstrap Icons -->
-       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- DataTables -->
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-
-    <!-- Botones exportación -->
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script> *@
-    <!-- jQuery -->
-   @*  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- DataTables -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-
-    <!-- Extensión Responsive -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-
-    <!-- Botones -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-
-    <!-- Dependencias para exportar -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script> *@
+	
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -300,7 +242,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- En _Layout.cshtml -->
+    @* <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> *@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
