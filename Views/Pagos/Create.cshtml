@@ -31,7 +31,8 @@
                             <select asp-for="Pago.IdTipoMovimiento" id="tipoMovimiento" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
                                 <option disabled selected>Seleccione un Opción</option>
                             </select>
-                            <span asp-validation-for="Pago.IdTipoMovimiento" class="text-danger"></span>
+                            <span asp-validation-for="Pago.IdTipoMovimiento" class="text-danger"
+                            data-val-required="Por favor, seleccione el tipo de movimiento"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.IdTipoRecibo" class="control-label">Tipo de Recibo</label>
@@ -42,7 +43,7 @@
 
                         </div>
                         <div class="form-group">
-                            <label asp-for="Pago.IdMetodoPago" class="control-label">Metod Pago</label>
+                            <label asp-for="Pago.IdMetodoPago" class="control-label">Metodo de Pago</label>
                             <select asp-for="Pago.IdMetodoPago" asp-items="Model.metodoPagoSelectListItem" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                             </select>
@@ -57,11 +58,18 @@
                             <input asp-for="Pago.Monto" id="monto" class="form-control" />
                             <span asp-validation-for="Pago.Monto" class="text-danger"></span>
                         </div>
-						@*<div class="form-group">
+                        <div class="form-group">
+                            <label asp-for="Pago.IdGrado" class="control-label">Nivel</label>
+                            <select asp-for="Pago.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="Pago.IdGrado" class="text-danger"></span>
+                        </div>
+						<div class="form-group">
                             <label asp-for="Pago.Mora" class="control-label">Mora</label>
                             <input asp-for="Pago.Mora" id="Mora" class="form-control" />
                            <span asp-validation-for="Pago.Mora" class="text-danger"></span>
-                        </div> *@
+                        </div>
 						
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
                         <br />
@@ -131,6 +139,9 @@
                     <a asp-action="Index" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
                     </a>
+                    <button type="button" id="btnLimpiar" class="btn btn-warning">
+                        <i class="bi bi-trash3"></i> Limpiar Campos
+                    </button>
                 </div>
 
             </form>
@@ -142,7 +153,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-
+	<script src="~/js/limpiarcampos.js"></script>
     <script src="~/seewtalert/sweetalert.all.min.js"></script>
     <script src="~/seewtalert/sweetalertstyle.js"></script>
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
@@ -277,7 +288,7 @@
             document.body.style.removeProperty('padding-right');
         }, 300);
         }
-
+       
     </script>
 
    

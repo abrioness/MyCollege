@@ -1,69 +1,65 @@
 ﻿@model WebColegio.Models.ViewModel.UsuarioViewModel
+
+
+@*
+    VISTA MÍNIMA FUNCIONAL
+    Elimina TODO y pega solo esto
+*@
+
 @{
-    // TempData["Mensaje"];
+
     Layout = null;
 }
+<div class="login_container">
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
-<div class="container col-sm-8 align-content-center" style="padding-top:10px">
-    <div class="card shadow-lg border-0 rounded-5">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi-person-circle"></i> Inicio de Sesión</h4>
-        </div>
-        <div class="card-body ">
-            <form asp-action="Login" method="post" enctype="multipart/form-data">
-                <div class="row align-content-center">
-                    <div class="col-md-6 acontent-center">
-                        <div class="form-group">
-                            <label asp-for="usuario.NombreUsuario">Usuario</label>
-                            <input asp-for="usuario.NombreUsuario" class="form-control" placeholder="Cedula" />
-                            <span asp-validation-for="usuario.NombreUsuario" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="usuario.Password" class="control-label">Contraseña</label>
-                            <input asp-for="usuario.Password" type="password" class="form-control" placeholder="Password" />
-                            <span asp-validation-for="usuario.Password" class="text-danger"></span>
-                        </div>
+    <div class="left">
+        <div class="login">Iniciar Sesión</div>
+        <img src="~/Image/colegiosanfrancisco.png" class="logo"></img>
+        <div class="eula">Sistema de Gestión Academica y Facturación para el Colegio San Francisco Javier</div>
+    </div>
+    <div class="right">
 
-                        @*  <div>
-                            <input for="RememberMe" type="checkbox" />
-                            <label name="RememberMe">Recordarme</label>
-                        </div> *@
-                        <div>
-                            <a class="btn-light btn-link rounded" asp-action="CambiarPassword" asp-controller="Login" asp-route-Login="@Model.usuario"> Restablecer Contraseña</a>
-                        </div>
-                        <br />
-                    </div>
-                    @* <div class="col-md-4 text-end">
-                        <div class="form-group">
-                            <img src="~/imagen/history nic/mapaporregion.png" width="85%" />
-                        </div>
-                    </div> *@
+        <form class="form" method="post" asp-action="Login" enctype="multipart/form-data">
+            <label asp-for="usuario.NombreUsuario">Usuario</label>
+            <input type="text" asp-for="usuario.NombreUsuario" id="user" required placeholder="Ejemp:0011910910011N"/>
+            <label asp-for="usuario.Password">Contraseña</label>
+            <input type="password" asp-for="usuario.Password" id="password" required placeholder="Contraseña">
+            <input type="submit" id="submit" value="Ingresar">
+
+            @* ¿No tienes una Cuenta?<a href="@Url.Action("Create","Usuarios")"> Registrar!</a> *@
+        </form>
+        @* @if (TempData.ContainsKey("Mensaje"))
+        {
+            <div class="form-group">
+                <div class="alert alert-danger" role="alert">
+                    @TempData["Mensaje"]
                 </div>
-                <!-- Botones -->
-                <div class="col-12 text-start">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-person-lock"></i> Iniciar Sesión
-                    </button>
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Volver
-                    </a>
-                </div>
-            </form>
-        </div>
+
+            </div>
+        } *@
     </div>
 
+
+    <script src="~/js/login.js" asp-append-version="true"></script>
+    <script src="~/lib/jquery/dist/js/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
 </div>
-@* <link href="~/css/paginacion.css" rel="stylesheet" />
-<script src="~/jquery/jquery.min.js"></script>
+
+@* <link href="~/css/paginacion.css" rel="stylesheet" />*
+<script src="~/jquery/jquery.min.js"></script>@
+
+
+@* <link href="~/DataTables/datatables.min.css" rel="stylesheet">
+<script src="~/DataTables/datatables.min.js"></script> *@
 <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-
-<link href="~/DataTables/datatables.min.css" rel="stylesheet">
-<script src="~/DataTables/datatables.min.js"></script>
-
 <script src="~/seewtalert/sweetalert.all.min.js"></script>
 
 <script src="~/seewtalert/sweetalertstyle.js"></script>
-<link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" /> *@
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" /> 
 @if (TempData["Mensaje"] != null)
@@ -82,4 +78,4 @@
     </script>
 }
 }
-
+ 

@@ -22,7 +22,7 @@
                         </div>
                         <div class="form-group">
                             <label asp-for="alumnos.CodigoAlumno" class="control-label">Código del Estudiante</label>
-                            <input asp-for="alumnos.CodigoAlumno" id="CodigoEstudiante" class="form-control" />
+                            <input asp-for="alumnos.CodigoAlumno" id="CodigoEstudiante" class="form-control" readonly />
                             
                         </div>
                        
@@ -154,12 +154,16 @@
                 <br />
                 <!-- Botones -->
                 <div class="col-12 text-end">
+
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-save"></i> Guardar
                     </button>
                     <a asp-action="Index" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
                     </a>
+                    <button type="button" id="btnLimpiar" class="btn btn-warning">
+                        <i class="bi bi-save"></i> Limpiar Campos
+                    </button>
                 </div>
 
             </form>
@@ -168,6 +172,7 @@
 </div>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="~/js/limpiarcampos.js"></script>
 <script>
         function capitalizeWords(input) {
             input.value = input.value
@@ -203,10 +208,11 @@
             const edad = calcularEdad(fecha);
             $("#Edad").val(edad); // ← Aquí se asigna la edad
         });
-
-
+                
 
     });
+
+
 
 </script> 
 

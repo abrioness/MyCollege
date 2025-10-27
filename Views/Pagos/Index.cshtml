@@ -19,7 +19,7 @@
 				</a>
 			</div>
 
-			<table id="tablaPagos" class="table table-striped table-bordered nowrap" style="width:100%">
+			<table id="tablaPagos" class="table text-sm-start table-bordered" style="width:100%">
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>
 					<tr>
@@ -57,11 +57,11 @@
 							}
 							<td>
 
-								@itemPago.Monto
+							C$ @itemPago.Monto
 							</td>
 							<td>
 
-								@itemPago.Mora
+							C$	@itemPago.Mora
 							</td>
 							@foreach (var mesPagar in Model.meses.Where(a => a.IdMes == itemPago.IdMes))
 							{

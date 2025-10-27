@@ -406,6 +406,7 @@ namespace WebColegio.Services
             }
 
         }
+       
         public async Task<List<CategoriaProducto>> GetCategoriaProductoAsync()
         {
             List<CategoriaProducto> categoriaProducto = new List<CategoriaProducto>();
@@ -565,10 +566,12 @@ namespace WebColegio.Services
         {
             bool respuesta = false;
             //alumnos.CodigoAlumno = await GenerarCodigoAlumno();
-           
-            
 
-                // Asegurar datos mínimos requeridos
+
+            
+            // Asegurar datos mínimos requeridos
+               
+                alumnos.CodigoUnico = 0;
                 alumnos.Activo = true;
                 alumnos.UsuarioRegistro = 1;
                 alumnos.FechaRegistro = DateTime.Now;

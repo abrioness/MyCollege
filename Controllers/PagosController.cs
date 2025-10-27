@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics.Metrics;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebColegio.Models;
@@ -125,12 +128,13 @@ namespace WebColegio.Controllers
                                    }).ToList(),
                 meses = await _Iservices.GetMesesAsync(),
                 periodo = await _Iservices.GetPeriodoAsync(),
-                //.Select(r => new SelectListItem
-                //{
-                //    Value = r.IdMes.ToString(),
-                //    Text = r.Mes,
-                //    //Selected = r.IdPregunta == respuestas.IdPregunta
-                //}).ToList(),
+                gradosSelectListItem=(await _Iservices.GetGradosAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdGrado.ToString(),
+                    Text = r.NombreGrado,
+                    //Selected = r.IdPregunta == respuestas.IdPregunta
+                }).ToList(),
 
 
             };
@@ -149,77 +153,119 @@ namespace WebColegio.Controllers
             int total = 0;
             try
             {
+                int periodo= await _Iservices.GetPeriodoAsync().ContinueWith(p=>p.Result.FirstOrDefault(a=>a.Activo && a.Actual)?.IdPeriodo) ?? 0;
+                pagos.Pago.IdPeriodo = periodo;
+                //int tipoMov = await _Iservices.GetTipoMovimientoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.IdTipoMovimiento==pagos.Pago.IdTipoMovimiento)?.IdTipoMovimiento) ?? 0;
+
                 //validarDuplicado = await _Iservices.ValidarNotas(pagos.MesPagado, pagos.IdTipoMovimiento, pagos.IdAlumno);
-                //if (validarDuplicado == true)
+                //if (ExistePagoDuplicado(pagos))
                 //{
-                //    TempData["Mensaje"] = "El Alumno ya Posee un Registro de Nota con la Asignatura Seleccionada.";
+                //    TempData["Mensaje"] = "El Alumno ya tiene un registro de pago con el concepto actual.";
                 //    TempData["Tipo"] = "warning";
                 //    return RedirectToAction("Create");
+                //}
+
+                //if(pagos.Pago.IdMes)
+                //{
+
                 //}
 
                 if (pagos != null)
                 {
                    if (!string.IsNullOrEmpty(MesesSeleccionados))//MesesSeleccionados != null && MesesSeleccionados.Any())
                     {
+
+                        if(BecaCompleta(pagos.Pago.IdAlumno,pagos.Pago.IdPeriodo).Result)
+                        {
+                            TempData["Mensaje"] = "El Estudiante Posee Beca Completa.";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
+                        if (MediaBeca(pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo).Result && pagos.Pago.Monto>320)
+                        {
+                            TempData["Mensaje"] = "El Estudiante Cuenta con Media Beca.";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
+
+
                         var ids = MesesSeleccionados.Split(',').Select(int.Parse).ToList();
-                        var listpagos = await _Iservices.GetPagosAsync();
-                        var año=await _Iservices.GetPeriodoAsync();
-                        int periodo= año.Max(p => p.Periodo);
+                        var listpagos = await _Iservices.GetPagosAsync();                      
+                        
                         bool aplicoMora = false;
                         bool duplicado = false;
                         //total = ids * mensualidad;
                         //if((ids* mensualidad)=pagos.Pago.Monto)
-
+                        
 
                         foreach (var idMes in ids)
+                        {
+                            // 1️⃣ Validar duplicado
+
+                            bool existePago = listpagos.Any(p => p.IdAlumno == pagos.Pago.IdAlumno
+                                            && p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento
+                                            && p.IdMes == idMes);
+                            
+                            if (existePago)
                             {
-                                // 1️⃣ Validar duplicado
-
-                                bool existePago = listpagos.Any(p => p.IdAlumno == pagos.Pago.IdAlumno
-                                                && p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento
-                                                && p.IdMes == idMes);
-
-                                if (existePago)
-                                {
                                 // Evita duplicado
                                 duplicado = true;
+
                                 TempData["Mensaje"] = $"El mes {idMes} ya fue pagado por este alumno.";
-                                    TempData["Tipo"] = "warning";
-                                    continue;
-                                }
+                                TempData["Tipo"] = "warning";
+                                continue;
+                            }
                             var todosLosMeses = Enumerable.Range(1, 12); // o hasta el mes actual
 
-                            
+
                             // 2️⃣ Verificar si hay mora (mes anterior sin pagar)
-                            //bool tienePendientes = listpagos
-                            //        .Any(p => p.IdAlumno == pagos.Pago.IdAlumno
+                            //var tienePendientes = listpagos
+                            //        .Where(p => p.IdAlumno == pagos.Pago.IdAlumno
                             //                    && p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento
-                            //                    && p.IdMes < idMes) == false;
+                            //                    && p.IdPeriodo == periodo
+                            //                    && p.IdMes < idMes);
+                            //for(int a=0;a<12-1;a++)
+                            //{
+                            //    tienePendientes.FirstOrDefault
+                            //}
 
                             int anioActual = pagos.Pago.IdPeriodo;
-
-                            int mesesPendientes = Enumerable
-                                .Range(1, 12)
-                                .Count(m => !listpagos.Any(p =>
-                                    p.IdAlumno == pagos.Pago.IdAlumno &&
-                                    p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
-                                    p.IdPeriodo == anioActual &&
-                                    p.IdMes != m));
-
-                            if (mesesPendientes>0)
+                            var mesesPendientes = await _Iservices.GetPagosAsync();
+                            var pendientes = mesesPendientes
+                            .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
+                                       p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
+                                       p.IdPeriodo == pagos.Pago.IdPeriodo &&
+                                       p.IdMes < idMes)
+                            .Select(p => p.IdMes).ToList();
+                            // 2. Obtener todos los meses que deberían estar pagados
+                            var todosMesesRequeridos = Enumerable.Range(1, idMes - 1).ToList();
+                            var mesesFaltantes = todosMesesRequeridos.Except(pendientes).ToList();
+                            
+                             if (mesesFaltantes.Any())
+                            {
+                                var primerMesFaltante = mesesFaltantes.Min();
+                                if (idMes != primerMesFaltante)
                                 {
-                                
-                                int totalMora = 10 * mesesPendientes;
-
-                                pagos.Mora = totalMora; // Aplica mora fija de 10
-                                aplicoMora = true;
+                                    
+                                    TempData["Mensaje"] = $"No puede pagar el mes de {Mes(idMes).Result}. Debe pagar primero el mes de {Mes(primerMesFaltante).Result}.";
+                                    TempData["Tipo"] = "warning";
+                                    return RedirectToAction("Create");
                                 }
-                                else
-                                {
-                                    pagos.Mora = 0; // Aplica mora fija de 10
+                            }
 
-                                    aplicoMora = false;
-                                }
+                            int montoMora = 0;
+                            if (mesesFaltantes.Any())
+                            {
+                                int montoBase = 10; // Obtener de configuración
+                                //decimal porcentajeMora = 0.10m;
+                                montoMora = mesesFaltantes.Count * (montoBase); //* porcentajeMora);
+                            }
+                            //else
+                            //    {
+                            //        pagos.Mora = 0; // Aplica mora fija de 10
+
+                            //        aplicoMora = false;
+                            //    }
 
                                 // ejemplo: crear un pago por cada mes
                                 var nuevoPago = new TblPago
@@ -229,7 +275,9 @@ namespace WebColegio.Controllers
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
                                     IdTipoMovimiento = pagos.Pago.IdTipoMovimiento,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
-                                    Mora = pagos.Mora,
+                                    IdGrado=pagos.Pago.IdGrado,
+                                    IdPeriodo=pagos.Pago.IdPeriodo,
+                                    Mora = montoMora,
                                     Monto = pagos.Pago.Monto,
                                     Activo = true,
                                     UsuarioRegistro = 1,
@@ -287,7 +335,82 @@ namespace WebColegio.Controllers
             }
         }
 
+        //Obtener nombre del mes.
+        public async Task<string> Mes(int idmes)
+        {
+            string mes = await _Iservices.GetMesesAsync().ContinueWith(a => a.Result.FirstOrDefault(m => m.IdMes == idmes)?.Mes ?? "No hay Mes");
 
+            return mes;
+        }
+        
+        public async Task<bool>BecaCompleta(int idalumno,int periodo)
+        {
+            bool becaCompleta = await _Iservices.GetAlumnosAsync().ContinueWith(a => a.Result.FirstOrDefault(b => b.IdAlumno==idalumno && b.BecaCompleta==true && b.IdPeriodo==periodo)?.BecaCompleta ?? false);
+            
+            if(becaCompleta)
+            {
+                return true;
+            }
+                return false;
+           
+        }
+        public async Task<bool>MediaBeca(int idalumno,int periodo)
+        {
+            
+            bool mediaBeca = await _Iservices.GetAlumnosAsync().ContinueWith(a => a.Result.FirstOrDefault(b => b.IdAlumno == idalumno && b.MediaBeca == true && b.IdPeriodo == periodo)?.MediaBeca ?? false);
+            
+            if (mediaBeca)
+            {
+                return true;
+            }
+            
+                return false;
+           
+        }
+        public bool ExistePagoDuplicado(PagosViewModel nuevoPago)
+        {
+
+            var query =  _Iservices.GetPagosAsync().ContinueWith(
+                         q => q.Result.Where(p => p.IdAlumno == nuevoPago.Pago.IdAlumno &&
+                        p.IdPeriodo == nuevoPago.Pago.IdPeriodo &&
+                        p.IdTipoMovimiento == nuevoPago.Pago.IdTipoMovimiento));
+
+            if(!query.Result.Any())
+            {
+                return false;
+            }
+            
+
+            return true;
+        }
+    //    public (bool tienePendientes, List<int> mesesPendientes, decimal moraAcumulada, bool puedePagar)
+    //ValidarPagoConMora(int idAlumno, int idTipoMovimiento, int periodo, int mesDeseado)
+    //    {
+    //        var pagosRealizados = listpagos
+    //            .Where(p => p.IdAlumno == idAlumno &&
+    //                       p.IdTipoMovimiento == idTipoMovimiento &&
+    //                       p.IdPeriodo == periodo &&
+    //                       p.IdMes <= mesDeseado) // Solo meses hasta el deseado
+    //            .Select(p => p.IdMes)
+    //            .OrderBy(m => m)
+    //            .ToList();
+
+    //        // Encontrar todos los meses que deberían estar pagados (1 hasta mesDeseado-1)
+    //        var todosMesesRequeridos = Enumerable.Range(1, mesDeseado - 1).ToList();
+
+    //        // Meses pendientes son los que no están en pagosRealizados
+    //        var mesesPendientes = todosMesesRequeridos.Except(pagosRealizados).ToList();
+
+    //        // Validar si puede pagar el mes deseado
+    //        bool puedePagar = !mesesPendientes.Any() ||
+    //                         (mesesPendientes.Count > 0 && mesesPendientes.Max() == mesDeseado - 1);
+
+    //        // Calcular mora
+    //        decimal montoBase = 1000; // Obtener de tu configuración
+    //        decimal mora = mesesPendientes.Count * (montoBase * 0.10m);
+
+    //        return (mesesPendientes.Any(), mesesPendientes, mora, puedePagar);
+    //    }
 
         // GET: PagosController/Edit/5
         public ActionResult Edit(int id)

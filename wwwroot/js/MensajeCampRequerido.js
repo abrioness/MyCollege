@@ -1,0 +1,1 @@
+﻿$.validator.messages.required = 'Este campo es obligatorio';

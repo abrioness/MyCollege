@@ -36,7 +36,7 @@ namespace WebColegio
 
             app.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Alumnos}/{action=Index}");
+                    pattern: "{controller=Login}/{action=Login}/{id?}");
 
 
             app.Run();

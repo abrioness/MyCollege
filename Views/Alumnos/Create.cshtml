@@ -6,15 +6,15 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 
 } *@
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
 
-<div class="container mt-6" style="padding:50px;">
+
+<div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
             <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro del Estudiante</h4>
         </div>
         <div class="card-body">
-            <form asp-action="Create" method="post" enctype="multipart/form-data" class="row g-3">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
              <div class="row">
                  <div class="col-md-6">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -160,6 +160,25 @@
                             </select>
                             <span asp-validation-for="alumnos.IdDiscapacidad" class="text-danger"></span>
                         </div>
+
+                        <div class="form-group">
+                            <label asp-for="alumnos.BecaCompleta" class="control-label">Beca Completa</label>
+                            <select asp-for="alumnos.BecaCompleta"  class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                                <option value="true">Si</option>
+                                <option value="flase">No</option>
+                            </select>
+                            <span asp-validation-for="alumnos.BecaCompleta" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.MediaBeca" class="control-label">Media Beca</label>
+                            <select asp-for="alumnos.MediaBeca" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                                <option value="true">Si</option>
+                                <option value="false">No</option>
+                            </select>
+                            <span asp-validation-for="alumnos.MediaBeca" class="text-danger"></span>
+                        </div>
                         <div class="form-group">
                             <label asp-for="alumnos.Observaciones" class="control-label">Observaciones</label>
                             <textarea asp-for="alumnos.Observaciones" class="form-control" ></textarea>
@@ -177,6 +196,9 @@
                     <a asp-action="Index" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
                     </a>
+                    <button type="button" id="btnLimpiar" class="btn btn-warning">
+                        <i class="bi bi-trash3"></i> Limpiar Campos
+                    </button>
                 </div>
 
         </form>
@@ -191,7 +213,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-
+	<script src="~/js/limpiarcampos.js"></script>
+	<script src="~/js/mensajecamprequerido.js"></script>
     <script src="~/seewtalert/sweetalert.all.min.js"></script>
     <script src="~/seewtalert/sweetalertstyle.js"></script>
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
@@ -236,42 +259,21 @@
 
     });
 
-               function msg(mensaje){
-                   swal.fire({
-                           title:'Warning',
-                           text: mensaje,
-                           icon: 'warning',
-                           showCancelButton: true,
-                        confirmButtonText: 'Aceptar',
-                        cancelButtonText: 'Cancelar' // corregido el error tipográfico
-                       });}
-
-               function msgconfirm(mensaje) {
-                    Swal.fire({
-                        title: 'Información',
-                        text: mensaje,
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonText: 'Aceptar',
-                        cancelButtonText: 'Cancelar'
-                    });
-                }
-
-
-
 </script>
 
-@if (TempData["Mensaje"] != null)
-{
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-               Swal.fire({
-                       title: '@(TempData["Tipo"]?.ToString() == "info" ? "Información" : "Warning")',
-                   text: '@TempData["Mensaje"]',
-                       icon: '@(TempData["Tipo"]?.ToString() == "info" ? "info" : "warning")',
-                   confirmButtonText: 'Aceptar'
-               });
-        });
-    </script>
-}
+    @if (TempData["Mensaje"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                Swal.fire({
+                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+                     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+                     "Información")',
+                    text: '@TempData["Mensaje"]',
+                    icon: '@TempData["Tipo"]',
+                    confirmButtonText: 'Aceptar'
+                });
+            });
+        </script>
+    }
 }

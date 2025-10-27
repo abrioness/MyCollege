@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
@@ -125,11 +126,15 @@ namespace WebColegio.Controllers
             bool existe = false;
             try
             {
+                alumnos.IdPeriodo = await _Iservices.GetPeriodoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.Actual)?.IdPeriodo) ?? 0;
+                
+                
                 existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoAlumno, alumnos.Nombre, alumnos.Apellido);
                 if (existe)
                 {
                     TempData["Mensaje"] = "Ya existe un alumno con el mismo Código";
-                    return RedirectToAction("Create", "Alumnos");
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
                 }
                 if (alumnos != null)
                 {
@@ -138,7 +143,8 @@ namespace WebColegio.Controllers
                     if(response)
                     {
                         TempData["Mensaje"] = "El registro del alumno se guardo correctamente";
-                        return RedirectToAction("Create","Alumnos");
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction("Create");
                     }
                    
                 }

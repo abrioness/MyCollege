@@ -16,8 +16,13 @@ namespace WebColegio.Models
 
         public int Edad { get; set; }
         public string? CodigoMINED { get; set; }
-        public string? CodigoAlumno { get; set; } 
+
+        public string? CodigoAlumno { get; set; }
+
+        public int? CodigoUnico { get; set; }
         public string? Cedula { get; set; }
+        public bool BecaCompleta { get; set; }
+        public bool MediaBeca { get; set; }
 
         public int IdGrado { get; set; }
 
@@ -27,10 +32,9 @@ namespace WebColegio.Models
 
         public int? IdRecinto { get; set; }
         public int? IdSexo { get; set; }
+        public int IdGrupo { get; set; }
 
         public int IdPeriodo { get; set; }
-
-        public int IdGrupo { get; set; }
 
         public string? Direccion { get; set; }
 
@@ -38,14 +42,16 @@ namespace WebColegio.Models
 
         public string NombreMadre { get; set; } = null!;
 
-        public string? NombrePadre { get; set; } 
+        public string? NombrePadre { get; set; }
 
         public string? NombreTutor { get; set; }
         public string? CedulaTutor { get; set; }
+
         public string? ContactoTutor { get; set; }
         public string? Correo { get; set; }
         public string? Observaciones { get; set; }
         public int? IdDiscapacidad { get; set; }
+
         public bool Activo { get; set; }
 
         public int UsuarioRegistro { get; set; }
@@ -55,8 +61,7 @@ namespace WebColegio.Models
         public int? UsuarioActualiza { get; set; }
 
         public DateTime? FechaActualiza { get; set; }
-        
-    
 
-}
+
+    }
 }

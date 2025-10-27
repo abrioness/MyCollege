@@ -27,15 +27,10 @@ namespace WebColegio.Controllers
         //    }
         //    return false;
         //}
-        public IActionResult Index()
+        // GET: /Login/Login
+        [HttpGet]
+        public IActionResult Login()
         {
-            //var cedula = HttpContext.Session.GetString("UsuarioCedula");
-
-            //if (string.IsNullOrEmpty(cedula))
-            //{
-            //    return RedirectToAction("Login");
-            //}
-
             return View();
         }
 

@@ -40,6 +40,7 @@ namespace WebColegio.Services
         Task<List<CatPeriodo>> GetPeriodoAsync();
         Task<List<CatDiscapacidad>> GetDiscapacidadAsync();
         Task<List<CatMovInventario>> GetMovInventarioAsync();
+       
         #endregion
         #region Metodos Post
         Task<bool> PostAlumnosAsync(TblAlumno alumnos);
