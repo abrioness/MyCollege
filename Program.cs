@@ -1,6 +1,7 @@
 
 
 
+using Microsoft.AspNetCore.Authentication.Cookies;
 using WebColegio.Services;
 
 namespace WebColegio
@@ -16,10 +17,26 @@ namespace WebColegio
             builder.Services.AddControllers();
             builder.Services.AddScoped<IServicesApi, ServicesApi>();
             builder.Services.AddControllersWithViews();
-          
-                
+            builder.Services.AddHttpContextAccessor();
 
-                var app = builder.Build();
+            builder.Services.AddDistributedMemoryCache(); // Requerido para sesione
+            builder.Services.AddSession(
+                options =>
+                {
+                    options.IdleTimeout = TimeSpan.FromMinutes(30);
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.IsEssential = true;
+                });
+
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Login";
+                    options.AccessDeniedPath = "/Login/AccessDenied";
+                });
+
+
+            var app = builder.Build();
 
 
                     
@@ -29,10 +46,10 @@ namespace WebColegio
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseSession();
 
-            //app.UseAuthorization();
-
-            //app.MapRazorPages();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllerRoute(
                     name: "default",

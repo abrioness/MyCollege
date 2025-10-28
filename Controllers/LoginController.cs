@@ -35,15 +35,16 @@ namespace WebColegio.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(string Login, string Password)
+        public async Task<IActionResult> Login(string NombreUsuario, string Password)
         {
             // Buscar usuario por cédula
-            var usuario = await _IService.GetLogin(Login);
-
+            var usuario = await _IService.GetLogin(NombreUsuario);
+            var rol = usuario.IdRol;
             if (usuario == null)
             {
                 TempData["Mensaje"] = "Usuario o Contraseña Icorrecta!";
-                return RedirectToAction("Index", "Login");
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Login");
             }
 
             // Convertir contraseña guardada en byte[] a string (hash)
@@ -54,7 +55,8 @@ namespace WebColegio.Controllers
             if (!esValido)
             {
                 TempData["Mensaje"] = "Password Incorrecta";
-                return RedirectToAction("Index", "Login");
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Login");
             }
             var claims = new List<Claim>
             {
@@ -69,9 +71,26 @@ namespace WebColegio.Controllers
                 new ClaimsPrincipal(claimsIdentity),
                 new AuthenticationProperties { IsPersistent = true });
             // Guardar datos en sesión
-            HttpContext.Session.SetString("UsuarioCedula", Login);
+            HttpContext.Session.SetString("UsuarioCedula", NombreUsuario);
             HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario); // si tienes Id
-            return RedirectToAction("Index", "Estadisticas");
+
+            if (usuario.IdRol.ToString() == "4")
+            {
+                //var validarTipoUsuario = await _IService.GetValidarTipoUsuario();
+               var notasPorUsuario= await _IService.GetNotasPorUsuario(usuario.NombreUsuario);
+                if(notasPorUsuario!=null)
+                {
+                    return RedirectToAction("DetailsNotas", "Notas");
+                }
+                else
+                {
+                    TempData["Mensaje"] = "Usuario del Tutor no Existe!";
+                    TempData["Tipo"] = "warning";
+
+                    return RedirectToAction("Login");
+                }
+            }
+            return RedirectToAction("Index", "notas");
 
 
         }
@@ -150,7 +169,7 @@ namespace WebColegio.Controllers
 
             // Limpiar toda la sesión manualmente
             HttpContext.Session.Clear();
-            return RedirectToAction("Index", "Login");
+            return RedirectToAction("Login");
         }
     }
 }

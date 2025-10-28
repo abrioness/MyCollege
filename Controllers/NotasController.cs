@@ -50,6 +50,65 @@ namespace WebColegio.Controllers
             }
           
         }
+        // GET: NotasController/Details/ para Los tutores
+        public async Task<ActionResult> DetailsNotas(string cedulatutor)
+        {
+            
+              //_context.TblNotas.FirstOrDefault(n => n.Id == id);
+            //var asignatura = (await _Iservices.GetAsignaturaAsync())
+            // .FirstOrDefault(a => a.IdAsignatura == nota.IdAsignatura);
+            if(cedulatutor=="")
+            {
+                TempData["Mensaje"] = "El nombre del Usuario no existe";
+                TempData["Tipo"] = "warning";
+                return View("NotFound");
+
+            }
+
+            var notasAlumnoTutor = await _Iservices.GetNotasPorUsuario(cedulatutor);
+            var v_alumNota = await _Iservices.V_alumnoNotas(notasAlumnoTutor.IdAlumno);
+            if (v_alumNota == null)
+            {
+                TempData["Mensaje"] = "El dato del usuario no es correcto";
+                TempData["Tipo"] = "warning";
+                return NoContent();
+
+            }
+            List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(v_alumNota.IdAlumno);
+            var viewModel = new NotasViewModel
+            {
+                listNotas = listnota,
+                alumnoNotas = v_alumNota,
+
+                asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
+        .Select(r => new SelectListItem
+        {
+            Value = r.IdAsignatura.ToString(),
+            Text = r.NombreAsignatura
+        }).ToList(),
+                periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdPeriodo.ToString(),
+                                      Text = r.NombrePeriodo,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                sexoSelectListItem = (await _Iservices.GetSexosAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdSexo.ToString(),
+                                      Text = r.Sexo,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+            };
+
+            if (notasAlumnoTutor == null)
+            {
+                return NotFound();
+            }
+
+            return View(viewModel);
+        }
 
         // GET: NotasController/Details/5
         public async Task<ActionResult> Details(int id)

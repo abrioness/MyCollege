@@ -559,9 +559,12 @@ namespace WebColegio.Services
 
 
         }
+       
+
+
 
         #endregion
-        #region Metodos Post
+            #region Metodos Post
         public async Task<bool> PostAlumnosAsync(TblAlumno alumnos)
         {
             bool respuesta = false;
@@ -893,6 +896,27 @@ namespace WebColegio.Services
 
 
         }
+        public async Task<TblNotas> GetNotasPorUsuario(string tutor)
+        {
+            var notasTutor = new TblNotas();
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + "api/Notas/GetNotaTutor" + tutor);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<TblNotas>(content);
+
+                    notasTutor = resultado;
+                }
+                return notasTutor;
+            }
+
+
+        }
+
 
         public async Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno)
         {
