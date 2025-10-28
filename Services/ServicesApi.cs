@@ -521,6 +521,26 @@ namespace WebColegio.Services
             }
 
         }
+
+        public async Task<TblRol> GetRol(int idrol)
+        {
+
+            using (var httpClient = new HttpClient())
+            {
+                var rol = new TblRol();
+
+                var response = await httpClient.GetAsync(url + $"api/TblRol/"+ idrol);
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadAsStringAsync();
+                    var r = JsonConvert.DeserializeObject<TblRol>(data);
+                    rol = r;
+                }
+                return rol;
+            }
+
+
+        }
         public async Task<TblAlumno> V_alumnoNotas(int idnota)
         {
             var ValumnoNotas = new TblAlumno();
@@ -564,7 +584,7 @@ namespace WebColegio.Services
 
 
         #endregion
-            #region Metodos Post
+        #region Metodos Post
         public async Task<bool> PostAlumnosAsync(TblAlumno alumnos)
         {
             bool respuesta = false;
@@ -902,7 +922,7 @@ namespace WebColegio.Services
             using (var httpclient = new HttpClient())
             {
 
-                var response = await httpclient.GetAsync(url + "api/Notas/GetNotaTutor" + tutor);
+                var response = await httpclient.GetAsync(url + $"api/Notas/GetNotaTutor?cedula={tutor}"); //&idalumno={idalumno}");
 
                 if (response.IsSuccessStatusCode)
                 {

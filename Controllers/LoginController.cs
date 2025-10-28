@@ -38,8 +38,9 @@ namespace WebColegio.Controllers
         public async Task<IActionResult> Login(string NombreUsuario, string Password)
         {
             // Buscar usuario por cédula
-            var usuario = await _IService.GetLogin(NombreUsuario);
-            var rol = usuario.IdRol;
+            var usuario = await _IService.GetLogin(NombreUsuario);            
+            var idrol = usuario.IdRol;
+            var roles = await _IService.GetRol(idrol);
             if (usuario == null)
             {
                 TempData["Mensaje"] = "Usuario o Contraseña Icorrecta!";
@@ -61,6 +62,8 @@ namespace WebColegio.Controllers
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+                 new Claim(ClaimTypes.Role, roles.NombreRol),
+                new Claim(ClaimTypes.Role, "Usuario"), // Todos son usuarios base                
                 new Claim(ClaimTypes.Role, usuario.IdRol.ToString())  // 👈 Aquí se asigna el rol desde BD   
             };
 
@@ -74,13 +77,13 @@ namespace WebColegio.Controllers
             HttpContext.Session.SetString("UsuarioCedula", NombreUsuario);
             HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario); // si tienes Id
 
-            if (usuario.IdRol.ToString() == "4")
+            if (usuario.IdRol==4)
             {
                 //var validarTipoUsuario = await _IService.GetValidarTipoUsuario();
-               var notasPorUsuario= await _IService.GetNotasPorUsuario(usuario.NombreUsuario);
+               var notasPorUsuario= await _IService.GetNotasPorUsuario(NombreUsuario);
                 if(notasPorUsuario!=null)
                 {
-                    return RedirectToAction("DetailsNotas", "Notas");
+                    return RedirectToAction("DetailsNotas", "Notas" ,new { cedulatutor=usuario.Cedula});
                 }
                 else
                 {

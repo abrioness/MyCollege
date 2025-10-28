@@ -4,7 +4,7 @@
 <nav style="background-color:mediumblue;padding-top:20px;">
     <div class="text-start text-white"><img src="~/image/colegiosanfrancisco.png" style="width:5%;margin-left:47px;text-size-adjust:auto" /><span>      Colegio Parroquial San Francisco Javier</span>
         <ul class="navbar-collapse">
-            <li class="nav-item rounded">
+            <li class="navbar-brand rounded">
                 <a class="nav-link dropdown-item text-white" href="#" id="registroDropdown" role="button"
                 data-bs-toggle="collapse" data-bs-target="#collapseLogin" aria-controls="collapseLogin" aria-expanded="false">
                     <i class="bi bi-person-lock"></i> Login
@@ -78,31 +78,31 @@
 *@
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background-color: yellow;width:180px;">
-
-                    <!-- Menú Principal -->
-                    @* <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-controller="Alumnos" asp-action="Index"> *@
-                    @* <div class="sidebar-brand-text mx-3">Menú</div> *@
-                    @* </a> *@
                     @if (User.Identity.IsAuthenticated)
                     {
-                    <!-- Alumnos -->
-                    <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAlumnos"
-                        aria-expanded="false" aria-controls="collapseAlumnos">
-                            <i class="bi bi-mortarboard-fill"></i>
-                            <span>Alumnos</span>
-                        </a>
-                        <div id="collapseAlumnos" class="collapse">
-                            <div class="bg-white py-2 collapse-inner rounded">
-                                <a class="collapse-item"  asp-controller="Alumnos" asp-action="Index">Lista de Alumnos</a>
-                                <a class="collapse-item" asp-controller="Alumnos" asp-action="Create">Agregar Alumno</a>
-                            </div>
-                        </div>
-                    </li>
 
-                    <!-- Notas -->
-                   
-                        @if (User.IsInRole("4"))
+                        <!-- Menú Principal -->
+                        @* <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-controller="Alumnos" asp-action="Index"> *@
+                        @* <div class="sidebar-brand-text mx-3">Menú</div> *@
+                        @* </a> *@
+
+                        <!-- Alumnos -->
+                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAlumnos"
+                            aria-expanded="false" aria-controls="collapseAlumnos">
+                                <i class="bi bi-mortarboard-fill"></i>
+                                <span>Alumnos</span>
+                            </a>
+                            <div id="collapseAlumnos" class="collapse">
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    <a class="collapse-item"  asp-controller="Alumnos" asp-action="Index">Lista de Alumnos</a>
+                                    <a class="collapse-item" asp-controller="Alumnos" asp-action="Create">Agregar Alumno</a>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- Notas -->
+                        @if (User.IsInRole("Tutor") || User.IsInRole("Admin"))
                         {
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
@@ -120,58 +120,64 @@
                                 </div>
                             </li>
                         }
-                   
-                        <!-- Facturación -->
-                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
-                               aria-expanded="false" aria-controls="collapseRecibos">
-                            <i class="bi bi-stickies"></i>
-                                <span>Recibo</span>
-                            </a>
-                            <div id="collapseRecibos" class="collapse">
-                                <div class="bg-white py-2 collapse-inner rounded">
-                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Index">Lista de Recibos</a>
-                                    @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Agregar Recibo</a> *@
-                                    <a class="collapse-item" asp-controller="ReciboCaja" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja">Ver Arqueo</a>
-                                    @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
-                                    
-                                </div>
-                            </div>
-                        </li>
-                        <!-- Inventario -->
-                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseInventario"
-                               aria-expanded="false" aria-controls="collapseInventario">
-                                <i class="bi bi-clipboard-check"></i>
-                                <span>Inventario</span>
-                            </a>
-                            <div id="collapseInventario" class="collapse">
-                                <div class="bg-white py-2 collapse-inner rounded">
-                                    <a class="collapse-item" asp-controller="Inventario" asp-action="Index">Lista de Inventario</a>
-                                    <a class="collapse-item" asp-controller="Inventario" asp-action="Create">Agregar Inventario</a>
-                                    
+                        @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Secretaria"))
+                        {
+                            <!-- Facturación -->
+                            <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
+                                aria-expanded="false" aria-controls="collapseRecibos">
+                                    <i class="bi bi-stickies"></i>
+                                    <span>Recibo</span>
+                                </a>
+                                <div id="collapseRecibos" class="collapse">
+                                    <div class="bg-white py-2 collapse-inner rounded">
+                                        <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Index">Lista de Recibos</a>
+                                        @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Agregar Recibo</a> *@
+                                        <a class="collapse-item" asp-controller="ReciboCaja" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja">Ver Arqueo</a>
+                                        @* <a class="collapse-item" asp-controller="ReciboCaja" asp-action="Create">Recibo Egreso</a> *@
 
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
+                            </li>
+                            <!-- Inventario -->
+                            <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseInventario"
+                                aria-expanded="false" aria-controls="collapseInventario">
+                                    <i class="bi bi-clipboard-check"></i>
+                                    <span>Inventario</span>
+                                </a>
+                                <div id="collapseInventario" class="collapse">
+                                    <div class="bg-white py-2 collapse-inner rounded">
+                                        <a class="collapse-item" asp-controller="Inventario" asp-action="Index">Lista de Inventario</a>
+                                        <a class="collapse-item" asp-controller="Inventario" asp-action="Create">Agregar Inventario</a>
+
+
+                                    </div>
+                                </div>
+                            </li>
+                        }
                         <!-- productos -->
-                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
-                               aria-expanded="false" aria-controls="collapseProducto">
-                                <i class="bi bi-cart4"></i>
-                                <span>Productos</span>
-                            </a>
-                            <div id="collapseProducto" class="collapse">
-                                <div class="bg-white py-2 collapse-inner rounded">
-                                    <a class="collapse-item" asp-controller="Productos" asp-action="Index">Lista de Productos</a>
-                                    <a class="collapse-item" asp-controller="Productos" asp-action="Create">Agregar Producto</a>
-                                    @* <a class="collapse-item" asp-controller="Login" asp-action="Login">Sesión</a> *@
+                        @if (User.IsInRole("Cajero") || User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
+                                aria-expanded="false" aria-controls="collapseProducto">
+                                    <i class="bi bi-cart4"></i>
+                                    <span>Productos</span>
+                                </a>
+                                <div id="collapseProducto" class="collapse">
+                                    <div class="bg-white py-2 collapse-inner rounded">
+                                        <a class="collapse-item" asp-controller="Productos" asp-action="Index">Lista de Productos</a>
+                                        <a class="collapse-item" asp-controller="Productos" asp-action="Create">Agregar Producto</a>
+                                        @* <a class="collapse-item" asp-controller="Login" asp-action="Login">Sesión</a> *@
 
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
-
+                            </li>
+                        }
                         <!-- pagos -->
+                        @if (User.IsInRole("Cajero") || User.IsInRole("Admin"))
+                        {
                         <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
                                aria-expanded="false" aria-controls="collapsePago">
@@ -187,6 +193,7 @@
                                 </div>
                             </div>
                         </li>
+                    }
                     }
                     </ul>
                 </div>
