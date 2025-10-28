@@ -541,13 +541,13 @@ namespace WebColegio.Services
 
 
         }
-        public async Task<TblAlumno> V_alumnoNotas(int idnota)
+        public async Task<TblAlumno> V_alumnoNotas(string cedulaTutor)
         {
             var ValumnoNotas = new TblAlumno();
             using (var httpclient = new HttpClient())
             {
 
-                var response = await httpclient.GetAsync(url + "api/Alumnos/alumnoNota?idnota="+idnota);
+                var response = await httpclient.GetAsync(url + "api/Alumnos/alumnoNota?cedulaTutor="+cedulaTutor);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -916,9 +916,9 @@ namespace WebColegio.Services
 
 
         }
-        public async Task<TblNotas> GetNotasPorUsuario(string tutor)
+        public async Task<List<TblNotas>> GetNotasPorUsuario(string tutor)
         {
-            var notasTutor = new TblNotas();
+            List<TblNotas> notasTutor = new List<TblNotas>();
             using (var httpclient = new HttpClient())
             {
 
@@ -927,7 +927,7 @@ namespace WebColegio.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonConvert.DeserializeObject<TblNotas>(content);
+                    var resultado = JsonConvert.DeserializeObject<List<TblNotas>>(content);
 
                     notasTutor = resultado;
                 }

@@ -66,7 +66,7 @@ namespace WebColegio.Controllers
             }
 
             var notasAlumnoTutor = await _Iservices.GetNotasPorUsuario(cedulatutor);
-            var v_alumNota = await _Iservices.V_alumnoNotas(notasAlumnoTutor.IdAlumno);
+            var v_alumNota = await _Iservices.V_alumnoNotas(cedulatutor);
             if (v_alumNota == null)
             {
                 TempData["Mensaje"] = "El dato del usuario no es correcto";
@@ -113,8 +113,8 @@ namespace WebColegio.Controllers
         // GET: NotasController/Details/5
         public async Task<ActionResult> Details(int id)
         {
-            var v_alumNota = await _Iservices.V_alumnoNotas(id);
-            List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(v_alumNota.IdAlumno);   //_context.TblNotas.FirstOrDefault(n => n.Id == id);
+            //var v_alumNota = await _Iservices.V_alumnoNotas(id);
+            List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(id);   //_context.TblNotas.FirstOrDefault(n => n.Id == id);
             //var asignatura = (await _Iservices.GetAsignaturaAsync())
             // .FirstOrDefault(a => a.IdAsignatura == nota.IdAsignatura);
 
@@ -122,7 +122,7 @@ namespace WebColegio.Controllers
             var viewModel = new NotasViewModel
             {
                 listNotas = listnota,
-                alumnoNotas = v_alumNota,
+                //alumnoNotas = v_alumNota,
            
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
         .Select(r => new SelectListItem
@@ -241,7 +241,7 @@ namespace WebColegio.Controllers
         // GET: NotasController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
-            var v_alumNota = await _Iservices.V_alumnoNotas(id);
+            //var v_alumNota = await _Iservices.V_alumnoNotas(id);
             var notas = await _Iservices.GetNotasById(id);
             if (id == 0)
             {

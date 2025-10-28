@@ -22,7 +22,7 @@ namespace WebColegio.Services
         Task<List<FacturaColegiatura>> GetFacturacionAsync();
         Task<List<TipoColegiatura>> GetTipoColegiatuuraAsync();
         Task<List<TblEstadoPago>> GetEstadoPagoAsync();
-        Task<TblAlumno> V_alumnoNotas(int idnota);
+        Task<TblAlumno> V_alumnoNotas(string cedulaTutor);
         Task<List<TblUsuarios>> GetUsuariosAsync();
         Task<List<TblPago>> GetPagosAsync();
         Task<List<TblReciboCaja>> GetRecibosCajaAsync();
@@ -65,7 +65,7 @@ namespace WebColegio.Services
         Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
         Task<ArqueoCajaViewModel> GetArqueoById(int id);
         Task<TblPago> GetPagoById(int id);
-        Task<TblNotas> GetNotasPorUsuario(string usuario);
+        Task<List<TblNotas>> GetNotasPorUsuario(string usuario);
         Task<TblUsuarios> GetLogin(string usuario);
         Task<TblRol> GetRol(int idrol);
         #endregion
