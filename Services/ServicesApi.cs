@@ -4,6 +4,7 @@ using System.Net.Security;
 //using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
@@ -1250,10 +1251,24 @@ namespace WebColegio.Services
             }
 
         }
-
+        //public async Task<int> ValidarMesesPendientes(List<TblPago> pagos,int idmes)
+        //{
+        //    if(pagos == null)
+        //    {
+        //        return 0;
+        //    }
+        //    //var mesesPendientes = await GetPagosAsync();
+        //    var pendientes = pagos
+        //    .Where(p => p.IdAlumno == pagos. &&
+        //               p.IdTipoMovimiento == pagos.IdTipoMovimiento &&
+        //               p.IdPeriodo == pagos.IdPeriodo &&
+        //               p.IdMes < idmes)
+        //    .Select(p => p.IdMes).Count();
+        //    return pendientes;
+        //}
         #endregion
 
-        #region Generar Código Estudiante
+                    #region Generar Código Estudiante
         public async Task<string> GenerarCodigoAlumno()
         {
             // Obtiene el último alumno insertado

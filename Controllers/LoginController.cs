@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebColegio.Services;
+using WebColegio.Models;
 
 namespace WebColegio.Controllers
 {
@@ -81,7 +82,9 @@ namespace WebColegio.Controllers
             {
                 //var validarTipoUsuario = await _IService.GetValidarTipoUsuario();
                var notasPorUsuario= await _IService.GetNotasPorUsuario(NombreUsuario);
-                if(notasPorUsuario!=null)
+               List<TblPago> pagosMensualidad = await _IService.GetPagosAsync();
+                //int valirMensualidad=await _IService.ValidarMesesPendientes(pagosMensualidad, DateTime.Now.Month);
+                if (notasPorUsuario!=null)
                 {
                     return RedirectToAction("DetailsNotas", "Notas" ,new { cedulatutor=usuario.Cedula});
                 }

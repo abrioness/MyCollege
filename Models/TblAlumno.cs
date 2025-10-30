@@ -34,7 +34,7 @@ namespace WebColegio.Models
         public int? IdSexo { get; set; }
         public int IdGrupo { get; set; }
 
-        public int IdPeriodo { get; set; }
+        public int IdPeriodo { get; set; } 
 
         public string? Direccion { get; set; }
 
