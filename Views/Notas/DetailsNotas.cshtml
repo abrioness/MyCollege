@@ -16,7 +16,7 @@
                 <span> @Model.alumnoNotas.Direccion</span>
 
                 <br>
-                <b>Periodo: </b> <span>@Model.alumnoNotas.IdPeriodo @* periodoEvaluacionsSelectListItem.FirstOrDefault(a => a.Value == Model.notas.IdPeriodo.ToString())?.Text</span> *@
+                <b>Periodo: </b> <span>@Model.periodoSelectListItem.FirstOrDefault(a => a.Value == Model.alumnoNotas.IdPeriodo.ToString())?.Text</span> 
                <br/>
                 <b>Modalidad: </b> <span>@Model.modalidadSelectListItem.FirstOrDefault(a => a.Value == Model.alumnoNotas.IdModalidad.ToString())?.Text</span>
                 <br>

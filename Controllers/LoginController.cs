@@ -39,15 +39,16 @@ namespace WebColegio.Controllers
         public async Task<IActionResult> Login(string NombreUsuario, string Password)
         {
             // Buscar usuario por cédula
-            var usuario = await _IService.GetLogin(NombreUsuario);            
-            var idrol = usuario.IdRol;
-            var roles = await _IService.GetRol(idrol);
+            var usuario = await _IService.GetLogin(NombreUsuario);
             if (usuario == null)
             {
                 TempData["Mensaje"] = "Usuario o Contraseña Icorrecta!";
                 TempData["Tipo"] = "warning";
                 return RedirectToAction("Login");
             }
+            var idrol = usuario.IdRol;
+            var roles = await _IService.GetRol(idrol);
+            
 
             // Convertir contraseña guardada en byte[] a string (hash)
             string storedHash = Encoding.UTF8.GetString(usuario.Password);

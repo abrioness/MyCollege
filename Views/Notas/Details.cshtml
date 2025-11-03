@@ -10,25 +10,20 @@
             <div class="col-1">
                 @* <img src="data:image/jpeg;base64,@Convert.ToBase64String(Alumnos)" class="img-fluid rounded-circle mb-3 ml-5" style="width: 150px; height: 150px" /> *@
             </div>
-            <div class="col-3">
+            <div class="col-6">
                 <h2>@Model.alumnoNotas.Nombre @Model.alumnoNotas.Apellido</h2>
-                
-                    <b>Dirección:</b>
+                <b>Dirección:</b>
+                <span> @Model.alumnoNotas.Direccion</span>
 
-                    <span> @Model.alumnoNotas.Direccion</span>
-
-                
-               
-                    <br>
-                @* <b>Periodo: </b> <span>@Model.periodoEvaluacionsSelectListItem.FirstOrDefault(a => a.Value == Model.notas.IdPeriodo.ToString())?.Text</span> *@
-
-               
                 <br>
-               @*  <b>Estado Civil: </b> <span>@empleado.estadCivil</span> *@
-                
+                <b>Periodo: </b> <span>@Model.periodoSelectListItem.FirstOrDefault(a => a.Value == Model.alumnoNotas.IdPeriodo.ToString())?.Text</span>
+                <br />
+                <b>Modalidad: </b> <span>@Model.modalidadSelectListItem.FirstOrDefault(a => a.Value == Model.alumnoNotas.IdModalidad.ToString())?.Text</span>
+                <br>
+                <b>Nivel: </b> <span>@Model.gradosSelectListItem.FirstOrDefault(a => a.Value == Model.alumnoNotas.IdGrado.ToString())?.Text</span>
+                <br>
+                @*  <b>Estado Civil: </b> <span>@empleado.estadCivil</span> *@
                 <b>Sexo: </b> <span>@Model.sexoSelectListItem.FirstOrDefault(a => a.Value == Model.alumnoNotas.IdSexo.ToString())?.Text</span>
-
-               
                 @* foreach (var religion in Model.religion.Where(x => x.idReligion == empleado.fkReligion))
                 {
                     <br>
@@ -38,55 +33,57 @@
             </div>
         </div>
         <br />
-<table id="detalleNotas" class="table table-bordered display responsive nowrap">
-    <thead>
-        <tr>
-            <th>
-              Asignatura
-            </th>
+        <table id="detalleNotas" class="table table-bordered display responsive nowrap">
+            <thead>
+                <tr>
+                    <th>
+                        Asignatura
+                    </th>
                     <th>
                         Acum I
                     </th>
                     <th>
                         Exam I
                     </th>
-            <th>
-                Corte I
-            </th>
+                    <th>
+                        Corte I
+                    </th>
                     <th>
                         Acum II
                     </th>
                     <th>
                         Exam II
                     </th>
-            <th>
-                Corte II
-            </th>
+                    <th>
+                        Corte II
+                    </th>
                     <th>
                         Acum III
                     </th>
                     <th>
                         Exam III
                     </th>
-            <th>
-                Corte III
-            </th>
+                    <th>
+                        Corte III
+                    </th>
                     <th>
                         Acum IV
                     </th>
                     <th>
                         Exam IV
                     </th>
-            <th>
-                Corte IV
-            </th>
-            <th>
-                NF
-            </th>
-        </tr>
+                    <th>
+                        Corte IV
+                    </th>
+                    <th>
+                        NF
+                    </th>
+                </tr>
 
-    </thead>
-    <tbody>
+            </thead>
+            <tbody>
+
+               
     @foreach(var nota in Model.listNotas){
     <tr>
         

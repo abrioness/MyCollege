@@ -41,7 +41,6 @@ namespace WebColegio.Services
                 return Alumnoslist;
             }
 
-
         }
 
         //Get hacia la Api para listar usuarios

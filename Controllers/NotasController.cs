@@ -71,7 +71,7 @@ namespace WebColegio.Controllers
             var _nivel = await _Iservices.GetGradosAsync();
             if (v_alumNota == null)
             {
-                TempData["Mensaje"] = "El dato del usuario no es correcto";
+                TempData["Mensaje"] = "No existen datos del alumno";
                 TempData["Tipo"] = "warning";
                 return NoContent();
 
@@ -132,26 +132,30 @@ namespace WebColegio.Controllers
         {
             //var v_alumNota = await _Iservices.V_alumnoNotas(id);
             List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(id);   //_context.TblNotas.FirstOrDefault(n => n.Id == id);
-            //var asignatura = (await _Iservices.GetAsignaturaAsync())
-            // .FirstOrDefault(a => a.IdAsignatura == nota.IdAsignatura);
+            //var v_alumNota = await _Iservices.V_alumnoNotas(cedulatutor);
+            var _modalidad = await _Iservices.GetModalidadesAsync();
+            var _nivel = await _Iservices.GetGradosAsync();
 
-
+            if (listnota == null)
+            {
+                return NotFound();
+            }
             var viewModel = new NotasViewModel
             {
                 listNotas = listnota,
-                //alumnoNotas = v_alumNota,
-           
+               
+
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
-        .Select(r => new SelectListItem
-        {
-            Value = r.IdAsignatura.ToString(),
-            Text = r.NombreAsignatura
-        }).ToList(),
-                periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+                                            .Select(r => new SelectListItem
+                                            {
+                                                Value = r.IdAsignatura.ToString(),
+                                                Text = r.NombreAsignatura
+                                            }).ToList(),
+                periodoSelectListItem = (await _Iservices.GetPeriodoAsync())
                                   .Select(r => new SelectListItem
                                   {
                                       Value = r.IdPeriodo.ToString(),
-                                      Text = r.NombrePeriodo,
+                                      Text = r.Periodo.ToString(),
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
                 sexoSelectListItem = (await _Iservices.GetSexosAsync())
@@ -161,12 +165,29 @@ namespace WebColegio.Controllers
                                       Text = r.Sexo,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
-            };
+                modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdModalidad.ToString(),
+                                      Text = r.Modalidad,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
+                gradosSelectListItem = (await _Iservices.GetGradosAsync())
+                                  .Select(r => new SelectListItem
+                                  {
+                                      Value = r.IdGrado.ToString(),
+                                      Text = r.NombreGrado,
+                                      //Selected = r.IdPregunta == respuestas.IdPregunta
+                                  }).ToList(),
 
-            if (listnota == null)
+            };
+            if (viewModel == null)
             {
+                TempData["Mensaje"] = "No existe Notas";
+                TempData["Tipo"] = "warning";
                 return NotFound();
             }
+
 
             return View(viewModel);
         }
@@ -184,11 +205,11 @@ namespace WebColegio.Controllers
                                       Text = r.NombreTipEvaluacion,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
-                periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
+                periodoSelectListItem = (await _Iservices.GetPeriodoAsync())
                                   .Select(r => new SelectListItem
                                   {
                                       Value = r.IdPeriodo.ToString(),
-                                      Text = r.NombrePeriodo,
+                                      Text = r.Periodo.ToString(),
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())

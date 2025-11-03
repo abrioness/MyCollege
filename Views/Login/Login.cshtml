@@ -14,13 +14,13 @@
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
-    <div class="left">
-        <div class="login">Iniciar Sesión</div>
-        <img src="~/Image/colegiosanfrancisco.png" class="logo"></img>
-        <div class="eula">Sistema de Gestión Academica y Facturación para el Colegio San Francisco Javier</div>
-    </div>
+    
     <div class="right">
-
+        <div class="left">
+            <div class="login">Iniciar Sesión</div>
+            <img src="~/Image/colegiosanfrancisco.png" class="logo"></img>
+            @* <div class="eula">"En todo Amar y Servir""</div> *@
+        </div>
         <form class="form" method="post" asp-action="Login" enctype="multipart/form-data">
             <label for="NombreUsuario">Usuario</label>
             <input type="text" name="NombreUsuario" id="user" required placeholder="Ejemp:0011910910011N" />
@@ -50,17 +50,15 @@
 
 @section Scripts {
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <script src="~/js/limpiarcampos.js"></script>
     <script src="~/seewtalert/sweetalert.all.min.js"></script>
     <script src="~/seewtalert/sweetalertstyle.js"></script>
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-    @* <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> *@
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     @* <partial name="_ValidationScriptsPartial" />  *@
 @if (TempData["Mensaje"] != null)

@@ -1,24 +1,11 @@
 ﻿@* @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor *@
 
-<nav style="background-color:mediumblue;padding-top:20px;">
-    <div class="text-start text-white"><img src="~/image/colegiosanfrancisco.png" style="width:5%;margin-left:47px;text-size-adjust:auto" /><span>      Colegio Parroquial San Francisco Javier</span>
-        <ul class="navbar-collapse">
-            <li class="navbar-brand rounded">
-                <a class="nav-link dropdown-item text-white" href="#" id="registroDropdown" role="button"
-                data-bs-toggle="collapse" data-bs-target="#collapseLogin" aria-controls="collapseLogin" aria-expanded="false">
-                    <i class="bi bi-person-lock"></i> Login
-                </a>
-                <div id="collapseLogin" class="collapse" aria-labelledby="headingTwo">
+<nav style="background-color:#5478e8;padding-top:20px;">
+    <div class="text-start text-white"><img src="~/image/colegiosanfrancisco.png" style="width:5%;margin-left:47px;text-size-adjust:auto" />
 
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" asp-controller="Login" asp-action="Index">Iniciar Sesión</a>
-                        <a class="collapse-item" asp-controller="Login" asp-action="Logout"> Cerrar Sesión</a>
-
-                    </div>
-                </div>
-            </li>
-        </ul>
+        <div class="align-text-top text-center" ><span style="font-family: 'Trebuchet MS', sans-serif">Colegio Parroquial San Francisco Javier</span></div>
+        
     </div>
     @if(User.Identity.IsAuthenticated)
     {
@@ -78,6 +65,23 @@
 *@
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background-color: yellow;width:180px;">
+                   
+                        <li class="navbar-brand rounded">
+                            <a class="nav-link dropdown-item text-white" href="#" id="registroDropdown" role="button"
+                               data-bs-toggle="collapse" data-bs-target="#collapseLogin" aria-controls="collapseLogin" aria-expanded="false">
+                                <i class="bi bi-person-lock"></i> Login
+                            </a>
+                            <div id="collapseLogin" class="collapse" aria-labelledby="headingTwo">
+
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    <a class="collapse-item" asp-controller="Login" asp-action="Index">Iniciar Sesión</a>
+                                    <a class="collapse-item" asp-controller="Login" asp-action="Logout"> Cerrar Sesión</a>
+
+                                </div>
+                            </div>
+                        </li>                       
+                    
+                    
                     @if (User.Identity.IsAuthenticated)
                     {
 

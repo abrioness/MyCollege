@@ -13,22 +13,25 @@
 }
 
 body {
-    background: white;
+    background: black;
     font-family: 'Inter UI', sans-serif;
     margin: 0;
+    background-image: url('../image/fondoinicio.jpg');
+    background-repeat:no-repeat;
 }
 
 .logo {
-    width: 150px;
-    height: 150px;
-    margin-top: -30px;
-    margin-bottom: -20px;
+    width: 100px;
+    height: 100px;
+    margin-top: -5px;
+    margin-bottom: -10px;
     margin-left: 80px;
     border-radius: 20px;
 }
 
 .page {
     background: #e2e2e5;
+   
     display: flex;
     flex-direction: column;
     height: calc(100% - 40px);
@@ -55,6 +58,7 @@ body {
     height: 320px;
     margin: 100px auto;
     width: 640px;
+    
 }
 
 @media (max-width: 767px) {
@@ -66,9 +70,9 @@ body {
 }
 
 .left {
-    background: white;
-    height: calc(100% - 40px);
-    top: 20px;
+    /*background: white;*/
+    /*height: calc(100% - 40px);*/
+    top: 10px;
     position: relative;
     width: 50%;
 }
@@ -83,24 +87,29 @@ body {
 }
 
 .login {
-    font-size: 35px;
-    font-weight: 900;
+    font-size: 25px;
+    font-weight: 800;
     margin: -25px 40px 40px;
+    text-align:justify;
+    /*opacity:0.4;*/
 }
 
 .eula {
-    color: #999;
-    font-size: 14px;
+    color: black;
+    font-size: 20px;
     line-height: 1.5;
-    margin: 40px;
+    align-content:center;    
+    margin: 10px;
 }
 
 .right {
-    background: #474A59;
+    background: #5c76e0;
     box-shadow: 0px 0px 40px 16px rgba(0,0,0,0.22);
-    color: #F1F1F2;
+    color: #000000;
     position: relative;
     width: 50%;
+    height:150%;
+    opacity: 0.9;
 }
 
 @media (max-width: 767px) {
@@ -120,7 +129,7 @@ svg {
 path {
     fill: none;
     stroke: url(#linearGradient);
-    ;
+    
     stroke-width: 4;
     stroke-dasharray: 240 1386;
 }
@@ -134,18 +143,19 @@ path {
 }
 
 label {
-    color: #c2c2c5;
+    color: white;
     display: block;
     font-size: 14px;
+    font-family:Arial, Helvetica, sans-serif
     height: 16px;
     margin-top: 20px;
     margin-bottom: 5px;
 }
 
 input {
-    background: transparent;
+    /*background: transparent;*/
     border: 0;
-    color: #f2f2f2;
+    color: black;
     font-size: 20px;
     height: 30px;
     line-height: 30px;
@@ -155,8 +165,8 @@ input {
 input:hover {
     border: solid;
     border-color: white;
-    border-radius: 30px;
-    color: white;
+    /*border-radius: 30px;*/
+    color: black;
 }
 
     input::-moz-focus-inner {
@@ -164,22 +174,22 @@ input:hover {
     }
 
 #submit {
-    color: #707075;
+    color: black;
     margin-top: 40px;
     transition: color 300ms;
 }
 
     #submit:hover {
         border: solid;
-        border-color: white;
+        border-color: blue;
         border-radius: 30px;
-        color: white;
+        color: black;
     }
 
     #submit:focus {
-        color: #f2f2f2;
+        color: #000000;
     }
 
     #submit:active {
-        color: #d0d0d2;
+        color: #000000;
     }
