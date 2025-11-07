@@ -341,6 +341,22 @@ namespace WebColegio.Services
                 return  pagos;
             }
         }
+        public async Task<List<TblPagoCaja>> GetPagoCajaAsync()
+        {
+            List<TblPagoCaja> pagosCaja = new List<TblPagoCaja>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TblPagoCajas");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblPagoCaja>>(content);
+                    pagosCaja = resultado;
+                }
+                return pagosCaja;
+            }
+        }
+
         public async Task<List<TblReciboCaja>> GetRecibosCajaAsync()
         {
             List<TblReciboCaja> reciboCajas = new List<TblReciboCaja>();
@@ -701,7 +717,47 @@ namespace WebColegio.Services
 
             return respuesta;
         }
+        //Pago de Caja
+        public async Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja)
+        {
 
+            bool respuesta = false;
+
+            // Asegurar datos mínimos requeridos
+            //pagos.Activo = true;
+            //pagos.UsuarioRegistro = 1;
+            //pagos.FechaRegistro = DateTime.Now;
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Serializar el objeto alumno
+                    string jsonPagos = JsonConvert.SerializeObject(pagosCaja);
+                    var content = new StringContent(jsonPagos, Encoding.UTF8, "application/json");
+
+                    // Enviar POST
+                    var response = await httpClient.PostAsync(url + "api/TblPagoCajas", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        respuesta = true;
+                    }
+                    else
+                    {
+                        // Para debug: mostrar mensaje de error
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en POST: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostPagosCajaAsync: " + ex.Message);
+            }
+
+            return respuesta;
+        }
         //POST de FACTURACION
         public async Task<bool> PostFacturacionAsync(FacturaColegiatura factura)
         {

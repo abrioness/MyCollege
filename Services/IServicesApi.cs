@@ -25,6 +25,8 @@ namespace WebColegio.Services
         Task<TblAlumno> V_alumnoNotas(string cedulaTutor);
         Task<List<TblUsuarios>> GetUsuariosAsync();
         Task<List<TblPago>> GetPagosAsync();
+        Task<List<TblPagoCaja>> GetPagoCajaAsync();
+
         Task<List<TblReciboCaja>> GetRecibosCajaAsync();
 
       
@@ -48,7 +50,7 @@ namespace WebColegio.Services
         Task<bool> PostPagosAsync(TblPago pagos);
         Task<bool> PostFacturacionAsync(FacturaColegiatura factura);
         
-        //Task<bool> PostPagosAsync(PagosViewModel pagos);
+        Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja);
         Task<bool> PostReciboCajaAsync(TblReciboCaja reciboCaja);
         Task<bool> PostInventarioAsync(TblInventario inventario);
         Task<bool> PostProductosAsync(Productos producto);
