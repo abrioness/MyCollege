@@ -12,7 +12,7 @@ namespace WebColegio.Models
 
         public string Apellido { get; set; } = null!;
 
-        public DateOnly FechaNacimiento { get; set; }
+        public DateOnly? FechaNacimiento { get; set; }
 
         public int Edad { get; set; }
         public string? CodigoMINED { get; set; }
@@ -21,8 +21,8 @@ namespace WebColegio.Models
 
         public int? CodigoUnico { get; set; }
         public string? Cedula { get; set; }
-        public bool BecaCompleta { get; set; }
-        public bool MediaBeca { get; set; }
+        public bool? BecaCompleta { get; set; }
+        public bool? MediaBeca { get; set; }
 
         public int IdGrado { get; set; }
 

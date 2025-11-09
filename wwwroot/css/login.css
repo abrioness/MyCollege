@@ -17,7 +17,9 @@ body {
     font-family: 'Inter UI', sans-serif;
     margin: 0;
     background-image: url('../image/fondoinicio.jpg');
-    background-repeat:no-repeat;
+    width: 130%;
+    background-repeat: no-repeat;
+    scrollbar-width: none;
 }
 
 .logo {
@@ -25,8 +27,9 @@ body {
     height: 100px;
     margin-top: -5px;
     margin-bottom: -10px;
-    margin-left: 80px;
+    margin-left: 120px;
     border-radius: 20px;
+    
 }
 
 .page {
@@ -58,7 +61,7 @@ body {
     height: 320px;
     margin: 100px auto;
     width: 640px;
-    
+    position:center;
 }
 
 @media (max-width: 767px) {
@@ -87,10 +90,12 @@ body {
 }
 
 .login {
+    padding-top:40px;
     font-size: 25px;
     font-weight: 800;
     margin: -25px 40px 40px;
-    text-align:justify;
+    text-align:center;
+    
     /*opacity:0.4;*/
 }
 

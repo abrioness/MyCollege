@@ -16,7 +16,7 @@
 
     
     <div class="right">
-        <div class="left">
+        <div class="center text-white">
             <div class="login">Iniciar Sesión</div>
             <img src="~/Image/colegiosanfrancisco.png" class="logo"></img>
             @* <div class="eula">"En todo Amar y Servir""</div> *@
@@ -26,7 +26,9 @@
             <input type="text" name="NombreUsuario" id="user" required placeholder="Ejemp:0011910910011N" />
             <label for="Password">Contraseña</label>
             <input type="password" name="Password" id="password" required placeholder="Contraseña">
-            <input type="submit" id="submit" value="Ingresar">
+            <button type="submit" class="btn btn-success text-white" id="submit">
+                <i class="fa-lock"> Iniciar Sesión</i>
+                </button>
 
             @* ¿No tienes una Cuenta?<a href="@Url.Action("Create","Usuarios")"> Registrar!</a> *@
         </form>
