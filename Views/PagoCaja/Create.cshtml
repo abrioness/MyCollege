@@ -12,89 +12,79 @@
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-coin"></i> Pagos de Caja</h4>
+            <h4 class="mb-0"><i class="bi bi-cash"></i> Pagos de Caja</h4>
         </div>
         <div class="card-body">
             <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
-                    <div class="col-lg-4">                        
-
-                        @* <div class="form-group">
-                            <label asp-for="PagosCaja." class="control-label">Concepto</label>
-
-                            <select asp-for="Pago.IdTipoMovimiento" id="tipoMovimiento" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione un Opción</option>
-                            </select>
-                            <span asp-validation-for="Pago.IdTipoMovimiento" class="text-danger"
-                                  data-val-required="Por favor, seleccione el tipo de movimiento"></span>
-                        </div>
+                    <div class="col-lg-6">
                         <div class="form-group">
-                            <label asp-for="Pago.IdTipoRecibo" class="control-label">Tipo de Recibo</label>
-                            <select asp-for="Pago.IdTipoRecibo" asp-items="Model.tipoRecibosSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione una Opción</option>
-                            </select>
-                            <span asp-validation-for="Pago.IdTipoRecibo" class="text-danger"></span>
-
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="Pago.IdMetodoPago" class="control-label">Metodo de Pago</label>
-                            <select asp-for="Pago.IdMetodoPago" asp-items="Model.metodoPagoSelectListItem" class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
-                            </select>
-                            <span asp-validation-for="Pago.IdMetodoPago" class="text-danger"></span>
+                            <label asp-for="PagosCaja.NumeroRecibo" class="control-label">Número Recibo</label>
+                            <input asp-for="PagosCaja.NumeroRecibo" value="@Model.SiguienteNumero" id="numeroRecibo" class="form-control" readonly />
+                            <span asp-validation-for="PagosCaja.NumeroRecibo" class="text-danger"></span>
                         </div>
 
-                    </div>
 
-                    <div class="col-lg-4">
                         <div class="form-group">
-                            <label asp-for="Pago.Monto" class="control-label">Cantidad</label>
-                            <input asp-for="Pago.Monto" id="monto" class="form-control" />
-                            <span asp-validation-for="Pago.Monto" class="text-danger"></span>
+                            <label asp-for="PagosCaja.Nombre" class="control-label">Recibi De:</label>
+                                <input asp-for="PagosCaja.Nombre" id="monto" class="form-control" />
+                                <span asp-validation-for="PagosCaja.Nombre" class="text-danger"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="Pago.IdGrado" class="control-label">Nivel</label>
-                            <select asp-for="Pago.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
-                            </select>
-                            <span asp-validation-for="Pago.IdGrado" class="text-danger"></span>
+                            <label asp-for="PagosCaja.Monto" class="control-label">La Cantidad de:</label>
+                            <input asp-for="PagosCaja.Monto" id="monto" class="form-control" />
+                            <span asp-validation-for="PagosCaja.Monto" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
-                            <label asp-for="Pago.Mora" class="control-label">Mora</label>
-                            <input asp-for="Pago.Mora" id="Mora" class="form-control" />
-                            <span asp-validation-for="Pago.Mora" class="text-danger"></span>
-                        </div>
- *@
+                            <div class="form-group">
+                                <label asp-for="PagosCaja.IdGrado" class="control-label">Nivel</label>
+                                <select asp-for="PagosCaja.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
+                                    <option value="">Seleccione una Opción</option>
+                                </select>
+                                <span asp-validation-for="PagosCaja.IdGrado" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="PagosCaja.IdTurno" class="control-label">Turno</label>
+                                <select asp-for="PagosCaja.IdTurno" asp-items="Model.turnosSelectListItem" class="form-select" required>
+                                    <option value="">Seleccione una Opción</option>
+                                </select>
+                                <span asp-validation-for="PagosCaja.IdTurno" class="text-danger"></span>
+                            </div>
+                           
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
                         <br />
-                        <div class="form-group" id="mesPagado">
-                            <label>Meses a pagar</label>
-                            <div id="mesesSeleccionadosContainer" class="mb-2">
-                                <!-- Aquí se mostrarán los meses elegidos -->
-                            </div>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMeses">
-                                Seleccionar meses
-                            </button>
-
-                            <!-- Campo oculto que enviará los IDs -->
-                            <input type="hidden" id="MesesSeleccionados" name="MesesSeleccionados" />
-                        </div>
-                        <div class="form-group col-lg-4" style="" id="mesPagado">
-                            <label>Descripción</label>
-                            <div id="" class="mb-lg-5">
-                                <!-- Aquí se mostrarán los meses elegidos -->
-                            </div>
-                            @* <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMeses">
-                            Seleccionar meses
-                        </button> *@
-
-                            <!-- Campo oculto que enviará los IDs -->
-                            <textarea id="MesesSeleccionados" name="MesesSeleccionados"></textarea>
-                        </div>
+                        
+                       
                     </div>
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label asp-for="PagosCaja.Serie" class="control-label">Serie:</label>
+                        <input asp-for="PagosCaja.Serie" id="serie" class="form-control" readonly value="A" />
+                        <span asp-validation-for="PagosCaja.Serie" class="text-danger"></span>
+                    </div>
+                        <div class="form-group">
+                            <label asp-for="PagosCaja.Concepto" class="control-label">En Concepto:</label>
+                            <select asp-for="PagosCaja.Concepto" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="PagosCaja.Concepto" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="PagosCaja.IdPeriodo" class="control-label">Periodo</label>
+                            <select asp-for="PagosCaja.IdPeriodo" asp-items="Model.periodo" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="PagosCaja.IdPeriodo" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="PagosCaja.Descripcion" class="control-label">Observaciones</label>
+                            <textarea asp-for="PagosCaja.Descripcion" class="form-control"></textarea>
+
+                        </div>
+                          
+                </div>
                     <!-- Modal -->
-                    <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
+					@*  <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -115,8 +105,8 @@
                                                     <label class="form-check-label" for="mes_@itemMeses.IdMes">
                                                         @itemMeses.Mes
                                                     </label>
-                                                    @* <input type="hidden" asp-for="@itemMeses.IdMes" /> *@
-                                                    @* <input type="hidden" asp-for="mesesSelectListItem[i].Value" /> *@
+                                                     <input type="hidden" asp-for="@itemMeses.IdMes" /> *@
+                                                    @* <input type="hidden" asp-for="mesesSelectListItem[i].Value" /> 
                                                 </div>
                                             </div>
                                         }
@@ -128,7 +118,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>*@
 
 
 
@@ -159,143 +149,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-    <script src="~/js/limpiarcampos.js"></script>
-    <script src="~/seewtalert/sweetalert.all.min.js"></script>
-    <script src="~/seewtalert/sweetalertstyle.js"></script>
-    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+  
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-
-            $(document).ready(function() {
-            // Reemplaza 1 y 2 por los valores reales de tu base de datos
-            $('#tipoMovimiento').change(function() {
-                const tipoMovimientoId = parseInt($('#tipoMovimiento').val());
-
-                // Ajusta estos números según tus tipos de movimiento
-                if (tipoMovimientoId === 1) { // 1 = Matrícula
-                    $('#mesPagado').show();
-                } else {
-                    $('#mesPagado').hide();
-                }
-            }).trigger('change');
-        });
-
-
-
-        $("#AlumnoNombre").autocomplete({
-            source: function (request, response) {
-                $.ajax({
-                    url: "https://localhost:7008/api/Alumnos/buscar",
-                    data: { q: request.term },
-                    success: function (data) {
-                         console.log("Respuesta API:", data); // 👈 debug
-                        response($.map(data, function (item) {
-                            return {
-                                label: item.nombreCompleto,
-                                value: item.nombreCompleto,
-                                id: item.id
-                            };
-                        }));
-                    }
-                });
-            },
-            minLength: 2, // empieza a buscar desde 2 letras
-            select: function (event, ui) {
-                $("#IdAlumno").val(ui.item.id); // Guardamos el ID del alumno
-            }
-        });
-
-               function msg(mensaje){
-                   swal.fire({
-                           title:'Warning',
-                           text: mensaje,
-                           icon: 'warning',
-                           showCancelButton: true,
-                        confirmButtonText: 'Aceptar',
-                        cancelButtonText: 'Cancelar' // corregido el error tipográfico
-                       });}
-
-               function msgconfirm(mensaje) {
-                    Swal.fire({
-                        title: 'Información',
-                        text: mensaje,
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonText: 'Aceptar',
-                        cancelButtonText: 'Cancelar'
-                    });
-                }
-
-        document.getElementById("mesPagado").addEventListener("change", function () {
-            const nombre = this.value.trim().toUpperCase();
-
-            if (nombre.length === 0) {
-                document.getElementById("Mora").value = "";
-                return;
-            }
-
-            // Quitar tildes
-            const sinAcentos = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-            // Dividir por espacios
-            const palabras = sinAcentos.split(" ").filter(p => p.length > 0);
-
-            let codigoBase = "";
-
-            // Si tiene 2 o más palabras → tomar 3 primeras letras de la 1ra + 3 de la 2da
-            if (palabras.length >= 2) {
-                codigoBase = palabras[0].substring(0, 3) + palabras[1].substring(0, 3);
-            }
-            // Si solo hay una palabra → tomar 6 primeras letras
-            else {
-                codigoBase = palabras[0].substring(0, 6);
-            }
-
-            codigoBase = codigoBase.toUpperCase();
-
-            // Agregar número (esto puedes cambiarlo por el correlativo real)
-            const numero = document.getElementById("CodigoProducto").value;
-
-            document.getElementById("CodigoProducto").value = `${codigoBase}-${numero}`;
-        });
-
-          function confirmarMeses() {
-            let seleccionados = [];
-            let nombres = [];
-
-            document.querySelectorAll('#modalMeses input[type="checkbox"]:checked').forEach(chk => {
-                seleccionados.push(chk.value);
-                nombres.push(chk.nextElementSibling.textContent);
-            });
-
-            // Guardar IDs en el campo oculto
-            document.getElementById('MesesSeleccionados').value = seleccionados.join(',');
-
-            // Mostrar nombres en la vista principal
-            let contenedor = document.getElementById('mesesSeleccionadosContainer');
-            contenedor.innerHTML = '';
-
-            nombres.forEach(nombre => {
-                let badge = document.createElement('span');
-                badge.className = 'badge bg-success me-1';
-                badge.textContent = nombre;
-                contenedor.appendChild(badge);
-            });
-
-               // ✅ Cerrar correctamente la modal y eliminar el fondo bloqueante
-        const modalElement = document.getElementById('modalMeses');
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        modalInstance.hide();
-
-        // Esperar un pequeño tiempo y eliminar el backdrop manualmente si quedara
-        setTimeout(() => {
-            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.removeProperty('padding-right');
-        }, 300);
-        }
-
-    </script>
+    
 
 
 

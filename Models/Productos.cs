@@ -9,6 +9,8 @@
         public string? CodigoBarra { get; set; }
 
         public string? Descripcion { get; set; }
+        public int ExistenciaInicial { get; set; }
+        public int IdMovInventario { get; set; }
 
         public int IdCateProducto { get; set; }
 
@@ -16,7 +18,7 @@
 
         public decimal CostoUnitario { get; set; }
 
-        public decimal PrecioVenta { get; set; }
+        public decimal ImporteInventario { get; set; }
 
         public int StockActual { get; set; }
 

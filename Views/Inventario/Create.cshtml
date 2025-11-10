@@ -1,4 +1,4 @@
-﻿  @model WebColegio.Models.ViewModel.InventarioViewModel
+﻿@*   @model WebColegio.Models.ViewModel.InventarioViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -6,7 +6,7 @@
 @*<div class="content">
      <div class="modal-body">
         <span class="h5 mb-1">Bienvenido: @TempData["nombreusuario"] </span>
-    </div> *@
+    </div>
 
 
 
@@ -25,7 +25,7 @@
                             <label asp-for="Inventario.i">Nombre del Alumno</label>
                             <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar alumno..." />
                             <input type="hidden" id="IdAlumno" name="notas.IdAlumno" />
-                        </div> *@
+                        </div> 
 
                         <div class="form-group">
                             <label asp-for="Inventario.IdProducto" class="control-label">Producto</label>
@@ -64,7 +64,7 @@
                         <div class="form-group">
                             <label asp-for="Inventario.Descripcion" class="control-label">Descripción</label>
                             <input asp-for="Inventario.Descripcion" id="examen2" class="form-control" />
-                            @* <span asp-validation-for="Inventario.Descripcion" class="text-danger"></span> *@
+                             <span asp-validation-for="Inventario.Descripcion" class="text-danger"></span> 
                         </div>
 
                         
@@ -92,11 +92,11 @@
     </div>
 </div>
 @* </div> *@
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@*<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-@* <div>
+ <div>
     <a asp-action="Index">Back to List</a>
-</div> *@
+</div> 
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -106,7 +106,7 @@
     <script src="~/seewtalert/sweetalert.all.min.js"></script>
     <script src="~/seewtalert/sweetalertstyle.js"></script>
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-
+*@
    @*  <script>
         $("#AlumnoNombre").autocomplete({
             source: function (request, response) {
@@ -195,7 +195,7 @@
 
 
 
-    </script> *@
+    </script> 
 
     @if (TempData["Mensaje"] != null)
     {
@@ -211,4 +211,4 @@
         </script>
     }
 }
-
+*@

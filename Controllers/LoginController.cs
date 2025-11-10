@@ -44,7 +44,7 @@ namespace WebColegio.Controllers
             {
                 TempData["Mensaje"] = "Usuario o Contraseña Icorrecta!";
                 TempData["Tipo"] = "warning";
-                return RedirectToAction("Login");
+                return View("Login");
             }
             var idrol = usuario.IdRol;
             var roles = await _IService.GetRol(idrol);
@@ -59,7 +59,7 @@ namespace WebColegio.Controllers
             {
                 TempData["Mensaje"] = "Password Incorrecta";
                 TempData["Tipo"] = "warning";
-                return RedirectToAction("Login");
+                return View("Login");
             }
             var claims = new List<Claim>
             {
@@ -85,7 +85,8 @@ namespace WebColegio.Controllers
                var notasPorUsuario= await _IService.GetNotasPorUsuario(NombreUsuario);
                List<TblPago> pagosMensualidad = await _IService.GetPagosAsync();
                 //int valirMensualidad=await _IService.ValidarMesesPendientes(pagosMensualidad, DateTime.Now.Month);
-                if (notasPorUsuario!=null)
+               
+                if (notasPorUsuario.Count>0)
                 {
                     return RedirectToAction("DetailsNotas", "Notas" ,new { cedulatutor=usuario.Cedula});
                 }
@@ -94,7 +95,7 @@ namespace WebColegio.Controllers
                     TempData["Mensaje"] = "Usuario del Tutor no Existe!";
                     TempData["Tipo"] = "warning";
 
-                    return RedirectToAction("Login");
+                    return View("Login");
                 }
             }
             return RedirectToAction("Index", "notas");

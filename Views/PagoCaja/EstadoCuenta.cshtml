@@ -19,89 +19,67 @@
 				</a>
 			</div>
 			<div class="table-responsive" style="font-size: 12px;">
-			<table id="tablaPagos" class="table justify-content-lg-between table-bordered  small" style="width:100%">
-				@* class="display responsive nowrap" style="width:100%"> *@
-				<thead>
-					<tr>
-						<th>Alumno</th>
-						<th>Grado</th>
-						<th>Matricula</th>
-						<th>Enero</th>
-						<th>Febrero</th>
-						<th>Marzo</th>
-						<th>Abril</th>
-						<th>Mayo</th>
-						<th>Junio</th>
-						<th>Julio</th>
-						<th>Agosto</th>
-						<th>Septiembre</th>
-						<th>Octubre</th>
-						<th>Noviembre</th>
-						<th>Diciembre</th>
-
-					</tr>
-				</thead>
-				<tbody>
-					@foreach (var alumno in Model.alumno)
-					{
+				<table id="tablaPagos" class="table justify-content-lg-between table-bordered  small" style="width:100%">
+					@* class="display responsive nowrap" style="width:100%"> *@
+					<thead>
 						<tr>
-							<td>
-								<a asp-action="Create" asp-controller="ReciboCaja" asp-route-id="@alumno.IdAlumno" class="btn btn-sm btn-info">
-									@alumno.Nombre @alumno.Apellido
-								</a>
-							</td>
+							<th>Alumno</th>
+							<th>Grado</th>
+							<th>Matricula</th>
+							<th>Enero</th>
+							<th>Febrero</th>
+							<th>Marzo</th>
+							<th>Abril</th>
+							<th>Mayo</th>
+							<th>Junio</th>
+							<th>Julio</th>
+							<th>Agosto</th>
+							<th>Septiembre</th>
+							<th>Octubre</th>
+							<th>Noviembre</th>
+							<th>Diciembre</th>
 
-							@* Buscar grado y periodo asociados si aplica *@
-							@{
-								var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
-								var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
-							}
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var alumno in Model.alumno)
+						{
+							<tr>
+								<td>
+									<a asp-action="Create" asp-controller="ReciboCaja" asp-route-id="@alumno.IdAlumno" class="btn btn-sm btn-info">
+										@alumno.Nombre @alumno.Apellido
+									</a>
+								</td>
 
-							<td>@(grado?.NombreGrado ?? "-")</td>
-							<td>@(periodo?.Periodo.ToString() ?? "-")</td>
-								 @if(User.Identity.IsAuthenticated)
-							{
-									@if (User.IsInRole("Cajero"))
+								@* Buscar grado y periodo asociados si aplica *@
+								@{
+									var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
+									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
+								}
+
+								<td>@(grado?.NombreGrado ?? "-")</td>
+								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
+
+								@* Mostrar columnas de los 12 meses *@
+								@for (int mes = 1; mes <= 12; mes++)
+								{
+									var pagoMes = Model.pagos
+									.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
+
+									if (pagoMes != null)
 									{
-										@for (int mes = 1; mes <= 12; mes++)
-										{
-											var pagoMes = Model.pagos
-											.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
-
-											if (pagoMes != null)
-											{
-												<td> <span class="badge bg-success">Pagado</span></td>
-											}
-											else
-											{
-												<td><span class="badge bg-warning text-dark">Pendiente</span></td>
-											}
-										}
+										<td>C$ @pagoMes.Monto</td>
 									}
 									else
 									{
-							@* Mostrar columnas de los 12 meses *@
-							@for (int mes = 1; mes <= 12; mes++)
-							{
-								var pagoMes = Model.pagos
-								.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
-
-								if (pagoMes != null)
-								{
-									<td>C$ @pagoMes.Monto</td>
-								}
-								else
-								{
-									<td>C$ 0.00</td>
-								}
-							}
+										<td>C$ 0.00</td>
 									}
-													}
-						</tr>
-					}
-				</tbody>
+								}
+							</tr>
+						}
+					</tbody>
 
-			</table>
+				</table>
 			</div>
 		</div>
 	</div>
@@ -116,7 +94,7 @@
 <script>
 	$(document).ready(function () {
 			$('#tablaPagos').DataTable({
-			responsive: true,			
+			responsive: true,
 			dom: 'Bfrtip', // Botones + filtro + tabla
 		scrollX: true,
 		scrollY: '600px',// Habilita scroll horizontal

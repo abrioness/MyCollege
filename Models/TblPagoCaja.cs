@@ -12,6 +12,7 @@
         public decimal Monto { get; set; }
         public int Concepto { get; set; }
         public string Descripcion { get; set; } = null!;
+        public bool Activo { get; set; }
         public int UsuarioRegistro { get; set; }
         public DateTime FechaRegistro { get; set; }
         public int UsuarioActualizo { get; set; }

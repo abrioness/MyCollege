@@ -8,6 +8,7 @@ namespace WebColegio.Models.ViewModel
         public string SiguienteCodigo { get; set; }
         public List<Productos> listaproducto { get; set; } = new();
         public List<SelectListItem> listCategoriaProducto { get; set; } = new();
+        public List<SelectListItem> listMovimientoInventario { get; set; } = new();
         public List<SelectListItem> ListaProveedores { get; set; } = new();
         public List<SelectListItem> ListaUsuarios { get; set; } = new();
         

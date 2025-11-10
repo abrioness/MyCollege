@@ -32,7 +32,7 @@ namespace WebColegio.Services
       
         Task<List<Productos>> GetProductosAsync();
         Task<List<CategoriaProducto>> GetCategoriaProductoAsync();
-        Task<List<TblInventario>> GetInventarioAsync();
+        //Task<List<TblInventario>> GetInventarioAsync();
         Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync();
         Task<List<CatTipoRecibo>> GetTipoReciboAsync();
         Task<List<CatMetodoPago>> GetMetodoPagoAsync();
@@ -52,7 +52,7 @@ namespace WebColegio.Services
         
         Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja);
         Task<bool> PostReciboCajaAsync(TblReciboCaja reciboCaja);
-        Task<bool> PostInventarioAsync(TblInventario inventario);
+        //Task<bool> PostInventarioAsync(TblInventario inventario);
         Task<bool> PostProductosAsync(Productos producto);
 
         #endregion

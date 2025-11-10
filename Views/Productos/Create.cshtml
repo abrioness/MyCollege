@@ -13,7 +13,7 @@
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-pencil"></i> Registro de Productos</h4>
+            <h4 class="mb-0"><i class="bi-clipboard-check"></i> Registro de Inventario</h4>
         </div>
         <div class="card-body">
         <form asp-action="Create" method="post" enctype="multipart/form-data" >
@@ -37,11 +37,11 @@
                             <input asp-for="tblproducto.NombreProducto" id="NombreProducto" class="form-control text-uppercase" />
                             <span asp-validation-for="tblproducto.NombreProducto" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
+                        @* <div class="form-group">
                             <label asp-for="tblproducto.Descripcion" class="control-label">Descripción</label>
                             <input type="text" asp-for="tblproducto.Descripcion" id="Descripcion" class="form-control" />
                           
-                        </div>
+                        </div> *@
                 <div class="form-group">
                             <label asp-for="tblproducto.IdCateProducto" class="control-label">Categoría del Producto</label>
                             <select asp-for="tblproducto.IdCateProducto" asp-items="Model.listCategoriaProducto" class="form-select" required>
@@ -49,28 +49,35 @@
                                     </select>
                             <span asp-validation-for="tblproducto.IdCateProducto" class="text-danger"></span>
                 </div>
-           
-                    
+                        <div class="form-group">
+                            <label asp-for="tblproducto.ExistenciaInicial" class="control-label">Existencia Actual</label>
+                            <input asp-for="tblproducto.ExistenciaInicial" id="existenciaActual" class="form-control" />
+                            <span asp-validation-for="tblproducto.ExistenciaInicial" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.IdMovInventario" class="control-label">Tipo Moviento del Inventario</label>
+                            <select asp-for="tblproducto.IdMovInventario" asp-items="Model.listMovimientoInventario" class="form-select" required>
+                                <option disabled selected>Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="tblproducto.IdMovInventario" class="text-danger"></span>
+                        </div>
                             </div>
                 <div class="col-lg-4">
+
                         <div class="form-group">
                             <label asp-for="tblproducto.CostoUnitario" class="control-label">Costo Unitario</label>
                             <input type="number" asp-for="tblproducto.CostoUnitario" id="costoUnitario" class="form-control" />
                             @* <span asp-validation-for="tblproducto.CostoUnitario" class="text-danger"></span> *@
                         </div>
-                        <div class="form-group">
-                            <label asp-for="tblproducto.PrecioVenta" class="control-label">Precio de Venta</label>
-                            <input type="number" asp-for="tblproducto.PrecioVenta" id="precioVenta" class="form-control" />
-                            
-                        </div>
+                        
             <div class="form-group">
                             <label asp-for="tblproducto.StockActual" class="control-label">Stock Actual</label>
                             <input asp-for="tblproducto.StockActual" id="stockActual" class="form-control"  />
                             <span asp-validation-for="tblproducto.StockActual" class="text-danger"></span>
             </div>
                         <div class="form-group">
-                            <label asp-for="tblproducto.StockMinimo" class="control-label">Stock Minimo</label>
-                            <input asp-for="tblproducto.StockMinimo" id="stockMinimo" class="form-control" />
+                            <label asp-for="tblproducto.ImporteInventario" class="control-label">Importe de Inventario</label>
+                            <input asp-for="tblproducto.ImporteInventario" id="importeInventario" class="form-control" readonly />
                             
                         </div>
                         
@@ -79,7 +86,6 @@
                         
 
                     </div>
-
 
                     <br />
                     <!-- Botones -->
@@ -120,7 +126,7 @@
         <script>
         document.getElementById("NombreProducto").addEventListener("change", function () {
             const nombre = this.value.trim().toUpperCase();
-
+           
             if (nombre.length === 0) {
                 document.getElementById("CodigoProducto").value = "";
                 return;
@@ -149,10 +155,22 @@
             const numero = document.getElementById("CodigoProducto").value;
 
             document.getElementById("CodigoProducto").value = `${codigoBase}-${numero}`;
+            
+        
         });
 
-
-
+        function calcularImporteInventario() {
+             let stockActual=parseFloat($("#stockActual").val()) || 0;
+        let costoUnitario=parseFloat($("#costoUnitario").val()) || 0;
+            let importeInventario = stockActual * costoUnitario;
+            $("#importeInventario").val(importeInventario.toFixed(1));
+            
+        }
+        $(document).ready(function() {
+            // 2. CONFIGURAR EVENTOS DE CÁLCULO
+            $("#costoUnitario, #stockActual").on("input", calcularImporteInventario);
+        calcularImporteInventario();
+        });
 
     </script>
     

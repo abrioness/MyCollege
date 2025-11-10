@@ -6,7 +6,7 @@ namespace WebColegio.Models.ViewModel
     {
         public TblReciboCaja ReciboCaja { get; set; }
         public TblPagoCaja PagosCaja { get; set; } = new();
-
+        public int SiguienteNumero { get; set; }
         public int Mora { get; set; }
         public List<TblPagoCaja> listPagoCaja { get; set; } = new();
         public List<SelectListItem> reciboCajas { get; set; } = new();
@@ -25,7 +25,8 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> estadoPagoSelectListItem { get; set; } = new();
         public List<SelectListItem> mesesSelectListItem { get; set; } = new();
         public List<SelectListItem> gradosSelectListItem { get; set; } = new();
+        public List<SelectListItem> turnosSelectListItem { get; set; } = new();
         public List<TblCatMeses> meses { get; set; } = new List<TblCatMeses>();
-        public List<CatPeriodo> periodo { get; set; } = new List<CatPeriodo>();
+        public List<SelectListItem> periodo { get; set; } =  new();
     }
 }

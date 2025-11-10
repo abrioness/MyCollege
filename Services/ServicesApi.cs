@@ -521,22 +521,22 @@ namespace WebColegio.Services
             }
 
         }
-        public  async Task<List<TblInventario>> GetInventarioAsync()
-        {
-            List<TblInventario> inventario = new List<TblInventario>();
-            using (var httpclient = new HttpClient())
-            {
-                var response = await httpclient.GetAsync(url + "api/Inventario");
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonConvert.DeserializeObject<List<TblInventario>>(content);
-                    inventario = resultado;
-                }
-                return inventario;
-            }
+        //public  async Task<List<TblInventario>> GetInventarioAsync()
+        //{
+        //    List<TblInventario> inventario = new List<TblInventario>();
+        //    using (var httpclient = new HttpClient())
+        //    {
+        //        var response = await httpclient.GetAsync(url + "api/Inventario");
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            var content = await response.Content.ReadAsStringAsync();
+        //            var resultado = JsonConvert.DeserializeObject<List<TblInventario>>(content);
+        //            inventario = resultado;
+        //        }
+        //        return inventario;
+        //    }
 
-        }
+        //}
 
         public async Task<TblRol> GetRol(int idrol)
         {
@@ -582,7 +582,6 @@ namespace WebColegio.Services
             using (var httpClient = new HttpClient())
             {
                 var login = new TblUsuarios();
-
                 var response = await httpClient.GetAsync(url + $"api/Usuarios/obtenerUsuario?login={usuario}");
                 if (response.IsSuccessStatusCode)
                 {
@@ -733,8 +732,8 @@ namespace WebColegio.Services
                 using (var httpClient = new HttpClient())
                 {
                     // Serializar el objeto alumno
-                    string jsonPagos = JsonConvert.SerializeObject(pagosCaja);
-                    var content = new StringContent(jsonPagos, Encoding.UTF8, "application/json");
+                    string jsonPagosCaja = JsonConvert.SerializeObject(pagosCaja);
+                    var content = new StringContent(jsonPagosCaja, Encoding.UTF8, "application/json");
 
                     // Enviar POST
                     var response = await httpClient.PostAsync(url + "api/TblPagoCajas", content);
@@ -849,45 +848,45 @@ namespace WebColegio.Services
             return respuesta;
         }
 
-        public async Task<bool> PostInventarioAsync(TblInventario inventario)
-        {
-            bool respuesta = false;
+        //public async Task<bool> PostInventarioAsync(TblInventario inventario)
+        //{
+        //    bool respuesta = false;
 
-            // Asegurar datos mínimos requeridos
-            inventario.Activo = true;
-            inventario.UsuarioRegistro = 1;
-            inventario.FechaRegistro = DateTime.Now;
+        //    // Asegurar datos mínimos requeridos
+        //    inventario.Activo = true;
+        //    inventario.UsuarioRegistro = 1;
+        //    inventario.FechaRegistro = DateTime.Now;
 
-            try
-            {
-                using (var httpClient = new HttpClient())
-                {
-                    // Serializar el objeto alumno
-                    string jsonInventario = JsonConvert.SerializeObject(inventario);
-                    var content = new StringContent(jsonInventario, Encoding.UTF8, "application/json");
+        //    try
+        //    {
+        //        using (var httpClient = new HttpClient())
+        //        {
+        //            // Serializar el objeto alumno
+        //            string jsonInventario = JsonConvert.SerializeObject(inventario);
+        //            var content = new StringContent(jsonInventario, Encoding.UTF8, "application/json");
 
-                    // Enviar POST
-                    var response = await httpClient.PostAsync(url + "api/Inventario", content);
+        //            // Enviar POST
+        //            var response = await httpClient.PostAsync(url + "api/Inventario", content);
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        respuesta = true;
-                    }
-                    else
-                    {
-                        // Para debug: mostrar mensaje de error
-                        var errorMsg = await response.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Error en POST: " + errorMsg);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Excepción en PostInventarioAsync: " + ex.Message);
-            }
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                respuesta = true;
+        //            }
+        //            else
+        //            {
+        //                // Para debug: mostrar mensaje de error
+        //                var errorMsg = await response.Content.ReadAsStringAsync();
+        //                Debug.WriteLine("Error en POST: " + errorMsg);
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debug.WriteLine("Excepción en PostInventarioAsync: " + ex.Message);
+        //    }
 
-            return respuesta;
-        }
+        //    return respuesta;
+        //}
 
         public async Task<bool> PostProductosAsync(Productos product)
         {

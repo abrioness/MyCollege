@@ -22,13 +22,14 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Index()
         {
             var _productos = await _Iservices.GetProductosAsync();
+            var _movInvebtario = await _Iservices.GetMovInventarioAsync();
             var _categoriaProducto = await _Iservices.GetCategoriaProductoAsync();
 
             var viewModel = new ColeccionCatalogos
             {
                 producto = _productos,
-                categoriasProducto=_categoriaProducto
-
+                categoriasProducto=_categoriaProducto,
+                movinventario = _movInvebtario
             };
 
 
@@ -69,6 +70,13 @@ namespace WebColegio.Controllers
                                    {
                                        Value = r.IdCateProducto.ToString(),
                                        Text = r.NombreCategoria,
+                                       //Selected = r.IdPregunta == respuestas.IdPregunta
+                                   }).ToList(),
+                listMovimientoInventario = (await _Iservices.GetMovInventarioAsync())
+                                   .Select(r => new SelectListItem
+                                   {
+                                       Value = r.IdMovInventario.ToString(),
+                                       Text = r.MovimientoInventario,
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList()
             };
