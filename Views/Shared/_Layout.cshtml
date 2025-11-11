@@ -1,16 +1,15 @@
 ﻿@* @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor *@
 
-<nav style="background-color:royalblue;padding-top:20px;">
-    <div class="align-text-top text-center text-white-50"><span style="font-size:35px; font-family:'Arial', 'Trebuchet MS', sans-serif; margin-left:15px">Colegio Parroquial San Francisco Javier</span><br />
-        <span style="font-size:25px; font-family:'Arial', 'Trebuchet MS', sans-serif;margin-left:15px">”    En todo Amar y Servir”</span></div>
-    <div class="align-text-top text-center text-white-50"></div>
-    <div class="text-start text-white"><img src="~/image/colegiosanfrancisco.png" style="width:8%;margin-left:40px;margin-top:10px;text-size-adjust:auto;padding-top:revert-layer" />
-        
+<nav style="background-color:royalblue;height:35%;">
+    <div class="align-text-top text-center text-white-50"><span style="font-size:25px; font-family:'Arial', 'Trebuchet MS', sans-serif; margin-left:15px">Colegio Parroquial San Francisco Javier</span><br />
+        <span style="font-size:20px; font-family:'Arial', 'Trebuchet MS', sans-serif;margin-left:15px">”    En todo Amar y Servir”</span></div>
+    
+    <div class="text-start text-white" style="float:inline-start">
+        <img src="~/image/colegiosanfrancisco.png" style="width:8%;margin-left:40px;" />
+        <img src="~/image/SanFrancisco.png" style="width:28%;margin-left:58%;"/>
     </div>
-   @*  <div class="text-end text-white">        
-        <img src="~/image/SanFrancisco.png" style="width:28%;position:fixed;" />
-    </div> *@
+    
     @if(User.Identity.IsAuthenticated)
     {
         <div class="text-end text-white">

@@ -1059,6 +1059,28 @@ namespace WebColegio.Services
                 return pago!;
             }
         }
+        public async Task<TblPagoCaja> GetPagoCajaById(int id)
+        {
+            // Suponiendo que tu API tiene un endpoint como:
+            // GET https://tuservidor/api/arqueo/{id}
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + $"api/TblPagoCajas/" + id);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Error al obtener el arqueo: {response.StatusCode}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Usar Newtonsoft.Json o System.Text.Json para deserializar
+                var pagoCaja = JsonConvert.DeserializeObject<TblPagoCaja>(json);
+
+                return pagoCaja!;
+            }
+        }
 
         public async Task<TblReciboCaja> GetReciboCajaById(int id)
         {

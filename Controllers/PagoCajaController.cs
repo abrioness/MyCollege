@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,7 @@ namespace WebColegio.Controllers
             var _grados = await _Iservices.GetGradosAsync();
             var _turnos = await _Iservices.GetTurnosAsync();
             var _periodo = await _Iservices.GetPeriodoAsync();
+            var _tipoMovimiento=await _Iservices.GetTipoMovimientoAsync();
             //var _metodoPago = await _Iservices.GetMetodoPagoAsync();
             //var _meses = await _Iservices.GetMesesAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
@@ -37,7 +39,8 @@ namespace WebColegio.Controllers
                 pagoCajas = _pagoscaja,
                 grados = _grados,
                 turnos = _turnos,
-                
+                tipoMovimiento = _tipoMovimiento,
+                periodo = _periodo,
                 //modalidades = _modalidad,
                 //grados = _grados    
 
@@ -53,9 +56,31 @@ namespace WebColegio.Controllers
         }
 
         // GET: PagoCajaController/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            return View();
+            var reciboPagoCaja = await _Iservices.GetPagoCajaById(id);
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
+            var _grados = await _Iservices.GetGradosAsync();
+            var _turnos = await _Iservices.GetTurnosAsync();
+            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
+            var viewModel = new pagoCajasViewModel
+            {
+                PagosCaja = reciboPagoCaja,
+                 //= _alumnos,
+                //metodoPago = _metodoPago,
+                //tipoMovimiento = _tipoMovimiento,
+                //cantidadEnLetras = NumeroALetras(listrecibos.Monto),
+                //grados = _grados
+
+            };
+
+            //if (listrecibos == null)
+            //{
+            //    return NotFound();
+            //}
+
+            return View(viewModel);
         }
 
         // GET: PagoCajaController/Create

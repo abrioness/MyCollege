@@ -67,6 +67,7 @@ namespace WebColegio.Services
         Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
         Task<ArqueoCajaViewModel> GetArqueoById(int id);
         Task<TblPago> GetPagoById(int id);
+        Task<TblPagoCaja> GetPagoCajaById(int id);
         Task<List<TblNotas>> GetNotasPorUsuario(string usuario);
         Task<TblUsuarios> GetLogin(string usuario);
         Task<TblRol> GetRol(int idrol);
