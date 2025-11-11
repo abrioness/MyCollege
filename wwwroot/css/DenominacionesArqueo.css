@@ -1,0 +1,70 @@
+﻿body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+.titulo {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.subtitulo {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+th, td {
+    border: 1px solid #000;
+    padding: 4px;
+    font-size: 11px;
+}
+
+th {
+    background: #f0f0f0;
+    text-align: center;
+}
+
+.totales {
+    font-weight: bold;
+    text-align: right;
+    padding-right: 10px;
+}
+
+.firma {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+}
+
+    .firma div {
+        width: 45%;
+    }
+
+@media print {
+    .no-print {
+        display: none;
+    }
+}
+    #DenominacionCordoba {
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        
+    }
+    input{
+        width:auto;
+    }
+    td{
+        text-align:center;
+    }
+td {
+    border: none;
+}

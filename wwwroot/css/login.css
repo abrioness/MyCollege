@@ -19,8 +19,9 @@ body {
     background-image: url('../image/fondoinicio.jpg');
     width: 130%;
     background-repeat: no-repeat;
-    scrollbar-width: none;
-    background-size:auto;
+    scrollbar-width:revert;
+    background-size:150%;
+   
 }
 
 .logo {
