@@ -1,7 +1,7 @@
 ﻿@* @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor *@
 
-<nav style="background-color:royalblue;height:35%;">
+<nav style="background-color:royalblue;height:37%;">
     @if (User.Identity.IsAuthenticated)
     {
         <div class="text-start text-white" style="margin-left:20px">
@@ -9,7 +9,7 @@
         </div>
     }
 
-    <div class="align-text-top text-center text-white-40"><span style="font-size:25px;font-family:'Arial', 'Trebuchet MS', sans-serif; margin-left:15px">Colegio Parroquial San Francisco Javier</span><br />
+    <div class="align-text-top text-center text-white"><span style="font-size:25px;font-family:'Arial', 'Trebuchet MS', sans-serif; margin-left:15px">Colegio Parroquial San Francisco Javier</span><br />
         <span style="font-size:20px; font-family:'Arial', 'Trebuchet MS', sans-serif;margin-left:15px">”En Todo Amar y Servir”</span>
        
     
@@ -94,7 +94,7 @@
                         @* <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-controller="Alumnos" asp-action="Index"> *@
                         @* <div class="sidebar-brand-text mx-3">Menú</div> *@
                         @* </a> *@
-                        @if (User.IsInRole("Docente") || User.IsInRole("Admin"))
+                        @if (User.IsInRole("Direcctor") || User.IsInRole("Admin"))
                         {
                             <!-- Alumnos -->
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
@@ -130,7 +130,7 @@
                                 </div>
                             </li>
                         }
-                        @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Secretaria"))
+                        @if (User.IsInRole("") || User.IsInRole("Admin") || User.IsInRole("Secretaria"))
                         {
                             <!-- Facturación -->
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
@@ -167,7 +167,7 @@
                             </li> *@
                         }
                         <!-- productos -->
-                        @if (User.IsInRole("Cajero") || User.IsInRole("Admin"))
+                        @if (User.IsInRole("Secretaria") || User.IsInRole("Admin"))
                         {
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
@@ -215,8 +215,9 @@
                                 <div id="collapsePagoCaja" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
                                         <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index">Lista de Pago Caja</a>
-                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create">Agregar Pago</a>
-                                        
+                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index">Lista Egreso</a>
+                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create">Agregar Pago</a>                                        
+                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create">Agregar Egreso</a>
                                         <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta">Estado de Cuenta</a>
                                     </div>
                                 </div>

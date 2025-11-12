@@ -357,7 +357,21 @@ namespace WebColegio.Services
                 return pagosCaja;
             }
         }
-
+        public async Task<List<TblEgreso>> GetEgresoAsync()
+        {
+            List<TblEgreso> egreso = new List<TblEgreso>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TblEgresos");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblEgreso>>(content);
+                    egreso = resultado;
+                }
+                return egreso;
+            }
+        }
         public async Task<List<TblReciboCaja>> GetRecibosCajaAsync()
         {
             List<TblReciboCaja> reciboCajas = new List<TblReciboCaja>();
@@ -758,6 +772,49 @@ namespace WebColegio.Services
 
             return respuesta;
         }
+
+
+        public async Task<bool> PostEgresoAsync(TblEgreso egresos)
+        {
+
+            bool respuesta = false;
+
+            // Asegurar datos mínimos requeridos
+            //pagos.Activo = true;
+            //pagos.UsuarioRegistro = 1;
+            //pagos.FechaRegistro = DateTime.Now;
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Serializar el objeto alumno
+                    string jsonEgreso = JsonConvert.SerializeObject(egresos);
+                    var content = new StringContent(jsonEgreso, Encoding.UTF8, "application/json");
+
+                    // Enviar POST
+                    var response = await httpClient.PostAsync(url + "api/TblEgresos", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        respuesta = true;
+                    }
+                    else
+                    {
+                        // Para debug: mostrar mensaje de error
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en POST: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostEgresoAsync: " + ex.Message);
+            }
+
+            return respuesta;
+        }
+
         //POST de FACTURACION
         public async Task<bool> PostFacturacionAsync(FacturaColegiatura factura)
         {
@@ -1083,7 +1140,29 @@ namespace WebColegio.Services
                 return pagoCaja!;
             }
         }
+        public async Task<TblEgreso> GetEgresoCajaById(int id)
+        {
+            // Suponiendo que tu API tiene un endpoint como:
+            // GET https://tuservidor/api/arqueo/{id}
 
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + $"api/TblEgresos/" + id);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Error al obtener el recibo de egreso: {response.StatusCode}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Usar Newtonsoft.Json o System.Text.Json para deserializar
+                var egreso = JsonConvert.DeserializeObject<TblEgreso>(json);
+
+                return egreso!;
+            }
+        }
         public async Task<TblReciboCaja> GetReciboCajaById(int id)
         {
             

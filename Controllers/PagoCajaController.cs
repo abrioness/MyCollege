@@ -80,6 +80,7 @@ namespace WebColegio.Controllers
 
             return View(viewModel);
         }
+       
 
         // GET: PagoCajaController/Create
         public async Task<ActionResult> Create()
@@ -90,7 +91,7 @@ namespace WebColegio.Controllers
                 .Where(r => r.Serie == "A")
                 .Max(r => (int?)r.NumeroRecibo);
 
-            var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
+            var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 20001;
             var viewmodel = new pagoCajasViewModel
             {
                 SiguienteNumero=siguienteNumero,
@@ -142,7 +143,12 @@ namespace WebColegio.Controllers
             //int mensualidad = 640;
             //int total = 0;
             var buscarIdGuardado = await _Iservices.GetPagoCajaAsync();
-            
+            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo && r.Serie == "A" && r.Activo == true);
+            if (validarDuplicado)
+            {
+                TempData["Mensaje"] = "El número de Recibo ya Existe.";
+                return RedirectToAction("Create");
+            }
             try
             {
 

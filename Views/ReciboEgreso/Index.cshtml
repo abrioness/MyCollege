@@ -1,0 +1,130 @@
+﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@* @{
+	ViewData["Title"] = "Index";
+} *@
+<script src="~/js/site.js"></script>
+@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
+<div class="container mt-6" style="padding:20px;">
+	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+		<div class="card-header bg-primary text-white">
+			<h5 class="mb-0"><i class="bi bi-cash"></i> Egresos de Caja</h5>
+		</div>
+
+		<div class="card-body">
+			<div class="col-12 text-end">
+
+				<a asp-action="Create" class="btn btn-primary">
+					<i class="bi bi-plus-circle"></i> Agregar Egreso de Caja
+				</a>
+			</div>
+
+			<table id="tablaPagos" class="table text-sm-start table-bordered" style="width:100%">
+				@* class="display responsive nowrap" style="width:100%"> *@
+				<thead>
+					<tr>
+						<td>Número Recibo</td>
+						<th>Nombre</th>
+						<th>Concepto</th>
+						<th>Monto</th>						
+						<th>Descripción</th>
+						<th>Periodo</th>
+						<th>Fecha Registro</th>
+
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var itemEgreso in Model.egresos)
+					{
+						<tr>
+
+
+							<td>
+
+								<a asp-action="Details" asp-controller="ReciboEgreso" asp-route-id="@itemEgreso.IdEgreso" class="btn btn-sm btn-info">@itemEgreso.NumeroRecibo</a>
+
+							</td>
+
+
+							@* @foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPago.IdTipoMovimiento))
+							{
+								<td>
+
+									@tipoMovimiento.Concepto
+
+								</td>
+							} *@
+							<td>
+
+								@itemEgreso.Nombre
+							</td>
+
+							@foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemEgreso.Concepto))
+							{
+								<td>
+
+									@tipoMovimiento.Concepto
+
+								</td>
+							}
+							<td>
+
+								C$	@itemEgreso.Monto
+							</td>
+							
+							<td>
+
+								@itemEgreso.Descripcion
+							</td>
+							@foreach (var periodo in Model.periodo.Where(a => a.IdPeriodo == itemEgreso.IdPeriodo))
+							{
+								<td>
+
+									@periodo.Periodo
+
+								</td>
+							}
+							<td>
+
+								@itemEgreso.FechaRegistro.ToString("dd/MM/yyyy")
+							</td>
+
+							@* <td>
+							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
+						</td> 
+							<td>
+								<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
+							</td>*@
+						</tr>
+					}
+				</tbody>
+
+			</table>
+		</div>
+	</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script>
+	$(document).ready(function () {
+			$('#tablaPagos').DataTable({
+			responsive: true,
+			dom: 'Bfrtip', // Botones + filtro + tabla
+			buttons: [
+				{
+					extend: 'excelHtml5',
+					text: 'Exportar a Excel',
+					className: 'btn btn-success'
+				}
+			],
+			language: {
+				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+			}
+		});
+	});
+</script>

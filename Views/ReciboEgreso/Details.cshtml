@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.pagoCajasViewModel
+﻿@model WebColegio.Models.ViewModel.EgresoViewModel
 
 @{
     Layout = null;
@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recibo de Caja - @Model.PagosCaja.NumeroRecibo</title>
+    <title>Recibo de Caja - @Model.Egresos.NumeroRecibo</title>
     <style>
         * {
             margin: 0;
@@ -164,7 +164,6 @@
             .recibo-container {
                 border: none;
                 padding: 0;
-                
             }
 
             .no-print {
@@ -179,7 +178,7 @@
 
         <!-- Encabezado -->
         <div class="header">
-@* 
+            @* 
             <div class="insignia">
                 <img src="~/image/colegiosanfrancisco.png" style="width:10%;" />
             </div> *@
@@ -191,30 +190,25 @@
         </div>
 
         <!-- Título del recibo -->
-        <div class="recibo-titulo">RECIBO DE CAJA</div>
+        <div class="recibo-titulo">RECIBO DE EGRESO</div>
         <!-- Serie de recibo -->
-        <div class="serie-recibo">Serie"@Model.PagosCaja.Serie"</div>
+        <div class="serie-recibo">Serie"@Model.Egresos.Serie"</div>
         <!-- Número de recibo -->
-        <div class="numero-recibo">Nº @Model.PagosCaja.NumeroRecibo</div>
+        <div class="numero-recibo">Nº @Model.Egresos.NumeroRecibo</div>
 
         <!-- Campos del recibo -->
-       @*  @{
+        @*  @{
             var alumno = Model.alumnos?.FirstOrDefault(a => a.IdAlumno == Model.ReciboCaja.IdAlumno);
         } *@
 
         <div class="campo">
             <div class="campo-label">Recibí de:</div>
-            <div class="campo-valor">@Model.PagosCaja.Nombre</div>
+            <div class="campo-valor">@Model.Egresos.Nombre</div>
         </div>
+       
+       
         @{
-            var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.PagosCaja.IdGrado);
-        }
-        <div class="campo">
-            <div class="campo-label">Nivel:</div>
-            <div class="campo-valor">@grado?.NombreGrado </div>
-        </div>
-        @{
-            var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.PagosCaja.Concepto);
+            var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.Egresos.Concepto);
         }
         <div class="campo">
             <div class="campo-label">En concepto de:</div>
@@ -223,19 +217,10 @@
 
             </div>
         </div>
-        @{
-            var turno = Model.turnos?.FirstOrDefault(a => a.IdTurno == Model.PagosCaja.IdTurno);
-        }
-        <div class="campo">
-            <div class="campo-label">Metodo Pago</div>
-            <div class="campo-valor">
-                @turno?.NombreTurno
-
-            </div>
-        </div>
+       
         <div class="campo">
             <div class="campo-label">La cantidad de:</div>
-            <div class="campo-valor">C$ @Model.PagosCaja.Monto.ToString("N2")</div>
+            <div class="campo-valor">C$ @Model.Egresos.Monto.ToString("N2")</div>
         </div>
         @* <div class="campo">
             <div class="campo-label">Cantidad en Letras</div>
@@ -243,7 +228,7 @@
 
         </div> *@
         @{
-            var fecha = Model.PagosCaja.FechaRegistro;
+            var fecha = Model.Egresos.FechaRegistro;
         }
         <!-- Fecha -->
         <div class="fecha">
@@ -277,7 +262,7 @@
     <!-- Botón de impresión (solo visible en navegador) -->
     <div class="no-print">
         <button class="print-button" onclick="window.print()">🖨️ Imprimir Recibo</button>
-        
+
     </div>
 
     <script>

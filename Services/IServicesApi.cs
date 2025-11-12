@@ -26,10 +26,9 @@ namespace WebColegio.Services
         Task<List<TblUsuarios>> GetUsuariosAsync();
         Task<List<TblPago>> GetPagosAsync();
         Task<List<TblPagoCaja>> GetPagoCajaAsync();
-
         Task<List<TblReciboCaja>> GetRecibosCajaAsync();
+        Task<List<TblEgreso>> GetEgresoAsync();
 
-      
         Task<List<Productos>> GetProductosAsync();
         Task<List<CategoriaProducto>> GetCategoriaProductoAsync();
         //Task<List<TblInventario>> GetInventarioAsync();
@@ -51,6 +50,7 @@ namespace WebColegio.Services
         Task<bool> PostFacturacionAsync(FacturaColegiatura factura);
         
         Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja);
+        Task<bool> PostEgresoAsync(TblEgreso egresos);
         Task<bool> PostReciboCajaAsync(TblReciboCaja reciboCaja);
         //Task<bool> PostInventarioAsync(TblInventario inventario);
         Task<bool> PostProductosAsync(Productos producto);
@@ -71,6 +71,7 @@ namespace WebColegio.Services
         Task<List<TblNotas>> GetNotasPorUsuario(string usuario);
         Task<TblUsuarios> GetLogin(string usuario);
         Task<TblRol> GetRol(int idrol);
+        Task<TblEgreso> GetEgresoCajaById(int id);
         #endregion
         #region Metodos de Busqueda
         Task<List<TblAlumno>> searchAlumnosAsync();

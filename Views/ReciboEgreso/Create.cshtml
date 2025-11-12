@@ -1,0 +1,160 @@
+﻿@model WebColegio.Models.ViewModel.EgresoViewModel
+
+@*@{
+    ViewData["Title"] = "Create";
+}
+<div class="content">
+     <div class="modal-body">
+        <span class="h5 mb-1">Bienvenido: @TempData["nombreusuario"] </span>
+    </div> *@
+
+
+<div class="container mt-6">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-cash"></i> Egreso de Caja</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label asp-for="Egresos.NumeroRecibo" class="control-label">Número Recibo</label>
+                            <input asp-for="Egresos.NumeroRecibo" value="@Model.SiguienteNumero" id="numeroRecibo" class="form-control" readonly />
+                            <span asp-validation-for="Egresos.NumeroRecibo" class="text-danger"></span>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label asp-for="Egresos.Nombre" class="control-label">Páguese A:</label>
+                            <input asp-for="Egresos.Nombre" id="monto" class="form-control" />
+                            <span asp-validation-for="Egresos.Nombre" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Egresos.Monto" class="control-label">La Cantidad de:</label>
+                            <input asp-for="Egresos.Monto" id="monto" class="form-control" />
+                            <span asp-validation-for="Egresos.Monto" class="text-danger"></span>
+                        </div>
+                           
+
+                        <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
+                        <br />
+
+
+                    </div>
+                <div class="col-lg-6">
+                    <div class="form-group">
+                            <label asp-for="Egresos.Serie" class="control-label">Serie:</label>
+                            <input asp-for="Egresos.Serie" id="serie" class="form-control" readonly value="A" />
+                            <span asp-validation-for="Egresos.Serie" class="text-danger"></span>
+                    </div>
+                        <div class="form-group">
+                            <label asp-for="Egresos.Concepto" class="control-label">En Concepto:</label>
+                            <select asp-for="Egresos.Concepto" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="Egresos.Concepto" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Egresos.IdPeriodo" class="control-label">Periodo</label>
+                            <select asp-for="Egresos.IdPeriodo" asp-items="Model.periodo" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="Egresos.IdPeriodo" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Egresos.Descripcion" class="control-label">Observaciones</label>
+                            <textarea asp-for="Egresos.Descripcion" class="form-control"></textarea>
+
+                        </div>
+
+                </div>
+                    <!-- Modal -->
+                    @*  <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Seleccionar meses</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        @foreach (var itemMeses in Model.meses)
+                                        {
+
+                                            <div class="col-md-4 mb-2">
+                                                <div class="form-check">
+                                                    <input type="checkbox"
+                                                           name="MesesSeleccionados"
+                                                           value="@itemMeses.IdMes"
+                                                           class="form-check-input" id="mes_@itemMeses.IdMes" />
+                                                    <label class="form-check-label" for="mes_@itemMeses.IdMes">
+                                                        @itemMeses.Mes
+                                                    </label>
+                                                     <input type="hidden" asp-for="@itemMeses.IdMes" /> *@
+                    @* <input type="hidden" asp-for="mesesSelectListItem[i].Value" /> 
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                    <button type="button" class="btn btn-primary" onclick="confirmarMeses()">Confirmar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>*@
+
+
+
+
+                </div>
+
+
+                <br />
+                <!-- Botones -->
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Procesar Pago
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                    <button type="button" id="btnLimpiar" class="btn btn-warning">
+                        <i class="bi bi-trash3"></i> Limpiar Campos
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+
+    @if (TempData["Mensaje"] != null)
+    {
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        Swal.fire({
+                            title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+     "Información")',
+                            text: '@TempData["Mensaje"]',
+                            icon: '@TempData["Tipo"]',
+                            confirmButtonText: 'Aceptar'
+                        });
+                    });
+                </script>
+    }
+}

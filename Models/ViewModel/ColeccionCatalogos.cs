@@ -36,5 +36,6 @@
 
         public List<CatPeriodo> periodo { get; set; } = new List<CatPeriodo>();
         public List<TblPagoCaja> pagoCajas { get; set; } = new List<TblPagoCaja>();
+        public List<TblEgreso> egresos { get; set; } = new List<TblEgreso>();
     }
 }
