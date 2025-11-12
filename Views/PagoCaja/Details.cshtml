@@ -1,0 +1,290 @@
+﻿@model WebColegio.Models.ViewModel.pagoCajasViewModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Impresión de Recibo";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recibo de Caja - @Model.PagosCaja.NumeroRecibo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            background: #fff;
+            padding: 10mm;
+        }
+
+        .recibo-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            border: 0;
+            padding: 8mm;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 6mm;
+            /* border-bottom: 1px solid #000; */
+            padding-bottom: 3mm;
+        }
+
+        .colegio-nombre {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 2mm;
+            text-transform: uppercase;
+        }
+
+        .vicaria {
+            font-size: 10px;
+            margin-bottom: 2mm;
+        }
+
+        .direccion {
+            font-size: 9px;
+            margin-bottom: 3mm;
+        }
+
+        .recibo-titulo {
+            font-size: 12px;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 4mm;
+        }
+
+        .numero-recibo {
+            text-align: right;
+            font-weight: bold;
+            margin-bottom: 6mm;
+        }
+
+        .serie-recibo {
+            text-align: right;
+            font-weight: bold;
+            margin-bottom: 4mm;
+        }
+
+        .insignia {
+            align-items: flex-start;
+            display: flex;
+        }
+
+        .campo {
+            margin-bottom: 3mm;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .campo-label {
+            font-weight: bold;
+            min-width: 40mm;
+            margin-right: 3mm;
+        }
+
+        .campo-valor {
+            flex: 1;
+            /* border-bottom: 1px solid #000;*/
+            min-height: 5mm;
+            padding: 0 2mm;
+        }
+
+        .cantidad-letras {
+            font-style: italic;
+            margin-top: 1mm;
+            padding-left: 43mm;
+        }
+
+        .firma-section {
+            margin-top: 10mm;
+            text-align: center;
+        }
+
+        .firma-line {
+            width: 60mm;
+            border-top: 1px solid #000;
+            margin: 15mm auto 2mm;
+        }
+
+        .firma-text {
+            font-size: 10px;
+        }
+
+        .referencia {
+            position: absolute;
+            bottom: 5mm;
+            right: 8mm;
+            font-size: 8px;
+            text-align: right;
+        }
+
+        .concepto-lines {
+            min-height: 15mm;
+        }
+
+        .fecha {
+            margin-top: 8mm;
+            text-align: right;
+            padding-right: 10mm;
+        }
+
+        .no-print {
+            text-align: center;
+            margin-top: 10mm;
+            padding: 10px;
+        }
+
+        .print-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        @@media print {
+            body {
+                padding: 0;
+            }
+
+            .recibo-container {
+                border: none;
+                padding: 0;
+                
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="recibo-container">
+
+
+        <!-- Encabezado -->
+        <div class="header">
+@* 
+            <div class="insignia">
+                <img src="~/image/colegiosanfrancisco.png" style="width:10%;" />
+            </div> *@
+            <div class="colegio-nombre">COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</div>
+
+            <div class="vicaria">VICARIA DE EDUCACIÓN CATÓLICA</div>
+            <div class="direccion">Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</div>
+
+        </div>
+
+        <!-- Título del recibo -->
+        <div class="recibo-titulo">RECIBO DE CAJA</div>
+        <!-- Serie de recibo -->
+        <div class="serie-recibo">Serie"@Model.PagosCaja.Serie"</div>
+        <!-- Número de recibo -->
+        <div class="numero-recibo">Nº @Model.PagosCaja.NumeroRecibo</div>
+
+        <!-- Campos del recibo -->
+       @*  @{
+            var alumno = Model.alumnos?.FirstOrDefault(a => a.IdAlumno == Model.ReciboCaja.IdAlumno);
+        } *@
+
+        <div class="campo">
+            <div class="campo-label">Recibí de:</div>
+            <div class="campo-valor">@Model.PagosCaja.Nombre</div>
+        </div>
+        @{
+            var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.PagosCaja.IdGrado);
+        }
+        <div class="campo">
+            <div class="campo-label">Nivel:</div>
+            <div class="campo-valor">@grado?.NombreGrado </div>
+        </div>
+        @{
+            var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.PagosCaja.Concepto);
+        }
+        <div class="campo">
+            <div class="campo-label">En concepto de:</div>
+            <div class="campo-valor">
+                @tipoMovimiento?.Concepto
+
+            </div>
+        </div>
+        @{
+            var turno = Model.turnos?.FirstOrDefault(a => a.IdTurno == Model.PagosCaja.IdTurno);
+        }
+        <div class="campo">
+            <div class="campo-label">Metodo Pago</div>
+            <div class="campo-valor">
+                @turno?.NombreTurno
+
+            </div>
+        </div>
+        <div class="campo">
+            <div class="campo-label">La cantidad de:</div>
+            <div class="campo-valor">C$ @Model.PagosCaja.Monto.ToString("N2")</div>
+        </div>
+        @* <div class="campo">
+            <div class="campo-label">Cantidad en Letras</div>
+            @Model.cantidadEnLetras (C$)<b> @Model.ReciboCaja.Monto</b>
+
+        </div> *@
+        @{
+            var fecha = Model.PagosCaja.FechaRegistro;
+        }
+        <!-- Fecha -->
+        <div class="fecha">
+            Managua: @fecha.Day de
+            @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(fecha.Month)
+            del 20@{
+                @fecha.ToString("yy")
+            }
+        </div>
+        <div class="firma-section">
+            <div class="firma-line"></div>
+            <div class="firma-text">Firma y Sello del cajero</div>
+            @* <div class="firma-text">@Model.reciboCajas.FirstOrDefault(a => a.UsuarioRegistro == Model.ReciboCaja.UsuarioRegistro)</div> *@
+        </div>
+    </div>
+
+    @* <div class="campo">
+            <div class="campo-label">En concepto de:</div>
+            <div class="campo-valor concepto-lines">@Model.ReciboCaja.IdTipoMovimiento</div>
+        </div>*@
+
+
+    <!-- Firma y sello -->
+    <!-- Referencia -->
+    @* <div class="referencia">
+            ref.: Barros, Copaz América<br />
+            208. 50J. (2) 10.001-11.000 15/08/025
+        </div> *@
+    </div>
+
+    <!-- Botón de impresión (solo visible en navegador) -->
+    <div class="no-print">
+        <button class="print-button" onclick="window.print()">🖨️ Imprimir Recibo</button>
+    </div>
+
+    <script>
+        // Auto-imprimir al cargar la página (opcional)
+        window.onload = function() {
+            // Descomenta la siguiente línea si quieres que se imprima automáticamente
+            // window.print();
+        };
+    </script>
+</body>
+</html>

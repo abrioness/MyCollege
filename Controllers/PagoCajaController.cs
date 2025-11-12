@@ -59,19 +59,17 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Details(int id)
         {
             var reciboPagoCaja = await _Iservices.GetPagoCajaById(id);
-            var _alumnos = await _Iservices.GetAlumnosAsync();
+            //var _alumnos = await _Iservices.GetAlumnosAsync();
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             var _grados = await _Iservices.GetGradosAsync();
             var _turnos = await _Iservices.GetTurnosAsync();
-            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
+            //var _metodoPago = await _Iservices.GetMetodoPagoAsync();
             var viewModel = new pagoCajasViewModel
             {
                 PagosCaja = reciboPagoCaja,
-                 //= _alumnos,
-                //metodoPago = _metodoPago,
-                //tipoMovimiento = _tipoMovimiento,
-                //cantidadEnLetras = NumeroALetras(listrecibos.Monto),
-                //grados = _grados
+                tipoMovimiento = _tipoMovimiento,
+                turnos=_turnos,
+                grados = _grados
 
             };
 
@@ -143,10 +141,15 @@ namespace WebColegio.Controllers
             bool validarDuplicado = false;
             //int mensualidad = 640;
             //int total = 0;
+            var buscarIdGuardado = await _Iservices.GetPagoCajaAsync();
+            
             try
             {
-                
 
+                //if (numRecibo==null)
+                //{
+                //    TempData["Mensaje"] = "El numero de Recibo ya existe.";
+                //}
                 if (pagoscaja != null)
                 {
                     //var userId = _userManager.GetUserId(User); // o UserManager.GetUserId(User)
@@ -157,8 +160,11 @@ namespace WebColegio.Controllers
                     response = await _Iservices.PostPagosCajaAsync(pagoscaja);
                     if (response)
                     {
+                       
+                        var idPag = buscarIdGuardado.Max();
                         TempData["Mensaje"] = "Se Proceso Correctamente el Pago.";
-                        return RedirectToAction("Create");
+                        var numRecibo = buscarIdGuardado.FirstOrDefault(a => a.NumeroRecibo == pagoscaja.NumeroRecibo);
+                        return RedirectToAction("Details","PagoCaja", new {id=idPag});
                     }
                     else
                     {

@@ -4,6 +4,7 @@ using System.Net.Security;
 //using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
 using WebColegio.Models;
@@ -1063,6 +1064,7 @@ namespace WebColegio.Services
         {
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
+           
             using (var httpclient = new HttpClient())
             {
 
@@ -1070,7 +1072,7 @@ namespace WebColegio.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"Error al obtener el arqueo: {response.StatusCode}");
+                    throw new Exception($"Error al obtener el recibo de caja: {response.StatusCode}");
                 }
 
                 var json = await response.Content.ReadAsStringAsync();

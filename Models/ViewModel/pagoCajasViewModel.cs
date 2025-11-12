@@ -7,6 +7,10 @@ namespace WebColegio.Models.ViewModel
         public TblReciboCaja ReciboCaja { get; set; }
         public TblPagoCaja PagosCaja { get; set; } = new();
 
+        public List<CatTipoMovimiento> tipoMovimiento { get; set; } = new List<CatTipoMovimiento>();
+        public List<CatMetodoPago> metodoPago { get; set; } = new List<CatMetodoPago>();
+        public List<Grados> grados { get; set; } = new List<Grados>();
+        public List<Turnos> turnos { get; set; } = new List<Turnos>();
         public int SiguienteNumero { get; set; }
         public int Mora { get; set; }
         public List<TblPagoCaja> listPagoCaja { get; set; } = new();
