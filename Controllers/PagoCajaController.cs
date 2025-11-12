@@ -161,10 +161,10 @@ namespace WebColegio.Controllers
                     if (response)
                     {
                        
-                        var idPag = buscarIdGuardado.Max();
+                        var idPag = buscarIdGuardado.Max(a=>a.IdPagoCaja);
                         TempData["Mensaje"] = "Se Proceso Correctamente el Pago.";
-                        var numRecibo = buscarIdGuardado.FirstOrDefault(a => a.NumeroRecibo == pagoscaja.NumeroRecibo);
-                        return RedirectToAction("Details","PagoCaja", new {id=idPag});
+                        
+                        return RedirectToAction("Details","PagoCaja", new {id= idPag });
                     }
                     else
                     {

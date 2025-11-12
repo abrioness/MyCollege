@@ -4,7 +4,7 @@ namespace WebColegio.Models.ViewModel
 {
     public class pagoCajasViewModel
     {
-        public TblReciboCaja ReciboCaja { get; set; }
+        //public TblReciboCaja ReciboCaja { get; set; }
         public TblPagoCaja PagosCaja { get; set; } = new();
 
         public List<CatTipoMovimiento> tipoMovimiento { get; set; } = new List<CatTipoMovimiento>();
