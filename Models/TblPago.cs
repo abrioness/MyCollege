@@ -5,14 +5,15 @@
         public int IdPago { get; set; }
 
         public int IdAlumno { get; set; }
-
+       
         public decimal Monto { get; set; }
-
-        //public int Concepto { get; set; }
+        public int? NumeroRecibo { get; set; }
+        public string Serie { get; set; } = null!;
+        public string Anyo { get; set; } = null!;
         public int IdMes { get; set; }
 
         public int? Mora { get; set; }
-
+        public string Descripcion { get; set; } = null!;
         public int IdMetodoPago { get; set; }
 
         public int IdTipoMovimiento { get; set; }

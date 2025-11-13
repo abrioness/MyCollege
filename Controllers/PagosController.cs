@@ -102,10 +102,17 @@ namespace WebColegio.Controllers
         // GET: PagosController/Create
         public async Task<ActionResult> Create()
         {
+            var recibos = await _Iservices.GetPagosAsync();
+            var maxNumero = recibos
+               .Where(r => r.Serie == "A")
+               .Max(r => (int?)r.NumeroRecibo);
+
+            var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
             var viewmodel = new PagosViewModel
             {
-                
-               tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
+
+                SiguienteNumero = siguienteNumero,
+                tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
                                    .Select(r => new SelectListItem
                                    {
                                        Value = r.IdTipoMovimiento.ToString(),

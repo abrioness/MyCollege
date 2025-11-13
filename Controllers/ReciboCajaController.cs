@@ -91,7 +91,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: ReciboCajaController/Create
-        public async Task<ActionResult> Create(int id)
+        public async Task<ActionResult> Create()
         {
             var recibos = await _Iservices.GetRecibosCajaAsync();
 
@@ -100,9 +100,9 @@ namespace WebColegio.Controllers
                 .Max(r => (int?)r.NumeroRecibo);
 
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
-            var verpago = await _Iservices.GetPagoById(id);
+            //var verpago = await _Iservices.GetPagoById(id);
 
-            var listrecibos = await _Iservices.GetReciboCajaById(id);
+            //var listrecibos = await _Iservices.GetReciboCajaById(id);
             var _alumnos = await _Iservices.GetAlumnosAsync();
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             var _grados = await _Iservices.GetGradosAsync();
@@ -110,21 +110,21 @@ namespace WebColegio.Controllers
             var viewModel = new ReciboCajaViewModel
             {
                 SiguienteNumero = siguienteNumero,
-                Pago = verpago,
-                ReciboCaja = listrecibos,
+                //Pago = verpago,
+                //ReciboCaja = listrecibos,
                 alumnos = _alumnos,
                 metodoPago = _metodoPago,
                 tipoMovimiento = _tipoMovimiento,
-                cantidadEnLetras = NumeroALetras(listrecibos.Monto),
+                //cantidadEnLetras = NumeroALetras(listrecibos.Monto),
                 grados = _grados
 
             };
 
-            if (verpago == null)
-            {
-                TempData["Mensaje"] = "El pago no existe.";
-                return RedirectToAction("Index");
-            }
+            //if (verpago == null)
+            //{
+            //    TempData["Mensaje"] = "El pago no existe.";
+            //    return RedirectToAction("Index");
+            //}
 
             //var viewmodel = new ReciboCajaViewModel
             //{
@@ -242,6 +242,11 @@ namespace WebColegio.Controllers
             pagosDelDia=pagosDelDia
                 .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)
                 .ToList();
+            //Egresos del día
+            var egresosDelDia = await _Iservices.GetEgresoAsync();
+            egresosDelDia = egresosDelDia
+                .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)
+                .ToList();
 
             // 2️⃣ Obtener los tipos movimientos relacionados
             var tipmov = await _Iservices.GetTipoMovimientoAsync();
@@ -291,11 +296,11 @@ namespace WebColegio.Controllers
 
 
             // 4️⃣ Armar los egresos
-            arqueo.Egresos = (from p in pagosDelDia
-                              where p.IdTipoMovimiento == 2 // suponiendo 2 = egreso
-                              group p by p.IdTipoMovimiento into g
+            arqueo.Egresos = (from p in egresosDelDia
+                              where p.NumeroRecibo >0 // suponiendo 2 = egreso
+                              group p by p.NumeroRecibo into g
                               select new EgresoDto
-                              {
+                              { 
                                   Detalle = "Egreso varios",
                                   Monto = g.Sum(x => x.Monto)
                               }).ToList();
