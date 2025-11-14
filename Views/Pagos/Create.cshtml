@@ -47,14 +47,14 @@
                             <span asp-validation-for="Pago.IdTipoRecibo" class="text-danger"></span>
 
                         </div>
-                        <div class="form-group">
+                        @*  <div class="form-group">
                             <label asp-for="Pago.IdMes" class="control-label">Meses</label>
-                            <select asp-for="Pago.IdMes" asp-items="Model.MeseselectListItem" class="form-select" required>
+                            <select asp-for="Pago.IdMes" asp-items="Model.MeseselectListItem" class="form-select" >
                                 <option disabled selected>Seleccione una Opción</option>
                             </select>
-                            @* <span asp-validation-for="Pago.IdMes" class="text-danger"></span> *@
+                            <span asp-validation-for="Pago.IdMes" class="text-danger"></span> 
 
-                        </div>
+                        </div>*@
                         <div class="form-group">
                             <label asp-for="Pago.IdPeriodo" class="control-label">Años</label>
                             <select asp-for="Pago.IdPeriodo" asp-items="Model.mesesSelectListItem" class="form-select" required>

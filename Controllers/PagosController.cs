@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Metrics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -158,8 +159,17 @@ namespace WebColegio.Controllers
             bool validarDuplicado = false;
             int mensualidad = 640;
             int total = 0;
+
+            var buscarIdGuardado = await _Iservices.GetEgresoAsync();
+            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagos.Pago.NumeroRecibo && r.Serie == "A" && r.Activo == true);
+            if (validarDuplicado)
+            {
+                TempData["Mensaje"] = "El número de Recibo ya Existe.";
+                return RedirectToAction("Create");
+            }
             try
             {
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 int periodo= await _Iservices.GetPeriodoAsync().ContinueWith(p=>p.Result.FirstOrDefault(a=>a.Activo && a.Actual)?.IdPeriodo) ?? 0;
                 pagos.Pago.IdPeriodo = periodo;
                 //int tipoMov = await _Iservices.GetTipoMovimientoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.IdTipoMovimiento==pagos.Pago.IdTipoMovimiento)?.IdTipoMovimiento) ?? 0;
@@ -242,8 +252,11 @@ namespace WebColegio.Controllers
                             .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
                                        p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
                                        p.IdPeriodo == pagos.Pago.IdPeriodo &&
-                                       p.IdMes < idMes)
+                                       p.IdMes <= idMes)
                             .Select(p => p.IdMes).ToList();
+
+                            
+
                             // 2. Obtener todos los meses que deberían estar pagados
                             var todosMesesRequeridos = Enumerable.Range(1, idMes - 1).ToList();
                             var mesesFaltantes = todosMesesRequeridos.Except(pendientes).ToList();
@@ -287,7 +300,7 @@ namespace WebColegio.Controllers
                                     Mora = montoMora,
                                     Monto = pagos.Pago.Monto,
                                     Activo = true,
-                                    UsuarioRegistro = 1,
+                                    UsuarioRegistro = idUsuario,
                                     FechaRegistro = DateTime.Now
                                     // otros campos...
                                 };

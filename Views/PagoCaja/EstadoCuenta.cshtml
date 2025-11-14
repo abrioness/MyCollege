@@ -68,13 +68,32 @@
 
 									if (pagoMes != null)
 									{
-										<td>C$ @pagoMes.Monto</td>
+										<td>✔️</td>
 									}
 									else
 									{
-										<td>C$ 0.00</td>
+										<td>❌</td>
 									}
 								}
+								@* Mostrar columnas de los 12 meses 
+								@for (int mes = 1; mes <= 12; mes++)
+								{
+									var pagoMes = Model.pagos
+									.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
+									@if (pagoMes != null)
+									{
+										<td>
+											<span class="badge bg-success">Pagado</span>
+										</td>
+									}
+									
+									else
+									{
+										<td><span class="badge bg-warning text-dark">Pendiente</span>
+										</td>
+									}
+									
+								}*@
 							</tr>
 						}
 					</tbody>

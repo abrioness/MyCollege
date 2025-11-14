@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
@@ -112,6 +113,8 @@ namespace WebColegio.Controllers
             bool validarDuplicado = false;
             //int mensualidad = 640;
             //int total = 0;
+          
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var buscarIdGuardado = await _Iservices.GetEgresoAsync();
             validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == egresos.NumeroRecibo && r.Serie == "A" && r.Activo==true);
             if(validarDuplicado)
@@ -129,7 +132,7 @@ namespace WebColegio.Controllers
                 if (egresos != null)
                 {
                     //var userId = _userManager.GetUserId(User); // o UserManager.GetUserId(User)
-                    egresos.UsuarioRegistro = 1;
+                    egresos.UsuarioRegistro = idUsuario;
                     egresos.Activo = true;
                     egresos.FechaRegistro = DateTime.Now;
                     //await _Iservices.InsertarPagoAsync(nuevoPago);

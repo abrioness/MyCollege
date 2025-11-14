@@ -66,18 +66,35 @@ namespace WebColegio.Controllers
                 new Claim(ClaimTypes.Name, usuario.NombreUsuario),
                  new Claim(ClaimTypes.Role, roles.NombreRol),
                 new Claim(ClaimTypes.Role, "Usuario"), // Todos son usuarios base                
-                new Claim(ClaimTypes.Role, usuario.IdRol.ToString())  // 👈 Aquí se asigna el rol desde BD   
+                new Claim(ClaimTypes.Role, usuario.IdRol.ToString()),  // 👈 Aquí se asigna el rol desde BD   
+                 new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString())
             };
-
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity),
-                new AuthenticationProperties { IsPersistent = true });
+                new AuthenticationProperties
+                {
+                    IsPersistent = true // mantiene la sesión
+                });
+           
             // Guardar datos en sesión
             HttpContext.Session.SetString("UsuarioCedula", NombreUsuario);
-            HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario); // si tienes Id
+            HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario);
+            HttpContext.Session.SetInt32("RolUsuario", usuario.IdRol);// si tienes Id
+            if (usuario.IdRol == 1)
+            {
+                return RedirectToAction("Index", "Pagos");
+            }
+            if (usuario.IdRol == 2)
+            {
+                return RedirectToAction("Index", "PagoCaja");
+            }
+            if (usuario.IdRol == 3)
+            {
+                return RedirectToAction("Index", "Notas");
+            }
 
             if (usuario.IdRol==4)
             {
@@ -98,7 +115,12 @@ namespace WebColegio.Controllers
                     return View("Login");
                 }
             }
-            return RedirectToAction("Index", "notas");
+            if (usuario.IdRol == 5)
+            {
+                return RedirectToAction("Index", "Inventario");
+            }
+            return RedirectToAction("Login");
+
 
 
         }
