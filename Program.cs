@@ -42,7 +42,7 @@ namespace WebColegio
                     
          
 
-            app.UseHttpsRedirection();
+           //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
@@ -55,7 +55,8 @@ namespace WebColegio
                     name: "default",
                     pattern: "{controller=Login}/{action=Login}/{id?}");
 
-
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://0.0.0.0:{port}");
             app.Run();
         }
     }
