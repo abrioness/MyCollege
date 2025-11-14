@@ -1,17 +1,21 @@
-# Etapa base: imagen runtime de .NET 9
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+# Etapa 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
+
+COPY *.csproj ./
+RUN dotnet restore
+
+COPY . .
+RUN dotnet publish -c Release -o /out
+
+# Etapa 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+
+# Puerto requerido por Cloud Run
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
-# Etapa build: compilar el proyecto
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
-COPY . .
-RUN dotnet restore "./WebColegio.csproj"
-RUN dotnet publish "./WebColegio.csproj" -c Release -o /app/publish
+COPY --from=build /out .
 
-# Etapa final
-FROM base AS final
-WORKDIR /app
-COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "WebColegio.dll"]
