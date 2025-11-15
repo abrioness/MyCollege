@@ -27,7 +27,7 @@ namespace WebColegio
                     options.Cookie.HttpOnly = true;
                     options.Cookie.IsEssential = true;
                 });
-
+        builder.Configuration["ApiUrl"] = Environment.GetEnvironmentVariable("API_URL");
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
