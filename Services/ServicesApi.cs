@@ -14,8 +14,8 @@ namespace WebColegio.Services
 {
     public class ServicesApi:IServicesApi
     {
-        private static string url = "https://localhost:8080/";
-        
+       // private static string url = "https://localhost:8080/";
+        private static string url = "https://webcolegio-api-uc.a.run.app/"
 
         public ServicesApi() { }
         //Metodo para Listar usuarios
