@@ -15,7 +15,7 @@ namespace WebColegio
             //builder.Services.AddRazorPages();
             builder.Services.AddScoped<IServicesApi, ServicesApi>();
             builder.Services.AddControllersWithViews();
-            builder.Configuration["ApiUrl"] = Environment.GetEnvironmentVariable("API_URL");
+            //builder.Configuration["ApiUrl"] = Environment.GetEnvironmentVariable("API_URL");
             //builder.Services.AddCors(options =>
             //{
             //    options.AddDefaultPolicy(policy =>
