@@ -80,7 +80,12 @@ namespace WebColegio.Controllers
 
             return View(viewModel);
         }
-       
+        //numeros en letra
+        private string NumeroALetras(decimal numero)
+        {
+            return Humanizer.NumberToWordsExtension.ToWords((long)numero, new System.Globalization.CultureInfo("es"))
+                .ToUpper() + " CÓRDOBAS";
+        }
 
         // GET: PagoCajaController/Create
         public async Task<ActionResult> Create()
@@ -143,7 +148,8 @@ namespace WebColegio.Controllers
             //int mensualidad = 640;
             //int total = 0;
             var buscarIdGuardado = await _Iservices.GetPagoCajaAsync();
-            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo && r.Serie == "A" && r.Activo == true);
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo  && r.Serie == "A" && r.Activo == true);
             if (validarDuplicado)
             {
                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
@@ -159,7 +165,7 @@ namespace WebColegio.Controllers
                 if (pagoscaja != null)
                 {
                     //var userId = _userManager.GetUserId(User); // o UserManager.GetUserId(User)
-                    pagoscaja.UsuarioRegistro =1;
+                    pagoscaja.UsuarioRegistro = idUsuario;
                     pagoscaja.Activo = true;
                     pagoscaja.FechaRegistro = DateTime.Now;
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
@@ -188,19 +194,60 @@ namespace WebColegio.Controllers
                 return View();
             }
         }
+        //public async Task<ActionResult> EstadoCuenta()
+        //{
+
+        //var _pagosCaja = await _Iservices.GetPagoCajaAsync();            
+        //var _turnos = await _Iservices.GetTurnosAsync();           
+        //var _periodo = await _Iservices.GetPeriodoAsync();
+        //var _grados = await _Iservices.GetGradosAsync();
+
+
+        //var VieModelEstadoCuenta = new ColeccionCatalogos
+        //{
+        //    pagoCajas = _pagosCaja,
+        //    turnos = _turnos,                
+        //    periodo = _periodo,
+        //    grados = _grados
+
+        //};
+        //if (VieModelEstadoCuenta == null)
+        //{
+        //    TempData["Message"] = "No hay estado de cuenta registradas";
+        //    TempData["Tipo"] = "warning";
+
+        //    return View("NotFound"); // Redirige a una vista de error o no encontrado
+        //}
+        //else
+        //{
+        //    //TempData["Message"] = "Estado de Cuenta encontradas";
+        //    //TempData["Tipo"] = "success";
+        //    return View(VieModelEstadoCuenta);
+        //}
+
+        //}
         public async Task<ActionResult> EstadoCuenta()
         {
 
-            var _pagosCaja = await _Iservices.GetPagoCajaAsync();            
-            var _turnos = await _Iservices.GetTurnosAsync();           
+            var _pagos = await _Iservices.GetPagosAsync();
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
+            var _tipoRecibo = await _Iservices.GetTipoReciboAsync();
+            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
+            var _meses = await _Iservices.GetMesesAsync();
+            var _notas = await _Iservices.GetNotasAsync();
             var _periodo = await _Iservices.GetPeriodoAsync();
             var _grados = await _Iservices.GetGradosAsync();
 
 
             var VieModelEstadoCuenta = new ColeccionCatalogos
             {
-                pagoCajas = _pagosCaja,
-                turnos = _turnos,                
+                pagos = _pagos,
+                alumno = _alumnos,
+                tipoMovimiento = _tipoMovimiento,
+                tipoRecibo = _tipoRecibo,
+                metodoPago = _metodoPago,
+                meses = _meses,
                 periodo = _periodo,
                 grados = _grados
 
@@ -208,14 +255,11 @@ namespace WebColegio.Controllers
             if (VieModelEstadoCuenta == null)
             {
                 TempData["Message"] = "No hay estado de cuenta registradas";
-                TempData["Tipo"] = "warning";
-
                 return View("NotFound"); // Redirige a una vista de error o no encontrado
             }
             else
             {
-                //TempData["Message"] = "Estado de Cuenta encontradas";
-                //TempData["Tipo"] = "success";
+                TempData["Message"] = "Estado de Cuenta encontradas";
                 return View(VieModelEstadoCuenta);
             }
         }

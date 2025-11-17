@@ -72,6 +72,7 @@ namespace WebColegio.Services
         Task<TblUsuarios> GetLogin(string usuario);
         Task<TblRol> GetRol(int idrol);
         Task<TblEgreso> GetEgresoCajaById(int id);
+        Task<TblUsuarios> GetUsuarioIdAsync(int idUser);
         #endregion
         #region Metodos de Busqueda
         Task<List<TblAlumno>> searchAlumnosAsync();

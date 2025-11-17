@@ -6,8 +6,9 @@
         public string Colegio { get; set; }
         public string Serie { get; set; }
         public int Numero { get; set; }
+        
         public DateTime Fecha { get; set; }
-
+        public List<TblEgreso> EgresosCaja { get; set; } = new();
         public List<IngresoDto> Ingresos { get; set; } = new();
         public List<EgresoDto> Egresos { get; set; } = new();
 
@@ -27,9 +28,10 @@
 
         public class IngresoDto
         {
-            public string Concepto { get; set; }
-            public string Recibo { get; set; }
-            public int Cantidad { get; set; }
+            public string? Concepto { get; set; }
+        public int? primerReciboDia { get; set; }
+        public int? ultimoReciboDia { get; set; }
+        public int Cantidad { get; set; }
             public decimal Monto { get; set; }
         }
 

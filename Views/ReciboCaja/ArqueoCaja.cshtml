@@ -14,8 +14,11 @@
         @* <h3>@Model.Colegio</h3> *@
         <div class="subtitulo">
             <p>ARQUEO DE CAJA</p>
-           @*  <p>Serie: @Model.Serie &nbsp;&nbsp; Nº: @Model.Numero</p>
-            <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p> *@
+            @* <p> COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</p>
+            <p>VICARIA DE EDUCACIÓN CATÓLICA</p>
+            <p>Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</p>
+             <p>Serie: @Model.Serie &nbsp;&nbsp; Nº: @Model.Numero</p> 
+            <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p>*@
         </div>
     </div>
 
@@ -35,8 +38,8 @@
             {
                 <tr>
                     <td>@i.Concepto</td>
-                    <td>@i.Recibo</td>
-                    <td style="text-align:center">@i.Cantidad</td>
+                    <td>@i.primerReciboDia - @i.ultimoReciboDia</td>
+                    <td style="text-align:center">@i.Cantidad</td> 
                     <td style="text-align:right">@i.Monto.ToString("C")</td>
                 </tr>
             }
@@ -56,7 +59,7 @@
         <tbody>
             @foreach (var e in Model.Egresos)
             {
-                <tr>
+                <tr class="align-content-center">
                     <td>@e.Detalle</td>
                     <td style="text-align:right">@e.Monto.ToString("C")</td>
                 </tr>
@@ -83,55 +86,60 @@
                 <tbody>
 
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="1000" /></td>
                         <td><span>C$ 1,000.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="500" /></td>
                         <td><span>C$ 500.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="200" /></td>
                         <td><span>C$ 200.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="100" /></td>
                         <td><span>C$ 100.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="50" /></td>
                         <td><span>C$ 50.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="20" /></td>
                         <td><span>C$ 20.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="10" /></td>
                         <td><span>C$ 10.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="5" /></td>
                         <td><span>C$ 5.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="1" /></td>
                         <td><span>C$ 1.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadc" data-precio="0.50" /></td>
                         <td><span>C$ 0.50</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totalc" readonly /></td>
                     </tr>
+                            <tr>
+                                <td></td>
+                                <td class="totales">Total en Cordoba</td>
+                                <td><input type="text" id="totalGeneralCordobas" readonly /></td>
+                            </tr>
                     @*  @foreach (var d in Model.DetalleCordobas)
             {
                 <tr>
@@ -159,51 +167,51 @@
                 <tbody>
 
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadd" data-precio="100" /></td>
                         <td><span>$ 100.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadd" data-precio="50" /></td>
                         <td><span>$ 50.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadd" data-precio="20" /></td>
                         <td><span>$ 20.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadd" data-precio="10" /></td>
                         <td><span>$ 10.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadd" data-precio="5" /></td>
                         <td><span>$ 5.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadd" data-precio="1" /></td>
                         <td><span>$ 1.00</span></td>
-                        <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="totald" readonly /></td>
                     </tr>
                             <tr>
                                 <td></td>
-                                <td>Total Dolares</td>
+                                <td class="totales">Total Dolares</td>
 
-                                <td>$<input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" id="totalGeneralDolares" readonly /></td>
                             </tr>
                             <tr>
                                 <td></td>
-                                <td>Tasa de Cambio</td>
+                                <td class="totales">Tasa de Cambio</td>
 
-                                <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td><input type="text" class="cantidadcambio" data-precio="36.7" /></td>
                             </tr>
                             <tr>
                                 <td></td>
-                                <td>Equivalente En:</td>
-                                <td><input type="text" id="DenominacionCordoba" /></td>
+                                <td class="totales">Equivalente En:</td>
+                                <td><input type="text" id="EquivalenteCordoba" /></td>
                             </tr>
                 </tbody>
             </table>
@@ -212,7 +220,17 @@
             </tr>
         </tbody>
     </table>
-    
+    <div class="TotalesGeneral align-content-center">
+        <p class="totalDetalleDinero">
+            TOTAL DETALLE DE DINERO:  <u>C$  </u>
+        </p>
+        <p class="totalEfectivo">
+            EFECTIVO VIA TRANSFERENCIA: <u>C$  </u>
+        </p>
+        <p class="totalDetalleEfectivo">
+            TOTAL DETALLE DE EFECTIVO: <u>C$  </u>
+        </p>
+    </div>
 
     <p class="totales" >
         Total en Letras: <u>@Model.TotalEnLetras</u>
@@ -231,7 +249,115 @@
     </div>
 
     <br />
-    <button class="no-print text-center" onclick="window.print()">🖨 Imprimir</button>
+    <button class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
 </body>
-</html>
 
+</html>
+<script>
+    function totalGeneralCordobas() {
+        let total = 0;
+
+        document.querySelectorAll(".totalc").forEach(input => {
+            // Extrae solo números (quita C$, comas, etc.)
+            let valor = parseFloat(input.value.replace(/[^0-9.-]+/g, "")) || 0;
+            total += valor;
+        });
+
+        // Mostrar el total general formateado
+        document.getElementById("totalGeneralCordobas").value =
+            "C$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+    }
+    function totalGeneralDolares() {
+        let total = 0;
+
+        document.querySelectorAll(".totald").forEach(input => {
+            // Extrae solo números (quita C$, comas, etc.)
+            let valor = parseFloat(input.value.replace(/[^0-9.-]+/g, "")) || 0;
+            total += valor;
+        });
+
+        // Mostrar el total general formateado
+        document.getElementById("totalGeneralDolares").value =
+            "$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+    }
+
+    //cambio de dolares a cordoba
+    document.querySelector(".cantidadcambio").addEventListener("input", function () {
+         let totaDetalleDinero=0;
+        // total en dólares (ya calculado en tu código anterior)
+        let totalDolares = parseFloat(
+            document.getElementById("totalGeneralDolares").value.replace(/[^0-9.-]+/g, "")
+        ) || 0;
+
+         let totalCordobas = parseFloat(
+            document.getElementById("totalGeneralCordobas").value.replace(/[^0-9.-]+/g, "")
+        ) || 0;
+        if(totalDolares>0)
+        {
+
+        // tasa de cambio ingresada
+        let tasa = parseFloat(this.value) || 0;
+
+        // equivalente total en córdobas
+        let equivalente = totalDolares * tasa;
+        totaDetalleDinero=equivalente+totalCordobas;
+         // 🔥 Actualizar el TOTAL DETALLE DE DINERO
+
+        // mostrar en input final
+        document.getElementById("EquivalenteCordoba").value =
+            "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+            document.querySelector(".totalDetalleEfectivo u").textContent =
+               "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+            
+    }
+    else
+    {
+         
+    
+            // 🔥 Actualizar el TOTAL DETALLE DE DINERO
+        document.querySelector(".totalDetalleDinero u").textContent =
+            "C$ " + totalCordobas.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+    document.querySelector(".totalDetalleEfectivo u").textContent =
+               "C$ " + totalCordobas.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+            
+    }
+    });
+
+
+
+    document.querySelectorAll(".cantidadc").forEach(input => {
+        input.addEventListener("input", function () {
+
+            let cantidad = parseInt(this.value) || 0;
+            let precio = parseFloat(this.dataset.precio);
+
+            let total = cantidad * precio;
+
+            let totalInput = this.closest("tr").querySelector(".totalc");
+
+            totalInput.value =
+                "C$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+
+            // 🔥 Recalcular total general
+            // calcularTotalGeneral();
+        });
+    });
+    document.querySelectorAll(".cantidadd").forEach(input => {
+        input.addEventListener("input", function () {
+
+            let cantidad = parseInt(this.value) || 0;
+            let precio = parseFloat(this.dataset.precio);
+
+            let total = cantidad * precio;
+
+            let totalInput = this.closest("tr").querySelector(".totald");
+
+            totalInput.value =
+                "$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+
+            // 🔥 Recalcular total general
+             totalGeneralCordobas();
+             totalGeneralDolares();
+        });
+    });
+</script>

@@ -45,6 +45,7 @@ namespace WebColegio.Controllers
         //{
         //    try
         //    {
+        //    int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
         //        bool existeLogin;
         //        string nombre = viewmodel.usuarios.Login;

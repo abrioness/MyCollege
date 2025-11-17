@@ -9,11 +9,12 @@
         public decimal Monto { get; set; }
         public int? NumeroRecibo { get; set; }
         public string Serie { get; set; } = null!;
-        public string Anyo { get; set; } = null!;
+        public int? Anyo { get; set; }
+       
         public int IdMes { get; set; }
-
+        public DateTime? FechaEmision { get; set; }
         public int? Mora { get; set; }
-        public string Descripcion { get; set; } = null!;
+        public string? Descripcion { get; set; }
         public int IdMetodoPago { get; set; }
 
         public int IdTipoMovimiento { get; set; }

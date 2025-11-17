@@ -15,9 +15,12 @@ namespace WebColegio.Services
     public class ServicesApi:IServicesApi
     {
         private static string url = "https://localhost:7008/";
+        //private readonly string _apiUrl;
+        public ServicesApi(IConfiguration config)
+        {
+            //_apiUrl = config["ApiUrl"];
+        }
         
-
-        public ServicesApi() { }
         //Metodo para Listar usuarios
         #region Metodos Get
 
@@ -656,10 +659,7 @@ namespace WebColegio.Services
         {
             bool respuesta = false;
 
-            // Asegurar datos mínimos requeridos
-            notas.Activo = true;
-            notas.UsuarioRegistro = 1;
-            notas.FechaRegistro = DateTime.Now;
+
 
             try
             {
@@ -1186,8 +1186,31 @@ namespace WebColegio.Services
                 return recibocaja!;
             }
         }
+        public async Task<TblUsuarios> GetUsuarioIdAsync(int idUser)
+        {
 
-       
+            // Suponiendo que tu API tiene un endpoint como:
+            // GET https://tuservidor/api/arqueo/{id}
+            using (var httpclient = new HttpClient())
+            {
+
+                var response = await httpclient.GetAsync(url + $"api/Usuarios/" + idUser);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Error al obtener el usuario: {response.StatusCode}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Usar Newtonsoft.Json o System.Text.Json para deserializar
+                var idUsuario = JsonConvert.DeserializeObject<TblUsuarios>(json);
+
+                return idUsuario!;
+            }
+        }
+
+
 
         #endregion
         #region Metodos de Busqueda

@@ -8,8 +8,17 @@ namespace WebColegio.Models.ViewModel
         public TblPago Pago { get; set; }= new();
         public int SiguienteNumero { get; set; }
         public int Mora { get; set; }
+        public decimal MontoTotal { get; set; }
+        public List<TblAlumno> alumnos { get; set; } = new List<TblAlumno>();
+        public List<CatTipoMovimiento> tipoMovimiento { get; set; } = new List<CatTipoMovimiento>();
+        public List<CatMetodoPago> metodoPago { get; set; } = new List<CatMetodoPago>();
+        public List<Grados> grados { get; set; } = new List<Grados>();
+        public List<Turnos> turnos { get; set; } = new List<Turnos>();
+      
+        public string cantidadEnLetras { get; set; } = null!;
+        public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
         public List<TblPago> listPagos {get;set;} = new();
-        public List<SelectListItem> reciboCajas { get; set; } = new();
+       
         public List<SelectListItem> pagosSelectListItem { get; set; } = new();
         public List<SelectListItem> alumnosSelectListItem { get; set; } = new();
         public List<SelectListItem> usuariosSelectListItem { get; set; } = new();

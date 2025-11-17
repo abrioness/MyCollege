@@ -29,7 +29,8 @@
 						<th>Existencia Inicial</th>
 						<th>Tipo de Movimiento</th>
 						<th>Stock Actual</th>
-						<th>Costo Unitario</th>						
+						<th>Costo Unitario</th>	
+						<th>Categoría</th>
 						<th>Importe de Inventario</th>
 						<th>Fecha Registro</th>
 					</tr>
@@ -77,6 +78,14 @@
 									C$ @itemProducto.CostoUnitario
 								
 
+							</td>
+								
+							<td>
+									@{
+										var itemCategoriaProducto = Model.categoriasProducto
+										.FirstOrDefault(a => a.IdCateProducto == itemProducto.IdCateProducto);
+									}
+								@itemCategoriaProducto.NombreCategoria
 							</td>
 							
 							<td>

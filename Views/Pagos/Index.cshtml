@@ -23,6 +23,7 @@
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>
 					<tr>
+						<th>Número Recibo</th>
 						<th>Alumno</th>
 						<th>Concepto</th>
 						<th>Monto</th>
@@ -37,12 +38,13 @@
 					@foreach (var itemPago in Model.pagos)
 					{
 						<tr>
+							<td><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
 
 							@foreach (var alumno in Model.alumno.Where(a => a.IdAlumno == itemPago.IdAlumno))
 							{
 								<td>
 
-									<a asp-action="Create" asp-controller="ReciboCaja" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info">	@alumno.Nombre  @alumno.Apellido</a>
+									@alumno.Nombre  @alumno.Apellido
 
 								</td>
 							}

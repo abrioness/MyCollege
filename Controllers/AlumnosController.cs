@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -127,8 +128,8 @@ namespace WebColegio.Controllers
             try
             {
                 alumnos.IdPeriodo = await _Iservices.GetPeriodoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.Actual)?.IdPeriodo) ?? 0;
-                
-                
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
                 existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoAlumno, alumnos.Nombre, alumnos.Apellido);
                 if (existe)
                 {

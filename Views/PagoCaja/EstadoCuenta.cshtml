@@ -61,7 +61,7 @@
 								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
 
 								@* Mostrar columnas de los 12 meses *@
-								@for (int mes = 1; mes <= 12; mes++)
+								@* @for (int mes = 1; mes <= 12; mes++)
 								{
 									var pagoMes = Model.pagos
 									.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
@@ -74,8 +74,8 @@
 									{
 										<td>❌</td>
 									}
-								}
-								@* Mostrar columnas de los 12 meses 
+								} *@
+								@* Mostrar columnas de los 12 meses *@
 								@for (int mes = 1; mes <= 12; mes++)
 								{
 									var pagoMes = Model.pagos
@@ -93,7 +93,7 @@
 										</td>
 									}
 									
-								}*@
+								}
 							</tr>
 						}
 					</tbody>

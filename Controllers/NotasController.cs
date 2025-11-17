@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -249,7 +250,8 @@ namespace WebColegio.Controllers
             bool validarDuplicado= false;
             try
             {
-                validarDuplicado=await _Iservices.ValidarNotas(notas.IdAsignatura,notas.IdPeriodo,notas.IdAlumno);
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                validarDuplicado =await _Iservices.ValidarNotas(notas.IdAsignatura,notas.IdPeriodo,notas.IdAlumno);
                 if (validarDuplicado == true)
                 {
                     TempData["Mensaje"] = "El Alumno ya Posee un Registro de Nota con la Asignatura Seleccionada.";
@@ -259,7 +261,11 @@ namespace WebColegio.Controllers
 
                 if (notas != null)
                 {
-                    
+                    // Asegurar datos mínimos requeridos
+                    notas.Activo = true;
+                    notas.UsuarioRegistro = idUsuario;
+                    notas.FechaRegistro = DateTime.Now;
+
                     response = await _Iservices.PostNotasAsync(notas);
                     if (response)
                     {

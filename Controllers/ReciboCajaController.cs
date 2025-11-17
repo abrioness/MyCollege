@@ -232,7 +232,7 @@ namespace WebColegio.Controllers
             // Inicializar el viewmodel del arqueo
             var arqueo = new ArqueoCajaViewModel
             {
-                Colegio = "Colegio Ejemplo",
+                Colegio = "COLEGIO SAN FRANCISCO JAVIER",
                 Serie = "A",
                 Fecha = fecha
             };
@@ -242,6 +242,9 @@ namespace WebColegio.Controllers
             pagosDelDia=pagosDelDia
                 .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)
                 .ToList();
+            var ordenarNumeroRecibo = pagosDelDia.OrderBy(p => p.NumeroRecibo).ToList();
+            var primerRecibo = ordenarNumeroRecibo.FirstOrDefault();
+            var ultimoRecibo = ordenarNumeroRecibo.LastOrDefault();
             //Egresos del día
             var egresosDelDia = await _Iservices.GetEgresoAsync();
             egresosDelDia = egresosDelDia
@@ -260,15 +263,15 @@ namespace WebColegio.Controllers
                 .ToList();
 
             // 2️⃣ Obtener los recibos relacionados
-            var recibos = await _Iservices.GetRecibosCajaAsync();
-            recibos = recibos
-                .Where(r => r.Activo == true && r.NumeroRecibo > 0)
-                .ToList();
+            //var recibos = await _Iservices.GetRecibosCajaAsync();
+            //recibos = recibos
+            //    .Where(r => r.Activo == true && r.NumeroRecibo > 0)
+            //    .ToList();
             // 3️⃣ Armar los ingresos
             arqueo.Ingresos = (
                     from p in pagosDelDia
-                    join r in recibos on p.IdPago equals r.IdPago into pr
-                    from r in pr.DefaultIfEmpty()
+                        //join r in recibos on p.IdPago equals r.IdPago into pr
+                        //from r in pr.DefaultIfEmpty()
 
                     join tm in tipmov on p.IdTipoMovimiento equals tm.IdTipoMovimiento into tmm
                     from tm in tmm.DefaultIfEmpty()
@@ -276,11 +279,10 @@ namespace WebColegio.Controllers
                     join mp in metpago on p.IdMetodoPago equals mp.IdMetodoPago into mpp
                     from mp in mpp.DefaultIfEmpty()
 
-                    where r != null && p.IdTipoMovimiento == r.IdTipoMovimiento // 1 = Ingreso
-                    group new { p, r, tm, mp } by new
+                    where p != null //&& p.IdTipoMovimiento == r.IdTipoMovimiento // 1 = Ingreso
+                    group new { p, tm, mp } by new
                     {
                         Concepto = tm != null ? tm.Concepto : "Sin concepto",
-                        Recibo = r != null ? r.NumeroRecibo.ToString() : "N/A",
 
                         MetodoPago = mp != null ? mp.MetodoPago : "No especificado"
                     }
@@ -288,8 +290,9 @@ namespace WebColegio.Controllers
                     select new IngresoDto
                     {
                         Concepto = g.Key.Concepto,
-                        Recibo = g.Key.Recibo,
                         Cantidad = g.Count(),
+                        primerReciboDia = primerRecibo?.NumeroRecibo,
+                        ultimoReciboDia=ultimoRecibo?.NumeroRecibo,
                         Monto = g.Sum(x => x.p.Monto)
                     }
                 ).ToList();
@@ -298,11 +301,11 @@ namespace WebColegio.Controllers
             // 4️⃣ Armar los egresos
             arqueo.Egresos = (from p in egresosDelDia
                               where p.NumeroRecibo >0 // suponiendo 2 = egreso
-                              group p by p.NumeroRecibo into g
+                              //group p by p.NumeroRecibo into g
                               select new EgresoDto
                               { 
-                                  Detalle = "Egreso varios",
-                                  Monto = g.Sum(x => x.Monto)
+                                  Detalle = p.Descripcion,
+                                  Monto = p.Monto
                               }).ToList();
 
             // 5️⃣ Totales

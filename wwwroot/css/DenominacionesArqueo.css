@@ -30,6 +30,21 @@ th {
     background: #f0f0f0;
     text-align: center;
 }
+.totalDetalleDinero {
+    font-weight: bold;
+    text-align: left;
+    padding-right: 10px;
+}
+.totalDetalleEfectivo {
+    font-weight: bold;
+    text-align: left;
+    padding-right: 10px;
+}
+.totalEfectivo {
+    font-weight: bold;
+    text-align: left;
+    padding-right: 10px;
+}
 
 .totales {
     font-weight: bold;
@@ -53,15 +68,56 @@ th {
         display: none;
     }
 }
-    #DenominacionCordoba {
+    .totalc {
         border-top: none;
         border-left: none;
         border-right: none;
         
     }
-    input{
-        width:auto;
-    }
+.cantidadc {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+.totald {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.cantidadd {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+#totalGeneralDolares {
+    
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+#totalGeneralCordobas {
+    
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+#EquivalenteCordoba {
+    
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+.cantidadcambio {
+    
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+input {
+    width: auto;
+}
     td{
         text-align:center;
     }

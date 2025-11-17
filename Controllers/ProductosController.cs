@@ -1,10 +1,12 @@
-﻿using System.Text;
+﻿using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
 
@@ -21,19 +23,37 @@ namespace WebColegio.Controllers
         // GET: ProductosController
         public async Task<ActionResult> Index()
         {
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var _productos = await _Iservices.GetProductosAsync();
             var _movInvebtario = await _Iservices.GetMovInventarioAsync();
             var _categoriaProducto = await _Iservices.GetCategoriaProductoAsync();
+            var _usuarioId = await _Iservices.GetUsuarioIdAsync(idUsuario);
 
-            var viewModel = new ColeccionCatalogos
+            if (_usuarioId.IdRol == 2 || _usuarioId.IdRol == 5)
             {
-                producto = _productos,
-                categoriasProducto=_categoriaProducto,
-                movinventario = _movInvebtario
-            };
 
 
-            return View(viewModel);
+                var viewModel = new ColeccionCatalogos
+                {
+
+                    producto = _productos.Where(r => r.UsuarioRegistro == idUsuario).ToList(),
+                    categoriasProducto = _categoriaProducto,
+                    movinventario = _movInvebtario
+                };
+                return View(viewModel);
+            }
+            if(_usuarioId.IdRol==1)
+            {
+                var viewModel = new ColeccionCatalogos
+                {
+
+                    producto = _productos,
+                    categoriasProducto = _categoriaProducto,
+                    movinventario = _movInvebtario
+                };
+                return View(viewModel);
+            }
+            return RedirectToAction("SinPermiso", "Login");
         }
 
         // GET: ProductosController/Details/5
@@ -120,70 +140,7 @@ namespace WebColegio.Controllers
                 return View();
             }
         }
-        //public class CodigoProductoHelper
-        //{
-        //    public static string GenerarCodigo(string nombreProducto, int correlativo)
-        //    {
-        //        if (string.IsNullOrWhiteSpace(nombreProducto))
-        //            return "";
-
-        //        // Quitar acentos y pasar a mayúsculas
-        //        nombreProducto = QuitarAcentos(nombreProducto).ToUpper();
-
-        //        // Dividir en palabras
-        //        var palabras = nombreProducto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        //        // Tomar las tres primeras letras de las dos primeras palabras
-        //        string parte1 = palabras.Length > 0 ? new string(palabras[0].Take(3).ToArray()) : "";
-        //        string parte2 = palabras.Length > 1 ? new string(palabras[1].Take(3).ToArray()) : "";
-
-        //        // Combinar ambas partes
-        //        string baseCodigo = $"{parte1}{parte2}";
-
-        //        // Agregar correlativo con 3 dígitos (001, 002, 003...)
-        //        string codigoFinal = $"{baseCodigo}-{correlativo:D3}";
-
-        //        return codigoFinal;
-        //    }
-
-        //    private static string QuitarAcentos(string texto)
-        //    {
-        //        var normalized = texto.Normalize(System.Text.NormalizationForm.FormD);
-        //        var sb = new StringBuilder();
-        //        foreach (var c in normalized)
-        //        {
-        //            if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c)
-        //                != System.Globalization.UnicodeCategory.NonSpacingMark)
-        //            {
-        //                sb.Append(c);
-        //            }
-        //        }
-        //        return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
-        //    }
-        //}
-        //public async Task<string> GenerarCodigoAutomaticoAsync(string nombreProducto)
-        //{
-        //    // Obtener el último número usado
-        //    var lisProducto = await _Iservices.GetProductosAsync();
-                
-        //        lisProducto.OrderByDescending(p => p.IdProducto)
-        //        .Select(p => p.CodigoBarra).FirstOrDefault();
-        //    var ultimoCodigo=lisProducto.ToString();
-        //    int correlativo = 1;
-
-        //    if (!string.IsNullOrEmpty(ultimoCodigo))
-        //    {
-        //        // Extraer la parte numérica final
-        //        var partes = ultimoCodigo.Split('-');
-        //        if (partes.Length == 2 && int.TryParse(partes[1], out int ultimoNum))
-        //        {
-        //            correlativo = ultimoNum + 1;
-        //        }
-        //    }
-
-        //    // Generar nuevo código
-        //    return CodigoProductoHelper.GenerarCodigo(nombreProducto, correlativo);
-        //}
+        
         // GET: ProductosController/Edit/5
         public ActionResult Edit(int id)
         {

@@ -95,9 +95,39 @@ namespace WebColegio.Controllers
             }
         }
         // GET: PagosController/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            return View();
+
+            var listpagos = await _Iservices.GetPagoById(id);
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
+            var _grados = await _Iservices.GetGradosAsync();
+            var _turnos = await _Iservices.GetTurnosAsync();
+            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
+            var viewModel = new PagosViewModel
+            {
+                Pago = listpagos,
+                alumnos = _alumnos,
+                metodoPago = _metodoPago,
+                tipoMovimiento = _tipoMovimiento,
+                cantidadEnLetras = NumeroALetras(listpagos.Monto),
+                grados = _grados,
+                turnos=_turnos
+                
+            };
+
+            if (listpagos == null)
+            {
+                return NotFound();
+            }
+
+            return View(viewModel);
+        }
+        //numeros en letra
+        private string NumeroALetras(decimal numero)
+        {
+            return Humanizer.NumberToWordsExtension.ToWords((long)numero, new System.Globalization.CultureInfo("es"))
+                .ToUpper() + " CÓRDOBAS";
         }
 
         // GET: PagosController/Create
@@ -160,45 +190,27 @@ namespace WebColegio.Controllers
             int mensualidad = 640;
             int total = 0;
 
-            var buscarIdGuardado = await _Iservices.GetEgresoAsync();
-            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagos.Pago.NumeroRecibo && r.Serie == "A" && r.Activo == true);
-            if (validarDuplicado)
-            {
-                TempData["Mensaje"] = "El número de Recibo ya Existe.";
-                return RedirectToAction("Create");
-            }
+            var buscarIdGuardado = await _Iservices.GetPagosAsync();
+           
             try
             {
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 int periodo= await _Iservices.GetPeriodoAsync().ContinueWith(p=>p.Result.FirstOrDefault(a=>a.Activo && a.Actual)?.IdPeriodo) ?? 0;
                 pagos.Pago.IdPeriodo = periodo;
-                //int tipoMov = await _Iservices.GetTipoMovimientoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.IdTipoMovimiento==pagos.Pago.IdTipoMovimiento)?.IdTipoMovimiento) ?? 0;
 
-                //validarDuplicado = await _Iservices.ValidarNotas(pagos.MesPagado, pagos.IdTipoMovimiento, pagos.IdAlumno);
-                //if (ExistePagoDuplicado(pagos))
-                //{
-                //    TempData["Mensaje"] = "El Alumno ya tiene un registro de pago con el concepto actual.";
-                //    TempData["Tipo"] = "warning";
-                //    return RedirectToAction("Create");
-                //}
-
-                //if(pagos.Pago.IdMes)
-                //{
-
-                //}
 
                 if (pagos != null)
                 {
                    if (!string.IsNullOrEmpty(MesesSeleccionados))//MesesSeleccionados != null && MesesSeleccionados.Any())
                     {
 
-                        if(BecaCompleta(pagos.Pago.IdAlumno,pagos.Pago.IdPeriodo).Result)
+                        if(BecaCompleta(pagos.Pago.IdAlumno,pagos.Pago.IdPeriodo).Result && pagos.Pago.IdTipoMovimiento==1)
                         {
                             TempData["Mensaje"] = "El Estudiante Posee Beca Completa.";
                             TempData["Tipo"] = "warning";
                             return RedirectToAction("Create");
                         }
-                        if (MediaBeca(pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo).Result && pagos.Pago.Monto>320)
+                        if (MediaBeca(pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo).Result && pagos.Pago.Monto > 320 && pagos.Pago.IdTipoMovimiento==1)
                         {
                             TempData["Mensaje"] = "El Estudiante Cuenta con Media Beca.";
                             TempData["Tipo"] = "warning";
@@ -213,17 +225,32 @@ namespace WebColegio.Controllers
                         bool duplicado = false;
                         //total = ids * mensualidad;
                         //if((ids* mensualidad)=pagos.Pago.Monto)
-                        
 
-                        foreach (var idMes in ids)
+                        //crear meses pagados previos
+                        var mesesPagadosBD = listpagos
+                        .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
+                                    p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
+                                    p.Anyo == pagos.Pago.Anyo)
+                        .Select(p => p.IdMes)
+                        .ToHashSet();
+                        //crear meses pagados virtualmente
+                        var mesesPagadosAcumulados = new HashSet<int>(mesesPagadosBD);
+
+                        var idsOrdenados = ids.OrderBy(m => m).ToList();
+
+                        foreach (var idMes in idsOrdenados)
                         {
                             // 1️⃣ Validar duplicado
 
-                            bool existePago = listpagos.Any(p => p.IdAlumno == pagos.Pago.IdAlumno
-                                            && p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento
-                                            && p.IdMes == idMes);
                             
-                            if (existePago)
+                            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagos.Pago.NumeroRecibo && r.IdMes ==idMes && r.IdPeriodo==periodo && r.Serie == "A" && r.Activo == true);
+                            if (validarDuplicado)
+                            {
+                                TempData["Mensaje"] = "El número de Recibo ya Existe.";
+                                return RedirectToAction("Create");
+                            }
+
+                            if (mesesPagadosAcumulados.Contains(idMes))
                             {
                                 // Evita duplicado
                                 duplicado = true;
@@ -233,72 +260,49 @@ namespace WebColegio.Controllers
                                 continue;
                             }
                             var todosLosMeses = Enumerable.Range(1, 12); // o hasta el mes actual
-
-
-                            // 2️⃣ Verificar si hay mora (mes anterior sin pagar)
-                            //var tienePendientes = listpagos
-                            //        .Where(p => p.IdAlumno == pagos.Pago.IdAlumno
-                            //                    && p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento
-                            //                    && p.IdPeriodo == periodo
-                            //                    && p.IdMes < idMes);
-                            //for(int a=0;a<12-1;a++)
-                            //{
-                            //    tienePendientes.FirstOrDefault
-                            //}
+                            // 2. Verificar si hay meses anteriores sin pagar
+                            var mesesPendientes = Enumerable.Range(1, idMes - 1)
+                                .Except(mesesPagadosAcumulados)
+                                .ToList();
 
                             int anioActual = pagos.Pago.IdPeriodo;
-                            var mesesPendientes = await _Iservices.GetPagosAsync();
-                            var pendientes = mesesPendientes
-                            .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
-                                       p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
-                                       p.IdPeriodo == pagos.Pago.IdPeriodo &&
-                                       p.IdMes <= idMes)
-                            .Select(p => p.IdMes).ToList();
 
-                            
-
-                            // 2. Obtener todos los meses que deberían estar pagados
-                            var todosMesesRequeridos = Enumerable.Range(1, idMes - 1).ToList();
-                            var mesesFaltantes = todosMesesRequeridos.Except(pendientes).ToList();
-                            
-                             if (mesesFaltantes.Any())
+                            var primerMesFaltante = mesesPendientes.Min();
+                            if (mesesPendientes.Any())
                             {
-                                var primerMesFaltante = mesesFaltantes.Min();
-                                if (idMes != primerMesFaltante)
-                                {
-                                    
+                                
+                               
                                     TempData["Mensaje"] = $"No puede pagar el mes de {Mes(idMes).Result}. Debe pagar primero el mes de {Mes(primerMesFaltante).Result}.";
                                     TempData["Tipo"] = "warning";
                                     return RedirectToAction("Create");
-                                }
+                                
                             }
-
-                            int montoMora = 0;
-                            if (mesesFaltantes.Any())
-                            {
-                                int montoBase = 10; // Obtener de configuración
-                                //decimal porcentajeMora = 0.10m;
-                                montoMora = mesesFaltantes.Count * (montoBase); //* porcentajeMora);
-                            }
-                            //else
-                            //    {
-                            //        pagos.Mora = 0; // Aplica mora fija de 10
-
-                            //        aplicoMora = false;
-                            //    }
-
+                            var hoy = DateTime.Now;
+                           // if(mesesPendientes.Count > 0)
+                           // {
+                           // int moraPorMes = 10;
+                           // decimal moraTotal = mesesPendientes.Count * moraPorMes;
+                           // pagos.Mora =(int) moraTotal;
+                           // pagos.MontoTotal = mensualidad + moraTotal;
+                           //}
+                            
                                 // ejemplo: crear un pago por cada mes
                                 var nuevoPago = new TblPago
                                 {
                                     IdAlumno = pagos.Pago.IdAlumno,
+                                    Serie="A",
+                                    NumeroRecibo=pagos.Pago.NumeroRecibo,
+                                    Anyo=pagos.Pago.Anyo,
                                     IdMes = idMes,
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
                                     IdTipoMovimiento = pagos.Pago.IdTipoMovimiento,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
                                     IdGrado=pagos.Pago.IdGrado,
                                     IdPeriodo=pagos.Pago.IdPeriodo,
-                                    Mora = montoMora,
+                                    FechaEmision=pagos.Pago.FechaEmision,
+                                    Mora = pagos.Pago.Mora,
                                     Monto = pagos.Pago.Monto,
+                                    Descripcion=pagos.Pago.Descripcion,
                                     Activo = true,
                                     UsuarioRegistro = idUsuario,
                                     FechaRegistro = DateTime.Now
@@ -307,25 +311,38 @@ namespace WebColegio.Controllers
 
                                 //await _Iservices.InsertarPagoAsync(nuevoPago);
                                 response = await _Iservices.PostPagosAsync(nuevoPago);
-                            }
+                                mesesPagadosAcumulados.Add(idMes);
+                        }
                         // 4️⃣ Mensaje final
                         if (duplicado)
                         {
-                            TempData["Mensaje"] = "Algunos meses ya estaban registrados y fueron omitidos.";
+                            TempData["Mensaje"] = "Pago del mes seleccionado ya existe.";
                             TempData["Tipo"] = "warning";
                         }
-                        else if (aplicoMora)
+                        if (aplicoMora)
                         {
                             TempData["Mensaje"] = "Pago registrado con mora de C$ 10 aplicada.";
                             TempData["Tipo"] = "info";
                         }
-                        else
+                        if(response)
                         {
+                            var idPag = buscarIdGuardado.Max(a => a.IdPago);                 
+
+                            
                             TempData["Mensaje"] = "Pago registrado correctamente.";
                             TempData["Tipo"] = "success";
+                            return RedirectToAction("Details", "Pagos", new { id = idPag+1 });
                         }
+                        else
+                        {
+                            //var idPag = buscarIdGuardado.Max(a => a.IdPago);
 
-                        return RedirectToAction("Create");
+
+                            TempData["Mensaje"] = "No se logro procesar el pago.";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
+                        
 
                     }
                     else
@@ -334,8 +351,12 @@ namespace WebColegio.Controllers
                         response = await _Iservices.PostPagosAsync(pagos.Pago);
                         if (response)
                         {
-                            TempData["Mensaje"] = "Se Proceso Correctamente el Pago.";
-                            return RedirectToAction("Create");
+                            var idPag = buscarIdGuardado.Max(a => a.IdPago+1); 
+
+
+                            TempData["Mensaje"] = "Pago registrado correctamente.";
+                            TempData["Tipo"] = "success";
+                            return RedirectToAction("Details", "Pagos", new { id = idPag });
                         }
                         else
                         {
@@ -353,6 +374,19 @@ namespace WebColegio.Controllers
             {
                 return View();
             }
+        }
+
+        //Calcular meses atrasados
+        public int CalcularMesesAtrasados(DateTime fechaDeuda, DateTime fechaActual)
+        {
+            int meses = (fechaActual.Year - fechaDeuda.Year) * 12 + (fechaActual.Month - fechaDeuda.Month);
+
+            if (fechaActual.Day < fechaDeuda.Day)
+            {
+                meses--; // ajusta si el mes aún no se completa
+            }
+
+            return meses < 0 ? 0 : meses;
         }
 
         //Obtener nombre del mes.

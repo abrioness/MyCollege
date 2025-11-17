@@ -55,7 +55,7 @@
                             <span asp-validation-for="tblproducto.ExistenciaInicial" class="text-danger"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="tblproducto.IdMovInventario" class="control-label">Tipo Moviento del Inventario</label>
+                            <label asp-for="tblproducto.IdMovInventario" class="control-label">Tipo Moviento</label>
                             <select asp-for="tblproducto.IdMovInventario" asp-items="Model.listMovimientoInventario" class="form-select" required>
                                 <option disabled selected>Seleccione una Opción</option>
                             </select>
@@ -175,7 +175,7 @@
     </script>
     
   
-    @if (TempData["Mensaje"] != null)
+  @*   @if (TempData["Mensaje"] != null)
     {
         <script>
             document.addEventListener("DOMContentLoaded", function () {
@@ -189,6 +189,6 @@
                 });
             });
         </script>
-    }
+    } *@
     
 }

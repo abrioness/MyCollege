@@ -15,7 +15,7 @@
             <h4 class="mb-0"><i class="bi bi-cash"></i> Pagos de Caja</h4>
         </div>
         <div class="card-body">
-            <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <form asp-action="Create" method="post" enctype="multipart/form-data" target="_blank">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
                     <div class="col-lg-6">
@@ -53,10 +53,30 @@
                            
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
                         <br />
-                        
-                       
+
+                        <div class="form-group">
+                            <label asp-for="PagosCaja.Anyo" class="control-label">Año</label>
+                            <select asp-for="PagosCaja.Anyo" class="form-select" required>
+                                <option value="">Seleccione una Opciòn</option>
+                                <option value="2022">2022</option>
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                                <option value="2029">2029</option>
+                                <option value="2030">2030</option>
+                            </select>
+                            
+                        </div>
                     </div>
                 <div class="col-lg-6">
+                        <div class="form-group">
+                            <label asp-for="PagosCaja.FechaEmision" class="control-label">Fecha de Emisión</label>
+                            <input type="date" asp-for="PagosCaja.FechaEmision" id="FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" required />
+                            <span asp-validation-for="PagosCaja.FechaEmision" class="text-danger"></span>
+                        </div>
                     <div class="form-group">
                         <label asp-for="PagosCaja.Serie" class="control-label">Serie:</label>
                         <input asp-for="PagosCaja.Serie" id="serie" class="form-control" readonly value="A" />
@@ -144,30 +164,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-  
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-
-
-
-    @if (TempData["Mensaje"] != null)
-    {
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                Swal.fire({
-                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
-     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
-     "Información")',
-                    text: '@TempData["Mensaje"]',
-                    icon: '@TempData["Tipo"]',
-                    confirmButtonText: 'Aceptar'
-                });
-            });
-        </script>
-    }
-}

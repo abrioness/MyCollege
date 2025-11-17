@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.pagoCajasViewModel
+﻿@model WebColegio.Models.ViewModel.PagosViewModel
 
 @{
     Layout = null;
@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recibo de Caja - @Model.PagosCaja.NumeroRecibo</title>
+    <title>Recibo de Caja - @Model.Pago.NumeroRecibo</title>
     <style>
         /* CONTENEDOR estilo voucher */
         .voucher {
@@ -84,20 +84,23 @@
         }
 
         @@media print {
-            .no-print {
-                display: none;
-            }
-            /* Ajustar todo al ancho del voucher */
-            .voucher {
-                border: none;
-                width: 220px;
-            }
+            .no-print
+
+        {
+            display: none;
+        }
+
+        /* Ajustar todo al ancho del voucher */
+        .voucher {
+            border: none;
+            width: 220px;
+        }
+
         }
     </style>
 </head>
 <body>
     <div class="voucher">
-
 
         <!-- Encabezado -->
         <div class="v-header">
@@ -108,31 +111,29 @@
 
         <div class="v-section">
             <div class="v-row center bold">RECIBO DE CAJA</div>
-            <div class="v-row">Serie: <span>@Model.PagosCaja.Serie</span></div>
-            <div class="v-row">N°: <span>@Model.PagosCaja.NumeroRecibo</span></div>
+            <div class="v-row">Serie: <span>@Model.Pago.Serie</span></div>
+            <div class="v-row">N°: <span>@Model.Pago.NumeroRecibo</span></div>
         </div>
 
         @{
-           
-            var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.PagosCaja.IdGrado);
-            var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.PagosCaja.Concepto);
-            var turno = Model.turnos?.FirstOrDefault(a => a.IdTurno == Model.PagosCaja.IdTurno);
-            var fecha = Model.PagosCaja.FechaRegistro=DateTime.Now;
-            // var fechaemision=Model.PagosCaja.fe
+            var alumno = Model.alumnos?.FirstOrDefault(a => a.IdAlumno == Model.Pago.IdAlumno);
+            var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.Pago.IdGrado);
+            var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.Pago.IdTipoMovimiento);
+            var metodopago = Model.metodoPago?.FirstOrDefault(a => a.IdMetodoPago == Model.Pago.IdMetodoPago);
+            var fecha = Model.Pago.FechaRegistro = DateTime.Now;
         }
+
         <div class="v-section">
-            <div class="v-row"><b>Recibí de:</b> <span>@Model.PagosCaja.Nombre</span></div>
+            <div class="v-row"><b>Recibí de:</b> <span>@alumno?.Nombre @alumno?.Apellido</span></div>
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
-            @* <div class="v-row"><b>Fec Emisión:</b> <span>C$ @Model.PagosCaja.FechaEmision</span></div> *@
-            <div class="v-row"><b>Fecha Pago:</b> <span>C$ @Model.PagosCaja.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
-            <div class="v-row"><b>Concepto:</b> <span>@tipoMovimiento?.Concepto, @Model.PagosCaja.Descripcion</span></div>
-            <div class="v-row"><b>Turno:</b> <span>@turno?.NombreTurno</span></div>
-            <div class="v-row"><b>La cantidad de:</b> <span>C$ @Model.PagosCaja.Monto.ToString("N2")</span></div>
-           @*  <div class="v-row"><b>En letras:</b><br />@Model.cantidadEnLetras (C$ @Model.PagosCaja.Monto)</div> *@
+            <div class="v-row"><b>Fecha Emisión:</b> <span>C$ @Model.Pago.FechaEmision</span></div>
+            <div class="v-row"><b>Fecha Pago:</b> <span>C$ @Model.Pago.FechaRegistro.ToString("dd/mm/yyyy")</span></div>
+            <div class="v-row"><b>Concepto:</b> <span>@tipoMovimiento?.Concepto, @Model.Pago.Descripcion</span></div>
+            <div class="v-row"><b>Método Pago:</b> <span>@metodopago?.MetodoPago</span></div>
+            <div class="v-row"><b>Monto:</b> <span>C$ @Model.Pago.Monto.ToString("N2")</span></div>
+            <div class="v-row"><b>En letras:</b><br />@Model.cantidadEnLetras (C$ @Model.Pago.Monto)</div>
         </div>
-          
-       
-        <!-- Fecha -->
+
         <div class="v-section center">
             Managua: @fecha.Day de
             @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(fecha.Month)
@@ -144,27 +145,28 @@
             <div class="line"></div>
             <div class="txt">Firma y Sello del Cajero</div>
             <div class="txt">
-                @Model.listPagoCaja.FirstOrDefault(a => a.UsuarioRegistro == Model.PagosCaja.UsuarioRegistro)
+                @Model.listPagos.FirstOrDefault(a => a.UsuarioRegistro == Model.Pago.UsuarioRegistro)
             </div>
         </div>
+
     </div>
 
-    
     <div class="no-print center">
         <button class="print-button " onclick="window.print()">🖨️ Imprimir</button>
-        <a asp-action="Index" class="btn btn-secondary">
+       <a asp-action="Index" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Volver
         </a>
-
+        
     </div>
-
-
-   
+    
 </body>
+
+</html>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
 <script src="~/js/limpiarcampos.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @if (TempData["Mensaje"] != null)
 {
@@ -176,4 +178,3 @@
         });
     </script>
 }
-</html>
