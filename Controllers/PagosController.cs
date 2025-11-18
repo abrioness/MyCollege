@@ -247,6 +247,7 @@ namespace WebColegio.Controllers
                             if (validarDuplicado)
                             {
                                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
+                                TempData["Tipo"] = "warning";
                                 return RedirectToAction("Create");
                             }
 
@@ -260,19 +261,27 @@ namespace WebColegio.Controllers
                                 continue;
                             }
                             var todosLosMeses = Enumerable.Range(1, 12); // o hasta el mes actual
+                             mesesPagadosAcumulados
+                            .Distinct()
+                            .Where(x => x >= 1 && x <= 12)
+                            .ToList();
                             // 2. Verificar si hay meses anteriores sin pagar
                             var mesesPendientes = Enumerable.Range(1, idMes - 1)
-                                .Except(mesesPagadosAcumulados)
-                                .ToList();
+                            .Except(mesesPagadosAcumulados)
+                            .Distinct()
+                            .ToList();
+                            //var mesesPendientes = Enumerable.Range(1, idMes - 1)
+                            //    .Except(mesesPagadosAcumulados)
+                            //    .ToList();
 
-                            int anioActual = pagos.Pago.IdPeriodo;
+                            //int anioActual =(int) pagos.Pago.Anyo; //pagos.Pago.IdPeriodo;
 
-                            var primerMesFaltante = mesesPendientes.Min();
+                            
                             if (mesesPendientes.Any())
                             {
-                                
-                               
-                                    TempData["Mensaje"] = $"No puede pagar el mes de {Mes(idMes).Result}. Debe pagar primero el mes de {Mes(primerMesFaltante).Result}.";
+                                var primerMesFaltante = mesesPendientes.Min();
+
+                                TempData["Mensaje"] = $"No puede pagar el mes de {Mes(idMes).Result}. Debe pagar primero el mes de {Mes(primerMesFaltante).Result}.";
                                     TempData["Tipo"] = "warning";
                                     return RedirectToAction("Create");
                                 
@@ -347,7 +356,7 @@ namespace WebColegio.Controllers
                     }
                     else
                     {
-                        pagos.Pago.IdMes = 0;
+                        //pagos.Pago.IdMes = 0;
                         response = await _Iservices.PostPagosAsync(pagos.Pago);
                         if (response)
                         {
@@ -361,6 +370,7 @@ namespace WebColegio.Controllers
                         else
                         {
                             TempData["Mensaje"] = "No se proceso el Pago.";
+                            TempData["Tipo"] = "warning";
                             return RedirectToAction("Create");
                         }
                     }

@@ -116,10 +116,13 @@ namespace WebColegio.Controllers
           
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var buscarIdGuardado = await _Iservices.GetEgresoAsync();
+            var buscarperiodo = await _Iservices.GetPeriodoAsync();
+            var periodo = buscarperiodo.Where(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true).FirstOrDefault();
             validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == egresos.NumeroRecibo && r.Serie == "A" && r.Activo==true);
             if(validarDuplicado)
             {
                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
+                TempData["Tipo"] = "warning";
                 return RedirectToAction("Create");
             }
             try
@@ -135,6 +138,7 @@ namespace WebColegio.Controllers
                     egresos.UsuarioRegistro = idUsuario;
                     egresos.Activo = true;
                     egresos.FechaRegistro = DateTime.Now;
+                    egresos.IdPeriodo = periodo.IdPeriodo;
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostEgresoAsync(egresos);
                     if (response)
@@ -142,12 +146,13 @@ namespace WebColegio.Controllers
 
                         var idPag = buscarIdGuardado.Max(a => a.IdEgreso);
                         TempData["Mensaje"] = "Se Proceso Correctamente el Pago.";
-
-                        return RedirectToAction("Details", "ReciboEgreso", new { id = idPag });
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction("Details", "ReciboEgreso", new { id = idPag +1});
                     }
                     else
                     {
                         TempData["Mensaje"] = "No se proceso el Pago.";
+                        TempData["Tipo"] = "warning";
                         return RedirectToAction("Create");
 
                     }

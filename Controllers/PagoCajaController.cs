@@ -148,11 +148,14 @@ namespace WebColegio.Controllers
             //int mensualidad = 640;
             //int total = 0;
             var buscarIdGuardado = await _Iservices.GetPagoCajaAsync();
+            var buscarperiodo = await _Iservices.GetPeriodoAsync();
+            var periodo = buscarperiodo.Where(r=>r.Periodo==DateTime.Now.Year && r.Activo==true && r.Actual==true).FirstOrDefault();
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo  && r.Serie == "A" && r.Activo == true);
             if (validarDuplicado)
             {
                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
+                TempData["Tipo"] = "warning";
                 return RedirectToAction("Create");
             }
             try
@@ -168,6 +171,7 @@ namespace WebColegio.Controllers
                     pagoscaja.UsuarioRegistro = idUsuario;
                     pagoscaja.Activo = true;
                     pagoscaja.FechaRegistro = DateTime.Now;
+                    pagoscaja.IdPeriodo = periodo.IdPeriodo;
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostPagosCajaAsync(pagoscaja);
                     if (response)
@@ -175,12 +179,13 @@ namespace WebColegio.Controllers
                        
                         var idPag = buscarIdGuardado.Max(a=>a.IdPagoCaja);
                         TempData["Mensaje"] = "Se Proceso Correctamente el Pago.";
-                        
-                        return RedirectToAction("Details","PagoCaja", new {id= idPag });
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction("Details","PagoCaja", new {id= idPag+1 });
                     }
                     else
                     {
                         TempData["Mensaje"] = "No se proceso el Pago.";
+                        TempData["Tipo"] = "warning";
                         return RedirectToAction("Create");
                      
                     }

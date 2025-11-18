@@ -14,11 +14,11 @@
         @* <h3>@Model.Colegio</h3> *@
         <div class="subtitulo">
             <p>ARQUEO DE CAJA</p>
-            @* <p> COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</p>
+            <p> COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</p>
             <p>VICARIA DE EDUCACIÓN CATÓLICA</p>
             <p>Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</p>
              <p>Serie: @Model.Serie &nbsp;&nbsp; Nº: @Model.Numero</p> 
-            <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p>*@
+            <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p>
         </div>
     </div>
 
@@ -206,7 +206,7 @@
                                 <td></td>
                                 <td class="totales">Tasa de Cambio</td>
 
-                                <td><input type="text" class="cantidadcambio" data-precio="36.7" /></td>
+                                <td><input type="text" class="cantidadcambio"  /></td>
                             </tr>
                             <tr>
                                 <td></td>
@@ -305,6 +305,8 @@
 
         // mostrar en input final
         document.getElementById("EquivalenteCordoba").value =
+            "C$ " + equivalente.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+           document.querySelector(".totalDetalleDinero u").textContent =
             "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
             document.querySelector(".totalDetalleEfectivo u").textContent =
                "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
@@ -316,9 +318,9 @@
     
             // 🔥 Actualizar el TOTAL DETALLE DE DINERO
         document.querySelector(".totalDetalleDinero u").textContent =
-            "C$ " + totalCordobas.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+            "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
     document.querySelector(".totalDetalleEfectivo u").textContent =
-               "C$ " + totalCordobas.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+               "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
             
     }
     });
