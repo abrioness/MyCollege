@@ -1,7 +1,11 @@
 ﻿@model WebColegio.Models.ViewModel.NotasViewModel
-<script src="c:\users\usuario\.nuget\packages\datatables.net\2.3.2\contentfiles\any\any\wwwroot\js\datatables.min.js"></script>
-<script src="c:\users\usuario\.nuget\packages\datatables.net\2.3.2\contentfiles\any\any\wwwroot\js\datatables.js"></script>
-<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+
+<script src="~/js/site.js"></script>
+
+@* <script src="~/js/limpiarcampos.js"></script> *@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<div class="container mt-auto" style="padding:2px;">
+    <div class="card shadow-lg p-3 mb-5 bg-white rounded">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0"><i class="bi bi-mortarboard-fill"></i> Detalles de  Nota</h5>
     </div>
@@ -33,7 +37,8 @@
             </div>
         </div>
         <br />
-        <table id="detalleNotas" class="table table-bordered display responsive nowrap">
+            <div class="table-responsive" style="font-size: 12px;">
+                <table id="detalleNotas" class="table justify-content-lg-between table-bordered  small" style="width:100%">
             <thead>
                 <tr>
                     <th>
@@ -137,11 +142,32 @@
 </table>
 
     
-    </div>
-    </div>
 
+    </div>
+    </div>
+    </div>
+    </div>
   
 
 <div class="mt-3">
     <a asp-action="Index" class="btn btn-secondary">Volver a la lista</a>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script>
+    $(document).ready(function () {
+            $('#detalleNotas').DataTable({
+            responsive: true,
+            // dom: 'Bfrtip', // Botones + filtro + tabla
+            
+            // language: {
+            //     url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+            // }
+        });
+    });
+</script>

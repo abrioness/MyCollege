@@ -48,6 +48,7 @@ namespace WebColegio.Controllers
             if (VieModelPagoCaja == null)
             {
                 TempData["Message"] = "No existen registros";
+                TempData["Tipo"] = "warning";
                 return View("NotFound"); // Redirige a una vista de error o no encontrado
             }
             

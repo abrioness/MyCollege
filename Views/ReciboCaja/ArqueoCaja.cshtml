@@ -38,7 +38,7 @@
             {
                 <tr>
                     <td>@i.Concepto</td>
-                    <td>@i.primerReciboDia - @i.ultimoReciboDia</td>
+                    <td>@i.Recibo</td>
                     <td style="text-align:center">@i.Cantidad</td> 
                     <td style="text-align:right">@i.Monto.ToString("C")</td>
                 </tr>
@@ -292,22 +292,27 @@
          let totalCordobas = parseFloat(
             document.getElementById("totalGeneralCordobas").value.replace(/[^0-9.-]+/g, "")
         ) || 0;
-        if(totalDolares>0)
-        {
 
         // tasa de cambio ingresada
         let tasa = parseFloat(this.value) || 0;
 
         // equivalente total en córdobas
-        let equivalente = totalDolares * tasa;
-        totaDetalleDinero=equivalente+totalCordobas;
+        let equivalente = parseFloat(totalDolares * tasa) || 0;
+        totaDetalleDinero=parseFloat(equivalente + totalCordobas) || 0 ;
+
+        if(totalDolares>0)
+        {
+
+        
          // 🔥 Actualizar el TOTAL DETALLE DE DINERO
 
         // mostrar en input final
         document.getElementById("EquivalenteCordoba").value =
             "C$ " + equivalente.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+
            document.querySelector(".totalDetalleDinero u").textContent =
             "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+
             document.querySelector(".totalDetalleEfectivo u").textContent =
                "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
             
@@ -319,6 +324,7 @@
             // 🔥 Actualizar el TOTAL DETALLE DE DINERO
         document.querySelector(".totalDetalleDinero u").textContent =
             "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+
     document.querySelector(".totalDetalleEfectivo u").textContent =
                "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
             

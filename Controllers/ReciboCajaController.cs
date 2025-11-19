@@ -283,16 +283,17 @@ namespace WebColegio.Controllers
                     group new { p, tm, mp } by new
                     {
                         Concepto = tm != null ? tm.Concepto : "Sin concepto",
+                        Recibo = p != null ? p.NumeroRecibo.ToString() : "N/A",
 
-                        MetodoPago = mp != null ? mp.MetodoPago : "No especificado"
                     }
                     into g
                     select new IngresoDto
                     {
                         Concepto = g.Key.Concepto,
                         Cantidad = g.Count(),
-                        primerReciboDia = primerRecibo?.NumeroRecibo,
-                        ultimoReciboDia=ultimoRecibo?.NumeroRecibo,
+                         Recibo = g.Key.Recibo,
+                        //primerReciboDia = primerRecibo?.NumeroRecibo,
+                        //ultimoReciboDia=ultimoRecibo?.NumeroRecibo,
                         Monto = g.Sum(x => x.p.Monto)
                     }
                 ).ToList();

@@ -38,7 +38,7 @@
             <div class="form-group">
                                 <label asp-for="notas.IdGrado" class="control-label">Nivel</label>
                                 <select asp-for="notas.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
-                                    <option disabled selected>Seleccione la Evaluación</option>
+                                    <option disabled selected>Seleccione una Opción</option>
                                 </select>
                                 <span asp-validation-for="notas.IdGrado" class="text-danger"></span>
                 
@@ -46,10 +46,17 @@
                     <div class="form-group">
                         <label asp-for="notas.IdAsignatura" class="control-label">Asignatura</label>
                                 <select asp-for="notas.IdAsignatura" asp-items="Model.asignaturaSelectListItem" class="form-select" required>
-                                    <option disabled selected>Seleccione la Evaluación</option>
+                                    <option disabled selected>Seleccione una Opción</option>
                                 </select>
                                 <span asp-validation-for="notas.IdAsignatura" class="text-danger"></span>
                             </div>
+                        <div class="form-group">
+                            <label asp-for="notas.IdTipoEvaluacion" class="control-label">Tipo de Evaluación</label>
+                            <select asp-for="notas.IdTipoEvaluacion" asp-items="Model.tipoEvaluacionesSelectListItem" class="form-select" required>
+                                <option disabled selected>Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="notas.IdTipoEvaluacion" class="text-danger"></span>
+                        </div>
                             <div class="form-group">
                                 <label for="Descripcion" class="control-label">Observación</label>
                                 <textarea name="Descripcion" class="form-control"> </textarea>
@@ -123,7 +130,6 @@
                     </div>
 
 
-
                         <div class="form-group">
                             <label asp-for="notas.NotaFinal" class="control-label">Nota Final</label>
                             <input asp-for="notas.NotaFinal" id="notaFinal" class="form-control" readonly />
@@ -133,7 +139,6 @@
                     
 					</div>
 
-                
                     <br />
                     <!-- Botones -->
                     <div class="col-12 text-end">
@@ -160,15 +165,12 @@
 </div> *@
 
 @section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="~/js/limpiarcampos.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
 
-
-        <!-- Tus otros scripts -->
-	<script src="~/js/limpiarcampos.js"></script>
-    <script src="~/seewtalert/sweetalert.all.min.js"></script>
-    <script src="~/seewtalert/sweetalertstyle.js"></script>
-    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
 
@@ -269,15 +271,10 @@
     @if (TempData["Mensaje"] != null)
     {
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                Swal.fire({
-                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
-     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
-     "Información")',
-                    text: '@TempData["Mensaje"]',
-                    icon: '@TempData["Tipo"]',
-                    confirmButtonText: 'Aceptar'
-                });
+            Swal.fire({
+                title: '@TempData["Tipo"]',
+                text: '@TempData["Mensaje"]',
+                icon: '@TempData["Tipo"]'
             });
         </script>
     }

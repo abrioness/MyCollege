@@ -131,7 +131,7 @@ namespace WebColegio.Controllers
         // GET: NotasController/Details/5
         public async Task<ActionResult> Details(int id)
         {
-            //var v_alumNota = await _Iservices.V_alumnoNotas(id);
+            var v_alumNota = await _Iservices.GetAlumnoIdAsync(id);
             List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(id);   //_context.TblNotas.FirstOrDefault(n => n.Id == id);
             //var v_alumNota = await _Iservices.V_alumnoNotas(cedulatutor);
             var _modalidad = await _Iservices.GetModalidadesAsync();
@@ -144,7 +144,7 @@ namespace WebColegio.Controllers
             var viewModel = new NotasViewModel
             {
                 listNotas = listnota,
-               
+                alumnoNotas=v_alumNota,
 
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
                                             .Select(r => new SelectListItem
@@ -188,7 +188,6 @@ namespace WebColegio.Controllers
                 TempData["Tipo"] = "warning";
                 return NotFound();
             }
-
 
             return View(viewModel);
         }
@@ -270,7 +269,8 @@ namespace WebColegio.Controllers
                     if (response)
                     {
                         TempData["Mensaje"] = "Se agrego la Nota del Alumno Correctamente.";
-                        return RedirectToAction(nameof(Index));
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction("create");
                     }
 
                 }

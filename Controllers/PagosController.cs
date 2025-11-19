@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Metrics;
+﻿using System;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -201,10 +202,15 @@ namespace WebColegio.Controllers
 
                 if (pagos != null)
                 {
-                   if (!string.IsNullOrEmpty(MesesSeleccionados))//MesesSeleccionados != null && MesesSeleccionados.Any())
+                    pagos.Pago.UsuarioRegistro = idUsuario;
+                    pagos.Pago.FechaRegistro = DateTime.Now;
+                    pagos.Pago.Serie = "A";
+                    pagos.Pago.Activo = true;
+                    if (!string.IsNullOrEmpty(MesesSeleccionados))//MesesSeleccionados != null && MesesSeleccionados.Any())
                     {
+                       
 
-                        if(BecaCompleta(pagos.Pago.IdAlumno,pagos.Pago.IdPeriodo).Result && pagos.Pago.IdTipoMovimiento==1)
+                        if (BecaCompleta(pagos.Pago.IdAlumno,pagos.Pago.IdPeriodo).Result && pagos.Pago.IdTipoMovimiento==1)
                         {
                             TempData["Mensaje"] = "El Estudiante Posee Beca Completa.";
                             TempData["Tipo"] = "warning";
@@ -234,10 +240,20 @@ namespace WebColegio.Controllers
                         .Select(p => p.IdMes)
                         .ToHashSet();
                         //crear meses pagados virtualmente
-                        var mesesPagadosAcumulados = new HashSet<int>(mesesPagadosBD);
+                        var mesesPagadosAcumulados = new HashSet<int?>(mesesPagadosBD);
 
                         var idsOrdenados = ids.OrderBy(m => m).ToList();
-
+                        if (duplicado)
+                        {
+                            TempData["Mensaje"] = "Pago del mes seleccionado, ya fue registrado.";
+                            TempData["Tipo"] = "warning";
+                        }
+                        if (aplicoMora)
+                        {
+                            TempData["Mensaje"] = "Pago registrado con mora de C$ 10 aplicada.";
+                            TempData["Tipo"] = "info";
+                        }
+                        
                         foreach (var idMes in idsOrdenados)
                         {
                             // 1️⃣ Validar duplicado
@@ -267,7 +283,7 @@ namespace WebColegio.Controllers
                             .ToList();
                             // 2. Verificar si hay meses anteriores sin pagar
                             var mesesPendientes = Enumerable.Range(1, idMes - 1)
-                            .Except(mesesPagadosAcumulados)
+                            .Except(mesesPagadosAcumulados.Cast<int>())
                             .Distinct()
                             .ToList();
                             //var mesesPendientes = Enumerable.Range(1, idMes - 1)
@@ -299,7 +315,7 @@ namespace WebColegio.Controllers
                                 var nuevoPago = new TblPago
                                 {
                                     IdAlumno = pagos.Pago.IdAlumno,
-                                    Serie="A",
+                                    
                                     NumeroRecibo=pagos.Pago.NumeroRecibo,
                                     Anyo=pagos.Pago.Anyo,
                                     IdMes = idMes,
@@ -312,60 +328,52 @@ namespace WebColegio.Controllers
                                     Mora = pagos.Pago.Mora,
                                     Monto = pagos.Pago.Monto,
                                     Descripcion=pagos.Pago.Descripcion,
-                                    Activo = true,
-                                    UsuarioRegistro = idUsuario,
-                                    FechaRegistro = DateTime.Now
+                                   
+                                  
                                     // otros campos...
                                 };
 
                                 //await _Iservices.InsertarPagoAsync(nuevoPago);
                                 response = await _Iservices.PostPagosAsync(nuevoPago);
                                 mesesPagadosAcumulados.Add(idMes);
+                            if (response)
+                            {
+                                var idPag = buscarIdGuardado.Max(a => a.IdPago);
+
+
+                                TempData["Mensaje"] = "Pago registrado correctamente.";
+                                TempData["Tipo"] = "success";
+                                return RedirectToAction("Details", "Pagos", new { id = idPag + 1 });
+                            }
+                            else
+                            {
+                                //var idPag = buscarIdGuardado.Max(a => a.IdPago);
+
+
+                                TempData["Mensaje"] = "No se logro procesar el pago.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create");
+                            }
                         }
                         // 4️⃣ Mensaje final
-                        if (duplicado)
-                        {
-                            TempData["Mensaje"] = "Pago del mes seleccionado ya existe.";
-                            TempData["Tipo"] = "warning";
-                        }
-                        if (aplicoMora)
-                        {
-                            TempData["Mensaje"] = "Pago registrado con mora de C$ 10 aplicada.";
-                            TempData["Tipo"] = "info";
-                        }
-                        if(response)
-                        {
-                            var idPag = buscarIdGuardado.Max(a => a.IdPago);                 
-
-                            
-                            TempData["Mensaje"] = "Pago registrado correctamente.";
-                            TempData["Tipo"] = "success";
-                            return RedirectToAction("Details", "Pagos", new { id = idPag+1 });
-                        }
-                        else
-                        {
-                            //var idPag = buscarIdGuardado.Max(a => a.IdPago);
-
-
-                            TempData["Mensaje"] = "No se logro procesar el pago.";
-                            TempData["Tipo"] = "warning";
-                            return RedirectToAction("Create");
-                        }
+                       
+                        
                         
 
                     }
                     else
                     {
+                        
                         //pagos.Pago.IdMes = 0;
                         response = await _Iservices.PostPagosAsync(pagos.Pago);
                         if (response)
                         {
-                            var idPag = buscarIdGuardado.Max(a => a.IdPago+1); 
+                            var idPag = buscarIdGuardado.Max(a => a.IdPago); 
 
 
                             TempData["Mensaje"] = "Pago registrado correctamente.";
                             TempData["Tipo"] = "success";
-                            return RedirectToAction("Details", "Pagos", new { id = idPag });
+                            return RedirectToAction("Details", "Pagos", new { id = idPag +1});
                         }
                         else
                         {

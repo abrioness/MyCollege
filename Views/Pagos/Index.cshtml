@@ -10,7 +10,7 @@
 		<div class="card-header bg-primary text-white">
 			<h5 class="mb-0"><i class="bi bi-cash"></i> Pagos</h5>
 		</div>
-		
+
 		<div class="card-body">
 			<div class="col-12 text-end">
 
@@ -31,7 +31,7 @@
 						<th>Mes Pagado</th>						
 						<th>Tipo Recibo</th>
 						<th>Metodo Pago</th>
-						
+
 					</tr>
 				</thead>
 				<tbody>
@@ -59,20 +59,26 @@
 							}
 							<td>
 
-							C$ @itemPago.Monto
+								C$ @itemPago.Monto
 							</td>
 							<td>
 
-							C$	@itemPago.Mora
+								C$	@((itemPago.Mora== null) ? "0" : itemPago.Mora)
 							</td>
-							@foreach (var mesPagar in Model.meses.Where(a => a.IdMes == itemPago.IdMes))
-							{
-								<td>
-
-									@mesPagar.Mes
-
-								</td>
-							}
+                            @if (itemPago.IdMes == null)
+                            {
+                                <td>  </td>
+                            }
+                            else
+                            {
+								@foreach (var mesPagar in Model.meses.Where(a => a.IdMes == itemPago.IdMes))
+								{
+									<td>
+										@mesPagar.Mes
+									</td>
+								}
+                            }
+							
 							
 							@foreach (var tipoRecibo in Model.tipoRecibo.Where(a => a.IdTipoRecibo == itemPago.IdTipoRecibo))
 							{

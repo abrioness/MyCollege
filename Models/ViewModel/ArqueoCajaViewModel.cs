@@ -29,9 +29,9 @@
         public class IngresoDto
         {
             public string? Concepto { get; set; }
-        public int? primerReciboDia { get; set; }
-        public int? ultimoReciboDia { get; set; }
-        //public int Recibo { get; set; }
+        //public int? primerReciboDia { get; set; }
+        //public int? ultimoReciboDia { get; set; }
+        public string? Recibo { get; set; }
         public int Cantidad { get; set; }
             public decimal Monto { get; set; }
         }
