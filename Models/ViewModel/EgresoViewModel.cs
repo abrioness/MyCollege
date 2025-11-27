@@ -29,5 +29,7 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> turnosSelectListItem { get; set; } = new();
         public List<TblCatMeses> meses { get; set; } = new List<TblCatMeses>();
         public List<SelectListItem> periodo { get; set; } = new();
+        public List<SelectListItem> recintos { get; set; } = new();
+
     }
 }

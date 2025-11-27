@@ -23,7 +23,7 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> tipoMovimientoSelectListItem { get; set; } = new();
         public List<SelectListItem> tipoRecibosSelectListItem { get; set; } = new();
         public List<SelectListItem> metodoPagoSelectListItem { get; set; } = new();
-
+        public List<SelectListItem> recintos { get; set; } = new();
         public List<SelectListItem> mesesPagoSelectListItem { get; set; } = new();
         public List<SelectListItem> tipoDescuentoSelectListItem { get; set; } = new();
         public List<SelectListItem> detallePagoSelectListItem { get; set; } = new();

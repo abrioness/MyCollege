@@ -18,19 +18,29 @@ namespace WebColegio.Controllers
 
         }
         // GET: ReciboEgresoController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
             var _egresos = await _Iservices.GetEgresoAsync();           
             var _periodo = await _Iservices.GetPeriodoAsync();
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
-       
+            var _recinto = await _Iservices.GetRecintosAsync();
 
+            var query = _egresos;
+            if (fechainicio.HasValue)
+            {
+                query = _egresos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+            }
+            if (fechafin.HasValue)
+            {
+                query = _egresos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+            }
 
             var VieModelEgresado = new ColeccionCatalogos
             {
-                egresos = _egresos,               
+                egresos = query,               
                 tipoMovimiento = _tipoMovimiento,
                 periodo = _periodo,
+                recintos=_recinto
                 
             };
             if (VieModelEgresado == null)
@@ -96,6 +106,12 @@ namespace WebColegio.Controllers
                                        Text = r.Periodo.ToString(),
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
+                recintos=(await _Iservices.GetRecintosAsync())
+                .Select(r=>new SelectListItem
+                {
+                    Value=r.IdRecinto.ToString(),
+                    Text=r.Recinto.ToString()
+                }).ToList(),
 
 
 

@@ -15,6 +15,7 @@
         public int IdMetodoPago { get; set; }
         public int IdTipoMovimiento { get; set; }
         public int IdTipoRecibo { get; set; }
+        public int? IdRecinto { get; set; }
         public int IdPeriodo { get; set; }
         public int IdGrado { get; set; }
         public bool Activo { get; set; }

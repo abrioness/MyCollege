@@ -12,6 +12,25 @@
 		</div>
 
 		<div class="card-body">
+			<div class="col-4 text-center">
+				@using (Html.BeginForm("Index", "Pagos", FormMethod.Get))
+				{
+					<div class="row">
+						<div class="col-4">
+							<label class="control-label">Desde:</label>
+							<input type="date" name="fechainicio" id="FechaInicio" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+						</div>
+						<div class="col-4">
+							<label class="control-label">Hasta:</label>
+							<input type="date" name="fechafin" id="FechaFin" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+						</div>
+						<div class="col-4">
+							<br />
+							<button type="submit" class="form-control btn btn-success">Filtrar</button>
+						</div>
+					</div>
+				}
+			</div>
 			<div class="col-12 text-end">
 
 				<a asp-action="Create" class="btn btn-primary">
@@ -31,6 +50,7 @@
 						<th>Mes Pagado</th>						
 						<th>Tipo Recibo</th>
 						<th>Metodo Pago</th>
+						<th>Fecha Emisión</th>
 
 					</tr>
 				</thead>
@@ -100,10 +120,10 @@
 							
 
 
-							@* <td>
-							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
+							 <td>
+								@itemPago.FechaRegistro.ToString("dd/MM/yyyy")
 						</td> 
-							<td>
+							@*<td>
 								<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
 							</td>*@
 						</tr>

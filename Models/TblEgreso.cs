@@ -12,6 +12,7 @@
         public DateTime? FechaEmision { get; set; }
         public int? Anyo { get; set; }
         public int IdPeriodo { get; set; }
+        public int? IdRecinto { get; set; }
         public bool Activo { get; set; }
         public int UsuarioRegistro { get; set; }
         public DateTime FechaRegistro { get; set; }

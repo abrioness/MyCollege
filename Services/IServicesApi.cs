@@ -28,6 +28,7 @@ namespace WebColegio.Services
         Task<List<TblPagoCaja>> GetPagoCajaAsync();
         Task<List<TblReciboCaja>> GetRecibosCajaAsync();
         Task<List<TblEgreso>> GetEgresoAsync();
+        Task<List<TblArqueoDiario>> GetArqueoDiarioAsync();
 
         Task<List<Productos>> GetProductosAsync();
         Task<List<CategoriaProducto>> GetCategoriaProductoAsync();
@@ -40,8 +41,9 @@ namespace WebColegio.Services
         Task<List<CatDiscapacidad>> GetDiscapacidadAsync();
         Task<List<CatMovInventario>> GetMovInventarioAsync();
 
+        Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync();
+        Task<List<TblCostoMatricula>> GetCostosMatriculaAsync();
 
-       
         #endregion
         #region Metodos Post
         Task<bool> PostAlumnosAsync(TblAlumno alumnos);
@@ -54,6 +56,7 @@ namespace WebColegio.Services
         Task<bool> PostReciboCajaAsync(TblReciboCaja reciboCaja);
         //Task<bool> PostInventarioAsync(TblInventario inventario);
         Task<bool> PostProductosAsync(Productos producto);
+        Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
 
         #endregion
         #region Metodos Put
@@ -65,7 +68,7 @@ namespace WebColegio.Services
         Task<TblNotas> GetNotasById(int id);
         Task<TblReciboCaja> GetReciboCajaById(int id);
         Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
-        Task<ArqueoCajaViewModel> GetArqueoById(int id);
+        Task<ArqueoDiarioViewModel> GetArqueoById(int id);
         Task<TblPago> GetPagoById(int id);
         Task<TblPagoCaja> GetPagoCajaById(int id);
         Task<List<TblNotas>> GetNotasPorUsuario(string usuario);

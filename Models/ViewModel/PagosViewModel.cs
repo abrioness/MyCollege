@@ -9,11 +9,16 @@ namespace WebColegio.Models.ViewModel
         public int SiguienteNumero { get; set; }
         public int Mora { get; set; }
         public decimal MontoTotal { get; set; }
+        public int mensualidad { get; set; }
+        public int matricula {  get; set; }
         public List<TblAlumno> alumnos { get; set; } = new List<TblAlumno>();
         public List<CatTipoMovimiento> tipoMovimiento { get; set; } = new List<CatTipoMovimiento>();
         public List<CatMetodoPago> metodoPago { get; set; } = new List<CatMetodoPago>();
         public List<Grados> grados { get; set; } = new List<Grados>();
         public List<Turnos> turnos { get; set; } = new List<Turnos>();
+        public List<Modalidades> modalidades { get; set; }=new List<Modalidades>();
+        public List<Recintos> recinto { get; set; } = new List<Recintos>();
+
       
         public string cantidadEnLetras { get; set; } = null!;
         public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
@@ -27,7 +32,7 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> tipoMovimientoSelectListItem { get; set; } = new();
         public List<SelectListItem> tipoRecibosSelectListItem { get; set; } = new();
         public List<SelectListItem> metodoPagoSelectListItem { get; set; } = new();
-
+        public List<SelectListItem> recintos { get; set; } = new();
         public List<SelectListItem> mesesPagoSelectListItem { get; set; } = new();
         public List<SelectListItem> tipoDescuentoSelectListItem { get; set; } = new();
         public List<SelectListItem> detallePagoSelectListItem { get; set; } = new();

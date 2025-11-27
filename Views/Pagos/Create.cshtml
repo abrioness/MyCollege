@@ -78,7 +78,13 @@
                             </select>
                             <span asp-validation-for="Pago.IdMetodoPago" class="text-danger"></span>
                         </div>
-                        
+                        <div class="form-group">
+                            <label asp-for="Pago.IdRecinto" class="control-label">Centro de Estudio</label>
+                            <select asp-for="Pago.IdRecinto" asp-items="Model.recintos" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="Pago.IdRecinto" class="text-danger"></span>
+                        </div>
                     </div>
                    
                     <div class="col-lg-4">
@@ -202,9 +208,10 @@
             // Reemplaza 1 y 2 por los valores reales de tu base de datos
             $('#tipoMovimiento').change(function() {
                 const tipoMovimientoId = parseInt($('#tipoMovimiento').val());
+                 
 
                 // Ajusta estos números según tus tipos de movimiento
-                if (tipoMovimientoId === 1) { // 1 = Matrícula
+                if (tipoMovimientoId === 1 ||tipoMovimientoId===10 ) { // 1 = Matrícula
                     $('#mesPagado').show();
                 } else {
                     $('#mesPagado').hide();

@@ -42,7 +42,7 @@ namespace WebColegio.Controllers
             var usuario = await _IService.GetLogin(NombreUsuario);
             if (usuario == null)
             {
-                TempData["Mensaje"] = "Usuario o Contraseña Icorrecta!";
+                TempData["Mensaje"] = "Usuario o Contraseña Incorrecta!";
                 TempData["Tipo"] = "warning";
                 return View("Login");
             }
@@ -89,7 +89,7 @@ namespace WebColegio.Controllers
             }
             if (usuario.IdRol == 2)
             {
-                return RedirectToAction("Index", "PagoCaja");
+                return RedirectToAction("EstadoCuenta", "PagoCaja");
             }
             if (usuario.IdRol == 3)
             {

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using System.Security.Cryptography.Xml;
 using System.Text;
+using WebColegio.Models;
 using WebColegio.Services;
 
 
@@ -41,11 +42,11 @@ namespace WebColegio.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
 
-        //public async Task<ActionResult> Create(UsuarioViewModel viewmodel)
+        //public async Task<ActionResult> Create(TblUsuarios viewmodel)
         //{
         //    try
         //    {
-        //    int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        //        int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
         //        bool existeLogin;
         //        string nombre = viewmodel.usuarios.Login;

@@ -21,13 +21,24 @@ namespace WebColegio.Controllers
         }
 
         // GET: ProductosController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var _productos = await _Iservices.GetProductosAsync();
             var _movInvebtario = await _Iservices.GetMovInventarioAsync();
             var _categoriaProducto = await _Iservices.GetCategoriaProductoAsync();
             var _usuarioId = await _Iservices.GetUsuarioIdAsync(idUsuario);
+            var query = _productos;
+            if (fechainicio.HasValue)
+            {
+                query = _productos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+            }
+            if (fechafin.HasValue)
+            {
+                query = _productos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+            }
+
+
 
             if (_usuarioId.IdRol == 2 || _usuarioId.IdRol == 5)
             {
@@ -36,7 +47,7 @@ namespace WebColegio.Controllers
                 var viewModel = new ColeccionCatalogos
                 {
 
-                    producto = _productos.Where(r => r.UsuarioRegistro == idUsuario).ToList(),
+                    producto = query.Where(r => r.UsuarioRegistro == idUsuario).ToList(),
                     categoriasProducto = _categoriaProducto,
                     movinventario = _movInvebtario
                 };

@@ -230,13 +230,13 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> ArqueoCaja(DateTime fecha)
         {
             // Inicializar el viewmodel del arqueo
-            var arqueo = new ArqueoCajaViewModel
+            var arqueo = new ArqueoDiarioViewModel
             {
                 Colegio = "COLEGIO SAN FRANCISCO JAVIER",
                 Serie = "A",
                 Fecha = fecha
             };
-           
+
             // 1️⃣ Obtener los pagos del día (ingresos y egresos)0
             var pagosDelDia = await _Iservices.GetPagosAsync();
             pagosDelDia=pagosDelDia

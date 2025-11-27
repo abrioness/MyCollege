@@ -21,8 +21,9 @@ namespace WebColegio.Controllers
            
         }
         // GET: PagoCajaController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(DateTime? fechainicio,DateTime? fechafin)
         {
+
             var _pagoscaja = await _Iservices.GetPagoCajaAsync();
             var _grados = await _Iservices.GetGradosAsync();
             var _turnos = await _Iservices.GetTurnosAsync();
@@ -32,11 +33,18 @@ namespace WebColegio.Controllers
             //var _meses = await _Iservices.GetMesesAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
             //var _grados = await _Iservices.GetGradosAsync();
-
-
+            var query = _pagoscaja;
+            if(fechainicio.HasValue)
+            {
+                query= _pagoscaja.Where(a=>a.FechaRegistro >= fechainicio.Value).ToList();
+            }
+            if (fechafin.HasValue)
+            {
+                query = _pagoscaja.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+            }
             var VieModelPagoCaja = new ColeccionCatalogos
             {
-                pagoCajas = _pagoscaja,
+                pagoCajas = query,
                 grados = _grados,
                 turnos = _turnos,
                 tipoMovimiento = _tipoMovimiento,
@@ -168,11 +176,16 @@ namespace WebColegio.Controllers
                 //}
                 if (pagoscaja != null)
                 {
+
+                   
+
                     //var userId = _userManager.GetUserId(User); // o UserManager.GetUserId(User)
                     pagoscaja.UsuarioRegistro = idUsuario;
                     pagoscaja.Activo = true;
                     pagoscaja.FechaRegistro = DateTime.Now;
                     pagoscaja.IdPeriodo = periodo.IdPeriodo;
+
+
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostPagosCajaAsync(pagoscaja);
                     if (response)

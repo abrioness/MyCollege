@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.ArqueoCajaViewModel
+﻿@model WebColegio.Models.ViewModel.ArqueoDiarioViewModel
 
 @{
     Layout = null; // Para que se imprima sin master page
@@ -7,18 +7,24 @@
 <html>
 <head>
     <link href="~/css/denominacionesarqueo.css" rel="stylesheet" />
-  
+
 </head>
 <body>
-    <div class="titulo">
-        @* <h3>@Model.Colegio</h3> *@
-        <div class="subtitulo">
-            <p>ARQUEO DE CAJA</p>
-            <p> COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</p>
-            <p>VICARIA DE EDUCACIÓN CATÓLICA</p>
-            <p>Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</p>
-             <p>Serie: @Model.Serie &nbsp;&nbsp; Nº: @Model.Numero</p> 
-            <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p>
+    <form method="post" asp-action="Create" enctype="multipart/form-data">
+        <div class="titulo">
+            @* <h3>@Model.Colegio</h3> *@
+            <div class="subtitulo">
+                <p>ARQUEO DE CAJA</p>
+                <p> COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</p>
+                <p>VICARIA DE EDUCACIÓN CATÓLICA</p>
+                <p>Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</p>
+                <p>Serie: "A" &nbsp;&nbsp; Nº: @Model.siguienteNumero</p>
+                @{
+                    var fecha = DateTime.Now.ToString("dd/MM/yyyy");
+                }
+            <p>Fecha: @fecha</p>
+            <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="A" />
+            <input type="hidden" asp-for="@Model.arqueoDiario.NumeroRecibo" value="@Model.siguienteNumero" />
         </div>
     </div>
 
@@ -43,10 +49,19 @@
                     <td style="text-align:right">@i.Monto.ToString("C")</td>
                 </tr>
             }
+                @foreach (var i in Model.IngresoCajaDto)
+                {
+                    <tr>
+                        <td>@i.Conceptos</td>
+                        <td>@i.Recibos</td>
+                        <td style="text-align:center">@i.Cantidades</td>
+                        <td style="text-align:right">@i.Montos.ToString("C")</td>
+                    </tr>
+                }
         </tbody>
     </table>
     <p class="totales">Total Ingresos: @Model.TotalIngresos.ToString("C")</p>
-
+    <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@Model.TotalIngresos"/>
     <!-- Egresos -->
     <h4>Egresos</h4>
     <table>
@@ -67,7 +82,7 @@
         </tbody>
     </table>
     <p class="totales">Total Egresos: @Model.TotalEgresos.ToString("C")</p>
-
+    <input type="hidden" asp-for="@Model.arqueoDiario.TotalEgreso" value="@Model.TotalEgresos" />
    
     <table class="col-6" id="tableContent">
         
@@ -86,59 +101,63 @@
                 <tbody>
 
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="1000" /></td>
+                                <td><input type="number" class="cantidadc" data-precio="1000" /></td>
                         <td><span>C$ 1,000.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="500" /></td>
+                                <td><input type="number" class="cantidadc" data-precio="500" /></td>
                         <td><span>C$ 500.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="200" /></td>
+                                <td><input type="number" class="cantidadc" data-precio="200" /></td>
                         <td><span>C$ 200.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="100" /></td>
+                                    <td><input type="number" class="cantidadc" data-precio="100" /></td>
                         <td><span>C$ 100.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="50" /></td>
+                                    <td><input type="number" class="cantidadc" data-precio="50" /></td>
                         <td><span>C$ 50.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="20" /></td>
+                                    <td><input type="number" class="cantidadc" data-precio="20" /></td>
                         <td><span>C$ 20.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="10" /></td>
+                                    <td><input type="number" class="cantidadc" data-precio="10" /></td>
                         <td><span>C$ 10.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="5" /></td>
+                                    <td><input type="number" class="cantidadc" data-precio="5" /></td>
                         <td><span>C$ 5.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="1" /></td>
+                                    <td><input type="number" class="cantidadc" data-precio="1" /></td>
                         <td><span>C$ 1.00</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadc" data-precio="0.50" /></td>
+                                    <td><input type="number" class="cantidadc" data-precio="0.50" /></td>
                         <td><span>C$ 0.50</span></td>
                                 <td><input type="text" class="totalc" readonly /></td>
                     </tr>
                             <tr>
                                 <td></td>
-                                <td class="totales">Total en Cordoba</td>
-                                <td><input type="text" id="totalGeneralCordobas" readonly /></td>
+                                <td class="totales">Total en Cordoba
+                                    <input type="hidden" asp-for="@Model.arqueoDiario.TotalCordobas" />
+                                </td>
+                                <td><input type="text" id="totalGeneralCordobas" readonly />
+                                    
+                                </td>
                             </tr>
                     @*  @foreach (var d in Model.DetalleCordobas)
             {
@@ -167,38 +186,40 @@
                 <tbody>
 
                     <tr>
-                                <td><input type="text" class="cantidadd" data-precio="100" /></td>
+                                    <td><input type="number" class="cantidadd" data-precio="100" /></td>
                         <td><span>$ 100.00</span></td>
                                 <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadd" data-precio="50" /></td>
+                                    <td><input type="number" class="cantidadd" data-precio="50" /></td>
                         <td><span>$ 50.00</span></td>
                                 <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadd" data-precio="20" /></td>
+                                    <td><input type="number" class="cantidadd" data-precio="20" /></td>
                         <td><span>$ 20.00</span></td>
                                 <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadd" data-precio="10" /></td>
+                                    <td><input type="number" class="cantidadd" data-precio="10" /></td>
                         <td><span>$ 10.00</span></td>
                                 <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadd" data-precio="5" /></td>
+                                    <td><input type="number" class="cantidadd" data-precio="5" /></td>
                         <td><span>$ 5.00</span></td>
                                 <td><input type="text" class="totald" readonly /></td>
                     </tr>
                     <tr>
-                                <td><input type="text" class="cantidadd" data-precio="1" /></td>
+                                    <td><input type="number" class="cantidadd" data-precio="1" /></td>
                         <td><span>$ 1.00</span></td>
                                 <td><input type="text" class="totald" readonly /></td>
                     </tr>
                             <tr>
                                 <td></td>
-                                <td class="totales">Total Dolares</td>
+                                <td class="totales">Total Dolares
+                                    <input type="hidden" asp-for="@Model.arqueoDiario.TotalDolares" />
+                                </td>
 
                                 <td><input type="text" id="totalGeneralDolares" readonly /></td>
                             </tr>
@@ -206,7 +227,7 @@
                                 <td></td>
                                 <td class="totales">Tasa de Cambio</td>
 
-                                <td><input type="text" class="cantidadcambio"  /></td>
+                                    <td><input type="text" class="cantidadcambio" /></td>
                             </tr>
                             <tr>
                                 <td></td>
@@ -224,16 +245,18 @@
         <p class="totalDetalleDinero">
             TOTAL DETALLE DE DINERO:  <u>C$  </u>
         </p>
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleDinero"/>
         <p class="totalEfectivo">
             EFECTIVO VIA TRANSFERENCIA: <u>C$  </u>
         </p>
         <p class="totalDetalleEfectivo">
             TOTAL DETALLE DE EFECTIVO: <u>C$  </u>
         </p>
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleEfectivo" />
     </div>
 
-    <p class="totales" >
-        Total en Letras: <u>@Model.TotalEnLetras</u>
+        <p class="totales">
+        Total en Letras: <u> </u>
     </p>
 
     <!-- Firmas -->
@@ -249,10 +272,19 @@
     </div>
 
     <br />
+    
     <button class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
+
+   @* 
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Guardar Arqueo
+        </button> *@
+ 
+    </form>
 </body>
 
 </html>
+<script src="https://cdn.jsdelivr.net/npm/numero-a-letras@1.0.6/index.min.js"></script>
 <script>
     function totalGeneralCordobas() {
         let total = 0;
@@ -267,6 +299,24 @@
         document.getElementById("totalGeneralCordobas").value =
             "C$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2 });
     }
+        function numeroEnLetrasCordoba(numero) {
+        const formatter = new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'NIO'
+        });
+
+        // Aquí solo formatea, no convierte a letras
+        return formatter.format(numero);
+    }
+        function convertirCordobasConCentavos(valor) {
+        const partes = valor.toFixed(2).split(".");
+        const entero = parseInt(partes[0]);
+        const centavos = partes[1];
+
+        return `${numeroEnLetrasCordoba(entero).toUpperCase()} CÓRDOBAS CON ${centavos}/100`;
+    }
+
+
     function totalGeneralDolares() {
         let total = 0;
 
@@ -284,6 +334,7 @@
     //cambio de dolares a cordoba
     document.querySelector(".cantidadcambio").addEventListener("input", function () {
          let totaDetalleDinero=0;
+        
         // total en dólares (ya calculado en tu código anterior)
         let totalDolares = parseFloat(
             document.getElementById("totalGeneralDolares").value.replace(/[^0-9.-]+/g, "")
@@ -299,7 +350,11 @@
         // equivalente total en córdobas
         let equivalente = parseFloat(totalDolares * tasa) || 0;
         totaDetalleDinero=parseFloat(equivalente + totalCordobas) || 0 ;
+            let totalRaw = String(totaDetalleDinero)
+            .replace(/\./g, "")       // elimina separadores de miles
+            .replace(",", ".");       // cambia coma por punto
 
+        let totalLet = parseFloat(totalRaw);
         if(totalDolares>0)
         {
 
@@ -315,7 +370,10 @@
 
             document.querySelector(".totalDetalleEfectivo u").textContent =
                "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
-            
+
+               document.querySelector(".totales u").textContent =
+            convertirCordobasConCentavos(totalLet).toUpperCase() + " CÓRDOBAS";
+
     }
     else
     {
@@ -327,7 +385,8 @@
 
     document.querySelector(".totalDetalleEfectivo u").textContent =
                "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
-            
+            document.querySelector(".totales u").textContent =
+            convertirCordobasConCentavos(totalLet).toUpperCase() + " CÓRDOBAS";
     }
     });
 

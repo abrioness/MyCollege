@@ -375,6 +375,23 @@ namespace WebColegio.Services
                 return egreso;
             }
         }
+        //Get de Arqueo Diario
+        public async Task<List<TblArqueoDiario>> GetArqueoDiarioAsync()
+        {
+            List<TblArqueoDiario> arqueoDiario = new List<TblArqueoDiario>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TblArqueoDiarios");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblArqueoDiario>>(content);
+                    arqueoDiario = resultado;
+                }
+                return arqueoDiario;
+            }
+        }
+
         public async Task<List<TblReciboCaja>> GetRecibosCajaAsync()
         {
             List<TblReciboCaja> reciboCajas = new List<TblReciboCaja>();
@@ -506,6 +523,40 @@ namespace WebColegio.Services
             }
 
         }
+        public async Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync()
+        {
+            List<TblCostoMensualidad> costoMensualidad = new List<TblCostoMensualidad>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TblCostoMensualidad");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblCostoMensualidad>>(content);
+                    costoMensualidad = resultado;
+                }
+                return costoMensualidad;
+            }
+
+        }
+
+        public async Task<List<TblCostoMatricula>> GetCostosMatriculaAsync()
+        {
+            List<TblCostoMatricula> costoMatricula = new List<TblCostoMatricula>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/TblCostoMatriculas");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblCostoMatricula>>(content);
+                    costoMatricula = resultado;
+                }
+                return costoMatricula;
+            }
+
+        }
+
         public async Task<List<TblCatMeses>> GetMesesAsync()
         {
             List<TblCatMeses> meses = new List<TblCatMeses>();
@@ -986,6 +1037,45 @@ namespace WebColegio.Services
             return respuesta;
         }
 
+
+        public async Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo)
+        {
+            bool respuesta = false;
+
+           
+            
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Serializar el objeto alumno
+                    string jsonArqueo = JsonConvert.SerializeObject(arqueo);
+                    var content = new StringContent(jsonArqueo, Encoding.UTF8, "application/json");
+
+                    // Enviar POST
+                    var response = await httpClient.PostAsync(url + "api/TblArqueoDiarios", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        respuesta = true;
+                    }
+                    else
+                    {
+                        // Para debug: mostrar mensaje de error
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en POST: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostArqueoAsync: " + ex.Message);
+            }
+
+            return respuesta;
+        }
+
         #endregion
 
         #region Metodos Get por Id
@@ -1073,7 +1163,7 @@ namespace WebColegio.Services
         }
 
         //Get de Arqueo de Caja
-        public async Task<ArqueoCajaViewModel> GetArqueoById(int id)
+        public async Task<ArqueoDiarioViewModel> GetArqueoById(int id)
         {
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
@@ -1090,7 +1180,7 @@ namespace WebColegio.Services
                 var json = await response.Content.ReadAsStringAsync();
 
                 // Usar Newtonsoft.Json o System.Text.Json para deserializar
-                var arqueo = JsonConvert.DeserializeObject<ArqueoCajaViewModel>(json);
+                var arqueo = JsonConvert.DeserializeObject<ArqueoDiarioViewModel>(json);
 
                 return arqueo!;
             }

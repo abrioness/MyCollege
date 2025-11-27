@@ -90,6 +90,13 @@
                             </select>
                             <span asp-validation-for="PagosCaja.Concepto" class="text-danger"></span>
                         </div>
+                        <div class="form-group">
+                            <label asp-for="PagosCaja.IdRecinto" class="control-label">Centro de Estudio</label>
+                            <select asp-for="PagosCaja.IdRecinto" asp-items="Model.recintos" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="PagosCaja.IdRecinto" class="text-danger"></span>
+                        </div>
                         
                         <div class="form-group">
                             <label asp-for="PagosCaja.Descripcion" class="control-label">Observaciones</label>

@@ -22,7 +22,7 @@ namespace WebColegio.Controllers
             _Iservices = services;
         }
         // GET: PagosController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
 
             var _pagos = await _Iservices.GetPagosAsync();
@@ -33,11 +33,19 @@ namespace WebColegio.Controllers
             var _meses = await _Iservices.GetMesesAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
             //var _grados = await _Iservices.GetGradosAsync();
-
+            var query = _pagos;
+            if (fechainicio.HasValue)
+            {
+                query = _pagos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+            }
+            if (fechafin.HasValue)
+            {
+                query = _pagos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+            }
 
             var VieModelPagos = new ColeccionCatalogos
             {
-                pagos=_pagos,
+                pagos=query,
                 alumno = _alumnos,
                 tipoMovimiento = _tipoMovimiento,
                 tipoRecibo = _tipoRecibo,
@@ -206,10 +214,51 @@ namespace WebColegio.Controllers
                     pagos.Pago.FechaRegistro = DateTime.Now;
                     pagos.Pago.Serie = "A";
                     pagos.Pago.Activo = true;
-                    if (!string.IsNullOrEmpty(MesesSeleccionados))//MesesSeleccionados != null && MesesSeleccionados.Any())
+                    if (pagos.Pago.IdTipoMovimiento == 10)
                     {
-                       
+                        int mes = Convert.ToInt32(MesesSeleccionados);
+                        pagos.Pago.IdMes = mes;
+                        if (string.IsNullOrEmpty(MesesSeleccionados))
+                        {
+                            TempData["Mensaje"] = "Debe Ingresar el Mes para hacer el pago de la Rifa";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
+                        var existePagoRifa = buscarIdGuardado.Where(a => a.IdAlumno == pagos.Pago.IdAlumno && a.IdMes <=6  && a.IdMes >= 6 && a.IdTipoMovimiento == 10).ToList();
+                        if (existePagoRifa.Count > 0)
+                        {
 
+                            TempData["Mensaje"] = "Ya existe el pago de la Rifa para este semestre";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
+                        response = await _Iservices.PostPagosAsync(pagos.Pago);
+                        if (response)
+                        {
+                            var idPag = buscarIdGuardado.Max(a => a.IdPago);
+
+
+                            TempData["Mensaje"] = "Pago registrado correctamente.";
+                            TempData["Tipo"] = "success";
+                            return RedirectToAction("Details", "Pagos", new { id = idPag + 1 });
+                        }
+                        else
+                        {
+                            TempData["Mensaje"] = "No se proceso el Pago.";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
+                    }
+
+                    
+                    if (!string.IsNullOrEmpty(MesesSeleccionados) && pagos.Pago.IdTipoMovimiento == 1)//MesesSeleccionados != null && MesesSeleccionados.Any())
+                    {
+                        var ids = MesesSeleccionados.Split(',').Select(int.Parse).ToList();
+                        var listpagos = await _Iservices.GetPagosAsync();
+
+                        bool aplicoMora = false;
+                        bool duplicado = false;
+                        
                         if (BecaCompleta(pagos.Pago.IdAlumno,pagos.Pago.IdPeriodo).Result && pagos.Pago.IdTipoMovimiento==1)
                         {
                             TempData["Mensaje"] = "El Estudiante Posee Beca Completa.";
@@ -222,13 +271,7 @@ namespace WebColegio.Controllers
                             TempData["Tipo"] = "warning";
                             return RedirectToAction("Create");
                         }
-
-
-                        var ids = MesesSeleccionados.Split(',').Select(int.Parse).ToList();
-                        var listpagos = await _Iservices.GetPagosAsync();                      
                         
-                        bool aplicoMora = false;
-                        bool duplicado = false;
                         //total = ids * mensualidad;
                         //if((ids* mensualidad)=pagos.Pago.Monto)
 
@@ -272,7 +315,7 @@ namespace WebColegio.Controllers
                                 // Evita duplicado
                                 duplicado = true;
 
-                                TempData["Mensaje"] = $"El mes {idMes} ya fue pagado por este alumno.";
+                                TempData["Mensaje"] = $"El mes {Mes(idMes).Result} ya fue pagado por este alumno.";
                                 TempData["Tipo"] = "warning";
                                 continue;
                             }
