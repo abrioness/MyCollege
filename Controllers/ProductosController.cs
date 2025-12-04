@@ -123,6 +123,7 @@ namespace WebColegio.Controllers
             bool ExisteProducto = false;
             try
             {
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 ExisteProducto = await _Iservices.ValidarProductos(producto.tblproducto.CodigoBarra,producto.tblproducto.IdCateProducto);
                 if (ExisteProducto)
                 {
@@ -133,6 +134,9 @@ namespace WebColegio.Controllers
 
                 if (producto != null)
                 {
+                    producto.tblproducto.Activo = true;
+                    producto.tblproducto.UsuarioRegistro = idUsuario;
+                    producto.tblproducto.FechaRegistro = DateTime.Now;
                     //producto.tblproducto.CodigoBarra = await GenerarCodigoAutomaticoAsync(producto.tblproducto.NombreProducto);
                     response = await _Iservices.PostProductosAsync(producto.tblproducto);
                     if (response)

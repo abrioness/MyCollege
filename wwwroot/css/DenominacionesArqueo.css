@@ -46,7 +46,12 @@ th {
     padding-right: 10px;
 }
 
-.totalesLetras{
+.totalesLetras {
+    font-weight: bold;
+    text-align: right;
+    padding-right: 10px;
+}
+.totales{ 
     font-weight: bold;
     text-align: right;
     padding-right: 10px;

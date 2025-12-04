@@ -20,3 +20,8 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+#tablaPagos {
+    width: auto !important;
+    min-width: 1200px; /* o más */
+}

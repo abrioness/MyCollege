@@ -34,30 +34,48 @@
                             <label asp-for="Pago.IdTipoMovimiento" class="control-label">Concepto</label>
 
                             <select asp-for="Pago.IdTipoMovimiento" id="tipoMovimiento" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione un Opción</option>
+                                <option value="">Seleccione un Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdTipoMovimiento" class="text-danger"
                             data-val-required="Por favor, seleccione el tipo de movimiento"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.IdTipoRecibo" class="control-label">Tipo de Recibo</label>
-                            <select asp-for="Pago.IdTipoRecibo" asp-items="Model.tipoRecibosSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione una Opción</option>
+                            <select asp-for="Pago.IdTipoRecibo"  asp-items="Model.tipoRecibosSelectListItem" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdTipoRecibo" class="text-danger"></span>
 
                         </div>
-                        @*  <div class="form-group">
-                            <label asp-for="Pago.IdMes" class="control-label">Meses</label>
-                            <select asp-for="Pago.IdMes" asp-items="Model.MeseselectListItem" class="form-select" >
-                                <option disabled selected>Seleccione una Opción</option>
+                         <div class="form-group">
+                            <label asp-for="Pago.IdPeriodo" class="control-label">Periodo</label>
+                            <select asp-for="Pago.IdPeriodo" id="periodo" asp-items="Model.periodo" class="form-select" >
+                                <option value="">Seleccione una Opción</option>
                             </select>
-                            <span asp-validation-for="Pago.IdMes" class="text-danger"></span> 
+                            <span asp-validation-for="Pago.IdPeriodo" class="text-danger"></span> 
 
-                        </div>*@
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Pago.IdRecinto" class="control-label">Centro de Estudio</label>
+                            <select asp-for="Pago.IdRecinto" id="recinto" asp-items="Model.recintos" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="Pago.IdRecinto" class="text-danger"></span>
+                        </div>
+                         <div class="form-group">
+                            <label asp-for="Pago.IdGrado" class="control-label">Nivel</label>
+                            <select asp-for="Pago.IdGrado" id="grado" asp-items="Model.gradosSelectListItem" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="Pago.IdGrado" class="text-danger"></span>
+                        </div>
+                       
+                    </div>
+                   
+                    <div class="col-lg-4">
                         <div class="form-group">
                             <label asp-for="Pago.Anyo" class="control-label">Año</label>
-                            <select asp-for="Pago.Anyo" class="form-select" required>
+                            <select asp-for="Pago.Anyo" id="anyo" class="form-select" required>
                                 <option value="">Seleccione una Opciòn</option>
                                 <option value="2022">2022</option>
                                 <option value="2023">2023</option>
@@ -69,7 +87,7 @@
                                 <option value="2029">2029</option>
                                 <option value="2030">2030</option>
                             </select>
-                            
+
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.IdMetodoPago" class="control-label">Metodo de Pago</label>
@@ -78,16 +96,7 @@
                             </select>
                             <span asp-validation-for="Pago.IdMetodoPago" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
-                            <label asp-for="Pago.IdRecinto" class="control-label">Centro de Estudio</label>
-                            <select asp-for="Pago.IdRecinto" asp-items="Model.recintos" class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
-                            </select>
-                            <span asp-validation-for="Pago.IdRecinto" class="text-danger"></span>
-                        </div>
-                    </div>
-                   
-                    <div class="col-lg-4">
+
                         <div class="form-group">
                             <label asp-for="Pago.FechaEmision" class="control-label">Fecha de Emisión</label>
                             <input type="date" asp-for="Pago.FechaEmision" id="FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" required/>
@@ -95,19 +104,13 @@
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.Monto" class="control-label">Cantidad</label>
-                            <input asp-for="Pago.Monto" id="monto" class="form-control" />
+                            <input asp-for="Pago.Monto" id="costoMensualidad" class="form-control" />
                             <span asp-validation-for="Pago.Monto" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
-                            <label asp-for="Pago.IdGrado" class="control-label">Nivel</label>
-                            <select asp-for="Pago.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
-                            </select>
-                            <span asp-validation-for="Pago.IdGrado" class="text-danger"></span>
-                        </div>
+                       
 						<div class="form-group">
                             <label asp-for="Mora" class="control-label">Mora</label>
-                            <input asp-for="Mora" id="Mora" class="form-control" />
+                            <input asp-for="Mora" id="totalMora" class="form-control" />
                            <span asp-validation-for="Mora" class="text-danger"></span>
                         </div>
 						
@@ -209,7 +212,9 @@
             $('#tipoMovimiento').change(function() {
                 const tipoMovimientoId = parseInt($('#tipoMovimiento').val());
                  
-
+                // if(tipoMovimientoId===1){
+                    
+                // }
                 // Ajusta estos números según tus tipos de movimiento
                 if (tipoMovimientoId === 1 ||tipoMovimientoId===10 ) { // 1 = Matrícula
                     $('#mesPagado').show();
@@ -243,6 +248,68 @@
                 $("#IdAlumno").val(ui.item.id); // Guardamos el ID del alumno
             }
         });
+
+                function cargarMensualidad() {
+
+            let recinto = $("#recinto").val();
+            let grado = $("#grado").val();
+            // let modalidad = $("#modalidad").val();
+            let periodo = $("#periodo").val();
+
+            if (recinto && grado && periodo) {
+
+                        $.getJSON("/Pagos/ObtenerMensualidad",
+            {
+                idRecinto: recinto,
+                idGrado: grado,
+                
+                idPeriodo: periodo
+            },
+            function (data) {
+                console.log(data);      // {costo: 620}
+                alert(data.costo);      // 620
+                $("#costoMensualidad").val(data.costo);
+            }
+        );
+
+
+            }
+        }
+        $("#recinto, #grado, #periodo").change(cargarMensualidad);
+
+       function cargarMora() {
+             let IdAlumno = $("#IdAlumno").val();
+               let IdTipoMovimiento = $("#tipoMovimiento").val();
+              let periodo = $("#periodo").val(); // input donde seleccionas mes o fecha
+
+             if (IdAlumno && IdTipoMovimiento && periodo) {
+                 $.getJSON("/Pagos/ObtenerMora",
+                    {
+                         idAlumno:IdAlumno,
+                        idTipoMovimiento:IdTipoMovimiento,
+                        periodo:periodo,
+                    },
+                    function (data) {
+                        if (data) {
+                            $("#totalMora").val(data.mora);
+                             alert(data.mora);      // 620
+                            // calcularTotal();
+                        } else {
+                            $("#totalMora").val("0");
+                        }
+                    });
+            }
+        }
+        //         function calcularTotal() {
+        //     let mensualidad = parseFloat($("#costoMensualidad").val()) || 0;
+        //     let mora = parseFloat($("#totalMora").val()) || 0;
+
+        //     $("#totalPagar").val(mensualidad + mora);
+        // }
+         $("#grado").change(cargarMora);
+        // $("#recinto, #grado, #modalidad, #periodo").change(cargarMensualidad);
+
+
 
                function msg(mensaje){
                    swal.fire({

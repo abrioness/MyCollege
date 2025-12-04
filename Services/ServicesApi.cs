@@ -678,10 +678,8 @@ namespace WebColegio.Services
             
             // Asegurar datos mínimos requeridos
                
-                alumnos.CodigoUnico = 0;
-                alumnos.Activo = true;
-                alumnos.UsuarioRegistro = 1;
-                alumnos.FechaRegistro = DateTime.Now;
+                //alumnos.CodigoUnico = ;
+                
                 
                
 
@@ -1002,9 +1000,7 @@ namespace WebColegio.Services
             bool respuesta = false;
 
             // Asegurar datos mínimos requeridos
-            product.Activo = true;
-            product.UsuarioRegistro = 1;
-            product.FechaRegistro = DateTime.Now;
+           
 
             try
             {
@@ -1387,9 +1383,7 @@ namespace WebColegio.Services
             existingAlumno.NombrePadre = alumno.NombrePadre;
             existingAlumno.NombreTutor = alumno.NombreTutor;
             existingAlumno.Correo = alumno.Correo;
-            existingAlumno.Activo = true;
-            existingAlumno.UsuarioActualiza = 1;
-            existingAlumno.FechaActualiza = DateTime.Now;
+            
 
            
 

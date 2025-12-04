@@ -7,6 +7,7 @@ namespace WebColegio.Models.ViewModel
         public TblArqueoDiario arqueoDiario { get; set; } = new();
         public int siguienteNumero { get; set; }
         public string Colegio { get; set; }
+        public string Direccion { get; set; }
         public string Serie { get; set; }
         public int Numero { get; set; }
         public List<Recintos> TblRecintos { get; set; } = new();

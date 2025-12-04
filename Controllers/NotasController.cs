@@ -18,7 +18,7 @@ namespace WebColegio.Controllers
             _Iservices = services;
         }
         // GET: NotasController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
             var _notas = await _Iservices.GetNotasAsync();
             var _alumnos = await _Iservices.GetAlumnosAsync();
@@ -28,10 +28,19 @@ namespace WebColegio.Controllers
             var _modalidad = await _Iservices.GetModalidadesAsync();
             var _grados = await _Iservices.GetGradosAsync();
 
+            var query = _notas;
+            if (fechainicio.HasValue)
+            {
+                query = _notas.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+            }
+            if (fechafin.HasValue)
+            {
+                query = _notas.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+            }
 
             var VieModelNotas = new ColeccionCatalogos
             {
-                notas = _notas,
+                notas = query,
                 alumno = _alumnos,
                 tipoEvaluaciones = _tipoEvaluacion,
                 periodoEvaluacions = _periodo,

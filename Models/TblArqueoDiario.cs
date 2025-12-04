@@ -7,6 +7,7 @@
         public int NumeroRecibo { get; set; }
         public int Anyo { get; set; }
         public int IdRecinto { get; set; }
+        public int IdPeriodo { get; set; }
         //public int? Cantidad { get; set; }
         public string? Serie { get; set; }
         //public decimal? Monto { get; set; }
@@ -24,8 +25,8 @@
         public bool Activo { get; set; }
         public int UsuarioRegistro { get; set; }
         public DateTime FechaRegistro { get; set; }
-        public bool UsuarioActualizo { get; set; }
-        public DateTime FechaActualizo { get; set; }
+        public int? UsuarioActualizo { get; set; }
+        public DateTime? FechaActualizo { get; set; }
 
     }
 }

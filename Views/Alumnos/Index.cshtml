@@ -5,13 +5,31 @@
 <script src="~/js/site.js"></script>
 @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
-<div class="container mt-6" style="padding:50px;">
+<div class="container mt-auto" style="padding:2px;">
 <div class="card shadow-lg p-3 mb-5 bg-white rounded" style="padding-top:50px;">
 	<div class="card-header bg-primary text-white">
 		<h5 class="mb-0"><i class="bi bi-people"></i> Lista de Alumnos</h5>
 	</div>
 	<div class="card-body">
-
+			<div class="col-4 text-center">
+				@using (Html.BeginForm("Index", "Alumnos", FormMethod.Get))
+				{
+					<div class="row">
+						<div class="col-4">
+							<label class="control-label">Desde:</label>
+							<input type="date" name="fechainicio" id="FechaInicio" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+						</div>
+						<div class="col-4">
+							<label class="control-label">Hasta:</label>
+							<input type="date" name="fechafin" id="FechaFin" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+						</div>
+						<div class="col-4">
+							<br />
+							<button type="submit" class="form-control btn btn-success">Filtrar</button>
+						</div>
+					</div>
+				}
+			</div>
 			<div class="col-12 text-end">
 
 				<a asp-action="Create" class="btn btn-primary">
@@ -26,11 +44,11 @@
 		<th>Nombre</th>
 		<th>Apellido</th>
 		<th>Edad</th>
-		<th>Cedula</th>
+		@* <th>Cedula</th> *@
 		<th>Grado</th>
 		<th>Turno</th> 
 		<th>Sexo</th>
-		@* <th>Editar</th> *@
+		<th>Fecha Registro</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -51,14 +69,14 @@
 				<td>
 					@itemAlumno.Edad
 				</td>
-				<td>
+				@* <td>
 					@itemAlumno.Cedula
-				</td>
+				</td> *@
 				@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
 				{
 					<td>
 					
-						@grado.NombreGrado
+						@grado.NombreGrado 
 
 					</td>
 				}
@@ -77,6 +95,10 @@
 
 					</td>
 				}
+				<td>
+					
+								@itemAlumno.FechaRegistro.ToString("dd/MM/yyyy")
+				</td>
 				@* <td>
 								<a asp-action="Edit" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
 				</td> *@

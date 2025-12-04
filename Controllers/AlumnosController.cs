@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace WebColegio.Controllers
 {
@@ -18,21 +19,30 @@ namespace WebColegio.Controllers
             _Iservices = services;
         }
         // GET: AlumnosController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
 
                 var _alumnos = await _Iservices.GetAlumnosAsync();
-                var _sexos = await _Iservices.GetSexosAsync();
+            _alumnos = _alumnos.Where(r => r.Activo == true).OrderByDescending(a => a.IdAlumno).ToList();
+            var _sexos = await _Iservices.GetSexosAsync();
                 var _grupos = await _Iservices.GetGruposAsync();
                 var _grados = await _Iservices.GetGradosAsync();
                 var _turnos = await _Iservices.GetTurnosAsync();
                 var _modalidades = await _Iservices.GetModalidadesAsync();
                 var _recintos = await _Iservices.GetRecintosAsync();
             var _discapacidad = await _Iservices.GetDiscapacidadAsync();
-
-                var VieModelAlumnos = new ColeccionCatalogos
+            var query = _alumnos;
+            if (fechainicio.HasValue)
+            {
+                query = _alumnos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+            }
+            if (fechafin.HasValue)
+            {
+                query = _alumnos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+            }
+            var VieModelAlumnos = new ColeccionCatalogos
                 {
-                    alumno = _alumnos,
+                    alumno = query,
                     sexos = _sexos,
                     grupos = _grupos,
                     grados = _grados,
@@ -139,7 +149,9 @@ namespace WebColegio.Controllers
                 }
                 if (alumnos != null)
                 {
-                     
+                    alumnos.Activo = true;
+                    alumnos.UsuarioRegistro = idUsuario;
+                    alumnos.FechaRegistro = DateTime.Now;
                     response = await _Iservices.PostAlumnosAsync(alumnos);
                     if(response)
                     {
@@ -224,6 +236,7 @@ namespace WebColegio.Controllers
         {
 
             try {
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 if (viewModel == null || viewModel.alumnos == null)
                 {
                     ModelState.AddModelError("", "Los datos del alumno son inválidos.");
@@ -232,7 +245,10 @@ namespace WebColegio.Controllers
 
                 if (!ModelState.IsValid)
                  {
-                var actualizado = await _Iservices.UpdateAlumnos(viewModel.alumnos);
+                    viewModel.alumnos.Activo = true;
+                    viewModel.alumnos.UsuarioActualiza = idUsuario;
+                    viewModel.alumnos.FechaActualiza = DateTime.Now;
+                    var actualizado = await _Iservices.UpdateAlumnos(viewModel.alumnos);
 
                 if (actualizado)
                 {

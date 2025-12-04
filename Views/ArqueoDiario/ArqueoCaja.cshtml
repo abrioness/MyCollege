@@ -15,40 +15,41 @@
             @* <h3>@Model.Colegio</h3> *@
             <div class="subtitulo">
                 <p>ARQUEO DE CAJA</p>
-                <p> COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</p>
+                <p>@Model.Colegio</p>
                 <p>VICARIA DE EDUCACIÓN CATÓLICA</p>
-                <p>Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</p>
+                <p>@Model.Direccion</p>
                 <p>Serie: "A" &nbsp;&nbsp; Nº: @Model.siguienteNumero</p>
                 @{
                     var fecha = DateTime.Now.ToString("dd/MM/yyyy");
                 }
-            <p>Fecha: @fecha</p>
-            <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="A" />
-            <input type="hidden" asp-for="@Model.arqueoDiario.NumeroRecibo" value="@Model.siguienteNumero" />
+                <p>Fecha: @fecha</p>
+                <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="A" />
+                <input type="hidden" asp-for="@Model.arqueoDiario.NumeroRecibo" value="@Model.siguienteNumero" />
+                <input type="hidden" asp-for="@Model.arqueoDiario.IdRecinto" value="@Model.arqueoDiario.IdRecinto"/>
+            </div>
         </div>
-    </div>
 
-    <!-- Ingresos -->
-    <h4>Ingresos</h4>
-    <table>
-        <thead>
-            <tr>
-                <th>Concepto</th>
-                <th>No. Recibo</th>
-                <th>Cantidad</th>
-                <th>Monto</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var i in Model.Ingresos)
-            {
+        <!-- Ingresos -->
+        <h4>Ingresos</h4>
+        <table>
+            <thead>
                 <tr>
-                    <td>@i.Concepto</td>
-                    <td>@i.Recibo</td>
-                    <td style="text-align:center">@i.Cantidad</td> 
-                    <td style="text-align:right">@i.Monto.ToString("C")</td>
+                    <th>Concepto</th>
+                    <th>No. Recibo</th>
+                    <th>Cantidad</th>
+                    <th>Monto</th>
                 </tr>
-            }
+            </thead>
+            <tbody>
+                @foreach (var i in Model.Ingresos)
+                {
+                    <tr>
+                        <td>@i.Concepto</td>
+                        <td>@i.Recibo</td>
+                        <td style="text-align:center">@i.Cantidad</td> 
+                        <td style="text-align:right">@i.Monto.ToString("C")</td>
+                    </tr>
+                }
                 @foreach (var i in Model.IngresoCajaDto)
                 {
                     <tr>
@@ -58,31 +59,49 @@
                         <td style="text-align:right">@i.Montos.ToString("C")</td>
                     </tr>
                 }
-        </tbody>
-    </table>
-    <p class="totales">Total Ingresos: @Model.TotalIngresos.ToString("C")</p>
-    <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@Model.TotalIngresos"/>
-    <!-- Egresos -->
-    <h4>Egresos</h4>
-    <table>
-        <thead>
-            <tr>
-                <th>Detalle</th>
-                <th>Monto</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var e in Model.Egresos)
-            {
-                <tr class="align-content-center">
-                    <td>@e.Detalle</td>
-                    <td style="text-align:right">@e.Monto.ToString("C")</td>
+            </tbody>
+        </table>
+        @{
+            decimal totalIngresos = Model.TotalIngresos;
+            decimal totalEgresos = Model.TotalEgresos;
+
+            decimal totalEfectivoEntregar = totalIngresos - totalEgresos;
+        }
+
+        <p class="totales">Total Ingresos: @Model.TotalIngresos.ToString("C")</p>
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@Model.TotalIngresos"/>
+        <!-- Egresos -->
+        <h4>Egresos</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Detalle</th>
+                    <th>Monto</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-    <p class="totales">Total Egresos: @Model.TotalEgresos.ToString("C")</p>
-    <input type="hidden" asp-for="@Model.arqueoDiario.TotalEgreso" value="@Model.TotalEgresos" />
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Egresos)
+                {
+                    <tr class="align-content-center">
+                        <td>@e.Detalle</td>
+                        <td style="text-align:right">@e.Monto.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @* @{
+            // decimal ingresoCaja = Convert.ToDecimal(Model.IngresoCajaDto.ToString());
+            // decimal ingresoMatricula = Convert.ToDecimal(Model.TotalIngresos.ToString());
+            // decimal egresos=Convert.ToDecimal(Model.TotalEgresos.ToString());
+            var TotalEfectovoEntregar = (Model.IngresoCajaDto ?? 0) +(Model.TotalIngresos ?? 0)-Model.Egresos
+        }  *@
+
+        <p class="totales">Total Egresos: @Model.TotalEgresos.ToString("C")</p>
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalEgreso" value="@Model.TotalEgresos" />
+        
+       
+        <p class="totales">TOTAL DE EFECTIVO A ENTREGAR: @totalEfectivoEntregar.ToString("C") </p>
+        
    
     <table class="col-6" id="tableContent">
         
@@ -243,16 +262,16 @@
     </table>
     <div class="TotalesGeneral align-content-center">
         <p class="totalDetalleDinero">
-            TOTAL DETALLE DE DINERO:  <u>C$  </u>
+                TOTAL DETALLE DE DINERO:  <u>C$ </u>
         </p>
-        <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleDinero"/>
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleDinero" id="totDetalDinero"/>
         <p class="totalEfectivo">
             EFECTIVO VIA TRANSFERENCIA: <u>C$  </u>
         </p>
         <p class="totalDetalleEfectivo">
-            TOTAL DETALLE DE EFECTIVO: <u>C$  </u>
+                TOTAL DETALLE DE EFECTIVO: <u> @totalEfectivoEntregar.ToString("C") </u>
         </p>
-        <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleEfectivo" />
+            <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleEfectivo" value="@totalEfectivoEntregar" />
     </div>
 
         <p class="totales">
@@ -275,10 +294,10 @@
     
     <button class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
 
-   @* 
+   
         <button type="submit" class="btn btn-primary">
             <i class="bi bi-save"></i> Guardar Arqueo
-        </button> *@
+        </button>
  
     </form>
 </body>
@@ -367,9 +386,10 @@
 
            document.querySelector(".totalDetalleDinero u").textContent =
             "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
-
-            document.querySelector(".totalDetalleEfectivo u").textContent =
-               "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+            document.getElementById("#totDetalDinero").value=
+            "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+            // document.querySelector(".totalDetalleEfectivo u").textContent =
+            //    "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
 
                document.querySelector(".totales u").textContent =
             convertirCordobasConCentavos(totalLet).toUpperCase() + " CÓRDOBAS";
@@ -383,8 +403,10 @@
         document.querySelector(".totalDetalleDinero u").textContent =
             "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
 
-    document.querySelector(".totalDetalleEfectivo u").textContent =
-               "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+    // document.querySelector(".totalDetalleEfectivo u").textContent =
+    //            "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+     document.getElementById("totDetalDinero").value=
+            "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
             document.querySelector(".totales u").textContent =
             convertirCordobasConCentavos(totalLet).toUpperCase() + " CÓRDOBAS";
     }

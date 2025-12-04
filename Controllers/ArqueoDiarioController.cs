@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebColegio.Controllers
 {
@@ -51,10 +52,10 @@ namespace WebColegio.Controllers
             bool response = false;
             bool validarDuplicado = false;
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            arqueoDia.arqueoDiario.UsuarioRegistro = idUsuario;
-            arqueoDia.arqueoDiario.FechaRegistro = DateTime.Now;
-            arqueoDia.arqueoDiario.Activo = true;
-            arqueoDia.arqueoDiario.Serie = "A";
+            //arqueoDia.arqueoDiario.UsuarioRegistro = idUsuario;
+            //arqueoDia.arqueoDiario.FechaRegistro = DateTime.Now;
+            //arqueoDia.arqueoDiario.Activo = true;
+            //arqueoDia.arqueoDiario.Serie = "A";
             //int mensualidad = 640;
             //int total = 0;
             var buscarIdGuardado = await _Iservices.GetArqueoDiarioAsync();
@@ -78,9 +79,17 @@ namespace WebColegio.Controllers
                 if (arqueoDia != null)
                 {
                     //var userId = _userManager.GetUserId(User); // o UserManager.GetUserId(User)
-                   
-                    
+
+                    var periodo = await _Iservices.GetPeriodoAsync();
+                   int periodoActual = periodo.Where(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true).FirstOrDefault().IdPeriodo;
+
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
+                    arqueoDia.arqueoDiario.UsuarioRegistro = idUsuario;
+                    arqueoDia.arqueoDiario.FechaRegistro = DateTime.Now;
+                    arqueoDia.arqueoDiario.Activo = true;
+                    arqueoDia.arqueoDiario.IdPeriodo = periodoActual;
+                    arqueoDia.arqueoDiario.Serie = "A";
+
                     response = await _Iservices.PostArqueoDiarioAsync(arqueoDia.arqueoDiario);
                     if (response)
                     {
@@ -113,34 +122,60 @@ namespace WebColegio.Controllers
         {
             var recintos = await _Iservices.GetRecintosAsync();
             var recibos = await _Iservices.GetArqueoDiarioAsync();
-            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));  
             var maxNumero = recibos
                 .Where(r => r.Serie == "A")
                 .Max(r => (int?)r.NumeroRecibo);
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 40001;
             //listar pagos mensualidad
+            var recintoNombre = 0;
+            var Recintos = await _Iservices.GetRecintosAsync();
+            var arqueo = new ArqueoDiarioViewModel();
+
             var pagosDelDia = await _Iservices.GetPagosAsync();
+           
             pagosDelDia = pagosDelDia.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList();
             //listar pagos de caja
             var pagosCajaDia = await _Iservices.GetPagoCajaAsync();
             pagosCajaDia = pagosCajaDia.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList();
 
-            var Recintos= await _Iservices.GetRecintosAsync();
+            foreach (var itemPago in pagosDelDia)
+            {
+                //pagosDelDia.Where(r=>r.IdRecinto == 1  && itemPago.UsuarioRegistro==idUsuario && itemPago.Activo && itemPago.FechaRegistro.Date==fecha).Select(r=>r.IdRecinto).FirstOrDefault() ?? 0;
 
+
+                if (itemPago.IdRecinto == 1)
+                {
+                    arqueo = new ArqueoDiarioViewModel
+                    {
+
+                        Colegio = "COLEGIO SAN FRANCISCO JAVIER",
+                        Direccion= "Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua",
+                        Serie = "A",
+                        Fecha = fecha,
+                        siguienteNumero = siguienteNumero
+                    };
+                }
+                if (itemPago.IdRecinto == 2)
+                {
+                    arqueo = new ArqueoDiarioViewModel
+                    {
+
+                        Colegio = "COLEGIO SAN MIGUEL",
+                        Direccion="Zona Once",
+                        Serie = "A",
+                        Fecha = fecha,
+                        siguienteNumero = siguienteNumero
+                    };
+                }
+            }
 
             // Inicializar el viewmodel del arqueo
-            var arqueo = new ArqueoDiarioViewModel
-            {
-           
-                Colegio = "COLEGIO SAN FRANCISCO JAVIER",
-                Serie = "A",
-                Fecha = fecha,
-                siguienteNumero=siguienteNumero
-            };
+
 
             // 1️⃣ Obtener los pagos del día (ingresos y egresos)0
-            
-            
+
+
             //pagosDelDia = pagosDelDia
             //    .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)
             //    .ToList();
@@ -255,6 +290,7 @@ namespace WebColegio.Controllers
             // 5️⃣ Totales
             arqueo.TotalIngresos = arqueo.Ingresos.Sum(x => x.Monto);
             arqueo.TotalEgresos = arqueo.Egresos.Sum(x => x.Monto);
+            
             arqueo.TotalEfectivo = arqueo.TotalIngresos - arqueo.TotalEgresos;
 
             // 6️⃣ (Opcional) Detalle por denominación (si lo llenas manualmente desde vista)

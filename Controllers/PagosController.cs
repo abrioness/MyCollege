@@ -8,15 +8,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WebColegio.Controllers
 {
     public class PagosController : Controller
     {
         private readonly IServicesApi _Iservices;
+        public const int MoraPorMes = 10;
         public PagosController(IServicesApi services)
         {
             _Iservices = services;
@@ -174,14 +177,29 @@ namespace WebColegio.Controllers
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
                 meses = await _Iservices.GetMesesAsync(),
-                periodo = await _Iservices.GetPeriodoAsync(),
-                gradosSelectListItem=(await _Iservices.GetGradosAsync())
+                periodo = (await _Iservices.GetPeriodoAsync())
+                .Select(r=> new SelectListItem
+                {
+
+                    Value = r.IdPeriodo.ToString(),
+                    Text = r.Periodo.ToString(),
+                }
+                ).ToList(),
+                gradosSelectListItem = (await _Iservices.GetGradosAsync())
                 .Select(r => new SelectListItem
                 {
                     Value = r.IdGrado.ToString(),
                     Text = r.NombreGrado,
                     //Selected = r.IdPregunta == respuestas.IdPregunta
                 }).ToList(),
+                recintos = (await _Iservices.GetRecintosAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.IdRecinto.ToString(),
+                    Text = r.Recinto.ToString(),
+                }
+                ).ToList()
 
 
             };
@@ -313,7 +331,7 @@ namespace WebColegio.Controllers
                             if (mesesPagadosAcumulados.Contains(idMes))
                             {
                                 // Evita duplicado
-                                duplicado = true;
+                                //duplicado = true;
 
                                 TempData["Mensaje"] = $"El mes {Mes(idMes).Result} ya fue pagado por este alumno.";
                                 TempData["Tipo"] = "warning";
@@ -440,16 +458,46 @@ namespace WebColegio.Controllers
         //Calcular meses atrasados
         public int CalcularMesesAtrasados(DateTime fechaDeuda, DateTime fechaActual)
         {
-            int meses = (fechaActual.Year - fechaDeuda.Year) * 12 + (fechaActual.Month - fechaDeuda.Month);
+            // Normalizar días (solo comparar por año y mes)
+            fechaDeuda = new DateTime(fechaDeuda.Year, fechaDeuda.Month, 1);
+            fechaActual = new DateTime(fechaActual.Year, fechaActual.Month, 1);
 
+            int meses = (fechaActual.Year - fechaDeuda.Year) * 12 + (fechaActual.Month - fechaDeuda.Month);
             if (fechaActual.Day < fechaDeuda.Day)
             {
-                meses--; // ajusta si el mes aún no se completa
+                meses--;
             }
 
             return meses < 0 ? 0 : meses;
         }
 
+        //calcular mora
+        //public int CalcularMoraTotal(DateTime fechaDeuda, DateTime fechaActual)
+        //{
+
+        //    return mesesAtrasados * MoraPorMes;
+        //}
+        [HttpGet]
+        public IActionResult ObtenerMora(int idAlumno,int idTipoMovimiento,int periodo)
+        {
+            int mes = DateTime.Now.Month;
+            var listpagos =  _Iservices.GetPagosAsync().Result;
+            var mesesPagadosBD = listpagos
+                       .Where(p => p.IdAlumno == idAlumno &&
+                                   p.IdTipoMovimiento == idTipoMovimiento &&
+                                   p.IdPeriodo == periodo)
+                       .Select(p => p.IdMes)
+                       .ToHashSet();
+            //crear meses pagados virtualmente
+            var mesesPagadosAcumulados = new HashSet<int?>(mesesPagadosBD);
+            var mesesPendientes = Enumerable.Range(1, mes - 1)
+                            .Except(mesesPagadosAcumulados.Cast<int>())
+                            .Distinct()
+                            .ToList();
+            int moraTotal = 10 * mesesPendientes.Count();
+
+            return Json(new { mora = moraTotal, mes });
+        }
         //Obtener nombre del mes.
         public async Task<string> Mes(int idmes)
         {
@@ -498,34 +546,53 @@ namespace WebColegio.Controllers
 
             return true;
         }
-    //    public (bool tienePendientes, List<int> mesesPendientes, decimal moraAcumulada, bool puedePagar)
-    //ValidarPagoConMora(int idAlumno, int idTipoMovimiento, int periodo, int mesDeseado)
-    //    {
-    //        var pagosRealizados = listpagos
-    //            .Where(p => p.IdAlumno == idAlumno &&
-    //                       p.IdTipoMovimiento == idTipoMovimiento &&
-    //                       p.IdPeriodo == periodo &&
-    //                       p.IdMes <= mesDeseado) // Solo meses hasta el deseado
-    //            .Select(p => p.IdMes)
-    //            .OrderBy(m => m)
-    //            .ToList();
 
-    //        // Encontrar todos los meses que deberían estar pagados (1 hasta mesDeseado-1)
-    //        var todosMesesRequeridos = Enumerable.Range(1, mesDeseado - 1).ToList();
 
-    //        // Meses pendientes son los que no están en pagosRealizados
-    //        var mesesPendientes = todosMesesRequeridos.Except(pagosRealizados).ToList();
+        [HttpGet]
+        public IActionResult ObtenerMensualidad(int idRecinto, int idGrado, int idPeriodo)
+        {
+            var mensualidad = _Iservices.GetCostosMensualidadAsync().Result
+                .Where(x => x.IdRecinto == idRecinto &&
+                            x.IdGrado == idGrado &&
+                            //x.IdModalidad == idModalidad &&
+                            x.IdPeriodo == idPeriodo &&
+                            x.Activo == true)
+                .Select(x => new {
+                    costo = x.CostoMensualidad
+                })
+                .FirstOrDefault();
 
-    //        // Validar si puede pagar el mes deseado
-    //        bool puedePagar = !mesesPendientes.Any() ||
-    //                         (mesesPendientes.Count > 0 && mesesPendientes.Max() == mesDeseado - 1);
+            return Json(mensualidad);
+        }
 
-    //        // Calcular mora
-    //        decimal montoBase = 1000; // Obtener de tu configuración
-    //        decimal mora = mesesPendientes.Count * (montoBase * 0.10m);
+        //    public (bool tienePendientes, List<int> mesesPendientes, decimal moraAcumulada, bool puedePagar)
+        //ValidarPagoConMora(int idAlumno, int idTipoMovimiento, int periodo, int mesDeseado)
+        //    {
+        //        var pagosRealizados = listpagos
+        //            .Where(p => p.IdAlumno == idAlumno &&
+        //                       p.IdTipoMovimiento == idTipoMovimiento &&
+        //                       p.IdPeriodo == periodo &&
+        //                       p.IdMes <= mesDeseado) // Solo meses hasta el deseado
+        //            .Select(p => p.IdMes)
+        //            .OrderBy(m => m)
+        //            .ToList();
 
-    //        return (mesesPendientes.Any(), mesesPendientes, mora, puedePagar);
-    //    }
+        //        // Encontrar todos los meses que deberían estar pagados (1 hasta mesDeseado-1)
+        //        var todosMesesRequeridos = Enumerable.Range(1, mesDeseado - 1).ToList();
+
+        //        // Meses pendientes son los que no están en pagosRealizados
+        //        var mesesPendientes = todosMesesRequeridos.Except(pagosRealizados).ToList();
+
+        //        // Validar si puede pagar el mes deseado
+        //        bool puedePagar = !mesesPendientes.Any() ||
+        //                         (mesesPendientes.Count > 0 && mesesPendientes.Max() == mesDeseado - 1);
+
+        //        // Calcular mora
+        //        decimal montoBase = 1000; // Obtener de tu configuración
+        //        decimal mora = mesesPendientes.Count * (montoBase * 0.10m);
+
+        //        return (mesesPendientes.Any(), mesesPendientes, mora, puedePagar);
+        //    }
 
         // GET: PagosController/Edit/5
         public ActionResult Edit(int id)
