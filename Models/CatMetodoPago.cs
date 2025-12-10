@@ -10,11 +10,11 @@
 
         public bool Activo { get; set; }
 
-        public DateOnly FehaRegistro { get; set; }
+        public DateTime FehaRegistro { get; set; }
 
         public int IdUsuarioRegistra { get; set; }
 
-        public DateOnly? FechaActualiza { get; set; }
+        public DateTime? FechaActualiza { get; set; }
 
         public int? IdUsuarioActualiza { get; set; }
     }
