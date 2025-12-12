@@ -139,6 +139,13 @@ namespace WebColegio.Controllers
                                       Text = r.Periodo.ToString(),
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
+                recintos = (await _Iservices.GetRecintosAsync())
+                                   .Select(r => new SelectListItem
+                                   {
+                                       Value = r.IdRecinto.ToString(),
+                                       Text = r.Recinto.ToString(),
+                                       //Selected = r.IdPregunta == respuestas.IdPregunta
+                                   }).ToList(),
 
 
 

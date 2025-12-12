@@ -82,6 +82,15 @@
                             <input asp-for="alumnos.Correo" class="form-control" />
                             @* <span asp-validation-for="Correo" class="text-danger"></span> *@
                         </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.Activo" class="control-label">Estado del Estudiante</label>
+                            <select asp-for="alumnos.Activo" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                                <option value="true">Activo</option>
+                                <option value="false">Inactivo</option>
+                            </select>
+                            <span asp-validation-for="alumnos.Activo" class="text-danger"></span>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
@@ -147,7 +156,11 @@
                             <input asp-for="alumnos.CedulaTutor" class="form-control" />
                             @* <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span>  *@
                         </div>
-                        
+                        <div class="form-group">
+                            <label asp-for="alumnos.Observaciones" class="control-label">Observaciones</label>
+                            <textarea asp-for="alumnos.Observaciones" class="form-control"></textarea>
+
+                        </div>
                        
                     </div>
                 </div>

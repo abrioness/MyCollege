@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="Views\Alumnos\Details.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="datatables.net" Version="2.3.2" />
     <PackageReference Include="Humanizer" Version="2.14.1" />

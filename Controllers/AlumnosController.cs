@@ -149,7 +149,7 @@ namespace WebColegio.Controllers
                 }
                 if (alumnos != null)
                 {
-                    alumnos.Activo = true;
+                    //alumnos.Activo = true;
                     alumnos.UsuarioRegistro = idUsuario;
                     alumnos.FechaRegistro = DateTime.Now;
                     response = await _Iservices.PostAlumnosAsync(alumnos);
@@ -245,7 +245,7 @@ namespace WebColegio.Controllers
 
                 if (!ModelState.IsValid)
                  {
-                    viewModel.alumnos.Activo = true;
+                    //viewModel.alumnos.Activo = true;
                     viewModel.alumnos.UsuarioActualiza = idUsuario;
                     viewModel.alumnos.FechaActualiza = DateTime.Now;
                     var actualizado = await _Iservices.UpdateAlumnos(viewModel.alumnos);

@@ -6,11 +6,11 @@
 @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
 <div class="container mt-auto" style="padding:2px;">
-<div class="card shadow-lg p-3 mb-5 bg-white rounded" style="padding-top:50px;">
-	<div class="card-header bg-primary text-white">
-		<h5 class="mb-0"><i class="bi bi-people"></i> Lista de Alumnos</h5>
-	</div>
-	<div class="card-body">
+	<div class="card shadow-lg p-3 mb-5 bg-white rounded" style="padding-top:50px;">
+		<div class="card-header bg-primary text-white">
+			<h5 class="mb-0"><i class="bi bi-people"></i> Lista de Alumnos</h5>
+		</div>
+		<div class="card-body">
 			<div class="col-4 text-center">
 				@using (Html.BeginForm("Index", "Alumnos", FormMethod.Get))
 				{
@@ -37,68 +37,86 @@
 				</a>
 			</div>
 			<table id="tablaAlumnos" class="table table-striped table-bordered nowrap" style="width:100%">
-	<thead>
-		<tr>
-		<th>Código Alumno</th>
-		<th>Código MINED</th>
-		<th>Nombre</th>
-		<th>Apellido</th>
-		<th>Edad</th>
-		@* <th>Cedula</th> *@
-		<th>Grado</th>
-		<th>Turno</th> 
-		<th>Sexo</th>
-		<th>Fecha Registro</th>
-		</tr>
-	</thead>
-	<tbody>
-		@foreach(var itemAlumno in Model.alumno){
-			<tr>
-				<td>
+				<thead>
+					<tr>
+						<th>Código Alumno</th>
+						<th>Código MINED</th>
+						<th>Nombre</th>
+						<th>Apellido</th>
+						<th>Edad</th>
+						@* <th>Cedula</th> *@
+						<th>Grado</th>
+						<th>Turno</th> 
+						<th>Sexo</th>
+						<th>Fecha Registro</th>
+						<th>Estado</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach(var itemAlumno in Model.alumno){
+						<tr>
+							<td>
 								<a asp-action="Edit" asp-controller="Alumnos" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-info">	@itemAlumno.CodigoAlumno</a>
-					</td>
+							</td>
 							<td>
 								@itemAlumno.CodigoMINED
 							</td>
-				<td>
-					@itemAlumno.Nombre
-				</td>
-				<td>
-					@itemAlumno.Apellido
-				</td>
-				<td>
-					@itemAlumno.Edad
-				</td>
-				@* <td>
+							<td>
+								@itemAlumno.Nombre
+							</td>
+							<td>
+								@itemAlumno.Apellido
+							</td>
+							<td>
+								@itemAlumno.Edad
+							</td>
+							@* <td>
 					@itemAlumno.Cedula
 				</td> *@
-				@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
-				{
-					<td>
-					
-						@grado.NombreGrado 
+							@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
+							{
+								<td>
 
-					</td>
-				}
-				@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemAlumno.IdTurno))
-				{
-					<td>
-						@turno.NombreTurno
+									@grado.NombreGrado 
 
-					</td>
-				}
-				@foreach (var sexo in Model.sexos.Where(a => a.IdSexo == itemAlumno.IdSexo))
-				{
-					<td>
+								</td>
+							}
+							@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemAlumno.IdTurno))
+							{
+								<td>
+									@turno.NombreTurno
 
-						@sexo.Sexo
+								</td>
+							}
+							@foreach (var sexo in Model.sexos.Where(a => a.IdSexo == itemAlumno.IdSexo))
+							{
+								<td>
 
-					</td>
-				}
-				<td>
-					
+									@sexo.Sexo
+
+								</td>
+							}
+							<td>
+
 								@itemAlumno.FechaRegistro.ToString("dd/MM/yyyy")
-				</td>
+							</td>
+							@{
+								var estado = "";
+								var activo = @itemAlumno.Activo;
+								if (activo == true)
+								{
+									estado = "Activo";
+								}
+								else
+								{
+									estado = "Inactivo";
+								}
+							}
+							<td>
+								
+								@estado
+
+							</td>
 				@* <td>
 								<a asp-action="Edit" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
 				</td> *@
