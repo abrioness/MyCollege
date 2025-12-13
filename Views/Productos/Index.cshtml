@@ -11,6 +11,7 @@
 			<h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Inventario</h5>
 		</div>
 		<div class="card-body">
+			<div class="table-responsive" style="font-size: 12px;">
 			<div class="col-4 text-center">
 				@using (Html.BeginForm("Index", "Productos", FormMethod.Get))
 				{
@@ -37,7 +38,7 @@
 					<i class="bi bi-plus-circle"></i> Agregar Inventario
 				</a>
 			</div>
-			<div class="table-responsive" style="font-size: 12px;">
+			
 				<table id="tablaProducto" class="table justify-content-lg-between table-bordered  small" style="width:100%">
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>

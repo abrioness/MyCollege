@@ -11,6 +11,7 @@
 			<h5 class="mb-0"><i class="bi bi-people"></i> Lista de Alumnos</h5>
 		</div>
 		<div class="card-body">
+			<div class="table-responsive" style="font-size: 12px;">
 			<div class="col-4 text-center">
 				@using (Html.BeginForm("Index", "Alumnos", FormMethod.Get))
 				{
@@ -49,7 +50,7 @@
 						<th>Turno</th> 
 						<th>Sexo</th>
 						<th>Fecha Registro</th>
-						<th>Estado</th>
+						<th><span class="badge bg-success">Estado</span></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -125,6 +126,7 @@
 	</tbody>
 	
 </table>
+</
 </div>
 </div>
 </div>

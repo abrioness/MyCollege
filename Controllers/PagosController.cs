@@ -290,8 +290,7 @@ namespace WebColegio.Controllers
                             return RedirectToAction("Create");
                         }
                         
-                        //total = ids * mensualidad;
-                        //if((ids* mensualidad)=pagos.Pago.Monto)
+                       
 
                         //crear meses pagados previos
                         var mesesPagadosBD = listpagos
@@ -347,12 +346,7 @@ namespace WebColegio.Controllers
                             .Except(mesesPagadosAcumulados.Cast<int>())
                             .Distinct()
                             .ToList();
-                            //var mesesPendientes = Enumerable.Range(1, idMes - 1)
-                            //    .Except(mesesPagadosAcumulados)
-                            //    .ToList();
-
-                            //int anioActual =(int) pagos.Pago.Anyo; //pagos.Pago.IdPeriodo;
-
+                            
                             
                             if (mesesPendientes.Any())
                             {
@@ -364,35 +358,32 @@ namespace WebColegio.Controllers
                                 
                             }
                             var hoy = DateTime.Now;
-                           // if(mesesPendientes.Count > 0)
-                           // {
-                           // int moraPorMes = 10;
-                           // decimal moraTotal = mesesPendientes.Count * moraPorMes;
-                           // pagos.Mora =(int) moraTotal;
-                           // pagos.MontoTotal = mensualidad + moraTotal;
-                           //}
-                            
-                                // ejemplo: crear un pago por cada mes
-                                var nuevoPago = new TblPago
-                                {
-                                    IdAlumno = pagos.Pago.IdAlumno,
-                                    
-                                    NumeroRecibo=pagos.Pago.NumeroRecibo,
-                                    Anyo=pagos.Pago.Anyo,
-                                    IdMes = idMes,
-                                    IdTipoRecibo = pagos.Pago.IdTipoRecibo,
-                                    IdTipoMovimiento = pagos.Pago.IdTipoMovimiento,
-                                    IdMetodoPago = pagos.Pago.IdMetodoPago,
-                                    IdGrado=pagos.Pago.IdGrado,
-                                    IdPeriodo=pagos.Pago.IdPeriodo,
-                                    FechaEmision=pagos.Pago.FechaEmision,
-                                    Mora = pagos.Pago.Mora,
-                                    Monto = pagos.Pago.Monto,
-                                    Descripcion=pagos.Pago.Descripcion,
-                                   
-                                  
-                                    // otros campos...
-                                };
+
+                            // ejemplo: crear un pago por cada mes
+                            var nuevoPago = new TblPago
+                            {
+                                IdAlumno = pagos.Pago.IdAlumno,
+
+                                NumeroRecibo = pagos.Pago.NumeroRecibo,
+                                Anyo = pagos.Pago.Anyo,
+                                IdMes = idMes,
+                                IdTipoRecibo = pagos.Pago.IdTipoRecibo,
+                                IdTipoMovimiento = pagos.Pago.IdTipoMovimiento,
+                                IdMetodoPago = pagos.Pago.IdMetodoPago,
+                                IdGrado = pagos.Pago.IdGrado,
+                                IdRecinto = pagos.Pago.IdRecinto,
+                                IdPeriodo = pagos.Pago.IdPeriodo,
+                                FechaEmision = pagos.Pago.FechaEmision,
+                                Mora = pagos.Pago.Mora,
+                                Monto = pagos.Pago.Monto,
+                                Serie = pagos.Pago.Serie,
+                                UsuarioRegistro = pagos.Pago.UsuarioRegistro,
+                                Descripcion = pagos.Pago.Descripcion,
+                                Activo = pagos.Pago.Activo
+
+
+                                // otros campos...
+                            };
 
                                 //await _Iservices.InsertarPagoAsync(nuevoPago);
                                 response = await _Iservices.PostPagosAsync(nuevoPago);

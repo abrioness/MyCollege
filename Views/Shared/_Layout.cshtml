@@ -93,8 +93,8 @@
                             <div id="collapseLogin" class="collapse">
 
                                 <div class="bg-white py-2 collapse-inner rounded">
-                                    <a class="collapse-item" asp-controller="Login" asp-action="Index">Iniciar Sesión</a>
-                                    <a class="collapse-item" asp-controller="Login" asp-action="Logout"> Cerrar Sesión</a>
+                                <i class="bi bi-arrow-return-right"></i>  <a class="collapse-item" asp-controller="Login" asp-action="Index">Iniciar Sesión</a>
+                                <i class="bi bi-arrow-return-right"></i>  <a class="collapse-item" asp-controller="Login" asp-action="Logout"> Cerrar Sesión</a>
 
                                 </div>
                             </div>
@@ -119,8 +119,8 @@
                                 </a>
                                 <div id="collapseAlumnos" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
-                                        
-                                        <a class="collapse-item" asp-controller="Alumnos" asp-action="Create">Agregar Alumno</a>
+
+                                        <i class="bi bi-arrow-return-right"></i>   <a class="collapse-item" asp-controller="Alumnos" asp-action="Create">Agregar Alumno</a>
                                     </div>
                                 </div>
                             </li>
@@ -136,8 +136,8 @@
                                 </a>
                                 <div id="collapseNotas" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
-                                        
-                                        <a class="collapse-item" asp-controller="Notas" asp-action="Create">Agregar  Notas</a>
+
+                                        <i class="bi bi-arrow-return-right"></i> <a class="collapse-item" asp-controller="Notas" asp-action="Create">Agregar  Notas</a>
                                         @* <a class="collapse-item" asp-controller="Notas" asp-action="Edit">  Editar</a> *@
                                         @* <a class="collapse-item" asp-controller="PeriodoEvaluacion" asp-action="Create">  Período de Evaluación</a> *@
                                     </div>
@@ -155,8 +155,8 @@
                                 </a>
                                 <div id="collapseRecibos" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
-                                      
-                                        <a class="collapse-item" asp-controller="ArqueoDiario" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja" target="_blank">Generar Arqueo</a>
+
+                                        <i class="bi bi-arrow-return-right"></i>  <a class="collapse-item" asp-controller="ArqueoDiario" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja" target="_blank">Generar Arqueo</a>
                                         
                                     </div>
                                 </div>
@@ -189,8 +189,8 @@
                                 </a>
                                 <div id="collapseProducto" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
-                                        
-                                        <a class="collapse-item" asp-controller="Productos" asp-action="Create">Agregar Inventario</a>
+
+                                        <i class="bi bi-arrow-return-right"></i>  <a class="collapse-item" asp-controller="Productos" asp-action="Create">Agregar Inventario</a>
                                         @* <a class="collapse-item" asp-controller="Login" asp-action="Login">Sesión</a> *@
 
                                     </div>
@@ -210,14 +210,14 @@
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     @if(User.IsInRole("Director") || User.IsInRole("Admin"))
                                     {
-                                        <a class="collapse-item" asp-controller="Alumnos" asp-action="Index">Reporte de Alumnos</a>
-                                        <a class="collapse-item" asp-controller="Notas" asp-action="Index"> Reporte de Notas</a>
+                                            <i class="bi bi-arrow-return-right"></i> <a class="collapse-item" asp-controller="Alumnos" asp-action="Index">Reporte de Alumnos</a>
+                                            <i class="bi bi-arrow-return-right"></i> <a class="collapse-item" asp-controller="Notas" asp-action="Index"> Reporte de Notas</a>
                                     }
-                                    <a class="collapse-item" asp-controller="Pagos" asp-action="Index">Reporte de Pagos</a>
-                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index">Reporte de Pago Caja</a>
-                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index">Reporte Egreso</a>
-                                        <a class="collapse-item" asp-controller="Productos" asp-action="Index">Reporte de Inventario</a>
-                                        <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta">Estado de Cuenta</a>
+                                        <i class="bi bi-arrow-return-right"></i>  <a class="collapse-item" asp-controller="Pagos" asp-action="Index">Reporte de Pagos</a>
+                                        <i class="bi bi-arrow-return-right"></i>    <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index">Reporte de Pago Caja</a>
+                                        <i class="bi bi-arrow-return-right"></i>    <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index">Reporte Egreso</a>
+                                        <i class="bi bi-arrow-return-right"></i>   <a class="collapse-item" asp-controller="Productos" asp-action="Index">Reporte de Inventario</a>
+                                        <i class="bi bi-arrow-return-right"></i>    <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta">Estado de Cuenta</a>
                                     
 
                                 </div>
@@ -234,13 +234,13 @@
                                 </a>
                                 <div id="collapsePagoCaja" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
-                                        
-                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create">Recibo Caja Varios</a>                                        
-                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create">Recibo Egresos</a>
-                                        
-                                        <a class="collapse-item" asp-controller="Pagos" asp-action="Create">Recibo Caja Mensualidad</a>
-                                        
-                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta">Estado de Cuenta</a>
+
+                                        <i class="bi bi-arrow-return-right"></i> <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create">Recibo Caja Varios</a>
+                                        <i class="bi bi-arrow-return-right"></i>   <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create">Recibo Egresos</a>
+
+                                        <i class="bi bi-arrow-return-right"></i>  <a class="collapse-item" asp-controller="Pagos" asp-action="Create">Recibo Caja Mensualidad</a>
+
+                                        <i class="bi bi-arrow-return-right"></i>  <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta">Estado de Cuenta</a>
                                     </div>
                                 </div>
                             </li>

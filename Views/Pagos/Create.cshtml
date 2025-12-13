@@ -109,9 +109,9 @@
                         </div>
                        
 						<div class="form-group">
-                            <label asp-for="Mora" class="control-label">Mora</label>
-                            <input asp-for="Mora" id="totalMora" class="form-control" />
-                           <span asp-validation-for="Mora" class="text-danger"></span>
+                            <label asp-for="Pago.Mora" class="control-label">Mora</label>
+                            <input asp-for="Pago.Mora" id="totalMora" class="form-control" />
+                           <span asp-validation-for="Pago.Mora" class="text-danger"></span>
                         </div>
 						
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
@@ -229,7 +229,7 @@
         $("#AlumnoNombre").autocomplete({
             source: function (request, response) {
                 $.ajax({
-                     url: "http://ApiColegio.somee.com/ApiColegio/api/Alumnos/buscar",
+                      url: "https://localhost:7008/api/Alumnos/buscar",
                     data: { q: request.term },
                     success: function (data) {
                          console.log("Respuesta API:", data); // 👈 debug

@@ -14,8 +14,8 @@ namespace WebColegio.Services
 {
     public class ServicesApi:IServicesApi
     {
-        //private static string url = "https://localhost:7008/";
-        private static string url= "http://ApiColegio.somee.com/ApiColegio/";
+        private static string url = "https://localhost:7008/";
+        //private static string url= "http://ApiColegio.somee.com/ApiColegio/";
         //private readonly string _apiUrl;
         public ServicesApi(IConfiguration config)
         {
