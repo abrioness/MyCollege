@@ -1,291 +1,382 @@
 ﻿@model WebColegio.Models.ViewModel.AlumnosViewModel
 
 @* @{
-    ViewData["Title"] = "Create";
+ViewData["Title"] = "Create";
     
-    Layout = "~/Views/Shared/_Layout.cshtml";
+Layout = "~/Views/Shared/_Layout.cshtml";
 
 } *@
 
 
 <div class="container mt-6">
-    <div class="card shadow-lg border-0 rounded-3">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro del Estudiante</h4>
-        </div>
-        <div class="card-body">
-            <form asp-action="Create" method="post" enctype="multipart/form-data">
-             <div class="row">
-                 <div class="col-md-6">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <div class="col-md-6">
-                            <label asp-for="alumnos.CodigoAlumno" class="control-label">Código del Estudiante</label>
-                            <input asp-for="alumnos.CodigoAlumno" value="@Model.codigoestudiante" class="form-control" readonly />
+<div class="card shadow-lg border-0 rounded-3">
+<div class="card-header bg-primary text-white">
+    <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro del Estudiante</h4>
+</div>
+<div class="card-body">
+    <form asp-action="Create" method="post" enctype="multipart/form-data" target="_blank">
+        <div class="row">
+            <div class="col-md-6">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="col-md-6">
+                    <label asp-for="alumnos.CodigoAlumno" class="control-label">Código del Estudiante</label>
+                    <input asp-for="alumnos.CodigoAlumno" value="@Model.codigoestudiante" class="form-control" readonly />
                             
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="alumnos.CodigoMINED" class="control-label">Código MINED</label>
-                            <input asp-for="alumnos.CodigoMINED" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el código MINED" />
-                            <span validation-for="alumnos.CodigoMINED" class="text-danger"></span>
-                        </div>
-             <div class="col-md-6">
-                  <label asp-for="alumnos.Nombre" class="control-label">Nombre</label>
-                  <input asp-for="alumnos.Nombre" id="Nombre" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Nombre del Alumno" />
-                  <span validation-for="alumnos.Nombre" class="text-danger"></span>
-            </div>
-                        <div class="col-md-6">
-                 <label asp-for="alumnos.Apellido" class="control-label">Apellido</label>
-                 <input asp-for="alumnos.Apellido" id="Apellido" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Apellido del Alumno" />
-                 <span asp-validation-for="alumnos.Apellido" class="text-danger"></span>
-            </div>
-            <div class="col-md-4">
-                  <label asp-for="alumnos.FechaNacimiento" class="control-label">Fecha de Nacimimento</label>
-                   <input type="date" asp-for="alumnos.FechaNacimiento" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-                   <span asp-validation-for="alumnos.FechaNacimiento" class="text-danger"></span>
-            </div>
-             <div class="col-md-2">
-                  <label asp-for="alumnos.Edad" class="control-label">Edad</label>
-                 <input asp-for="alumnos.Edad" id="Edad" class="form-control" readonly />
-                <span asp-validation-for="alumnos.Edad" class="text-danger"></span>
-            </div>
-
-            <div class="col-auto">
-             <label asp-for="alumnos.Cedula" class="">Cedula</label>
-             <input type="text" id="cedula" class="form-control" asp-for="alumnos.Cedula" placeholder="Cedula" maxlength="16" />
-
-            </div>
-
-            <div class="form-group">
-                <label asp-for="alumnos.IdSexo" class="control-label">Sexo</label>
-                            <select asp-for="alumnos.IdSexo" asp-items="Model.sexosSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione el Sexo</option>
-                            </select>
-
-                            <span asp-validation-for="alumnos.IdSexo" class="text-danger"></span>
-            </div>
-                    <div class="form-group">
-                        <label asp-for="alumnos.IdGrupo" class="control-label">Grupo</label>
-                            <select asp-for="alumnos.IdGrupo" asp-items="Model.gruposSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione el Grupo</option>
-                            </select>
-
-                            <span asp-validation-for="alumnos.IdGrupo" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <label asp-for="alumnos.IdGrado" class="control-label">Grado</label>
-                            <select asp-for="alumnos.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione el Grado</option>
-                            </select>
-
-                            <span asp-validation-for="alumnos.IdGrado" class="text-danger"></span>
-                    </div>
-            <div class="form-group">
-                <label asp-for="alumnos.IdTurno" class="control-label">Turno</label>
-                <select asp-for="alumnos.IdTurno" asp-items="Model.turnosSelectListItem" class="form-select" required>
-                 <option disabled selected>Seleccione el Turno</option>
-                </select>
-
-              <span asp-validation-for="alumnos.IdTurno" class="text-danger"></span>
-            </div>
-                        <div class="form-group">
-                            <label asp-for="alumnos.IdModalidad" class="control-label">Modalidad</label>
-                            <select asp-for="alumnos.IdModalidad" asp-items="Model.modalidadesSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione la Modalidad</option>
-                            </select>
-                            <span asp-validation-for="alumnos.IdModalidad" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="alumnos.Activo" class="control-label">Estado del Estudiante</label>
-                            <select asp-for="alumnos.Activo" class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
-                                <option value="true">Activo</option>
-                                <option value="false">Inactivo</option>
-                            </select>
-                            <span asp-validation-for="alumnos.Activo" class="text-danger"></span>
-                        </div>
-
-
                 </div>
                 <div class="col-md-6">
-
-            
-                
-            <div class="form-group">
-                <label asp-for="alumnos.IdRecinto" class="control-label">Recinto</label>
-                  <select asp-for="alumnos.IdRecinto" asp-items="Model.recintosSelectListItem" class="form-select" required>
-                   <option disabled selected>Seleccione el Recinto</option>
-                  </select>
-                 <span asp-validation-for="alumnos.IdRecinto" class="text-danger"></span>
-            </div>
-			@* < div class="form-group">
-                <label asp-for="IdGrupo" class="control-label"></label>
-                <input asp-for="IdGrupo" class="form-control" />
-                <span asp-validation-for="IdGrupo" class="text-danger"></span>
-            </div> *@
-            <div class="form-group">
-                <label asp-for="alumnos.Direccion" class="control-label">Direccion</label>
-                <input asp-for="alumnos.Direccion" class="form-control" />
-                <span asp-validation-for="alumnos.Direccion" class="text-danger"></span> 
-            </div>
-            <div class="form-group">
-                <label asp-for="alumnos.Telefono" class="control-label">Teléfono</label>
-                <input asp-for="alumnos.Telefono" class="form-control" />
-                <span asp-validation-for="alumnos.Telefono" class="text-danger"></span> 
-            </div>
-            <div class="form-group">
-                <label asp-for="alumnos.NombreMadre" class="control-label">Nombre de la Madre</label>
-                 <input asp-for="alumnos.NombreMadre" class="form-control" />
-                 <span asp-validation-for="alumnos.NombreMadre" class="text-danger"></span> 
-            </div>
-            <div class="form-group">
-                            <label asp-for="alumnos.NombrePadre" class="control-label">Nombre del Padre</label>
-                            <input asp-for="alumnos.NombrePadre" class="form-control" />
-                 <span asp-validation-for="alumnos.NombrePadre" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="alumnos.NombreTutor" class="control-label">Nombre Tutor</label>
-                            <input asp-for="alumnos.NombreTutor" class="form-control" />
-                <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span> 
-            </div>
-                        <div class="form-group">
-                            <label asp-for="alumnos.CedulaTutor" class="control-label">Cedula del Tutor</label>
-                            <input asp-for="alumnos.CedulaTutor" class="form-control" />
-                            <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span> 
+                    <label asp-for="alumnos.CodigoMINED" class="control-label">Código MINED</label>
+                    <input asp-for="alumnos.CodigoMINED" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Código MINED" />
+                    
+                </div>
+                        <div class="col-md-6">
+                            <label asp-for="alumnos.CodigoUnico" class="control-label">Código de Persona</label>
+                            <input asp-for="alumnos.CodigoUnico" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Código Persona" />
+                           
                         </div>
-                        <div class="form-group">
-                            <label asp-for="alumnos.ContactoTutor" class="control-label">Contacto del Tutor</label>
-                            <input asp-for="alumnos.ContactoTutor" class="form-control" />
-                            <span asp-validation-for="alumnos.ContactoTutor" class="text-danger"></span> 
-                        </div>
-            <div class="form-group">
-                <label asp-for="alumnos.Correo" class="control-label">Correo</label>
-                <input asp-for="alumnos.Correo" class="form-control" />
-                @* <span asp-validation-for="Correo" class="text-danger"></span> *@
-            </div>
+        <div class="col-md-6">
+            <label asp-for="alumnos.Nombre" class="control-label">Nombre</label>
+            <input asp-for="alumnos.Nombre" id="Nombre" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Nombre del Alumno" />
+            <span validation-for="alumnos.Nombre" class="text-danger"></span>
+    </div>
+                <div class="col-md-6">
+            <label asp-for="alumnos.Apellido" class="control-label">Apellido</label>
+            <input asp-for="alumnos.Apellido" id="Apellido" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Apellido del Alumno" />
+            <span asp-validation-for="alumnos.Apellido" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+            <label asp-for="alumnos.FechaNacimiento" class="control-label">Fecha de Nacimimento</label>
+            <input type="date" asp-for="alumnos.FechaNacimiento" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+            <span asp-validation-for="alumnos.FechaNacimiento" class="text-danger"></span>
+    </div>
+        <div class="col-md-2">
+            <label asp-for="alumnos.Edad" class="control-label">Edad</label>
+            <input asp-for="alumnos.Edad" id="Edad" class="form-control" readonly />
+        <span asp-validation-for="alumnos.Edad" class="text-danger"></span>
+    </div>
 
+    <div class="col-auto">
+        <label asp-for="alumnos.Cedula" class="">Cedula</label>
+        <input type="text" id="cedula" class="form-control" asp-for="alumnos.Cedula" placeholder="Cedula" maxlength="16" />
+
+    </div>
+
+    <div class="form-group">
+        <label asp-for="alumnos.IdSexo" class="control-label">Sexo</label>
+                    <select asp-for="alumnos.IdSexo" asp-items="Model.sexosSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione el Sexo</option>
+                    </select>
+
+                    <span asp-validation-for="alumnos.IdSexo" class="text-danger"></span>
+    </div>
+            <div class="form-group">
+                <label asp-for="alumnos.IdGrupo" class="control-label">Grupo</label>
+                    <select asp-for="alumnos.IdGrupo" asp-items="Model.gruposSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione el Grupo</option>
+                    </select>
+
+                    <span asp-validation-for="alumnos.IdGrupo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="alumnos.IdGrado" class="control-label">Grado</label>
+                    <select asp-for="alumnos.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione el Grado</option>
+                    </select>
+
+                            
+            </div>
+    <div class="form-group">
+        <label asp-for="alumnos.IdTurno" class="control-label">Turno</label>
+        <select asp-for="alumnos.IdTurno" asp-items="Model.turnosSelectListItem" class="form-select" required>
+            <option disabled selected>Seleccione el Turno</option>
+        </select>
+
+        <span asp-validation-for="alumnos.IdTurno" class="text-danger"></span>
+    </div>
+                <div class="form-group">
+                    <label asp-for="alumnos.IdModalidad" class="control-label">Modalidad</label>
+                    <select asp-for="alumnos.IdModalidad" asp-items="Model.modalidadesSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione la Modalidad</option>
+                    </select>
+                          
+                </div>
+                <div class="form-group">
+                    <label asp-for="alumnos.Activo" class="control-label">Estado del Estudiante</label>
+                    <select asp-for="alumnos.Activo" class="form-select" required>
+                        <option value="">Seleccione una Opción</option>
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                    <span asp-validation-for="alumnos.Activo" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="alumnos.GrupoEtnico" class="control-label">Grupo Etnico</label>
+                    <select asp-for="alumnos.GrupoEtnico" class="form-select" required>
+                        <option value="">Seleccione una Opción</option>
+                                
+                        <option value="Alto wangki-Bocay">Alto wangki-Bocay</option>
+                        <option value=" Chorotega de Occidente"> Chorotega de Occidente</option>
+                        <option value="Chorotega del Centro">Chorotega del Centro</option>
+                        <option value="Chorotega del Norte">Chorotega del Norte</option>
+                        <option value="Chorotegas">Chorotegas</option>
+                        <option value="Chorotegas del Pacífico">Chorotegas del Pacífico</option>
+                        <option value="Creole">Creole</option>
+                        <option value="Garífunas">Garífunas</option>
+                        <option value="Kipla Sait Tasbaika">Kipla Sait Tasbaika</option>
+                        <option value="Matagalpa">Matagalpa</option>
+                        <option value="Mestizos">Mestizos</option>                                
+                        <option value="Ramas">Ramas</option>
+                        <option value="Miskitu">Miskitu</option>
+                        <option value="Miskitu Indian Tasbaika Kum">Miskitu Indian Tasbaika Kum</option>
+                        <option value="Nahoas">Nahoas</option>
+                        <option value="Ninguno">Ninguno</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                           
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="alumnos.IdDiscapacidad" class="control-label">Discapacidad</label>
+                    <select asp-for="alumnos.IdDiscapacidad" asp-items="Model.discapacidadSelectListItem" class="form-select" required>
+                        <option disabled selected>Seleccione la Discapacidad</option>
+                    </select>
+                    <span asp-validation-for="alumnos.IdDiscapacidad" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="alumnos.Correo" class="control-label">Correo</label>
+                    <input asp-for="alumnos.Correo" class="form-control" />
+                    @* <span asp-validation-for="Correo" class="text-danger"></span> *@
+                </div>
+                       
                         
+
+                <div class="form-group">
+                    <label asp-for="alumnos.TipoEstudiante" class="control-label">Tipo Estudiante</label>
+                    <select asp-for="alumnos.TipoEstudiante" class="form-select" required>
+                        <option value="">Seleccione una Opción</option>
+                        <option value="Nuevo Ingreso">Nuevo Ingreso</option>
+                        <option value="Continuidad">Continuidad</option>
+                        <option value="Retirado">Retirado</option>
+                    </select>
+                    <span asp-validation-for="alumnos.TipoEstudiante" class="text-danger"></span>
+                </div>
                         <div class="form-group">
-                            <label asp-for="alumnos.IdDiscapacidad" class="control-label">Discapacidad</label>
-                            <select asp-for="alumnos.IdDiscapacidad" asp-items="Model.discapacidadSelectListItem" class="form-select" required>
-                                <option disabled selected>Seleccione la Discapacidad</option>
+                            <label asp-for="alumnos.IdRecinto" class="control-label">Recinto</label>
+                            <select asp-for="alumnos.IdRecinto" asp-items="Model.recintosSelectListItem" class="form-select" required>
+                                <option disabled selected>Seleccione el Recinto</option>
                             </select>
-                            <span asp-validation-for="alumnos.IdDiscapacidad" class="text-danger"></span>
+                            <span asp-validation-for="alumnos.IdRecinto" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group">
-                            <label asp-for="alumnos.BecaCompleta" class="control-label">Beca Completa</label>
-                            <select asp-for="alumnos.BecaCompleta"  class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
-                                <option value="true">Si</option>
-                                <option value="flase">No</option>
-                            </select>
-                            <span asp-validation-for="alumnos.BecaCompleta" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="alumnos.MediaBeca" class="control-label">Media Beca</label>
-                            <select asp-for="alumnos.MediaBeca" class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
-                                <option value="true">Si</option>
-                                <option value="false">No</option>
-                            </select>
-                            <span asp-validation-for="alumnos.MediaBeca" class="text-danger"></span>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label asp-for="alumnos.Observaciones" class="control-label">Observaciones</label>
-                            <textarea asp-for="alumnos.Observaciones" class="form-control" ></textarea>
+        </div>
+        <div class="col-md-6">
 
-                        </div>
            
-                </div>
+	<div class="form-group">
+        <label asp-for="alumnos.Barrio" class="control-label"></label>
+        <input asp-for="alumnos.Barrio" class="form-control" />
+        <span asp-validation-for="alumnos.Barrio" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="alumnos.Direccion" class="control-label">Direccion</label>
+        <input asp-for="alumnos.Direccion" class="form-control" />
+        <span asp-validation-for="alumnos.Direccion" class="text-danger"></span> 
+    </div>
+            <div class="form-group">
+            <label asp-for="alumnos.Departamento" class="control-label"></label>
+            <input asp-for="alumnos.Departamento" class="form-control" value="MANAGUA" readonly />
+                    
+        </div>
+            <div class="form-group">
+            <label asp-for="alumnos.Municipio" class="control-label"></label>
+            <input asp-for="alumnos.Municipio" class="form-control" />
+            <span asp-validation-for="alumnos.Municipio" class="text-danger"></span>
+        </div>
+            <div class="form-group">
+                <label asp-for="alumnos.Talla" class="control-label">Talla</label>
+                <input asp-for="alumnos.Talla" class="form-control" />
+                       
             </div>
-            <br />
-                <!-- Botones -->
-                <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Guardar
-                    </button>
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Volver
-                    </a>
-                    <button type="button" id="btnLimpiar" class="btn btn-warning">
-                        <i class="bi bi-trash3"></i> Limpiar Campos
-                    </button>
-                </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.Peso" class="control-label">Peso</label>
+                            <input type="number" asp-for="alumnos.Peso" class="form-control" />
 
-        </form>
+                        </div>
+    <div class="form-group">
+        <label asp-for="alumnos.Telefono" class="control-label">Teléfono</label>
+        <input asp-for="alumnos.Telefono" class="form-control" />
+        <span asp-validation-for="alumnos.Telefono" class="text-danger"></span> 
+    </div>
+
+    <div class="form-group">
+        <label asp-for="alumnos.NombreMadre" class="control-label">Nombre de la Madre</label>
+            <input asp-for="alumnos.NombreMadre" class="form-control" />
+            <span asp-validation-for="alumnos.NombreMadre" class="text-danger"></span> 
+    </div>
+    <div class="form-group">
+        <label asp-for="alumnos.CedulaMadre" class="control-label">Cedula de la Madre</label>
+            <input asp-for="alumnos.CedulaMadre" class="form-control" />
+            
+    </div>
+
+    <div class="form-group">
+        <label asp-for="alumnos.TelefonoMadre" class="control-label">Teléfono de la Madre</label>
+        <input asp-for="alumnos.TelefonoMadre" class="form-control" />
+        
+    </div>
+    <div class="form-group">
+                    <label asp-for="alumnos.NombrePadre" class="control-label">Nombre del Padre</label>
+                    <input asp-for="alumnos.NombrePadre" class="form-control" />
+            <span asp-validation-for="alumnos.NombrePadre" class="text-danger"></span>
+    </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.CedulaPadre" class="control-label">Cedula de la Padre</label>
+                            <input asp-for="alumnos.CedulaPadre" class="form-control" />
+
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="alumnos.TelefonoPadre" class="control-label">Teléfono de la Padre</label>
+                            <input asp-for="alumnos.TelefonoPadre" class="form-control" />
+
+                        </div>
+
+
+    <div class="form-group">
+        <label asp-for="alumnos.NombreTutor" class="control-label">Nombre Tutor</label>
+                    <input asp-for="alumnos.NombreTutor" class="form-control" />
+        <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span> 
+    </div>
+                <div class="form-group">
+                    <label asp-for="alumnos.CedulaTutor" class="control-label">Cedula del Tutor</label>
+                    <input asp-for="alumnos.CedulaTutor" class="form-control" />
+                    <span asp-validation-for="alumnos.NombreTutor" class="text-danger"></span> 
+                </div>
+                <div class="form-group">
+                            <label asp-for="alumnos.ContactoTutor" class="control-label">Teléfono del Tutor</label>
+                    <input asp-for="alumnos.ContactoTutor" class="form-control" />
+                    <span asp-validation-for="alumnos.ContactoTutor" class="text-danger"></span> 
+                </div>
+           
+
+                        
+                        
+
+                <div class="form-group">
+                    <label asp-for="alumnos.BecaCompleta" class="control-label">Beca Completa</label>
+                    <select asp-for="alumnos.BecaCompleta"  class="form-select" required>
+                        <option value="">Seleccione una Opción</option>
+                        <option value="true">Si</option>
+                        <option value="false">No</option>
+                    </select>
+                    <span asp-validation-for="alumnos.BecaCompleta" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="alumnos.MediaBeca" class="control-label">Media Beca</label>
+                    <select asp-for="alumnos.MediaBeca" class="form-select" required>
+                        <option value="">Seleccione una Opción</option>
+                        <option value="true">Si</option>
+                        <option value="false">No</option>
+                    </select>
+                    <span asp-validation-for="alumnos.MediaBeca" class="text-danger"></span>
+                </div>
+                        
+                <div class="form-group">
+                    <label asp-for="alumnos.Observaciones" class="control-label">Observaciones</label>
+                    <textarea asp-for="alumnos.Observaciones" class="form-control" ></textarea>
+
+                </div>
+           
         </div>
     </div>
+    <br />
+        <!-- Botones -->
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Guardar
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+            <button type="button" id="btnLimpiar" class="btn btn-warning">
+                <i class="bi bi-trash3"></i> Limpiar Campos
+            </button>
+        </div>
+
+</form>
+</div>
+</div>
 </div>
 
 @* <div>
-    <a asp-action="Index">Back to List</a>
+<a asp-action="Index">Back to List</a>
 </div> *@
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-	<script src="~/js/limpiarcampos.js"></script>
-	<script src="~/js/mensajecamprequerido.js"></script>
-    <script src="~/seewtalert/sweetalert.all.min.js"></script>
-    <script src="~/seewtalert/sweetalertstyle.js"></script>
-    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+<script src="~/js/limpiarcampos.js"></script>
+@* <script src="~/js/mensajecamprequerido.js"></script> *@
+<script src="~/seewtalert/sweetalert.all.min.js"></script>
+<script src="~/seewtalert/sweetalertstyle.js"></script>
+<link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
 <script>
-        function capitalizeWords(input) {
-            input.value = input.value
-                .toLowerCase()
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-        }
-        function calcularEdad(FechaNacimiento) {
-        const hoy = new Date();
-        const nacimiento = new Date(FechaNacimiento);
+function capitalizeWords(input) {
+    input.value = input.value
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+function calcularEdad(FechaNacimiento) {
+const hoy = new Date();
+const nacimiento = new Date(FechaNacimiento);
 
-        let edad = hoy.getFullYear() - nacimiento.getFullYear();
-        const mes = hoy.getMonth() - nacimiento.getMonth();
+let edad = hoy.getFullYear() - nacimiento.getFullYear();
+const mes = hoy.getMonth() - nacimiento.getMonth();
 
-        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-            edad--; // Aún no ha cumplido años este año
-        }
+if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--; // Aún no ha cumplido años este año
+}
 
-        return edad;
+return edad;
+}
+function mascara(Cedula) {
+    if (valor.match(/^\d{3}$/) !== null) {
+        return valor + '-';
+    } else if (valor.match(/^\d{3}\-\d{6}$/) !== null) {
+        return valor + '-';
     }
-        function mascara(Cedula) {
-            if (valor.match(/^\d{3}$/) !== null) {
-                return valor + '-';
-            } else if (valor.match(/^\d{3}\-\d{6}$/) !== null) {
-                return valor + '-';
-            }
-            return cadena;
-    }
+    return cadena;
+}
 
-     $(document).ready(function () {
-        $("#FechaNacimiento").on("change", function () {
-            const fecha = $(this).val();
-            const edad = calcularEdad(fecha);
-            $("#Edad").val(edad); // ← Aquí se asigna la edad
-        });
+$(document).ready(function () {
+$("#FechaNacimiento").on("change", function () {
+    const fecha = $(this).val();
+    const edad = calcularEdad(fecha);
+    $("#Edad").val(edad); // ← Aquí se asigna la edad
+});
 
 
 
-    });
+});
 
 </script>
 
-    @if (TempData["Mensaje"] != null)
-    {
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                Swal.fire({
-                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
-                     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
-                     "Información")',
-                    text: '@TempData["Mensaje"]',
-                    icon: '@TempData["Tipo"]',
-                    confirmButtonText: 'Aceptar'
-                });
-            });
-        </script>
-    }
+@if (TempData["Mensaje"] != null)
+{
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+                var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+        Swal.fire({
+            title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+                TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+                "Información")',
+                    text: mensaje,
+            icon: '@TempData["Tipo"]',
+            confirmButtonText: 'Aceptar'
+        });
+    });
+</script>
+}
 }

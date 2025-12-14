@@ -8,9 +8,10 @@
 <div class="container mt-auto" style="padding:2px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Inventario</h5>
+			<h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Reporte de Inventario</h5>
 		</div>
 		<div class="card-body">
+			<div class="table-responsive" style="font-size:12px">
 			<div class="col-4 text-center">
 				@using (Html.BeginForm("Index", "Productos", FormMethod.Get))
 				{
@@ -122,6 +123,7 @@
 				</tbody>
 
 			</table>
+		</div>
 		</div>
 		</div>
 	</div>

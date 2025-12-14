@@ -126,8 +126,8 @@
         <div class="v-section">
             <div class="v-row"><b>Recibí de:</b> <span>@alumno?.Nombre @alumno?.Apellido</span></div>
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
-            <div class="v-row"><b>Fecha Emisión:</b> <span>C$ @Model.Pago.FechaEmision</span></div>
-            <div class="v-row"><b>Fecha Pago:</b> <span>C$ @Model.Pago.FechaRegistro.ToString("dd/mm/yyyy")</span></div>
+            <div class="v-row"><b>Fecha Emisión:</b> <span> @Model.Pago.FechaEmision</span></div>
+            <div class="v-row"><b>Fecha Pago:</b> <span> @Model.Pago.FechaRegistro.ToString("dd/mm/yyyy")</span></div>
             <div class="v-row"><b>Concepto:</b> <span>@tipoMovimiento?.Concepto, @Model.Pago.Descripcion</span></div>
             <div class="v-row"><b>Método Pago:</b> <span>@metodopago?.MetodoPago</span></div>
             <div class="v-row"><b>Monto:</b> <span>C$ @Model.Pago.Monto.ToString("N2")</span></div>
@@ -153,7 +153,7 @@
 
     <div class="no-print center">
         <button class="print-button " onclick="window.print()">🖨️ Imprimir</button>
-       <a asp-action="Index" class="btn btn-secondary">
+       <a asp-action="Create" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Volver
         </a>
         

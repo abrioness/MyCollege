@@ -23,7 +23,10 @@ namespace WebColegio.Controllers
         {
 
                 var _alumnos = await _Iservices.GetAlumnosAsync();
-            _alumnos = _alumnos.Where(r => r.Activo == true).OrderByDescending(a => a.IdAlumno).ToList();
+             _alumnos = _alumnos
+            .Where(r => r.Activo==true)
+            .OrderByDescending(r => r.IdAlumno)
+            .ToList();
             var _sexos = await _Iservices.GetSexosAsync();
                 var _grupos = await _Iservices.GetGruposAsync();
                 var _grados = await _Iservices.GetGradosAsync();
@@ -58,10 +61,65 @@ namespace WebColegio.Controllers
         }
 
         // GET: AlumnosController/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
 
-            return View();
+            var _alumnos = await _Iservices.GetAlumnoIdAsync(id);
+
+            var viewModel = new AlumnosViewModel
+            {
+
+                alumnos = _alumnos,
+                periodoSelectListItem = (await _Iservices.GetPeriodoAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.IdPeriodo.ToString(),
+                    Text = r.Periodo.ToString(),
+                }
+                ).ToList(),
+                gradosSelectListItem = (await _Iservices.GetGradosAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdGrado.ToString(),
+                    Text = r.NombreGrado,
+                    //Selected = r.IdPregunta == respuestas.IdPregunta
+                }).ToList(),
+                recintosSelectListItem = (await _Iservices.GetRecintosAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.IdRecinto.ToString(),
+                    Text = r.Recinto.ToString(),
+                }
+                ).ToList(),
+                modalidadesSelectListItem = (await _Iservices.GetModalidadesAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.IdModalidad.ToString(),
+                    Text = r.Modalidad.ToString(),
+                }
+                ).ToList(),
+                turnosSelectListItem = (await _Iservices.GetTurnosAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.IdTurno.ToString(),
+                    Text = r.NombreTurno.ToString(),
+                }
+                ).ToList(),
+
+
+
+            };
+
+            if (_alumnos == null)
+            {
+                return NotFound();
+            }
+
+            return View(viewModel);
         }
 
        
@@ -137,10 +195,11 @@ namespace WebColegio.Controllers
             bool existe = false;
             try
             {
+                var buscarIdAlumnos=await _Iservices.GetAlumnosAsync();
                 alumnos.IdPeriodo = await _Iservices.GetPeriodoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.Actual)?.IdPeriodo) ?? 0;
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoAlumno, alumnos.Nombre, alumnos.Apellido);
+                existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoUnico);
                 if (existe)
                 {
                     TempData["Mensaje"] = "Ya existe un alumno con el mismo Código";
@@ -155,11 +214,18 @@ namespace WebColegio.Controllers
                     response = await _Iservices.PostAlumnosAsync(alumnos);
                     if(response)
                     {
-                        TempData["Mensaje"] = "El registro del alumno se guardo correctamente";
+                        var idAlumno = buscarIdAlumnos.Max(a => a.IdAlumno);
+                        TempData["Mensaje"] = "Se registro correctamente al Estudiante";
                         TempData["Tipo"] = "success";
+                        return RedirectToAction("Details", "Alumnos", new { id = idAlumno + 1 });
+                    }
+                    
+                    else
+                    {
+                        TempData["Mensaje"] = "No se proceso el registro.";
+                        TempData["Tipo"] = "warning";
                         return RedirectToAction("Create");
                     }
-                   
                 }
                 return NoContent();
             }

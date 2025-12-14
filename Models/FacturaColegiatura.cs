@@ -8,9 +8,9 @@
 
         public int IdTipoColegiatura { get; set; }
 
-        public DateOnly FechaEmision { get; set; }
+        public DateTime FechaEmision { get; set; }
 
-        public DateOnly FechaVencimiento { get; set; }
+        public DateTime FechaVencimiento { get; set; }
 
         public decimal MontoTotal { get; set; }
 

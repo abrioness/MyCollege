@@ -84,7 +84,7 @@ namespace WebColegio.Services
         Task<bool>ValidarNotas(int idAsignatura,int idPeriodoEva,int idAlumno);
         Task<bool> ValidarFacturas(int idTipoColegiatura, int idEstadoPago, int idAlumno, string mesFacturado, string anyoFacturado);
         Task<bool> ValidarProductos(string codigo, int categoria);
-        Task<bool> ValidarAlumnoDuplicado(string codigo, string nombre, string apellido);
+        Task<bool> ValidarAlumnoDuplicado(string codigo);
 
         //Task<int> ValidarMesesPendientes(List<TblPago> pagos, int idmes);
         #endregion

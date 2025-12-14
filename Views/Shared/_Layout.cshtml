@@ -1,6 +1,6 @@
 ﻿@* @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor *@
-
+@inject IConfiguration Configuration
 <nav style="background-color:royalblue;height:30%;">
     @if (User.Identity.IsAuthenticated)
     {
@@ -42,7 +42,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" icon="~/unpggl.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    @* <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> *@
     <meta name="description" content="">
     <meta name="author" content="">
 
@@ -239,8 +239,31 @@
                                         <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create">Recibo Egresos</a>
                                         
                                         <a class="collapse-item" asp-controller="Pagos" asp-action="Create">Recibo Caja Mensualidad</a>
+
                                         
                                         <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta">Estado de Cuenta</a>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                        @if (User.IsInRole("Cajero") || User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseHojaMatricula"
+                                   aria-expanded="false" aria-controls="collapseHojaMatricula">
+                                    <i class="bi bi-cash-coin"></i>
+                                    <span>Hojas de Matrícula</span>
+                                </a>
+                                <div id="collapsePagoCaja" class="collapse">
+                                    <div class="bg-white py-2 collapse-inner rounded">
+
+                                       @*  <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create">Recibo Caja Varios</a>
+                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create">Recibo Egresos</a> *@
+
+                                        <a class="collapse-item" asp-controller="Pagos" asp-action="MatriculaPreescolar">Hoja de Matrícula Preescolar</a>
+
+
+                                        @* <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta">Estado de Cuenta</a> *@
                                     </div>
                                 </div>
                             </li>
@@ -305,6 +328,12 @@
 
         <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
+    <!-- Configuración global de API -->
+    <script>
+        window.apiConfig = {
+            baseUrl: '@(Configuration["ApiSettings:BaseUrl"] ?? "")'
+        };
+    </script>
         @await RenderSectionAsync("Scripts", required: false)
 
 

@@ -106,6 +106,9 @@ namespace WebColegio.Controllers
                 return View(VieModelEstadoCuenta);
             }
         }
+        //Formato Matricula
+       
+
         // GET: PagosController/Details/5
         public async Task<ActionResult> Details(int id)
         {
@@ -176,7 +179,8 @@ namespace WebColegio.Controllers
                                        Text = r.MetodoPago,
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
-                meses = await _Iservices.GetMesesAsync(),
+                    meses = (await _Iservices.GetMesesAsync()),
+                
                 periodo = (await _Iservices.GetPeriodoAsync())
                 .Select(r=> new SelectListItem
                 {
@@ -198,6 +202,14 @@ namespace WebColegio.Controllers
 
                     Value = r.IdRecinto.ToString(),
                     Text = r.Recinto.ToString(),
+                }
+                ).ToList(),
+                modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.IdModalidad.ToString(),
+                    Text = r.Modalidad.ToString(),
                 }
                 ).ToList()
 
@@ -385,11 +397,15 @@ namespace WebColegio.Controllers
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
                                     IdGrado=pagos.Pago.IdGrado,
                                     IdPeriodo=pagos.Pago.IdPeriodo,
+                                    IdRecinto=pagos.Pago.IdRecinto,
                                     FechaEmision=pagos.Pago.FechaEmision,
                                     Mora = pagos.Pago.Mora,
                                     Monto = pagos.Pago.Monto,
                                     Descripcion=pagos.Pago.Descripcion,
-                                   
+                                    UsuarioRegistro=pagos.Pago.UsuarioRegistro,
+                                    Activo=pagos.Pago.Activo,
+                                    FechaRegistro=pagos.Pago.FechaRegistro,
+                                    Serie=pagos.Pago.Serie
                                   
                                     // otros campos...
                                 };
@@ -564,7 +580,22 @@ namespace WebColegio.Controllers
 
             return Json(mensualidad);
         }
+        [HttpGet]
+        public IActionResult ObtenerMatricula(int idRecinto, int idModalidad, int idPeriodo)
+        {
+            var matricula= _Iservices.GetCostosMatriculaAsync().Result
+                .Where(x => x.IdRecinto == idRecinto &&
+                            x.IdModalidad == idModalidad &&
+                            //x.IdModalidad == idModalidad &&
+                            x.IdPeriodo == idPeriodo &&
+                            x.Activo == true)
+                .Select(x => new {
+                    costo = x.CostoMatricula
+                })
+                .FirstOrDefault();
 
+            return Json(matricula);
+        }
         //    public (bool tienePendientes, List<int> mesesPendientes, decimal moraAcumulada, bool puedePagar)
         //ValidarPagoConMora(int idAlumno, int idTipoMovimiento, int periodo, int mesDeseado)
         //    {

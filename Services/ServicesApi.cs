@@ -14,14 +14,20 @@ namespace WebColegio.Services
 {
     public class ServicesApi:IServicesApi
     {
-        //private static string url = "https://localhost:7008/";
-        private static string url= "http://ApiColegio.somee.com/ApiColegio/";
-        //private readonly string _apiUrl;
+        // private static string url = "https://localhost:7008/";
+
+        //private static string url= "http://ApiColegio.somee.com/ApiColegio/";
+        private readonly string url;
+
         public ServicesApi(IConfiguration config)
         {
-            //_apiUrl = config["ApiUrl"];
+            // Obtener la URL base de la configuración
+            var baseUrl = config["ApiSettings:BaseUrl"];
+
+            // Si está vacía o null, usar URL relativa (mismo dominio)
+            // Si tiene valor, usar esa URL base
+            url = string.IsNullOrWhiteSpace(baseUrl) ? "" : baseUrl.TrimEnd('/') + "/";
         }
-        
         //Metodo para Listar usuarios
         #region Metodos Get
 
@@ -544,19 +550,55 @@ namespace WebColegio.Services
         public async Task<List<TblCostoMatricula>> GetCostosMatriculaAsync()
         {
             List<TblCostoMatricula> costoMatricula = new List<TblCostoMatricula>();
-            using (var httpclient = new HttpClient())
+            try
             {
-                var response = await httpclient.GetAsync(url + "api/TblCostoMatriculas");
-                if (response.IsSuccessStatusCode)
+                using (var httpclient = new HttpClient())
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonConvert.DeserializeObject<List<TblCostoMatricula>>(content);
-                    costoMatricula = resultado;
+                    var response = await httpclient.GetAsync(url + "api/TblCostoMatriculas");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+
+                        // Verificar que el contenido no esté vacío
+                        if (!string.IsNullOrWhiteSpace(content))
+                        {
+                            var resultado = JsonConvert.DeserializeObject<List<TblCostoMatricula>>(content);
+
+                            // Validar que el resultado no sea null antes de asignarlo
+                            if (resultado != null)
+                            {
+                                costoMatricula = resultado;
+                            }
+                            else
+                            {
+                                Debug.WriteLine("Error: La deserialización retornó null para TblCostoMatricula");
+                            }
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Error: El contenido de la respuesta está vacío");
+                        }
+                    }
+                    else
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine($"Error en la respuesta: {response.StatusCode} - {errorContent}");
+                    }
                 }
-                return costoMatricula;
+            }
+            catch (JsonException ex)
+            {
+                Debug.WriteLine($"Error de deserialización JSON: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error en GetCostosMatriculaAsync: {ex.Message}");
             }
 
+            return costoMatricula;
         }
+
+        
 
         public async Task<List<TblCatMeses>> GetMesesAsync()
         {
@@ -1410,14 +1452,14 @@ namespace WebColegio.Services
 
         #region Metodos de Validaciones
         
-        public async Task<bool> ValidarAlumnoDuplicado(string codigo,string nombre,string apellido)
+        public async Task<bool> ValidarAlumnoDuplicado(string codigo)
         {
             var existe = false;
 
             using (var httpclient = new HttpClient())
             {
 
-                var response = await httpclient.GetAsync(url + $"api/Alumnos/existeAlumno?codigo={codigo}&nombre={nombre}&apellido={apellido}");
+                var response = await httpclient.GetAsync(url + $"api/Alumnos/existeAlumno?codigo={codigo}");
 
                 if (response.IsSuccessStatusCode)
                 {

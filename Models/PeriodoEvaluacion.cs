@@ -6,9 +6,9 @@
 
         public string NombrePeriodo { get; set; } = null!;
 
-        public DateOnly FechaInicio { get; set; }
+        public DateTime FechaInicio { get; set; }
 
-        public DateOnly FechaFin { get; set; }
+        public DateTime FechaFin { get; set; }
 
         public int AnyoAcademico { get; set; }
 

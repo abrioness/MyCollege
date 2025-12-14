@@ -13,15 +13,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8"  name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
 </head>
 <body>
+    <div class="login-wrapper">
 <div class="login_container">
-    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    
 
     
     <div class="right">
@@ -32,7 +32,7 @@
         </div>
         <form class="form" method="post" asp-action="Login" enctype="multipart/form-data">
             <label for="NombreUsuario">Usuario</label>
-            <input type="text" name="NombreUsuario" id="user" required placeholder="Ingrese Nombre de Usuario" />
+            <input type="text" name="NombreUsuario" id="user" required placeholder="Nombre de Usuario" />
             <label for="Password">Contraseña</label>
             <input type="password" name="Password" id="password" required placeholder="Contraseña">
                 <input type="submit" id="submit" value="Iniciar Sesión">
@@ -50,7 +50,7 @@
             </div>
         } *@
     </div>
-
+    </div>
 
     
 

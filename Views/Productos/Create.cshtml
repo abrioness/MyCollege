@@ -175,20 +175,20 @@
     </script>
     
   
-  @*   @if (TempData["Mensaje"] != null)
+    @if (TempData["Mensaje"] != null)
     {
         <script>
             document.addEventListener("DOMContentLoaded", function () {
+                var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
                 Swal.fire({
                     title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
-                     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
-                     "Información")',
-                    text: '@TempData["Mensaje"]',
+     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+     "Información")',
+                    text: mensaje,
                     icon: '@TempData["Tipo"]',
                     confirmButtonText: 'Aceptar'
                 });
             });
         </script>
-    } *@
-    
+    }
 }

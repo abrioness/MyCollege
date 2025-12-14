@@ -11,6 +11,7 @@
         public int? IdMes { get; set; }
         public DateTime? FechaEmision { get; set; }
         public int? Mora { get; set; }
+        public decimal? TotalPagar { get; set; }
         public string? Descripcion { get; set; }
         public int IdMetodoPago { get; set; }
         public int IdTipoMovimiento { get; set; }
@@ -18,6 +19,7 @@
         public int? IdRecinto { get; set; }
         public int IdPeriodo { get; set; }
         public int IdGrado { get; set; }
+        public int? IdModalidad { get; set; }
         public bool Activo { get; set; }
         public int UsuarioRegistro { get; set; }
         public DateTime FechaRegistro { get; set; }

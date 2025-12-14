@@ -2,17 +2,15 @@
 
 @{
     ViewData["Title"] = "Create";
+    var añoActual = DateTime.Now.Year;
+    var añosInicio = añoActual - 10;
+    var añosFin = añoActual + 10;
 }
-@*<div class="content">
-     <div class="modal-body">
-        <span class="h5 mb-1">Bienvenido: @TempData["nombreusuario"] </span>
-    </div> *@
-
 
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-coin"></i> Pago de Mensualidad / Matrícula</h4>
+            <h4 class="mb-0"><i class="bi bi-coin"></i> Registro de Pagos</h4>
         </div>
         <div class="card-body">
             <form asp-action="Create" method="post" enctype="multipart/form-data" target="_blank">
@@ -37,22 +35,22 @@
                                 <option value="">Seleccione un Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdTipoMovimiento" class="text-danger"
-                            data-val-required="Por favor, seleccione el tipo de movimiento"></span>
+                                  data-val-required="Por favor, seleccione el tipo de movimiento"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.IdTipoRecibo" class="control-label">Tipo de Recibo</label>
-                            <select asp-for="Pago.IdTipoRecibo"  asp-items="Model.tipoRecibosSelectListItem" class="form-select" required>
+                            <select asp-for="Pago.IdTipoRecibo" asp-items="Model.tipoRecibosSelectListItem" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdTipoRecibo" class="text-danger"></span>
 
                         </div>
-                         <div class="form-group">
+                        <div class="form-group">
                             <label asp-for="Pago.IdPeriodo" class="control-label">Periodo</label>
-                            <select asp-for="Pago.IdPeriodo" id="periodo" asp-items="Model.periodo" class="form-select" >
+                            <select asp-for="Pago.IdPeriodo" id="periodo" asp-items="Model.periodo" class="form-select">
                                 <option value="">Seleccione una Opción</option>
                             </select>
-                            <span asp-validation-for="Pago.IdPeriodo" class="text-danger"></span> 
+                            <span asp-validation-for="Pago.IdPeriodo" class="text-danger"></span>
 
                         </div>
                         <div class="form-group">
@@ -62,32 +60,34 @@
                             </select>
                             <span asp-validation-for="Pago.IdRecinto" class="text-danger"></span>
                         </div>
-                         <div class="form-group">
+                        <div class="form-group">
+                            <label asp-for="Pago.IdModalidad" class="control-label">Modalidad</label>
+                            <select asp-for="Pago.IdModalidad" id="modalidad" asp-items="Model.modalidadSelectListItem" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                            </select>
+                            <span asp-validation-for="Pago.IdModalidad" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
                             <label asp-for="Pago.IdGrado" class="control-label">Nivel</label>
                             <select asp-for="Pago.IdGrado" id="grado" asp-items="Model.gradosSelectListItem" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdGrado" class="text-danger"></span>
                         </div>
-                       
+
                     </div>
-                   
+
                     <div class="col-lg-4">
                         <div class="form-group">
                             <label asp-for="Pago.Anyo" class="control-label">Año</label>
                             <select asp-for="Pago.Anyo" id="anyo" class="form-select" required>
-                                <option value="">Seleccione una Opciòn</option>
-                                <option value="2022">2022</option>
-                                <option value="2023">2023</option>
-                                <option value="2024">2024</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                                <option value="2028">2028</option>
-                                <option value="2029">2029</option>
-                                <option value="2030">2030</option>
+                                <option value="">Seleccione una Opción</option>
+                                @for (int año = añosInicio; año <= añosFin; año++)
+                                {
+                                    <option value="@año">@año</option>
+                                }
                             </select>
-
+                            <span asp-validation-for="Pago.Anyo" class="text-danger"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.IdMetodoPago" class="control-label">Metodo de Pago</label>
@@ -99,21 +99,25 @@
 
                         <div class="form-group">
                             <label asp-for="Pago.FechaEmision" class="control-label">Fecha de Emisión</label>
-                            <input type="date" asp-for="Pago.FechaEmision" id="FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" required/>
+                            <input type="date" asp-for="Pago.FechaEmision" id="FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" required />
                             <span asp-validation-for="Pago.FechaEmision" class="text-danger"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.Monto" class="control-label">Cantidad</label>
-                            <input asp-for="Pago.Monto" id="costoMensualidad" class="form-control" />
+                            <input asp-for="Pago.Monto" id="cantidad" class="form-control" readonly />
                             <span asp-validation-for="Pago.Monto" class="text-danger"></span>
                         </div>
-                       
-						<div class="form-group">
-                            <label asp-for="Mora" class="control-label">Mora</label>
-                            <input asp-for="Mora" id="totalMora" class="form-control" />
-                           <span asp-validation-for="Mora" class="text-danger"></span>
+
+                        <div class="form-group" id="moraDiv">
+                            <label asp-for="Pago.Mora" class="control-label">Mora</label>
+                            <input asp-for="Pago.Mora" id="totalMora" class="form-control" readonly/>
+                            <span asp-validation-for="Pago.Mora" class="text-danger"></span>
                         </div>
-						
+                        <div class="form-group">
+                            <label asp-for="Pago.TotalPagar" class="control-label">Total a Pagar</label>
+                            <input asp-for="Pago.TotalPagar" id="totalPagar" class="form-control" readonly />
+                            <span asp-validation-for="Pago.TotalPagar" class="text-danger"></span>
+                        </div>
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
                         <br />
                         <div class="form-group" id="mesPagado">
@@ -131,51 +135,43 @@
                         <div class="form-group">
                             <label asp-for="Pago.Descripcion" class="control-label">Observaciones</label>
                             <textarea name="Pago.Descripcion" class="form-control"></textarea>
-
                         </div>
-                        </div>
-                        <!-- Modal -->
-                        <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Seleccionar meses</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            @foreach (var itemMeses in Model.meses)
-                                            {
-                                                
-                                                <div class="col-md-4 mb-2">
-                                                    <div class="form-check">
-                                                        <input type="checkbox"
-                                                               name="MesesSeleccionados"                                                               
-                                                               value="@itemMeses.IdMes"
-                                                               class="form-check-input" id="mes_@itemMeses.IdMes" />
-                                                        <label class="form-check-label" for="mes_@itemMeses.IdMes">
-                                                            @itemMeses.Mes
-                                                        </label>
-                                                        @* <input type="hidden" asp-for="@itemMeses.IdMes" /> *@
-                                                        @* <input type="hidden" asp-for="mesesSelectListItem[i].Value" /> *@
-                                                    </div>
-                                                </div>
-                                            }
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                        <button type="button" class="btn btn-primary" onclick="confirmarMeses()">Confirmar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-                    
-
+                    </div>
                 </div>
 
+                <!-- Modal -->
+                <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Seleccionar meses</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    @foreach (var itemMeses in Model.meses)
+                                    {
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                <input type="checkbox"
+                                                       name="MesesSeleccionados"
+                                                       value="@itemMeses.IdMes"
+                                                       class="form-check-input" id="mes_@itemMeses.IdMes" />
+                                                <label class="form-check-label" for="mes_@itemMeses.IdMes">
+                                                    @itemMeses.Mes
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                <button type="button" class="btn btn-primary" onclick="confirmarMeses()">Confirmar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <br />
                 <!-- Botones -->
@@ -183,9 +179,9 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-save"></i> Procesar Pago
                     </button>
-                    <a asp-action="Index" class="btn btn-secondary">
+                    @* <a asp-action="Index" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
-                    </a>
+                    </a> *@
                     <button type="button" id="btnLimpiar" class="btn btn-warning">
                         <i class="bi bi-trash3"></i> Limpiar Campos
                     </button>
@@ -197,227 +193,271 @@
 </div>
 
 @section Scripts {
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-	<script src="~/js/limpiarcampos.js"></script>
-    <script src="~/seewtalert/sweetalert.all.min.js"></script>
-    <script src="~/seewtalert/sweetalertstyle.js"></script>
-    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/limpiarcampos.js"></script>
     <script>
+        (function() {
+            // Cachear selectores jQuery
+            const $tipoMovimiento = $('#tipoMovimiento');
+            const $mesPagado = $('#mesPagado');
+            const $alumnoNombre = $('#AlumnoNombre');
+            const $idAlumno = $('#IdAlumno');
+            const $recinto = $('#recinto');
+            const $grado = $('#grado');
+            const $periodo = $('#periodo');
+            const $monto = $('#cantidad');
 
-            $(document).ready(function() {
-            // Reemplaza 1 y 2 por los valores reales de tu base de datos
-            $('#tipoMovimiento').change(function() {
-                const tipoMovimientoId = parseInt($('#tipoMovimiento').val());
-                 
-                // if(tipoMovimientoId===1){
-                    
-                // }
-                // Ajusta estos números según tus tipos de movimiento
-                if (tipoMovimientoId === 1 ||tipoMovimientoId===10 ) { // 1 = Matrícula
-                    $('#mesPagado').show();
+            const $totalMora = $('#totalMora');
+            const $totalPagar = $('#totalPagar');
+            const $moraDiv=$('#moraDiv');
+            const $modalidad = $('#modalidad');
+            const $anyo = $('#anyo');
+
+            // Constantes para tipos de movimiento
+            const TIPO_MENSUALIDAD = 1;
+            const TIPO_MATRICULA = 2;
+            const TIPO_RIFA = 10;
+            const tiposConMeses = [TIPO_MENSUALIDAD, TIPO_RIFA];
+
+            // Función para cargar matrícula
+            function cargarMatricula() {
+                const recinto = $recinto.val();
+                const modalidad = $modalidad.val();
+                const periodo = $periodo.val();
+
+                if (recinto && modalidad && periodo) {
+                    $.getJSON("/Pagos/ObtenerMatricula", {
+                        idRecinto: recinto,
+                        idModalidad: modalidad,
+                        idPeriodo: periodo
+                    }, function(data) {
+                        if (data && data.costo) {
+                            $monto.val(data.costo);
+                            calcularTotalPagar(); // Recalcular total después de cargar
+                        }
+                    }).fail(function() {
+                        console.error('Error al cargar matricula');
+                    });
+                }
+            }
+
+            // Función para cargar mensualidad
+            function cargarMensualidad() {
+                const recinto = $recinto.val();
+                const grado = $grado.val();
+                const periodo = $periodo.val();
+
+                if (recinto && grado && periodo) {
+                    $.getJSON("/Pagos/ObtenerMensualidad", {
+                        idRecinto: recinto,
+                        idGrado: grado,
+                        idPeriodo: periodo
+                    }, function(data) {
+                        if (data && data.costo) {
+                            $monto.val(data.costo);
+                            calcularTotalPagar(); // Recalcular total después de cargar
+                        }
+                    }).fail(function() {
+                        console.error('Error al cargar mensualidad');
+                    });
+                }
+            }
+
+            // Función para cargar mora
+            function cargarMora() {
+                const idAlumno = $idAlumno.val();
+                const idTipoMovimiento = $tipoMovimiento.val();
+                const periodo = $periodo.val();
+
+                if (idAlumno && idTipoMovimiento && periodo) {
+                    $.getJSON("/Pagos/ObtenerMora", {
+                        idAlumno: idAlumno,
+                        idTipoMovimiento: idTipoMovimiento,
+                        periodo: periodo
+                    }, function(data) {
+                        if (data && data.mora) {
+                            $totalMora.val(data.mora);
+                        } else {
+                            $totalMora.val("0");
+                        }
+                        calcularTotalPagar(); // Recalcular total después de cargar mora
+                    }).fail(function() {
+                        $totalMora.val("0");
+                        calcularTotalPagar(); // Recalcular aunque falle
+                    });
+                }
+            }
+
+            // Función para calcular total a pagar (corregida)
+            function calcularTotalPagar() {
+                const costomensualidad = parseFloat($monto.val()) || 0;
+                const costomatricula = parseFloat($monto.val()) || 0;
+                const totalmora = parseFloat($totalMora.val()) || 0;
+                const tipoMovimientoId = parseInt($tipoMovimiento.val()) || 0;
+
+                if (tipoMovimientoId === TIPO_MENSUALIDAD) {
+                    $totalPagar.val((costomensualidad + totalmora).toFixed(2));
+                } else if (tipoMovimientoId === TIPO_MATRICULA) {
+                    $totalPagar.val(costomatricula.toFixed(2));
+                }
+            }
+
+            // Remover todos los listeners relacionados con tipoMovimiento antes de configurar
+            function limpiarListeners() {
+                $recinto.add($grado).add($periodo).add($modalidad).add($anyo)
+                    .off('change.tipoMovimiento');
+            }
+
+            // Configurar listeners según el tipo de movimiento
+            function configurarListenersPorTipo(tipoId) {
+                limpiarListeners(); // Limpiar antes de agregar nuevos
+
+                if (tipoId === TIPO_MENSUALIDAD) {
+                    // Mensualidad: recinto + grado + periodo → cargar mensualidad
+                    $recinto.add($grado).add($periodo)
+                        .on('change.tipoMovimiento', cargarMensualidad);
+                    // Grado → cargar mora
+                    $grado.on('change.tipoMovimiento', cargarMora);
+                    // Año → calcular total
+                    $anyo.on('change.tipoMovimiento', calcularTotalPagar);
+                } else if (tipoId === TIPO_MATRICULA) {
+                    // Matrícula: recinto + modalidad + periodo → cargar matrícula
+                    $recinto.add($modalidad).add($periodo)
+                        .on('change.tipoMovimiento', cargarMatricula);
+                    // Año → calcular total
+                    $anyo.on('change.tipoMovimiento', calcularTotalPagar);
+                }
+            }
+
+            // Manejar cambio de tipo de movimiento (optimizado)
+            $tipoMovimiento.on('change', function() {
+                const tipoMovimientoId = parseInt($(this).val()) || 0;
+                const mostrarMeses = tiposConMeses.includes(tipoMovimientoId);
+
+                // Controlar visibilidad
+                $mesPagado.toggle(mostrarMeses);
+
+                // Configurar listeners y visibilidad según tipo
+                if (tipoMovimientoId === TIPO_MENSUALIDAD) {
+                    $moraDiv.show();
+                    configurarListenersPorTipo(TIPO_MENSUALIDAD);
+                } else if (tipoMovimientoId === TIPO_MATRICULA) {
+                    $moraDiv.hide();
+                    configurarListenersPorTipo(TIPO_MATRICULA);
                 } else {
-                    $('#mesPagado').hide();
+                    // Tipo no configurado: ocultar y limpiar listeners
+                    $moraDiv.hide();
+                    limpiarListeners();
                 }
             }).trigger('change');
-        });
-       
 
+            // Autocompletado de alumnos
+            $alumnoNombre.autocomplete({
+                source: function(request, response) {
+                    // Construir URL: si hay baseUrl configurada, usarla; si no, usar URL relativa
+                    const apiBaseUrl = window.apiConfig?.baseUrl || '';
+                    const apiUrl = apiBaseUrl ? `${apiBaseUrl}api/Alumnos/buscar` : 'api/Alumnos/buscar';
 
-        $("#AlumnoNombre").autocomplete({
-            source: function (request, response) {
-                $.ajax({
-                     url: "http://ApiColegio.somee.com/ApiColegio/api/Alumnos/buscar",
-                    data: { q: request.term },
-                    success: function (data) {
-                         console.log("Respuesta API:", data); // 👈 debug
-                        response($.map(data, function (item) {
-                            return {
-                                label: item.nombreCompleto,
-                                value: item.nombreCompleto,
-                                id: item.id
-                            };
-                        }));
-                    }
-                });
-            },
-            minLength: 2, // empieza a buscar desde 2 letras
-            select: function (event, ui) {
-                $("#IdAlumno").val(ui.item.id); // Guardamos el ID del alumno
-            }
-        });
-
-                function cargarMensualidad() {
-
-            let recinto = $("#recinto").val();
-            let grado = $("#grado").val();
-            // let modalidad = $("#modalidad").val();
-            let periodo = $("#periodo").val();
-
-            if (recinto && grado && periodo) {
-
-                        $.getJSON("/Pagos/ObtenerMensualidad",
-            {
-                idRecinto: recinto,
-                idGrado: grado,
-                
-                idPeriodo: periodo
-            },
-            function (data) {
-                // console.log(data);      // {costo: 620}
-                // alert(data.costo);      // 620
-                $("#costoMensualidad").val(data.costo);
-            }
-        );
-
-
-            }
-        }
-        $("#recinto, #grado, #periodo").change(cargarMensualidad);
-
-       function cargarMora() {
-             let IdAlumno = $("#IdAlumno").val();
-               let IdTipoMovimiento = $("#tipoMovimiento").val();
-              let periodo = $("#periodo").val(); // input donde seleccionas mes o fecha
-
-             if (IdAlumno && IdTipoMovimiento && periodo) {
-                 $.getJSON("/Pagos/ObtenerMora",
-                    {
-                         idAlumno:IdAlumno,
-                        idTipoMovimiento:IdTipoMovimiento,
-                        periodo:periodo,
-                    },
-                    function (data) {
-                        if (data) {
-                            $("#totalMora").val(data.mora);
-                             // alert(data.mora);      // 620
-                            // calcularTotal();
-                        } else {
-                            $("#totalMora").val("0");
+                    $.ajax({
+                        url: apiUrl,
+                        data: { q: request.term },
+                        success: function(data) {
+                            response($.map(data, function(item) {
+                                return {
+                                    label: item.nombreCompleto,
+                                    value: item.nombreCompleto,
+                                    id: item.id
+                                };
+                            }));
+                        },
+                        error: function() {
+                            response([]);
                         }
                     });
-            }
-        }
-        //         function calcularTotal() {
-        //     let mensualidad = parseFloat($("#costoMensualidad").val()) || 0;
-        //     let mora = parseFloat($("#totalMora").val()) || 0;
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    $idAlumno.val(ui.item.id);
+                }
+            });
 
-        //     $("#totalPagar").val(mensualidad + mora);
-        // }
-         $("#grado").change(cargarMora);
-        // $("#recinto, #grado, #modalidad, #periodo").change(cargarMensualidad);
+            
+            // Los event listeners ahora se configuran dinámicamente según el tipo de movimiento
+            // en la función configurarListenersPorTipo()
 
+            // Función para confirmar meses seleccionados
+            window.confirmarMeses = function() {
+                const seleccionados = [];
+                const nombres = [];
 
+                document.querySelectorAll('#modalMeses input[type="checkbox"]:checked').forEach(chk => {
+                    seleccionados.push(chk.value);
+                    nombres.push(chk.nextElementSibling.textContent.trim());
+                });
 
-               function msg(mensaje){
-                   swal.fire({
-                           title:'Warning',
-                           text: mensaje,
-                           icon: 'warning',
-                           showCancelButton: true,
-                        confirmButtonText: 'Aceptar',
-                        cancelButtonText: 'Cancelar' // corregido el error tipográfico
-                       });}
+                document.getElementById('MesesSeleccionados').value = seleccionados.join(',');
 
-               function msgconfirm(mensaje) {
-                    Swal.fire({
-                        title: 'Información',
-                        text: mensaje,
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonText: 'Aceptar',
-                        cancelButtonText: 'Cancelar'
-                    });
+                const contenedor = document.getElementById('mesesSeleccionadosContainer');
+                contenedor.innerHTML = '';
+
+                nombres.forEach(nombre => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-success me-1 mb-1';
+                    badge.textContent = nombre;
+                    contenedor.appendChild(badge);
+                });
+
+                const modalElement = document.getElementById('modalMeses');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
                 }
 
-        document.getElementById("mesPagado").addEventListener("change", function () {
-            const nombre = this.value.trim().toUpperCase();
-
-            if (nombre.length === 0) {
-                document.getElementById("Mora").value = "";
-                return;
-            }
-
-            // Quitar tildes
-            const sinAcentos = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-            // Dividir por espacios
-            const palabras = sinAcentos.split(" ").filter(p => p.length > 0);
-
-            let codigoBase = "";
-
-            // Si tiene 2 o más palabras → tomar 3 primeras letras de la 1ra + 3 de la 2da
-            if (palabras.length >= 2) {
-                codigoBase = palabras[0].substring(0, 3) + palabras[1].substring(0, 3);
-            }
-            // Si solo hay una palabra → tomar 6 primeras letras
-            else {
-                codigoBase = palabras[0].substring(0, 6);
-            }
-
-            codigoBase = codigoBase.toUpperCase();
-
-            // Agregar número (esto puedes cambiarlo por el correlativo real)
-            const numero = document.getElementById("CodigoProducto").value;
-
-            document.getElementById("CodigoProducto").value = `${codigoBase}-${numero}`;
-        });
-
-          function confirmarMeses() {
-            let seleccionados = [];
-            let nombres = [];
-
-            document.querySelectorAll('#modalMeses input[type="checkbox"]:checked').forEach(chk => {
-                seleccionados.push(chk.value);
-                nombres.push(chk.nextElementSibling.textContent);
-            });
-
-            // Guardar IDs en el campo oculto
-            document.getElementById('MesesSeleccionados').value = seleccionados.join(',');
-
-            // Mostrar nombres en la vista principal
-            let contenedor = document.getElementById('mesesSeleccionadosContainer');
-            contenedor.innerHTML = '';
-
-            nombres.forEach(nombre => {
-                let badge = document.createElement('span');
-                badge.className = 'badge bg-success me-1';
-                badge.textContent = nombre;
-                contenedor.appendChild(badge);
-            });
-
-               // ✅ Cerrar correctamente la modal y eliminar el fondo bloqueante
-        const modalElement = document.getElementById('modalMeses');
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        modalInstance.hide();
-
-        // Esperar un pequeño tiempo y eliminar el backdrop manualmente si quedara
-        setTimeout(() => {
-            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.removeProperty('padding-right');
-        }, 300);
-        }
-       
+                setTimeout(() => {
+                    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('padding-right');
+                }, 300);
+            };
+        })();
     </script>
-
-   
 
     @if (TempData["Mensaje"] != null)
     {
         <script>
             document.addEventListener("DOMContentLoaded", function () {
+                var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
                 Swal.fire({
                     title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
-                 TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
-                 "Información")',
-                    text: '@TempData["Mensaje"]',
+     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+     "Información")',
+                    text: mensaje,
                     icon: '@TempData["Tipo"]',
                     confirmButtonText: 'Aceptar'
                 });
             });
         </script>
     }
+
+    @* @if (TempData["Mensaje"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const tipo = "@TempData["Tipo"];
+                const titulo = tipo === 'success' ? 'Éxito' :
+                              tipo === 'warning' ? 'Atención' : 'Información';
+
+                Swal.fire({
+                    title: titulo,
+                    text: '@Html.Raw(TempData["Mensaje"])',
+                    icon: tipo || 'info',
+                    confirmButtonText: 'Aceptar'
+                });
+            });
+        </script>
+    } *@
 }
