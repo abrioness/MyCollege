@@ -18,7 +18,7 @@
 				<a asp-action="Create" class="btn btn-primary">
 					<i class="bi bi-plus-circle"></i> Agregar Pago
 				</a>
-			</div>
+			</div><br />
 			<div class="table-responsive" style="font-size: 12px;">
 					<table id="tablaPagos" class="table table-bordered table-sm">
 					@* class="display responsive nowrap" style="width:100%"> *@
@@ -117,19 +117,19 @@
 			$('#tablaPagos').DataTable({
 			responsive: false,
 			dom: 'Bfrtip', // Botones + filtro + tabla
-		scrollX: true,
-		scrollY: '600px',// Habilita scroll horizontal
-		scrollY: '400px', // Altura fija con scroll vertical
-		scrollCollapse: true,
-		paging: true,
-		pageLength: 25, // Reduce número de registros por página
-		autoWidth: false, // Deja que DataTable calcule el ancho
-		columnDefs: [
-		//{ width: '100px', targets:  }, // Personaliza anchos de columnas
-		{ width: '100px', targets: 1 },
-		{ width: '100px', targets: 2 },
-		{ width: '120px', targets: 3 },
-		{ width: '100px', targets: 4 },
+		// scrollX: true,
+		// scrollY: '600px',// Habilita scroll horizontal
+		// scrollY: '400px', // Altura fija con scroll vertical
+		// scrollCollapse: true,
+		// paging: true,
+		// pageLength: 25, // Reduce número de registros por página
+		// autoWidth: false, // Deja que DataTable calcule el ancho
+		// columnDefs: [
+		// //{ width: '100px', targets:  }, // Personaliza anchos de columnas
+		// { width: '100px', targets: 1 },
+		// { width: '100px', targets: 2 },
+		// { width: '120px', targets: 3 },
+		// { width: '100px', targets: 4 },
 		// Añade más columnas según necesites
 	],
 			buttons: [
