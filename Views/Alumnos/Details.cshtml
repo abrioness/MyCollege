@@ -7,7 +7,7 @@
 @model WebColegio.Models.ViewModel.AlumnosViewModel
 
 @{
-    ViewData["Title"] = "Detalle de Matrícula";
+    ViewData["Title"] = "Hoja de Matrícula";
     Layout = null;
 }
 <!DOCTYPE html>
@@ -15,239 +15,320 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />    
-<link href="~/css/hojamatricula.css" rel="stylesheet" />
+    <link href="~/css/hojamatricula.css" rel="stylesheet" />
 </head>
-<body>
-<div class="container mt-4">
+<body >
+    <div class="container p-3" >
 
-    <div class="text-center mb-3">
-        @{
-            var recinto = Model.recintosSelectListItem
-            .FirstOrDefault(s => s.Value == Model.alumnos.IdRecinto.ToString());
-        }
-        @{
-            var periodo = Model.periodoSelectListItem
-            .FirstOrDefault(s => s.Value == Model.alumnos.IdPeriodo.ToString());
-        }
-        <h5>
-            <strong>
-                @recinto?.Text
-            </strong>
-        </h5>
-        <h6>HOJA DE MATRÍCULA DE PREESCOLAR @periodo.Text</h6>
-        <hr />
-        <hr />
-        @{
-            var today = DateTime.Now;
-        }
-       
-		<h6 class="text-start">Fecha en que se presentó al centro a matricularse</h6> <div class="row border-1 position-relative" style="width:185px;align-content:end"><div class="col-md-2 border-1">DÍA:@today.Day MES:@today.Month AÑO:@today.Year </div></div>
-		 <hr />
-    </div>
+        <div class="text-center mb-3">
+            @{
+                var recinto = Model.recintosSelectListItem
+                .FirstOrDefault(s => s.Value == Model.alumnos.IdRecinto.ToString());
+            }
+            @{
+                var periodo = Model.periodoSelectListItem
+                .FirstOrDefault(s => s.Value == Model.alumnos.IdPeriodo.ToString());
+            }
+            @{
+                var modalidad = Model.modalidadesSelectListItem
+                .FirstOrDefault(s => s.Value == Model.alumnos.IdModalidad.ToString());
+            }
+            <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
+                <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:12%;margin-left:55px">
+                <div class="titulo" style="flex: 1;">
+                    <h5 >
+                        <strong>
+                            @recinto?.Text
+                        </strong>
+                    </h5>
+                    @{
+                        int periodoActual = 0;
+                        if (Convert.ToInt32(@periodo.Text) == DateTime.Now.Year)
+                        {
+                            periodoActual = Convert.ToInt32(@periodo.Text)+1;
+                        }
+                        else
+                        {
+                            @periodo.Text
+                        }
 
-    <!-- I. DATOS DEL ESTUDIANTE -->
-    <fieldset class="p-3 mb-auto">
-        <legend class="w-auto px-2"><strong>I. DATOS PERSONALES DEL ESTUDIANTE</strong></legend>
-
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta">Nombres:</div>
-            <div class="valor">@Model.alumnos.Nombre</div>
-
-           
+                    }
+                    <h6>HOJA DE MATRÍCULA DE @modalidad?.Text  @periodoActual</h6>
+                </div>
             </div>
-        </div>
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-                <div class="etiqueta">Apellidos:</div>
-                <div class="valor">@Model.alumnos.Apellido</div>
+            <hr />
+            <hr />
+            @{
+                var today = DateTime.Now;
+            }
+            <div class="titulo d-flex justify-content-end flex-fill" style="margin-left:155px;">
+                <h6 class="mb-0">Fecha en que se presentó al centro a matricularse  DÍA: @today.Day MES: @today.Month AÑO: @today.Year</h6>
             </div>
+
         </div>
 
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Fecha de Nacimiento:</strong></div>
-            <div class="valor">@Model.alumnos.FechaNacimiento?.ToString("dd/MM/yyyy")</div>
+        <!-- I. DATOS DEL ESTUDIANTE -->
+        <fieldset class="p-3 mb-auto">
+            <legend class="w-auto px-2"><strong>I. DATOS PERSONALES DEL ESTUDIANTE</strong></legend>
 
-            @* <div class="col-md-3"><strong>Partida Nacimiento:</strong></div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta">Nombres:</div>
+                    <div class="valor">@Model.alumnos.Nombre</div>
+
+
+                </div>
+            </div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta">Apellidos:</div>
+                    <div class="valor">@Model.alumnos.Apellido</div>
+                </div>
+            </div>
+
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Fecha de Nacimiento:</strong></div>
+                    <div class="valor">@Model.alumnos.FechaNacimiento?.ToString("dd/MM/yyyy")</div>
+
+                    @* <div class="col-md-3"><strong>Partida Nacimiento:</strong></div>
             <div class="col-md-3">@((Model.PartidaNacimiento) ? "Sí" : "No")</div> *@
-        </div>
-        </div>
-
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Sexo:</strong></div>
-
-            <div class="valor">
-                @{
-                    var sexo = Model.sexosSelectListItem
-                    .FirstOrDefault(s => s.Value == Model.alumnos.IdSexo.ToString());
-                }
-                @sexo?.Text
-            </div>
-            </div>
-            </div>
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Teléfono:</strong></div>
-            <div class="valor">@Model.alumnos.Telefono</div>
-        </div>
-        </div>
-
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Departamento:</strong></div>
-            <div class="valor">@Model.alumnos.Departamento</div>
-            </div>
-            </div>
-                <div class="col-md-8 columna-izquierda">
-                    <div class="fila-interna">
-            <div class="etiqueta"><strong>Municipio:</strong></div>
-            <div class="valor">@Model.alumnos.Municipio</div>
-        </div>
-        </div>
-
-        <!-- COLUMNA IZQUIERDA -->
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta">Dirección:</div>
-            <div class="valor">@Model.alumnos.Direccion</div>
-            </div>
-        </div>
-
-        <!-- COLUMNA DERECHA -->
-        <div class="col-md-4 columna-derecha">
-            <div class="fila-interna">
-                <div class="etiqueta">Peso:</div>
-                <div class="valor">@Model.alumnos.Peso</div>
+                </div>
             </div>
 
-            <div class="fila-interna">
-                <div class="etiqueta">Talla:</div>
-                <div class="valor">@Model.alumnos.Talla</div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Sexo:</strong></div>
+
+                    <div class="valor">
+                        @{
+                            var sexo = Model.sexosSelectListItem
+                            .FirstOrDefault(s => s.Value == Model.alumnos.IdSexo.ToString());
+                        }
+                        @sexo?.Text
+                    </div>
+                </div>
             </div>
-        </div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Teléfono:</strong></div>
+                    <div class="valor">@Model.alumnos.Telefono</div>
+                </div>
+            </div>
 
-    </fieldset>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Departamento:</strong></div>
+                    <div class="valor">@Model.alumnos.Departamento</div>
+                </div>
+            </div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Municipio:</strong></div>
+                    <div class="valor">@Model.alumnos.Municipio</div>
+                </div>
+            </div>
 
-    <!-- II. PADRES O TUTOR -->
-    <fieldset class="border p-3 mb-4">
-        <legend class="w-auto px-2"><strong>II. DATOS PERSONALES DE LOS PADRES O TUTOR</strong></legend>
+            <!-- COLUMNA IZQUIERDA -->
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta">Dirección:</div>
+                    <div class="valor">@Model.alumnos.Direccion</div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div class="col-md-4 columna-derecha">
+                <div class="fila-interna">
+                    <div class="etiqueta">Peso:</div>
+                    <div class="valor">@Model.alumnos.Peso</div>
+                </div>
+
+                <div class="fila-interna">
+                    <div class="etiqueta">Talla:</div>
+                    <div class="valor">@Model.alumnos.Talla</div>
+                </div>
+            </div>
+
+        </fieldset>
+
+        <!-- II. PADRES O TUTOR -->
+        <fieldset class="border p-3 mb-4">
+            <legend class="w-auto px-2"><strong>II. DATOS PERSONALES DE LOS PADRES O TUTOR</strong></legend>
 
             <div class="col-md-4 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Nombre y Apellido de la Madre:</strong></div>
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Nombre y Apellido de la Madre:</strong></div>
                     <div class="valor">@Model.alumnos.NombreMadre</div>
                 </div>  
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Número de Cédula de la Madre:</strong> </div>
                     <div class="valor">@Model.alumnos.CedulaMadre</div>
                 </div>
-                 <div class="fila-interna">
+                <div class="fila-interna">
                     <div class="etiqueta"><strong>Teléfono de la Madre:</strong></div>
                     <div class="valor"> @Model.alumnos.TelefonoMadre </div>
-				</div>
                 </div>
-        
+            </div>
 
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
+
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
                     <div class="etiqueta"><strong>Nombre y Apellido del Padre:</strong> </div>
-                <div class="valor">@Model.alumnos.NombrePadre</div>
-                <div class="etiqueta"><strong>Número de Cédula del Padre:</strong></div>
-                <div class="valor"> @Model.alumnos.CedulaPadre</div>
-                <div class="etiqueta"><strong>Teléfono del Padre:</strong> </div>
-                <div class="valor">@Model.alumnos.TelefonoPadre</div>
-        </div>
-        </div>
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
+                    <div class="valor">@Model.alumnos.NombrePadre</div>
+                    <div class="etiqueta"><strong>Número de Cédula del Padre:</strong></div>
+                    <div class="valor"> @Model.alumnos.CedulaPadre</div>
+                    <div class="etiqueta"><strong>Teléfono del Padre:</strong> </div>
+                    <div class="valor">@Model.alumnos.TelefonoPadre</div>
+                </div>
+            </div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
                     <div class="etiqueta"><strong>Nombre y Apellido del Tutor:</strong> </div>
-                <div class="valor">@Model.alumnos.NombreTutor</div>
+                    <div class="valor">@Model.alumnos.NombreTutor</div>
                     <div class="etiqueta"><strong>Número de Cédula del Tutor:</strong> </div>
-                <div class="valor">@Model.alumnos.CedulaTutor</div>
-                <div class="etiqueta"><strong>Teléfono del Tutor:</strong> </div>
-                <div class="valor">@Model.alumnos.ContactoTutor</div>
-        </div>
-        </div>
-    </fieldset>
-
-    <!-- DATOS ESCOLARES -->
-    <fieldset class="border p-3">
-        <legend class="w-auto px-2"><strong>DATOS ESCOLARES</strong></legend>
-
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Código del Estudiante:</strong></div>
-            <div class="valor">@Model.alumnos.CodigoAlumno</div>
-
-            <div class="etiqueta"><strong>Código del Centro Escolar:</strong></div>
-            <div class="valor">21054</div>
-        </div>
-        </div>
-
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Nivel:</strong></div>
-            <div class="valor">
-                @{
-                    var nivel = Model.gradosSelectListItem
-                    .FirstOrDefault(s => s.Value == Model.alumnos.IdGrado.ToString());
-                }
-                @nivel?.Text
-
+                    <div class="valor">@Model.alumnos.CedulaTutor</div>
+                    <div class="etiqueta"><strong>Teléfono del Tutor:</strong> </div>
+                    <div class="valor">@Model.alumnos.ContactoTutor</div>
+                </div>
             </div>
-            </div>
-            </div>
-        <div class="col-md-8 columna-izquierda">
-            <div class="fila-interna">
-            <div class="etiqueta"><strong>Modalidad:</strong></div>
-            <div class="valor">
-                @{
-                    var modalidad = Model.modalidadesSelectListItem
-                    .FirstOrDefault(s => s.Value == Model.alumnos.IdModalidad.ToString());
-                }
-                @modalidad?.Text
+        </fieldset>
 
+        <!-- DATOS ESCOLARES -->
+        <fieldset class="border p-3">
+            <legend class="w-auto px-2"><strong>DATOS ESCOLARES</strong></legend>
+
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Código del Estudiante:</strong></div>
+                    <div class="valor">@Model.alumnos.CodigoAlumno</div>
+
+                    <div class="etiqueta"><strong>Código del Centro Escolar:</strong></div>
+                    <div class="valor">21054</div>
+                </div>
             </div>
+
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Nivel:</strong></div>
+                    <div class="valor">
+                        @{
+                            var nivel = Model.gradosSelectListItem
+                            .FirstOrDefault(s => s.Value == Model.alumnos.IdGrado.ToString());
+                        }
+                        @nivel?.Text
+
+                    </div>
+                </div>
             </div>
-        </div>
-    </fieldset>
-    <div class="row">
-        <p><span class="text-end"> ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</span></p>
-    <p>
-        1.	“El Colegio parroquial San Francisco Javier es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
-        2.	El Colegio Parroquial San Francisco Javier se reservará el derecho de aceptar matrícula del estudiante que: a) Repitente. b) del padre, madre o tutor que no asisten a la reuniones o encuentros para retirar calificaciones y dialogar sobre la conducta y rendimiento académico del estudiante a cargo. c) De los padres, madres y tutores que han incumplidos arreglos de pago de matrícula y mensualidades.
-    </p>
-        <p></p> <span class="text-center">REGLAMENTO INTERNO PARA PADRES DE FAMILIA Y TUTORES</span></p>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Modalidad:</strong></div>
+                    <div class="valor">
+                       
+                        @modalidad?.Text
 
-        <p><span class="text-center">DERECHOS</span><p>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        @if (Model.alumnos.IdModalidad == 1 && Model.alumnos.IdRecinto == 1)
+        {
+            <div class="row" id="peescolar">
+                <p><span> ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</span></p>
+                <p>
+                    1.	“El Colegio parroquial San Francisco Javier es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
+                    2.	El Colegio Parroquial San Francisco Javier se reservará el derecho de aceptar matrícula del estudiante que: a) Repitente. b) del padre, madre o tutor que no asisten a la reuniones o encuentros para retirar calificaciones y dialogar sobre la conducta y rendimiento académico del estudiante a cargo. c) De los padres, madres y tutores que han incumplidos arreglos de pago de matrícula y mensualidades.
+                </p>
+                <p> <span class="text-center">REGLAMENTO INTERNO PARA PADRES DE FAMILIA Y TUTORES</span></p>
 
-    1.	Recibir información periódica de la situación educativa de sus hijos siempre que no afecten las horas de clases.
-    2.	Ser atendido con prontitud y eficacia en sus inquietudes y demandas relacionadas con la situación educativa de sus hijos. Los docentes les atenderán los días viernes a las 10:00 am.
+                <p><span class="text-center">DERECHOS</span><p>
 
-        <p> <span class="text-center">DEBERES</span><p>
-    <p>
-        1) Apoyar moral y materialmente al alumno y al Centro en el cumplimiento de las disposiciones disciplinarias o de otra índole que demande su intervención. 2) Velar por que sus hijos asistan con puntualidad y regularidad a clases, a los exámenes y eventos programáticos. 3) Revisar el boletín escolar y devolverlo firmado en los plazos estipulados por el Centro. 4) No interrumpir deliberadamente las horas de clases. 5) Asistir sin falta a las reuniones o encuentros de padres de familia y tutores. 6)  El centro realizará cuatro (4) actividades grandes (pueden ser 1 kermesse, 2 rifas y 1 excursión ó las que estime conveniente la dirección) las cuales deben ser apoyadas por los padres de familia y estudiantes. 7) Cancelar puntualmente la mensualidad y cualquier actividad realizada por el Centro. 8) El Padre/Madre de familia se compromete a cancelar la contribución (colegiatura de enero a diciembre) a más tardar el 15 de cada mes. En caso de no pagar en la fecha estipulada deberá pagar C$10.00 (diez córdobas) adicionales. Traer tarjeta y el último recibo que ha cancelado para realizar el pago. 9) El Padre/Madre de familia debe asistir a todos los llamados que haga el/la Maestra (o), consejera o el subdirector de la modalidad. 10) El boletín se entregará únicamente al Padre/Madre de familia en la reunión y será devuelto al maestro (a) a más tardar 3 días después de recibirlo. 11) Después de haberle entregado recibo de caja no habrá reembolso por si decide no estudiar en el centro. 12) Para los padres con estudiantes que se promocionarán en el centro podrán ir cancelando los gastos en cuotas a partir del mes de julio. 13) El padre, madre o tutor se comprometen vestir a su hijo con el uniforme correcto desde el primer día de clases (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla), de no cumplir no se dejará ingresar al estudiante al centro.
-        <p> <span class="text-center">
+                    1.	Recibir información periódica de la situación educativa de sus hijos siempre que no afecten las horas de clases.
+                    2.	Ser atendido con prontitud y eficacia en sus inquietudes y demandas relacionadas con la situación educativa de sus hijos. Los docentes les atenderán los días viernes a las 10:00 am.
+
+                    <p> <span class="text-center">DEBERES</span><p>
+                            <p>
+                                1) Apoyar moral y materialmente al alumno y al Centro en el cumplimiento de las disposiciones disciplinarias o de otra índole que demande su intervención. 2) Velar por que sus hijos asistan con puntualidad y regularidad a clases, a los exámenes y eventos programáticos. 3) Revisar el boletín escolar y devolverlo firmado en los plazos estipulados por el Centro. 4) No interrumpir deliberadamente las horas de clases. 5) Asistir sin falta a las reuniones o encuentros de padres de familia y tutores. 6)  El centro realizará cuatro (4) actividades grandes (pueden ser 1 kermesse, 2 rifas y 1 excursión ó las que estime conveniente la dirección) las cuales deben ser apoyadas por los padres de familia y estudiantes. 7) Cancelar puntualmente la mensualidad y cualquier actividad realizada por el Centro. 8) El Padre/Madre de familia se compromete a cancelar la contribución (colegiatura de enero a diciembre) a más tardar el 15 de cada mes. En caso de no pagar en la fecha estipulada deberá pagar C$10.00 (diez córdobas) adicionales. Traer tarjeta y el último recibo que ha cancelado para realizar el pago. 9) El Padre/Madre de familia debe asistir a todos los llamados que haga el/la Maestra (o), consejera o el subdirector de la modalidad. 10) El boletín se entregará únicamente al Padre/Madre de familia en la reunión y será devuelto al maestro (a) a más tardar 3 días después de recibirlo. 11) Después de haberle entregado recibo de caja no habrá reembolso por si decide no estudiar en el centro. 12) Para los padres con estudiantes que se promocionarán en el centro podrán ir cancelando los gastos en cuotas a partir del mes de julio. 13) El padre, madre o tutor se comprometen vestir a su hijo con el uniforme correcto desde el primer día de clases (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla), de no cumplir no se dejará ingresar al estudiante al centro.
+                                <p> <span class="text-center">
+                                        REGLAMENTO INTERNO PARA LOS ESTUDIANTES
+                                    </span>
+                                </p>
+                                <p>
+                                    1) Respetar a los miembros de la comunidad educativa. 2) Asistir diaria y puntualmente a clases y actividades del Centro. 3) Cuando él o la estudiante no asista a clases por motivos de salud u otras razones, deberá presentar constancia médica el día que se reintegre al colegio y entregarla al subdirector a la primera hora para que se pueda justificar su ausencia y reprogramar pruebas o actividades de evaluación. 4) Asistir y participar en las actividades religiosas programadas por el Centro. Esto no significa que se tiene que volver católico, pero si respetar las actividades y participar en ellas.  5) Vestir correctamente el uniforme escolar establecido (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla). 6) Permanecer en clases, recesos y actividades dirigidas hasta la conclusión de la jornada escolar. Podrá retirarse del centro únicamente con el permiso del profesor y de la dirección. 7) Informar al centro del cambio de domicilio y número telefónico del padre, madre o tutor. 8) No se permite en el centro el uso de objetos ajenos al material de clase: juguetes, IPOD, celulares, joyas o artículos de valor, belleza, entre otras, en caso de encontrárseles tales objetos, serán enviados a la dirección y serán entregados al Padre/Madre de Familia al final del curso escolar. 9) El corte del cabello del varón debe ser varonil y el peinado normal. No extravagante ni teñido tanto en varones como mujeres. 10) El uniforme de educación física no debe ser ajustado al cuerpo y solamente para los días que le corresponde dicha clase. Cuando no tenga el uniforme de educación física se presentará al centro con su uniforme normal y se cambiará a la hora que vaya a clase de educación física. 11) Apoyar las cuatro (4) actividades grandes del centro (1 kermesse, 2 rifas y 1 excursión ó como estime conveniente la Dirección). 12) Para Preescolar la promoción será de Uniforme. 13) El Padre/Madre de familia conscientes de que las ventas callejeras son un peligro para la salud, se comprometen a abstenerse de comprar alimentos y otros artículos en puestos callejeros frente al colegio. 14) Los y las estudiantes padres, madre y tutores, se comprometen a dar cumplimiento a esta normativa y al reglamento del MINED.
+
+                                </p>
+                                <hr />
+                <p> <span class="text-center">Frima del Subdirector</span><p>
+            </div>
+        }
+        @if (Model.alumnos.IdModalidad == 2 && Model.alumnos.IdRecinto==1)
+        {
+        <div class="row" id="Primaria">
+                <p>
+                    <span>
+                        ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</span></p>
+                <p>
+                1.	“El Colegio parroquial San Francisco Javier es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
+                2.	El Colegio Parroquial San Francisco Javier se reservará el derecho de aceptar matrícula del estudiante que: a) Repitente. b) del padre, madre o tutor que no asisten a la reuniones o encuentros para retirar calificaciones y dialogar sobre la conducta y rendimiento académico del estudiante a cargo. c) De los padres, madres y tutores que han incumplidos arreglos de pago de matrícula y mensualidades.
+				</p>
+                <p>
+                REGLAMENTO INTERNO PARA PADRES DE FAMILIA Y TUTORES
+				</p>
+                <p>
+                DERECHOS
+                </p>
+                <p>
+                1.	Recibir información periódica de la situación educativa de sus hijos.
+                2.	Ser atendido con prontitud y eficacia en sus inquietudes y demandas relacionadas con la situación educativa de sus hijos. Los docentes les atenderán los días viernes a las 10:00 am.
+                </p>
+                <p>
+                DEBERES
+                </p>
+                <p>
+                1) Apoyar moral y materialmente al alumno y al Centro en el cumplimiento de las disposiciones disciplinarias o de otra índole que demande su intervención. 2) Velar por que sus hijos asistan con puntualidad y regularidad a clases, a los exámenes y eventos programáticos. 3) Revisar el boletín escolar y devolverlo firmado en los plazos estipulados por el Centro. 4) No interrumpir deliberadamente las horas de clase. 5) Asistir sin falta a las reuniones o encuentros de padres de familia y tutores. 6)  El centro realizará cuatro (4) actividades grandes (pueden ser 1 kermesse, 2 rifas y 1 excursión ó las que estime conveniente la dirección) las cuales deben ser apoyadas por los padres de familia y estudiantes. 7) Cancelar puntualmente cualquier actividad realizada por el Centro. 8) El Padre/Madre de familia se compromete a cancelar la contribución (colegiatura de enero a diciembre) a más tardar el 15 de cada mes. En caso de no pagar en la fecha estipulada deberá pagar C$10.00 (diez córdobas) adicionales. Traer tarjeta y el último recibo que ha cancelado para realizar el pago. 9) El Padre/Madre de familia debe asistir a todos los llamados que haga el/la Maestra (o), consejera o el subdirector de la modalidad. 10) El boletín se entregará únicamente al Padre/Madre de familia en la reunión y será devuelto al maestro (a) a más tardar 3 días después de recibirlo. 11) Después de haberle entregado recibo de caja no habrá reembolso por si decide no estudiar en el centro. 12) Para los padres con estudiantes que se promocionarán en el centro podrán ir cancelando los gastos en cuotas a partir del mes de julio. 13) El padre, madre o tutor se comprometen vestir a su hijo con el uniforme correcto desde el primer día de clases (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla), de no cumplir no se dejará ingresar al estudiante al centro desde el primer día.
+				</p>
+                <p>REGLAMENTO INTERNO PARA LOS ESTUDIANTES</p>
+                <p>
+                1) Respetar a los miembros de la comunidad educativa. 2) Asistir diaria y puntualmente a clases y actividades del Centro. 3) Cuando él o la estudiante no asista a clases por motivos de salud u otras razones, deberá presentar constancia médica el día que se reintegre al colegio y entregarla al subdirector a la primera hora para que se pueda justificar su ausencia y reprogramar pruebas o actividades de evaluación. 4) Asistir y participar en las actividades religiosas programadas por el Centro. Esto no significa que se tiene que volver católico, pero si respetar las actividades y participar en ellas. 5) Vestir correctamente el uniforme escolar establecido (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla). 6) Permanecer en clases, recesos y actividades dirigidas hasta la conclusión de la jornada escolar. Podrá retirarse del centro únicamente con el permiso del profesor y de la dirección. 7) Informar al centro del cambio de domicilio y número telefónico del padre, madre o tutor. 8) Exhortar a sus padres y responsables a participar activamente en las reuniones y eventos del Centro. 9) No se permite en el centro el uso de objetos ajenos al material de clase: juguetes, IPOD, celulares, joyas, piercing o artículos de valor, belleza, entre otras, en caso de encontrárseles tales objetos, serán enviados a la dirección y serán entregados al Padre/Madre de Familia al final del curso escolar. 10) No usar maquillaje ni uñas pintadas. De reincidir firmarán carta de compromiso. 11) El corte del cabello del varón debe ser varonil y el peinado normal. No extravagante ni teñido tanto en varones como mujeres. 12) El uniforme de educación física no debe ser ajustado al cuerpo y solamente para los días que le corresponde dicha clase. Cuando no tenga el uniforme de educación física se presentará al centro con su uniforme normal y se cambiará a la hora que vaya a clase de educación física. 13) Apoyar las cuatro (4) actividades grandes del centro (2 kermesse, 1 rifa y 1 excursión ó como estime conveniente la Dirección). 14) Para Sexto Grado la promoción será de Uniforme. 15) El Padre/Madre de familia conscientes de que las ventas callejeras son un peligro para la salud, se comprometen a abstenerse de comprar alimentos y otros artículos en puestos callejeros frente al colegio. 16) Los y las estudiantes padres, madre y tutores, se comprometen a dar cumplimiento a esta normativa y al reglamento del MINED.
+                </p>
+                <hr />
+                <p> <span class="text-center">Frima del Subdirector</span><p>
+            </div>
+            }
+        @if (Model.alumnos.IdModalidad == 3 && Model.alumnos.IdRecinto == 1)
+        {
+                <div class="row" id="Secundaria">
+                ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:
+
+                1.	“El Colegio parroquial San Francisco Javier es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
+                2.	El Colegio Parroquial San Francisco Javier se reservará el derecho de aceptar matrícula del estudiante que: a) Repitente. b) del padre, madre o tutor que no asisten a la reuniones o encuentros para retirar calificaciones y dialogar sobre la conducta y rendimiento académico del estudiante a cargo. c) De los padres, madres y tutores que han incumplidos arreglos de pago de matrícula y mensualidades.
+
+                REGLAMENTO INTERNO PARA PADRES DE FAMILIA Y TUTORES
+
+                DERECHOS
+
+                1.	Recibir información periódica de la situación educativa de sus hijos.
+                2.	Ser atendido con prontitud y eficacia en sus inquietudes y demandas relacionadas con la situación educativa de sus hijos. Los docentes les atenderán los días viernes a las 04:10 Pm.
+                DEBERES
+
+                1) Apoyar moral y materialmente al alumno y al Centro en el cumplimiento de las disposiciones disciplinarias o de otra índole que demande su intervención. 2) Velar por que sus hijos asistan con puntualidad y regularidad a clases, a los exámenes y eventos programáticos. 3) Revisar el boletín escolar y devolverlo firmado en los plazos estipulados por el Centro. 4) No interrumpir deliberadamente las horas de clase. 5) Asistir sin falta a las reuniones de padres de familia y tutores. 6)  El centro realizará cuatro (4) actividades grandes (pueden ser 1 kermesse, 2 rifas y 1 excursión ó las que estime conveniente la dirección) las cuales deben ser apoyadas por los padres de familia y estudiantes. 7) Cancelar puntualmente cualquier actividad realizada por el Centro. 8) El Padre/Madre de familia se compromete a cancelar la contribución (colegiatura de enero a diciembre) a más tardar el 15 de cada mes. En caso de no pagar en la fecha estipulada deberá pagar C$10.00 (diez córdobas) adicionales. Traer tarjeta y el último recibo que ha cancelado para realizar el pago. 9) El Padre/Madre de familia debe asistir a todos los llamados que haga el/la Maestra (o), consejera o el subdirector de la modalidad. 10) El boletín se entregará únicamente al Padre/Madre de familia en la reunión y será devuelto al maestro (a) a más tardar 3 días después de recibirlo. 11) Después de haberle entregado recibo de caja no habrá reembolso por si decide no estudiar en el centro. 11) Para los padres con estudiantes que se promocionarán en el centro podrán ir cancelando los gastos en cuotas a partir del mes de julio. 12) El padre, madre o tutor se comprometen vestir a su hijo con el uniforme correcto desde el primer día de clases (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla), de no cumplir no se dejará ingresar al estudiante al centro desde el primer día.
                 REGLAMENTO INTERNO PARA LOS ESTUDIANTES
-            </span>
-        </p>
-        <p>
-        1) Respetar a los miembros de la comunidad educativa. 2) Asistir diaria y puntualmente a clases y actividades del Centro. 3) Cuando él o la estudiante no asista a clases por motivos de salud u otras razones, deberá presentar constancia médica el día que se reintegre al colegio y entregarla al subdirector a la primera hora para que se pueda justificar su ausencia y reprogramar pruebas o actividades de evaluación. 4) Asistir y participar en las actividades religiosas programadas por el Centro. Esto no significa que se tiene que volver católico, pero si respetar las actividades y participar en ellas.  5) Vestir correctamente el uniforme escolar establecido (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla). 6) Permanecer en clases, recesos y actividades dirigidas hasta la conclusión de la jornada escolar. Podrá retirarse del centro únicamente con el permiso del profesor y de la dirección. 7) Informar al centro del cambio de domicilio y número telefónico del padre, madre o tutor. 8) No se permite en el centro el uso de objetos ajenos al material de clase: juguetes, IPOD, celulares, joyas o artículos de valor, belleza, entre otras, en caso de encontrárseles tales objetos, serán enviados a la dirección y serán entregados al Padre/Madre de Familia al final del curso escolar. 9) El corte del cabello del varón debe ser varonil y el peinado normal. No extravagante ni teñido tanto en varones como mujeres. 10) El uniforme de educación física no debe ser ajustado al cuerpo y solamente para los días que le corresponde dicha clase. Cuando no tenga el uniforme de educación física se presentará al centro con su uniforme normal y se cambiará a la hora que vaya a clase de educación física. 11) Apoyar las cuatro (4) actividades grandes del centro (1 kermesse, 2 rifas y 1 excursión ó como estime conveniente la Dirección). 12) Para Preescolar la promoción será de Uniforme. 13) El Padre/Madre de familia conscientes de que las ventas callejeras son un peligro para la salud, se comprometen a abstenerse de comprar alimentos y otros artículos en puestos callejeros frente al colegio. 14) Los y las estudiantes padres, madre y tutores, se comprometen a dar cumplimiento a esta normativa y al reglamento del MINED.
 
-    </p>
-    </div>
+                1) Respetar a los miembros de la comunidad educativa. 2) Asistir diaria y puntualmente a clases y actividades del Centro. 3) Cuando él o la estudiante no asiste a clases por motivos de salud u otras razones, deberá presentar constancia médica el día que se reintegre al colegio y entregarla al subdirector a la primera hora para que se pueda justificar su ausencia y reprogramar pruebas o actividades de evaluación. 4) Asistir y participar en las actividades religiosas programadas por el Centro. Esto no significa que se tiene que volver católico, pero si respetar las actividades y participar en ellas.  5) Vestir correctamente el uniforme escolar establecido (varones: camisa blanca por dentro, escarapela, pantalón azul varonil, no ajustado al cuerpo como licra y zapatos negros; mujeres: camisa blanca por dentro, escarapela, falda azul hasta la rodilla, zapatos negros y medias blancas hasta la rodilla). 6) Permanecer en clases, recesos y actividades dirigidas hasta la conclusión de la jornada escolar. Podrá retirarse del centro únicamente con el permiso del profesor y de la dirección. 7) Informar al centro del cambio de domicilio. 8) Exhortar a sus padres y responsables a participar activamente en las reuniones y eventos del Centro. 9) No se permite en el centro el uso de objetos ajenos al material de clase: juguetes, IPOD, celulares, joyas, piercing o artículos de valor, belleza, entre otras, en caso de encontrárseles tales objetos, serán enviados a la dirección y serán entregados al Padre/Madre de Familia al final del curso escolar. 10) No usar maquillaje ni uñas pintadas. De reincidir firmarán carta de compromiso. 11) El corte del cabello del varón debe ser varonil y el peinado normal. No extravagante ni teñido tanto en varones como mujeres. 12) El uniforme de educación física no debe ser ajustado al cuerpo y solamente para los días que le corresponde dicha clase. Cuando no tenga el uniforme de educación física se presentará al centro con su uniforme normal y se cambiará a la hora que vaya a clase de educación física. 13) Apoyar las cuatro (4) actividades grandes del centro (2 kermesse, 1 rifa y 1 excursión ó como estime conveniente la Dirección). 14) Para Undécimo Grado la promoción será de Uniforme. 15) El y la estudiante de noveno grado deberán cumplir 60 horas de trabajo ecológico establecidos por el MINED; en jornada Matutinas, de no cumplir con este periodo, no se le renovará matricula. 16) Los Estudiantes de Noveno y Décimo Grado participarán en un retiro que se realizará en una casa de retiro un fin de semana del mes de agosto y podrán ir abonando desde marzo. 17) Los estudiantes de Undécimo grado realizarán Investigación Bibliográfica guiados por la docente de Lengua y Literatura desde inicios del año escolar para que presenten documento final y defensa en el mes de octubre. 18) El Padre/Madre de familia conscientes de que las ventas callejeras son un peligro para la salud, se comprometen a abstenerse de comprar alimentos y otros artículos en puestos callejeros frente al colegio. 19) Los y las estudiantes padres, madre y tutores, se comprometen a dar cumplimiento a esta normativa y al reglamento del MINED.
+
+            </div>
+            }
 </div>
-   
 
 
 
-	
 
-<div class="no-print center">
+
+
+    <div class="no-print center" style="margin-left:185px;">
     <button class="print-button " onclick="window.print()">🖨️ Imprimir</button>
-    <a asp-action="Index" class="btn btn-secondary">
+    <a asp-action="Create" class="btn btn-secondary">
         <i class="bi bi-arrow-left"></i> Volver
     </a>
 
@@ -255,3 +336,25 @@
 </body>
 
 </html>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+    <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/limpiarcampos.js"></script>
+@if (TempData["Mensaje"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+                Swal.fire({
+                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+     "Información")',
+                    text: mensaje,
+                    icon: '@TempData["Tipo"]',
+                    confirmButtonText: 'Aceptar'
+                });
+            });
+        </script>
+    }

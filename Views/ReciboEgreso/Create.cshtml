@@ -1,9 +1,12 @@
 ﻿@model WebColegio.Models.ViewModel.EgresoViewModel
 
-@*@{
+@{
     ViewData["Title"] = "Create";
+    var añoActual = DateTime.Now.Year;
+    var añosInicio = añoActual - 3;
+    var añosFin = añoActual + 5;
 }
-<div class="content">
+@*<div class="content">
      <div class="modal-body">
         <span class="h5 mb-1">Bienvenido: @TempData["nombreusuario"] </span>
     </div> *@
@@ -12,10 +15,10 @@
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-cash"></i> Egreso de Caja</h4>
+            <h4 class="mb-0"><i class="bi bi-cash"></i> Registro de Egresos de Caja</h4>
         </div>
         <div class="card-body">
-            <form asp-action="Create" method="post" enctype="multipart/form-data" target="_blank">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
                     <div class="col-lg-6">
@@ -39,19 +42,14 @@
 
                         <div class="form-group">
                             <label asp-for="Egresos.Anyo" class="control-label">Año</label>
-                            <select asp-for="Egresos.Anyo" class="form-select" required>
-                                <option value="">Seleccione una Opciòn</option>
-                                <option value="2022">2022</option>
-                                <option value="2023">2023</option>
-                                <option value="2024">2024</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                                <option value="2028">2028</option>
-                                <option value="2029">2029</option>
-                                <option value="2030">2030</option>
+                            <select asp-for="Egresos.Anyo" id="anyo" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                                @for (int año = añosInicio; año <= añosFin; año++)
+                                {
+                                    <option value="@año">@año</option>
+                                }
                             </select>
-
+                            <span asp-validation-for="Egresos.Anyo" class="text-danger"></span>
                         </div>
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
                         <br />

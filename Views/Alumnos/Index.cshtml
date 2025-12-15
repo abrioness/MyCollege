@@ -5,7 +5,7 @@
 <script src="~/js/site.js"></script>
 @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
-<div class="container mt-auto" style="padding:2px;">
+<div class="container-fluid p-1" style="margin:auto;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded" style="padding-top:50px;">
 		<div class="card-header bg-primary text-white">
 			<h5 class="mb-0"><i class="bi bi-people"></i> Reporte de registros de Estudiantes</h5>
@@ -37,7 +37,7 @@
 					<i class="bi bi-plus-circle"></i> Agregar Alumno
 				</a>
 			</div>
-				<table id="tablaAlumnos" class="table justify-content-lg-between table-bordered  small" style="width:100%">
+				<table id="tablaAlumnos" class="table table-bordered table-sm">
 				<thead>
 					<tr>
 						<th>Código Alumno</th>
@@ -141,7 +141,7 @@
 <script>
 $(document).ready(function () {
 		$('#tablaAlumnos').DataTable({
-		responsive: true,
+		responsive: false,
 		dom: 'Bfrtip', // Botones + filtro + tabla
 		buttons: [
 			{

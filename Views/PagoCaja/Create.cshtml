@@ -12,10 +12,10 @@
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-cash"></i> Pagos de Caja Varios</h4>
+            <h4 class="mb-0"><i class="bi bi-cash"></i> Registro de Pagos Varios de Caja</h4>
         </div>
         <div class="card-body">
-            <form asp-action="Create" method="post" enctype="multipart/form-data" target="_blank">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
                     <div class="col-lg-6">
@@ -154,9 +154,9 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-save"></i> Procesar Pago
                     </button>
-                    <a asp-action="Index" class="btn btn-secondary">
+                   @*  <a asp-action="Index" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
-                    </a>
+                    </a> *@
                     <button type="button" id="btnLimpiar" class="btn btn-warning">
                         <i class="bi bi-trash3"></i> Limpiar Campos
                     </button>

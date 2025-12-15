@@ -2,22 +2,18 @@
 @* @{
 	ViewData["Title"] = "Index";
 } *@
-<script src="~/js/site.js"></script>
+@* <script src="~/js/site.js"></script> *@
 @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
-<style>
-	#tablaPagos th, #tablaPagos td {
-		white-space: nowrap;
-	}
-</style>
-<div class="container p-0" style="padding:2px;">
-	<div class="card shadow-lg p-0 mb-5 bg-white rounded">
+
+<div class="container-fluid p-1" style="margin:5px;width:min-content;margin-left:12px;">
+	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
 			<h5 class="mb-0"><i class="bi bi-cash"></i> Estado Cuenta</h5>
 		</div>
 
 		<div class="card-body p-0">
-			<div class="table-responsive" style="font-size:12px">
+			
 			<br />
 			<div class="col-12 text-end">
 
@@ -25,8 +21,8 @@
 					<i class="bi bi-plus-circle"></i> Agregar Pago
 				</a>
 			</div>
-			<div class="table-responsive">
-				<table id="tablaPagos" class="table table-bordered  small">
+			<div class="table-responsive" style="font-size:12px">
+				<table id="tablaPagos" class="table table-bordered table-sm">
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>
 					<tr>
@@ -131,7 +127,7 @@
 				</tbody>
 
 			</table>
-			</div>
+			
 		</div>
 		</div>
 	</div>
@@ -148,7 +144,7 @@
 
 	$(document).ready(function () {
 			$('#tablaPagos').DataTable({
-			responsive: true,			
+			responsive: false,			
 			dom: 'Bfrtip', // Botones + filtro + tabla
 		scrollX: true,
 		scrollY: '600px',// Habilita scroll horizontal

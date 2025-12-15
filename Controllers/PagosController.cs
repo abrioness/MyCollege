@@ -226,8 +226,7 @@ namespace WebColegio.Controllers
         {
             bool response = false;
             bool validarDuplicado = false;
-            int mensualidad = 640;
-            int total = 0;
+           
 
             var buscarIdGuardado = await _Iservices.GetPagosAsync();
            
@@ -440,23 +439,95 @@ namespace WebColegio.Controllers
                     }
                     else
                     {
-                        
-                        //pagos.Pago.IdMes = 0;
-                        response = await _Iservices.PostPagosAsync(pagos.Pago);
-                        if (response)
+                        if (pagos.Pago.IdTipoMovimiento == 2)
                         {
-                            var idPag = buscarIdGuardado.Max(a => a.IdPago); 
+                            int periodoMatricula = 0;
+                            if (periodo == pagos.Pago.IdPeriodo)
+                            {
+                                periodoMatricula = pagos.Pago.IdPeriodo + 1;
+                            }
+                            else
+                            {
+                                periodoMatricula = pagos.Pago.IdPeriodo;
+                            }
+                                decimal restarMensualidad = await ObtenerMensualidadDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula);
+                                decimal obtenerMat = await ObtenerMatriculaDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, periodoMatricula);
 
+                            var totalMatricual = Convert.ToDecimal(pagos.Pago.Monto);
+                            if (totalMatricual == obtenerMat)
+                            {
+                                decimal valormatricula = totalMatricual - restarMensualidad;
+                                pagos.Pago.Monto = valormatricula;
+                                var validarExistePagoMatricula =  _Iservices.GetPagosAsync().Result.Where(a => a.IdAlumno == pagos.Pago.IdAlumno && a.IdTipoMovimiento==pagos.Pago.IdTipoMovimiento && a.IdPeriodo == periodoMatricula).Count()>0;
+                                if(validarExistePagoMatricula)
+                                {
+                                    TempData["Mensaje"] = "El Pago de la Matricula ya se hizo efectiva.";
+                                    TempData["Tipo"] = "waring";
+                                    return RedirectToAction("Create", "Pagos");
+                                }
+                                pagos.Pago.IdPeriodo = periodoMatricula;
+                                await _Iservices.PostPagosAsync(pagos.Pago);
+                                
+                                var pagoprimermes = new TblPago
+                                {
+                                    IdAlumno = pagos.Pago.IdAlumno,
 
-                            TempData["Mensaje"] = "Pago registrado correctamente.";
-                            TempData["Tipo"] = "success";
-                            return RedirectToAction("Details", "Pagos", new { id = idPag +1});
+                                    NumeroRecibo = pagos.Pago.NumeroRecibo,
+                                    Anyo = pagos.Pago.Anyo,
+                                    IdMes = 1,
+                                    IdTipoRecibo = pagos.Pago.IdTipoRecibo,
+                                    IdTipoMovimiento = 1,
+                                    IdMetodoPago = pagos.Pago.IdMetodoPago,
+                                    IdGrado = pagos.Pago.IdGrado,
+                                    IdPeriodo = periodoMatricula,
+                                    IdRecinto = pagos.Pago.IdRecinto,
+                                    FechaEmision = pagos.Pago.FechaEmision,
+                                    Mora = 0,
+                                    Monto = restarMensualidad,
+                                    Descripcion = pagos.Pago.Descripcion,
+                                    UsuarioRegistro = pagos.Pago.UsuarioRegistro,
+                                    Activo = pagos.Pago.Activo,
+                                    FechaRegistro = pagos.Pago.FechaRegistro,
+                                    Serie = pagos.Pago.Serie
+
+                                    // otros campos...
+                                };
+                                response = await _Iservices.PostPagosAsync(pagoprimermes);
+                                if (response)
+                                {
+                                    var idPag = buscarIdGuardado.Max(a => a.IdPago);
+                                    TempData["Mensaje"] = "Pago registrado correctamente.";
+                                    TempData["Tipo"] = "success";
+                                    return RedirectToAction("Details", "Pagos", new { id =idPag +1 });
+                                }
+                                else
+                                {
+                                    TempData["Mensaje"] = "No se proceso el Pago.";
+                                    TempData["Tipo"] = "warning";
+                                    return RedirectToAction("Create");
+                                }
+                            }
+                           
                         }
                         else
                         {
-                            TempData["Mensaje"] = "No se proceso el Pago.";
-                            TempData["Tipo"] = "warning";
-                            return RedirectToAction("Create");
+                            //pagos.Pago.IdMes = 0;
+                            response = await _Iservices.PostPagosAsync(pagos.Pago);
+                            if (response)
+                            {
+                                var idPag = buscarIdGuardado.Max(a => a.IdPago);
+
+
+                                TempData["Mensaje"] = "Pago registrado correctamente.";
+                                TempData["Tipo"] = "success";
+                                return RedirectToAction("Details", "Pagos", new { id = idPag + 1 });
+                            }
+                            else
+                            {
+                                TempData["Mensaje"] = "No se proceso el Pago.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create");
+                            }
                         }
                     }
                    
@@ -465,9 +536,12 @@ namespace WebColegio.Controllers
                 }
                 return NoContent();
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                // En caso de error, redirigir a Create para que se cargue el modelo correctamente
+                TempData["Mensaje"] = "Ocurrió un error al procesar el pago. Por favor, intente nuevamente.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Create");
             }
         }
 
@@ -562,10 +636,33 @@ namespace WebColegio.Controllers
 
             return true;
         }
-
+        public async Task<decimal> ObtenerMensualidadDecimal(
+    int? idRecinto, int idGrado, int idPeriodo)
+        {
+            return await _Iservices.GetCostosMensualidadAsync()
+                .ContinueWith(t => t.Result
+                    .Where(x => x.IdRecinto == idRecinto &&
+                                x.IdGrado == idGrado &&
+                                x.IdPeriodo == idPeriodo &&
+                                x.Activo)
+                    .Select(x => x.CostoMensualidad)
+                    .FirstOrDefault());
+        }
+        public async Task<decimal> ObtenerMatriculaDecimal(
+    int? idRecinto, int? idModalidad, int idPeriodo)
+        {
+            return await _Iservices.GetCostosMatriculaAsync()
+                .ContinueWith(t => t.Result
+                    .Where(x => x.IdRecinto == idRecinto &&
+                                 x.IdModalidad == idModalidad &&
+                                x.IdPeriodo == idPeriodo &&
+                                x.Activo)
+                    .Select(x => x.CostoMatricula)
+                    .FirstOrDefault());
+        }
 
         [HttpGet]
-        public IActionResult ObtenerMensualidad(int idRecinto, int idGrado, int idPeriodo)
+        public IActionResult ObtenerMensualidad(int? idRecinto, int idGrado, int idPeriodo)
         {
             var mensualidad = _Iservices.GetCostosMensualidadAsync().Result
                 .Where(x => x.IdRecinto == idRecinto &&
@@ -581,7 +678,7 @@ namespace WebColegio.Controllers
             return Json(mensualidad);
         }
         [HttpGet]
-        public IActionResult ObtenerMatricula(int idRecinto, int idModalidad, int idPeriodo)
+        public IActionResult ObtenerMatricula(int? idRecinto, int? idModalidad, int idPeriodo)
         {
             var matricula= _Iservices.GetCostosMatriculaAsync().Result
                 .Where(x => x.IdRecinto == idRecinto &&

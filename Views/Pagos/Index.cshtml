@@ -39,7 +39,7 @@
 				</a>
 			</div>
 
-				<table id="tablaPagos" class="table justify-content-lg-between table-bordered  small" style="width:100%">
+				<table id="tablaPagos" class="table table-bordered table-sm">
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>
 					<tr>
@@ -146,7 +146,7 @@
 <script>
 	$(document).ready(function () {
 			$('#tablaPagos').DataTable({
-			responsive: true,
+			responsive: false,
 			dom: 'Bfrtip', // Botones + filtro + tabla
 			buttons: [
 				{

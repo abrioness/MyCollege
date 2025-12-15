@@ -57,7 +57,7 @@
 				</a>
 			</div>
 
-				<table id="tablaPagos" class="table justify-content-lg-between table-bordered  small" style="width:100%">
+				<table id="tablaPagos" class="table table-bordered table-sm">
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>
 					<tr>
@@ -96,40 +96,53 @@
 							} *@
 							<td>
 
-								@itemPagoCaja.Nombre
+								
+									@(string.IsNullOrWhiteSpace(itemPagoCaja.Nombre)
+																? " "
+																: itemPagoCaja.Nombre)
 							</td>
 							
 							@foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPagoCaja.Concepto))
 							{
 								<td>
 
-									@tipoMovimiento.Concepto
 
+										@(string.IsNullOrWhiteSpace(tipoMovimiento.Concepto)
+																	? " "
+																	: tipoMovimiento.Concepto)
 								</td>
 							}
 							<td>
-
-								C$	@itemPagoCaja.Monto
+									C$	@(string.IsNullOrWhiteSpace(itemPagoCaja.Monto.ToString())
+																? " "
+																: itemPagoCaja.Monto.ToString())
+									
 							</td>
 							@foreach (var nivel in Model.grados.Where(a => a.IdGrado == itemPagoCaja.IdGrado))
 							{
 								<td>
-
-									@nivel.NombreGrado
+										@(string.IsNullOrEmpty(nivel.NombreGrado)
+																	? "Sin Datos"
+																	: nivel.NombreGrado)
+									
 
 								</td>
 							}
 							@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemPagoCaja.IdTurno))
 							{
 								<td>
-
-									@turno.NombreTurno
+										@(string.IsNullOrWhiteSpace(turno.NombreTurno)
+																	? " "
+																	: turno.NombreTurno)
+									
 
 								</td>
 							}
 							<td>
 
-									@itemPagoCaja.Descripcion ? " ": " "
+									@(string.IsNullOrWhiteSpace(itemPagoCaja.Descripcion)
+																? " "
+																: itemPagoCaja.Descripcion)
 							</td>
 							@foreach (var periodo in Model.periodo.Where(a => a.IdPeriodo == itemPagoCaja.IdPeriodo))
 							{
@@ -140,8 +153,10 @@
 								</td>
 							}
 							<td>
-
-                                @itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy")
+									@(string.IsNullOrWhiteSpace(itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy"))
+																? " "
+																: itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy"))
+                                
 							</td>
 
 							@* <td>
@@ -169,7 +184,7 @@
 <script>
 	$(document).ready(function () {
 			$('#tablaPagos').DataTable({
-			responsive: true,
+			responsive: false,
 			dom: 'Bfrtip', // Botones + filtro + tabla
 			buttons: [
 				{

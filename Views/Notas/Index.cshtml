@@ -38,7 +38,7 @@
 				</a>
 			</div>
 
-			<table id="tablaNotas" class="table justify-content-lg-between table-bordered  small" style="width:100%">
+				<table id="tablaNotas" class="table table-bordered table-sm">
 				@* class="display responsive nowrap" style="width:100%"> *@
 			<thead>
 				<tr>
@@ -142,7 +142,7 @@
 <script>
 	$(document).ready(function () {
 			$('#tablaNotas').DataTable({
-			responsive: true,
+			responsive: false,
 			dom: 'Bfrtip', // Botones + filtro + tabla
 			buttons: [
 				{
