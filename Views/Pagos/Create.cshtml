@@ -10,7 +10,7 @@
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-coin"></i> Registro de Pagos de Mensualidad</h4>
+            <h4 class="mb-0"><i class="bi bi-cash-coin"></i> Registro de Recibo de Caja Mensualidad</h4>
         </div>
         <div class="card-body">
             <form asp-action="Create" method="post" enctype="multipart/form-data">
@@ -35,7 +35,7 @@
                                 <option value="">Seleccione un Opción</option>
                             </select>
                             <span asp-validation-for="Pago.IdTipoMovimiento" class="text-danger"
-                                  data-val-required="Por favor, seleccione el tipo de movimiento"></span>
+                            data-val-required="Por favor, seleccione el tipo de movimiento"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.IdTipoRecibo" class="control-label">Tipo de Recibo</label>
@@ -74,7 +74,11 @@
                             </select>
                             <span asp-validation-for="Pago.IdGrado" class="text-danger"></span>
                         </div>
-
+                        <div class="form-group">
+                            <label asp-for="Pago.TotalPagar" class="control-label">Total a Pagar</label>
+                            <input asp-for="Pago.TotalPagar" id="totalPagar" class="form-control" />
+                            <span asp-validation-for="Pago.TotalPagar" class="text-danger"></span>
+                        </div>
                     </div>
 
                     <div class="col-lg-4">
@@ -98,12 +102,15 @@
                         </div>
 
                         <div class="form-group">
-                            <label asp-for="Pago.FechaEmision" class="control-label">Fecha de Emisión</label>
-                            <input type="date" asp-for="Pago.FechaEmision" id="FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" required />
+                            @{
+                                var fechaMatricula = DateTime.Now.ToString("dd/MM/yyyy");
+                            }
+                            <label asp-for="Pago.FechaEmision" class="control-label">Fecha que se presentó a matricularse</label>
+                            <input type="text" asp-for="Pago.FechaEmision" value="@fechaMatricula"  class="form-control" readonly />
                             <span asp-validation-for="Pago.FechaEmision" class="text-danger"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="Pago.Monto" class="control-label">Cantidad</label>
+                            <label asp-for="Pago.Monto" class="control-label">Moto a Pagar</label>
                             <input asp-for="Pago.Monto" id="cantidad" class="form-control"  />
                             <span asp-validation-for="Pago.Monto" class="text-danger"></span>
                         </div>
@@ -113,11 +120,11 @@
                             <input asp-for="Pago.Mora" id="totalMora" class="form-control" />
                             <span asp-validation-for="Pago.Mora" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
+                       @*  <div class="form-group">
                             <label asp-for="Pago.TotalPagar" class="control-label">Total a Pagar</label>
                             <input asp-for="Pago.TotalPagar" id="totalPagar" class="form-control"  />
                             <span asp-validation-for="Pago.TotalPagar" class="text-danger"></span>
-                        </div>
+                        </div> *@
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
                         <br />
                         <div class="form-group" id="mesPagado">

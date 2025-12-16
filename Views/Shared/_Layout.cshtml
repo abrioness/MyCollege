@@ -120,7 +120,7 @@
                                 <div id="collapseAlumnos" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
 
-                                        <a class="collapse-item" asp-controller="Alumnos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Alumno</a>
+                                        <a class="collapse-item" asp-controller="Alumnos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Estudiante</a>
                                     </div>
                                 </div>
                             </li>
@@ -203,7 +203,7 @@
                         <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
                                aria-expanded="false" aria-controls="collapsePago">
-                                <i class="bi bi-cash-coin"></i>
+                                    <i class="bi bi-collection"></i>
                                 <span>Reportes</span>
                             </a>
                             <div id="collapsePago" class="collapse">
@@ -213,9 +213,9 @@
                                             <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
                                             <a class="collapse-item" asp-controller="Notas" asp-action="Index"><i class="bi bi-arrow-return-right text-black"></i> Reporte de Notas</a>
                                     }
-                                        <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Pagos</a>
-                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Pago Caja</a>
-                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte Egreso</a>
+                                        <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
+                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
+                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Egreso</a>
                                         <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
                                         <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
                                     
@@ -235,10 +235,10 @@
                                 <div id="collapsePagoCaja" class="collapse">
                                     <div class="bg-white py-2 collapse-inner rounded">
 
-                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo Pagos Varios</a>
-                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create"><i class="bi bi-arrow-return-right text-black"></i> Recibo Egresos</a>
+                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Varios</a>
+                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create"><i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Egresos</a>
 
-                                        <a class="collapse-item" asp-controller="Pagos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo Mensualidad</a>
+                                        <a class="collapse-item" asp-controller="Pagos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Mensualidad</a>
 
 
                                         <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
@@ -280,28 +280,28 @@
         <i class="fas fa-angle-up"></i>
     </a>
     <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="false">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
+                    <h5 class="modal-title" id="exampleModalLabel">¿Cerrar Sesión?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">Estas Seguro Que quieres cerrar la sesión?</div>
+                <div class="modal-body">
+                    ¿Estás seguro que quieres cerrar la sesión?
+                </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <a class="btn btn-primary" asp-controller="Login" asp-action="CerrarSesion">Cerrar Sesión</a>
                 </div>
             </div>
         </div>
     </div>
-  
 
 
-        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
         <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
         <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 
@@ -350,6 +350,59 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
+    <!-- Script para manejar el comportamiento de los collapse -->
+    <script>
+                
+        (function() {
+             'use strict';
+
+             // Interceptar el evento ANTES de que Bootstrap lo procese usando capture phase
+            const alumnos = document.getElementById('alumnos');
+
+        alumnos.addEventListener('shown.bs.collapse', () => {
+            console.log('Alumnos abierto');
+        });
+
+        alumnos.addEventListener('hidden.bs.collapse', () => {
+            console.log('Alumnos cerrado');
+        });
+            // Interceptar el evento ANTES de que Bootstrap lo procese usando capture phase
+        //     document.addEventListener('click', function(e) {
+        //         const link = e.target.closest('a[data-bs-toggle="collapse"]');
+        //         if (!link) return;
+
+        //         const targetId = link.getAttribute('data-bs-target');
+        //         if (!targetId) return;
+
+        //         const targetElement = document.querySelector(targetId);
+        //         if (!targetElement) return;
+
+        //          // Verificar si el collapse está abierto
+        //          const isExpanded = targetElement.classList.contains('show');
+
+        //         if (isExpanded) {
+        //             // Si está abierto, prevenir el comportamiento por defecto
+        //             e.preventDefault();
+        //             e.stopImmediatePropagation();
+
+        //             // Obtener o crear la instancia de Collapse de Bootstrap
+        //             let bsCollapse = bootstrap.Collapse.getInstance(targetElement);
+        //             if (!bsCollapse) {
+        //                 bsCollapse = new bootstrap.Collapse(targetElement, {
+        //                     toggle: false
+        //                 });
+        //             }
+
+        //             // Cerrar el collapse
+        //             bsCollapse.hide();
+
+        //             // Actualizar el estado del enlace
+        //             link.classList.add('collapsed');
+        //             link.setAttribute('aria-expanded', 'false');
+        //         }
+        //     }, true); // true = usar capture phase para interceptar antes de Bootstrap
+        // })();
+    </script>
 
 </body>
 
@@ -372,5 +425,42 @@
         color: #000;
         text-decoration: none;
     }
-  
+
+
+
+    /* Estilos mejorados para el modal */
+    .modal {
+        z-index: 1055;
+    }
+
+    .modal-backdrop {
+        z-index: 1050;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-dialog-centered {
+        display: flex;
+        align-items: center;
+        min-height: calc(100% - 1rem);
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+    }
 </style>

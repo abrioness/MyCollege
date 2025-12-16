@@ -9,7 +9,7 @@
 <div class="container-fluid p-1" style="margin:5px;width:min-content;margin-left:12px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-cash"></i> Estado Cuenta</h5>
+			<h5 class="mb-0"><i class="bi bi-cash"></i> Estado Cuenta de Estudiante</h5>
 		</div>
 
 		<div class="card-body p-0">
@@ -54,9 +54,9 @@
 					{
 						<tr>
 							<td>
-								<a asp-action="Create" asp-controller="ReciboCaja" asp-route-id="@alumno.IdAlumno" class="btn btn-sm btn-info">
+								<span class="btn btn-sm btn-info">
 									@alumno.Nombre @alumno.Apellido
-								</a>
+								</span>
 							</td>
 
 							@* Buscar grado y periodo asociados si aplica *@
