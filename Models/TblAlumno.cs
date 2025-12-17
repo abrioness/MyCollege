@@ -9,6 +9,7 @@ namespace WebColegio.Models
         public int IdAlumno { get; set; }
         public string? Nombre { get; set; }
         public string? Apellido { get; set; }
+        public string? PartidaNacimiento { get; set; }
         public DateTime? FechaNacimiento { get; set; }
         public int? Edad { get; set; }
         public string? CodigoMINED { get; set; }
@@ -44,8 +45,8 @@ namespace WebColegio.Models
         public decimal? Peso { get; set; }
         public string? Talla { get; set; }
         public string? TipoEstudiante { get; set; }
-        public string? Retirado { get; set; }
-        public string? RecibioEducacionPrescollar { get; set; }
+        public string? Repitente { get; set; }
+        public string? RecibioEducacionPreescolar { get; set; }
         public int? IdDiscapacidad { get; set; }
 
         public bool? Activo { get; set; }

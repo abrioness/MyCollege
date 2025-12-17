@@ -25,24 +25,34 @@ Layout = "~/Views/Shared/_Layout.cshtml";
                 </div>
                 <div class="col-md-6">
                     <label asp-for="alumnos.CodigoMINED" class="control-label">Código MINED</label>
-                    <input asp-for="alumnos.CodigoMINED" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Código MINED" />
+                    <input asp-for="alumnos.CodigoMINED" class="form-control"  placeholder="Código MINED" />
                     
                 </div>
                         <div class="col-md-6">
                             <label asp-for="alumnos.CodigoUnico" class="control-label">Código de Persona</label>
-                            <input asp-for="alumnos.CodigoUnico" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Código Persona" />
+                            <input asp-for="alumnos.CodigoUnico" class="form-control"  placeholder="Código Persona" />
                            
                         </div>
         <div class="col-md-6">
             <label asp-for="alumnos.Nombre" class="control-label">Nombre</label>
-            <input asp-for="alumnos.Nombre" id="Nombre" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Nombre del Alumno" />
+            <input asp-for="alumnos.Nombre"  class="form-control"  placeholder="Nombre del Alumno" />
             <span validation-for="alumnos.Nombre" class="text-danger"></span>
     </div>
                 <div class="col-md-6">
             <label asp-for="alumnos.Apellido" class="control-label">Apellido</label>
-            <input asp-for="alumnos.Apellido" id="Apellido" class="form-control" oninput="capitalizeWords(this)" placeholder="Ingrese el Apellido del Alumno" />
+            <input asp-for="alumnos.Apellido"  class="form-control"  placeholder="Apellido del Alumno" />
             <span asp-validation-for="alumnos.Apellido" class="text-danger"></span>
     </div>
+                        <div class="form-group">
+                            <label asp-for="alumnos.PartidaNacimiento" class="control-label">Tiene Partida de Nacimiento</label>
+                            <select asp-for="alumnos.PartidaNacimiento" class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                                <option value="Si">SI</option>
+                                <option value="No">NO</option>
+
+                            </select>
+                            <span asp-validation-for="alumnos.PartidaNacimiento" class="text-danger"></span>
+                        </div>
     <div class="col-md-4">
             <label asp-for="alumnos.FechaNacimiento" class="control-label">Fecha de Nacimimento</label>
             <input type="date" asp-for="alumnos.FechaNacimiento" id="FechaNacimiento" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
@@ -154,9 +164,10 @@ Layout = "~/Views/Shared/_Layout.cshtml";
                     <label asp-for="alumnos.TipoEstudiante" class="control-label">Tipo Estudiante</label>
                     <select asp-for="alumnos.TipoEstudiante" class="form-select" required>
                         <option value="">Seleccione una Opción</option>
-                        <option value="Nuevo Ingreso">Nuevo Ingreso</option>
                         <option value="Continuidad">Continuidad</option>
+                        <option value="Nuevo Ingreso">Nuevo Ingreso</option>                        
                         <option value="Retirado">Retirado</option>
+                        <option value="Traslado">Traslado</option>
                     </select>
                     <span asp-validation-for="alumnos.TipoEstudiante" class="text-danger"></span>
                 </div>
@@ -168,15 +179,16 @@ Layout = "~/Views/Shared/_Layout.cshtml";
                             <span asp-validation-for="alumnos.IdRecinto" class="text-danger"></span>
                         </div>
 
+                        <div class="form-group">
+                            <label asp-for="alumnos.Barrio" class="control-label"></label>
+                            <input asp-for="alumnos.Barrio" class="form-control" />
+                            <span asp-validation-for="alumnos.Barrio" class="text-danger"></span>
+                        </div>
         </div>
         <div class="col-md-6">
 
            
-	<div class="form-group">
-        <label asp-for="alumnos.Barrio" class="control-label"></label>
-        <input asp-for="alumnos.Barrio" class="form-control" />
-        <span asp-validation-for="alumnos.Barrio" class="text-danger"></span>
-    </div>
+	
     <div class="form-group">
         <label asp-for="alumnos.Direccion" class="control-label">Direccion</label>
         <input asp-for="alumnos.Direccion" class="form-control" />
@@ -205,24 +217,24 @@ Layout = "~/Views/Shared/_Layout.cshtml";
 
                         </div>
                         <div class="form-group">
-                            <label asp-for="alumnos.Retirado" class="control-label">Tipo Estudiante</label>
-                            <select asp-for="alumnos.Retirado" class="form-select" required>
+                            <label asp-for="alumnos.Repitente" class="control-label">Es Repitente</label>
+                            <select asp-for="alumnos.Repitente" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                                 <option value="Si">SI</option>
                                 <option value="No">NO</option>
                                 
                             </select>
-                            <span asp-validation-for="alumnos.Retirado" class="text-danger"></span>
+                            <span asp-validation-for="alumnos.Repitente" class="text-danger"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="alumnos.RecibioEducacionPrescollar" class="control-label">Para el 1er Grado el alumno Recibio Educaciòn Preecolar</label>
-                            <select asp-for="alumnos.RecibioEducacionPrescollar" class="form-select" required>
+                            <label asp-for="alumnos.RecibioEducacionPreescolar" class="control-label">Para el 1er Grado el alumno Recibio Educación Prescolar</label>
+                            <select asp-for="alumnos.RecibioEducacionPreescolar" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                                 <option value="Si">SI</option>
                                 <option value="No">NO</option>
 
                             </select>
-                            <span asp-validation-for="alumnos.RecibioEducacionPrescollar" class="text-danger"></span>
+                            <span asp-validation-for="alumnos.RecibioEducacionPreescolar" class="text-danger"></span>
                         </div>
     <div class="form-group">
         <label asp-for="alumnos.Telefono" class="control-label">Teléfono</label>

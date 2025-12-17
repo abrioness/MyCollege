@@ -87,10 +87,11 @@
 
                     <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLogin"
-                           aria-expanded="false" aria-controls="collapseLogin">
+                           aria-expanded="false">
+                            
                                 <i class="bi bi-person-lock"></i> Login
                             </a>
-                            <div id="collapseLogin" class="collapse">
+                        <div id="collapseLogin" class="collapse" data-bs-parent="#accordionSidebar">
 
                                 <div class="bg-white py-2 collapse-inner rounded">
                                 <a class="collapse-item" asp-controller="Login" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Iniciar Sesión</a>
@@ -112,12 +113,13 @@
                         {
                             <!-- Alumnos -->
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAlumnos"
-                                aria-expanded="false" aria-controls="collapseAlumnos">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"  data-bs-target="#collapseAlumnos"
+                                   aria-expanded="false" aria-controls="collapseAlumnos" role="button">
+                                    
                                     <i class="bi bi-mortarboard-fill"></i>
                                     <span>Alumnos</span>
                                 </a>
-                                <div id="collapseAlumnos" class="collapse">
+                                <div id="collapseAlumnos" class="collapse" data-bs-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
 
                                         <a class="collapse-item" asp-controller="Alumnos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Estudiante</a>
@@ -130,11 +132,11 @@
                         {
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
-                                aria-expanded="false" aria-controls="collapseNotas">
+                                   aria-expanded="false" aria-controls="collapseNotas" role="button">
                                     <i class="bi bi-pencil-square"></i>
                                     <span>Notas</span>
                                 </a>
-                                <div id="collapseNotas" class="collapse">
+                                <div id="collapseNotas" class="collapse" data-bs-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
 
                                         <a class="collapse-item" asp-controller="Notas" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar  Notas</a>
@@ -149,11 +151,11 @@
                             <!-- Facturación -->
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
-                                aria-expanded="false" aria-controls="collapseRecibos">
+                                   aria-expanded="false" aria-controls="collapseRecibos" role="button">
                                     <i class="bi bi-stickies"></i>
                                     <span>Arqueo Diario</span>
                                 </a>
-                                <div id="collapseRecibos" class="collapse">
+                                <div id="collapseRecibos" class="collapse" data-bs-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
 
                                         <a class="collapse-item" asp-controller="ArqueoDiario" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja" target="_blank"><i class="bi bi-arrow-return-right text-black"></i> Generar Arqueo</a>
@@ -183,11 +185,11 @@
                         {
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
-                                aria-expanded="false" aria-controls="collapseProducto">
+                                   aria-expanded="false" aria-controls="collapseProducto" role="button">
                                     <i class="bi bi-clipboard-check"></i>
                                     <span>Inventario</span>
                                 </a>
-                                <div id="collapseProducto" class="collapse">
+                                <div id="collapseProducto" class="collapse" data-bs-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
 
                                         <a class="collapse-item" asp-controller="Productos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Inventario</a>
@@ -203,36 +205,43 @@
                         <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
                                aria-expanded="false" aria-controls="collapsePago">
-                                    <i class="bi bi-collection"></i>
+                                    <i class="bi bi-collection"></i>                               
+
                                 <span>Reportes</span>
                             </a>
-                            <div id="collapsePago" class="collapse">
+                                <div id="collapsePago" class="collapse" data-bs-parent="#accordionSidebar">
                                 <div class="bg-white py-2 collapse-inner rounded">
                                     @if(User.IsInRole("Director") || User.IsInRole("Admin"))
                                     {
                                             <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
                                             <a class="collapse-item" asp-controller="Notas" asp-action="Index"><i class="bi bi-arrow-return-right text-black"></i> Reporte de Notas</a>
                                     }
+
                                         <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
                                         <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
                                         <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Egreso</a>
+
+                                        <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Recibos Mensualidades</a>
+                                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Recibo Caja Varios</a>
+                                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Recibo Egreso</a>
+
                                         <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
                                         <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
                                     
 
                                 </div>
-                            </div>
+                            </div>  
                         </li>
                     }
                         @if (User.IsInRole("Cajero") || User.IsInRole("Admin"))
                         {
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePagoCaja"
-                                   aria-expanded="false" aria-controls="collapsePagoCaja">
+                                   aria-expanded="false" aria-controls="collapsePagoCaja" role="button">
                                     <i class="bi bi-cash-coin"></i>
                                     <span>Agregar Pagos</span>
                                 </a>
-                                <div id="collapsePagoCaja" class="collapse">
+                                <div id="collapsePagoCaja" class="collapse" data-bs-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
 
                                         <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Varios</a>
@@ -357,56 +366,49 @@
              'use strict';
 
              // Interceptar el evento ANTES de que Bootstrap lo procese usando capture phase
-            const alumnos = document.getElementById('alumnos');
-
-        alumnos.addEventListener('shown.bs.collapse', () => {
-            console.log('Alumnos abierto');
-        });
-
-        alumnos.addEventListener('hidden.bs.collapse', () => {
-            console.log('Alumnos cerrado');
-        });
+                   
             // Interceptar el evento ANTES de que Bootstrap lo procese usando capture phase
-        //     document.addEventListener('click', function(e) {
-        //         const link = e.target.closest('a[data-bs-toggle="collapse"]');
-        //         if (!link) return;
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a[data-bs-toggle="collapse"]');
+                if (!link) return;
 
-        //         const targetId = link.getAttribute('data-bs-target');
-        //         if (!targetId) return;
+                const targetId = link.getAttribute('data-bs-target');
+                if (!targetId) return;
 
-        //         const targetElement = document.querySelector(targetId);
-        //         if (!targetElement) return;
+                const targetElement = document.querySelector(targetId);
+                if (!targetElement) return;
 
-        //          // Verificar si el collapse está abierto
-        //          const isExpanded = targetElement.classList.contains('show');
+                 // Verificar si el collapse está abierto
+                 const isExpanded = targetElement.classList.contains('show');
 
-        //         if (isExpanded) {
-        //             // Si está abierto, prevenir el comportamiento por defecto
-        //             e.preventDefault();
-        //             e.stopImmediatePropagation();
+                if (isExpanded) {
+                    // Si está abierto, prevenir el comportamiento por defecto
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
 
-        //             // Obtener o crear la instancia de Collapse de Bootstrap
-        //             let bsCollapse = bootstrap.Collapse.getInstance(targetElement);
-        //             if (!bsCollapse) {
-        //                 bsCollapse = new bootstrap.Collapse(targetElement, {
-        //                     toggle: false
-        //                 });
-        //             }
+                    // Obtener o crear la instancia de Collapse de Bootstrap
+                    let bsCollapse = bootstrap.Collapse.getInstance(targetElement);
+                    if (!bsCollapse) {
+                        bsCollapse = new bootstrap.Collapse(targetElement, {
+                            toggle: false
+                        });
+                    }
 
-        //             // Cerrar el collapse
-        //             bsCollapse.hide();
+                    // Cerrar el collapse
+                    bsCollapse.hide();
 
-        //             // Actualizar el estado del enlace
-        //             link.classList.add('collapsed');
-        //             link.setAttribute('aria-expanded', 'false');
-        //         }
-        //     }, true); // true = usar capture phase para interceptar antes de Bootstrap
-        // })();
+                    // Actualizar el estado del enlace
+                    link.classList.add('collapsed');
+                    link.setAttribute('aria-expanded', 'false');
+                }
+            }, true); // true = usar capture phase para interceptar antes de Bootstrap
+        })();
     </script>
 
 </body>
 
 </html>
+
 <style>
     .collapse-item {
         text-decoration: none; /* quita subrayado */

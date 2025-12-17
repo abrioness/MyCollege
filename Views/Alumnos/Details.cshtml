@@ -33,11 +33,16 @@
                 var modalidad = Model.modalidadesSelectListItem
                 .FirstOrDefault(s => s.Value == Model.alumnos.IdModalidad.ToString());
             }
+            @{
+                var turno = Model.turnosSelectListItem
+                .FirstOrDefault(s => s.Value == Model.alumnos.IdTurno.ToString());
+            }
+
             <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
                 <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:12%;margin-left:55px">
                 <div class="titulo" style="flex: 1;">
                     <h5 >
-                        <strong>
+                        <strong class ="badge">
                             @recinto?.Text
                         </strong>
                     </h5>
@@ -49,7 +54,7 @@
                         }
                         else
                         {
-                             @periodo.Text// debe agregar el nombre completo colegio parroquil
+                            @periodo.Text// debe agregar el nombre completo colegio parroquil
                         }
 
                     }
@@ -69,32 +74,40 @@
         <!-- I. DATOS DEL ESTUDIANTE -->
         <fieldset class="p-3 mb-auto">
             <legend class="w-auto px-2"><strong>I. DATOS PERSONALES DEL ESTUDIANTE</strong></legend>
+            <div class="col-lg-6">
+                <div class="col-md-8 columna-izquierda">
+                    <div class="fila-interna">
+                        <div class="etiqueta">Nombres:</div>
+                        <div class="valor">@Model.alumnos.Nombre</div>
 
-            <div class="col-md-8 columna-izquierda">
-                <div class="fila-interna">
-                    <div class="etiqueta">Nombres:</div>
-                    <div class="valor">@Model.alumnos.Nombre</div>
 
-
+                    </div>
+                </div>
+                <div class="col-md-8 columna-izquierda">
+                    <div class="fila-interna">
+                        <div class="etiqueta">Apellidos:</div>
+                        <div class="valor">@Model.alumnos.Apellido</div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-8 columna-izquierda">
-                <div class="fila-interna">
-                    <div class="etiqueta">Apellidos:</div>
-                    <div class="valor">@Model.alumnos.Apellido</div>
+            <div class="col-lg-6">
+                <div class="col-md-8 columna-izquierda">
+                    <div class="fila-interna">
+                        <div class="etiqueta"><strong>Tiene Partida Nacimiento:</strong></div>
+                        <div class="valor">@Model.alumnos.PartidaNacimiento</div>
+                    </div>
+                </div>
+
+
+                <div class="col-md-8 columna-izquierda">
+                    <div class="fila-interna">
+                        <div class="etiqueta"><strong>Fecha de Nacimiento:</strong></div>
+                        <div class="valor">@Model.alumnos.FechaNacimiento?.ToString("dd/MM/yyyy")</div>
+
+
+                    </div>
                 </div>
             </div>
-
-            <div class="col-md-8 columna-izquierda">
-                <div class="fila-interna">
-                    <div class="etiqueta"><strong>Fecha de Nacimiento:</strong></div>
-                    <div class="valor">@Model.alumnos.FechaNacimiento?.ToString("dd/MM/yyyy")</div>
-
-                    @* <div class="col-md-3"><strong>Partida Nacimiento:</strong></div>
-            <div class="col-md-3">@((Model.PartidaNacimiento) ? "Sí" : "No")</div> *@
-                </div>
-            </div>
-
             <div class="col-md-8 columna-izquierda">
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Sexo:</strong></div>
@@ -148,6 +161,7 @@
                     <div class="valor">@Model.alumnos.Talla</div>
                 </div>
             </div>
+
 
         </fieldset>
 
@@ -224,12 +238,46 @@
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Modalidad:</strong></div>
                     <div class="valor">
-                       
+
                         @modalidad?.Text
 
                     </div>
                 </div>
             </div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Turno:</strong></div>
+                    <div class="valor">
+
+                        @turno?.Text
+
+                    </div>
+                </div>
+                <div class="col-md-8 columna-izquierda">
+                    <div class="fila-interna">
+                        <div class="etiqueta"><strong>Es Repitente?</strong></div>
+                        <div class="valor">
+
+                            @Model.alumnos.Repitente
+
+                        </div>
+                    </div>
+                </div>
+                @if(modalidad.Value=="2"){
+                    
+                
+                <div class="col-md-8 columna-izquierda">
+                    <div class="fila-interna">
+                        <div class="etiqueta"><strong>Para 1er grado, el alumno recibió Educ. Preescolar?</strong></div>
+                        <div class="valor">
+
+                            @Model.alumnos.Repitente
+
+                        </div>
+                    </div>
+					</div>
+				}
+    </div>
         </fieldset>
         @if (Model.alumnos.IdModalidad == 1 && Model.alumnos.IdRecinto == 1)
         {

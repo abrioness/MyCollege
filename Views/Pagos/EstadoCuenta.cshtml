@@ -9,11 +9,11 @@
 <div class="container-fluid p-1" style="margin:5px;width:min-content;margin-left:12px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-cash"></i> Estado Cuenta de Estudiante</h5>
+			<h5 class="mb-0"><i class="bi bi-cash-coin"></i> Estado Cuenta de Estudiante</h5>
 		</div>
 
 		<div class="card-body p-0">
-			
+
 			<br />
 			<div class="col-12 text-end">
 
@@ -24,46 +24,49 @@
 			<br />
 			<div class="table-responsive" style="font-size:12px">
 				<table id="tablaPagos" class="table table-bordered table-sm">
-				@* class="display responsive nowrap" style="width:100%"> *@
-				<thead>
-					<tr>
-						<th>Alumno</th>
-						<th>Grado</th>
-						<th>Matricula</th>
-						<th>Enero</th>
-						<th>Febrero</th>
-						<th>Marzo</th>
-						<th>Abril</th>
-						<th>Mayo</th>
-						<th>Junio</th>
-						<th>Julio</th>
-						<th>Agosto</th>
-						<th>Septiembre</th>
-						<th>Octubre</th>
-						<th>Noviembre</th>
-						<th>Diciembre</th>
+					@* class="display responsive nowrap" style="width:100%"> *@
+					<thead>
+						<tr>
+							<th>Alumno</th>
+							<th>Grado</th>
+							<th>Matricula</th>
+							<th>Enero</th>
+							<th>Febrero</th>
+							<th>Marzo</th>
+							<th>Abril</th>
+							<th>Mayo</th>
+							<th>Junio</th>
+							<th>Julio</th>
+							<th>Agosto</th>
+							<th>Septiembre</th>
+							<th>Octubre</th>
+							<th>Noviembre</th>
+							<th>Diciembre</th>
 							<th>Sub Total</th>
 							<th>Mora Anterior</th>
 							<th>Abono Cta Morosa</th>
 							<th>Gran Total</th>
 							<th>Saldo 2024</th>
-					</tr>
-				</thead>
-				<tbody>
-					@foreach (var alumno in Model.alumno)
-					{
-						<tr>
-							<td>
-								<span class="btn btn-sm btn-info">
-									@alumno.Nombre @alumno.Apellido
-								</span>
-							</td>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var alumno in Model.alumno)
+						{
+							<tr>
+								<td>
 
-							@* Buscar grado y periodo asociados si aplica *@
-							@{
-								var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
-								var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
-							}
+									<span  class="btn btn-sm btn-info">
+
+										@alumno.Nombre @alumno.Apellido
+									</span>
+								</td>
+
+								@* Buscar grado y periodo asociados si aplica *@
+								@{
+									var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
+									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
+									
+								}
 
 							<td>@(grado?.NombreGrado ?? "-")</td>
 							<td>@(periodo?.Periodo.ToString() ?? "-")</td>
