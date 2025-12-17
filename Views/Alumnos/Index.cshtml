@@ -49,6 +49,7 @@
 						<th>Grado</th>
 						<th>Turno</th> 
 						<th>Sexo</th>
+						<th>Colegio</th>
 						<th>Fecha Registro</th>
 						<th>Estado</th>
 						<th>Hoja Matrícula</th>
@@ -98,27 +99,38 @@
 
 								</td>
 							}
-							<td>
+								@foreach (var recinto in Model.recintos.Where(a => a.IdRecinto == itemAlumno.IdRecinto))
+								{
+									<td>
+
+										@recinto.Recinto
+
+									</td>
+								}
+								<td>
 
 								@itemAlumno.FechaRegistro.ToString("dd/MM/yyyy")
 							</td>
 							@{
-								var estado = "";
-								var activo = @itemAlumno.Activo;
-								if (activo == true)
-								{
-									estado = "Activo";
-								}
-								else
-								{
-									estado = "Inactivo";
-								}
-							}
-							<td>
 								
-									<span class="bg-success" >@estado</span>
+								var activo = @itemAlumno.Activo;
+								
+							}
+							
+									@if (activo == true)
+									{
+									<td>
+										<span class="bg-success">
+											Activo
+										</span></td>
+									}
+									else
+									{
+									<td><span class="badge bg-warning text-dark">Inactivo</span></td>
+									}
+									
 
-							</td>
+							
 				<td>
 								<a asp-action="Details" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-printer-fill"></i></a>
 				</td>
