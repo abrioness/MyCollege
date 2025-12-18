@@ -48,7 +48,7 @@
 
                         </div>
                         <div class="form-group">
-                            <label asp-for="Pago.IdPeriodo" class="control-label">Periodo</label>
+                            <label asp-for="Pago.IdPeriodo" class="control-label">Ciclo Escolar</label>
                             <select asp-for="Pago.IdPeriodo" id="periodo" asp-items="Model.periodo" class="form-select">
                                 <option value="">Seleccione una Opción</option>
                             </select>
@@ -96,7 +96,7 @@
                             <span asp-validation-for="Pago.Anyo" class="text-danger"></span>
                         </div> *@
                         <div class="form-group">
-                            <label asp-for="Pago.IdMetodoPago" class="control-label">Metodo a Pagar</label>
+                            <label asp-for="Pago.IdMetodoPago" class="control-label">Metodo de Pago</label>
                             <select asp-for="Pago.IdMetodoPago" asp-items="Model.metodoPagoSelectListItem" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                             </select>

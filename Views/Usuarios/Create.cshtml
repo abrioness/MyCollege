@@ -1,0 +1,111 @@
+﻿@model WebColegio.Models.ViewModel.UsuarioViewModel
+
+@* @{
+    ViewData["Title"] = "Create";
+} *@
+<script>
+
+    function msg(mensaje){
+        swal.fire({
+                title: 'warning',
+                text: mensaje,
+                icon: 'warning',
+                confirmbuttontext: 'aceptar'
+            });}
+
+    function msgconfirm(mensaje)
+    {
+        swal.fire({
+                title: 'info',
+                text: mensaje,
+                icon: 'info',
+                confirmbuttontext: 'aceptar',
+                confirmbuttontext:'cancelar'
+            });
+    }
+
+</script>
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro de Usuario</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="usuarios.IdRol" class="control-label"> Rol </label>
+                            <select asp-for="usuarios.IdRol" asp-items="Model.RolSelectList" class="form-select" required>
+                                <option disabled selected>Seleccione el Rol</option>
+                            </select>
+                            <span asp-validation-for="usuarios.IdRol" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="usuarios.NombreCompleto" class="control-label">Nombre Completo</label>
+                            <input asp-for="usuarios.NombreCompleto" class="form-control" />
+                            <span asp-validation-for="usuarios.NombreCompleto" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="usuarios.NombreUsuario" class="control-label">Nombre de Usuario</label>
+                            <input asp-for="usuarios.NombreUsuario" class="form-control" />
+                            <span asp-validation-for="usuarios.NombreUsuario" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="usuarios.Cedula" class="control-label">Cedula</label>
+                            <input asp-for="usuarios.Cedula" class="form-control" />
+                            <span asp-validation-for="usuarios.Cedula" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Password" class="control-label">Contraseña</label>
+                            <input asp-for="Password" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="usuarios.Correo" class="control-label"></label>
+                            <input asp-for="usuarios.Correo" class="form-control" />
+                            <span asp-validation-for="usuarios.Correo" class="text-danger"></span>
+                        </div>                        
+          
+                <!-- Botones -->
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-floppy"></i> Guardar
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* <div>
+    <a asp-action="Index">Back to List</a>
+</div> *@
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    @if (TempData["Mensaje"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                        var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+                Swal.fire({
+                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+            TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+            "Información")',
+                            text: mensaje,
+                    icon: '@TempData["Tipo"]',
+                    confirmButtonText: 'Aceptar'
+                });
+            });
+        </script>
+    }
+}

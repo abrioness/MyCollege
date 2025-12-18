@@ -43,7 +43,7 @@ namespace WebColegio.Services
 
         Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync();
         Task<List<TblCostoMatricula>> GetCostosMatriculaAsync();
-
+        Task<bool> validarUsuarios(string login);
         #endregion
         #region Metodos Post
         Task<bool> PostAlumnosAsync(TblAlumno alumnos);
@@ -57,6 +57,7 @@ namespace WebColegio.Services
         //Task<bool> PostInventarioAsync(TblInventario inventario);
         Task<bool> PostProductosAsync(Productos producto);
         Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
+        Task<bool> PostUsuarios(TblUsuarios usuario);
 
         #endregion
         #region Metodos Put

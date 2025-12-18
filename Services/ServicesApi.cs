@@ -694,7 +694,7 @@ namespace WebColegio.Services
             using (var httpClient = new HttpClient())
             {
                 var login = new TblUsuarios();
-                var response = await httpClient.GetAsync(url + $"api/Usuarios/obtenerUsuario?login={usuario}");
+                var response = await httpClient.GetAsync(url + $"api/TblUsuarios/obtenerUsuario?login={usuario}");
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadAsStringAsync();
@@ -706,9 +706,22 @@ namespace WebColegio.Services
 
 
         }
-       
 
 
+        //Validación 
+        public async Task<bool> validarUsuarios(string login)//, int idtematica)
+        {
+
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetAsync(url + $"api/TblUsuarios/validarUsuario?login={login}");
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
 
         #endregion
         #region Metodos Post
@@ -1114,7 +1127,25 @@ namespace WebColegio.Services
 
             return respuesta;
         }
+        //Post registro de usuarios
+        public async Task<bool> PostUsuarios(TblUsuarios usuario)
+        {
+            if (usuario == null)
+            {
+                return false;
+            }
+            using (var httpClient = new HttpClient())
+            {
+                var content = JsonContent.Create(usuario);
+                var guardarUsuario = await httpClient.PostAsync(url + "api/TblUsuario/Guardar", content);
+                if (guardarUsuario.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                return false;
+            }
 
+        }
         #endregion
 
         #region Metodos Get por Id

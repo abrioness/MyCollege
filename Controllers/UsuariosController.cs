@@ -4,9 +4,11 @@ using Microsoft.CodeAnalysis.Scripting;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+using System.Security.Claims;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using WebColegio.Models;
+using WebColegio.Models.ViewModel;
 using WebColegio.Services;
 
 
@@ -42,44 +44,44 @@ namespace WebColegio.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
 
-        //public async Task<ActionResult> Create(TblUsuarios viewmodel)
-        //{
-        //    try
-        //    {
-        //        int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        public async Task<ActionResult> Create(UsuarioViewModel viewmodel)
+        {
+            try
+            {
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-        //        bool existeLogin;
-        //        string nombre = viewmodel.usuarios.Login;
-        //        string password = viewmodel.Password;
-        //        string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
-        //        byte[] passwordBytes = Encoding.UTF8.GetBytes(hashedPassword);
+                bool existeLogin;
+                string nombre = viewmodel.usuarios.NombreUsuario;
+                string password = viewmodel.Password;
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+                byte[] passwordBytes = Encoding.UTF8.GetBytes(hashedPassword);
 
-        //        existeLogin = await _Iservices.validarUsuarios(nombre);//validar si existe el usuario
+                existeLogin = await _Iservices.validarUsuarios(nombre);//validar si existe el usuario
 
-        //        if (existeLogin)
-        //        {
-        //            TempData["Mensaje"] = "El usuario ya se encuentra registrado.";
-        //            return BadRequest();
-        //        }
+                if (existeLogin)
+                {
+                    TempData["Mensaje"] = "El usuario ya se encuentra registrado.";
+                    return BadRequest();
+                }
 
-        //        else
-        //        {
+                else
+                {
 
-        //            viewmodel.usuarios.Login = nombre;
-        //            viewmodel.usuarios.Password = passwordBytes;
-        //            viewmodel.usuarios.UsuarioRegistro = 1;
-        //            viewmodel.usuarios.FechaRegistro = DateTime.Now;
-        //            viewmodel.usuarios.Activo = true;
+                    viewmodel.usuarios.NombreUsuario = nombre;
+                    viewmodel.usuarios.Password = passwordBytes;
+                    viewmodel.usuarios.UsuarioRegistro = 1;
+                    viewmodel.usuarios.FechaRegistro = DateTime.Now;
+                    viewmodel.usuarios.Activo = true;
 
-        //            _IService.PostUsuarios(viewmodel.usuarios);
-        //        }
-        //        return RedirectToAction("Index", "Contenidos");
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
+                    await _Iservices.PostUsuarios(viewmodel.usuarios);
+                }
+                return RedirectToAction("Index", "Contenidos");
+            }
+            catch
+            {
+                return View();
+            }
+        }
         // GET: UsuariosController/Edit/5
         public ActionResult Edit(int id)
         {

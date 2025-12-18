@@ -22,7 +22,7 @@
 
         public int UsuarioRegistro { get; set; }
 
-        public DateTime FecharRegistro { get; set; }
+        public DateTime FechaRegistro { get; set; }
 
         public int? UsuarioActualiza { get; set; }
 
