@@ -8,32 +8,32 @@
 <div class="container mt-auto" style="padding:2px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-cash"></i> Reporte de Caja Varios</h5>
+			<h5 class="mb-0"><i class="bi bi-cash-coin"></i> Reporte de Caja Varios</h5>
 		</div>
 
 		<div class="card-body">
 			<div class="table-responsive" style="font-size:12px">
-			<div class="col-4 text-center">
-			@using (Html.BeginForm("Index","PagoCaja",FormMethod.Get))
-			{
-				<div class="row">		
-					<div class="col-4">
-				<label class="control-label">Desde</label>
-				<input type = "date" name="fechainicio" id="FechaInicio" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-					</div>
-					<div class="col-4">
-				<label class="control-label">Hasta</label>
-				<input type="date" name="fechafin" id="FechaFin" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-					</div>
-					<div class="col-4">
-						<br/>
-							<button type="submit" class="form-control btn btn-success">Filtrar</button>
-				</div>
-					</div>
+				<div class="col-4 text-center">
+					@using (Html.BeginForm("Index","PagoCaja",FormMethod.Get))
+					{
+						<div class="row">		
+							<div class="col-4">
+								<label class="control-label">Desde</label>
+								<input type = "date" name="fechainicio" id="FechaInicio" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+							</div>
+							<div class="col-4">
+								<label class="control-label">Hasta</label>
+								<input type="date" name="fechafin" id="FechaFin" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+							</div>
+							<div class="col-4">
+								<br/>
+								<button type="submit" class="form-control btn btn-success">Filtrar</button>
+							</div>
+						</div>
 
-			}
-			</div>
-			@* <div class="col-6 text-start">
+					}
+				</div>
+				@* <div class="col-6 text-start">
 				<div class="form-group">
 					<label class="control-label">Fecha de Inicio</label>
 					<input type="date" asp-for=".FechaEmision" id="FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
@@ -50,43 +50,43 @@
 					</a>
 				</div>
 			</div> *@
-			<div class="col-12 text-end">
-				
-				<a asp-action="Create" class="btn btn-primary">
-					<i class="bi bi-plus-circle"></i> Agregar Pago de Caja
-				</a>
-			</div>
+				<div class="col-12 text-end">
+
+					<a asp-action="Create" class="btn btn-primary">
+						<i class="bi bi-plus-circle"></i> Agregar Pago de Caja
+					</a>
+				</div>
 
 				<table id="tablaPagos" class="table table-bordered table-sm">
-				@* class="display responsive nowrap" style="width:100%"> *@
-				<thead>
-					<tr>
-						<th>Número Recibo</th>
-						<th>Nombre</th>
-						<th>Concepto</th>
-						<th>Monto</th>
-						<th>Nivel</th>
-						<th>Turno</th>
-						<th>Descripción</th>
-						<th>Año</th>
-						<th>Fecha Registro</th>
-
-					</tr>
-				</thead>
-				<tbody>
-					@foreach (var itemPagoCaja in Model.pagoCajas)
-					{
+					@* class="display responsive nowrap" style="width:100%"> *@
+					<thead>
 						<tr>
+							<th>Número Recibo</th>
+							<th>Nombre</th>
+							<th>Concepto</th>
+							<th>Monto</th>
+							<th>Nivel</th>
+							<th>Turno</th>
+							<th>Descripción</th>
+							<th>Colegio</th>
+							<th>Fecha Emisión</th>
 
-							
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var itemPagoCaja in Model.pagoCajas)
+						{
+							<tr>
+
+
 								<td>
 
-								<a asp-action="Details" asp-controller="PagoCaja" asp-route-id="@itemPagoCaja.IdPagoCaja" class="btn btn-sm btn-info">@itemPagoCaja.NumeroRecibo</a>
+									<a asp-action="Details" asp-controller="PagoCaja" asp-route-id="@itemPagoCaja.IdPagoCaja" class="btn btn-sm btn-info">@itemPagoCaja.NumeroRecibo</a>
 
 								</td>
-							
 
-							@* @foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPago.IdTipoMovimiento))
+
+								@* @foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPago.IdTipoMovimiento))
 							{
 								<td>
 
@@ -94,32 +94,34 @@
 
 								</td>
 							} *@
-							<td>
-
-								
-									@(string.IsNullOrWhiteSpace(itemPagoCaja.Nombre)
-																? " "
-																: itemPagoCaja.Nombre)
-							</td>
-							
-							@foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPagoCaja.Concepto))
-							{
 								<td>
 
 
-										@(string.IsNullOrWhiteSpace(tipoMovimiento.Concepto)
-																	? " "
-																	: tipoMovimiento.Concepto)
+									@(string.IsNullOrWhiteSpace(itemPagoCaja.Nombre)
+																										? " "
+																										: itemPagoCaja.Nombre)
 								</td>
-							}
-							<td>
+
+								@foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPagoCaja.Concepto))
+								{
+									<td>
+
+
+										@(string.IsNullOrWhiteSpace(tipoMovimiento.Concepto)
+																											? " "
+																											: tipoMovimiento.Concepto)
+									</td>
+								}
+								<td>
 									C$	@(string.IsNullOrWhiteSpace(itemPagoCaja.Monto.ToString())
-																? " "
-																: itemPagoCaja.Monto.ToString())
-									
-							</td>
-							@foreach (var nivel in Model.grados.Where(a => a.IdGrado == itemPagoCaja.IdGrado))
-							{
+																							? " "
+																							: itemPagoCaja.Monto.ToString())
+
+								</td>
+								@{
+									var nivel = Model.grados.
+									FirstOrDefault(a => a.IdGrado == itemPagoCaja.IdGrado);
+									}
 								<td>
 										@(string.IsNullOrEmpty(nivel.NombreGrado)
 																	? "Sin Datos"
@@ -127,9 +129,11 @@
 									
 
 								</td>
-							}
-							@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemPagoCaja.IdTurno))
-							{
+							
+								@{
+								var turno=Model.turnos.
+								FirstOrDefault(a => a.IdTurno == itemPagoCaja.IdTurno);
+								}
 								<td>
 										@(string.IsNullOrWhiteSpace(turno.NombreTurno)
 																	? " "
@@ -137,21 +141,23 @@
 									
 
 								</td>
-							}
+							
 							<td>
 
 									@(string.IsNullOrWhiteSpace(itemPagoCaja.Descripcion)
 																? " "
 																: itemPagoCaja.Descripcion)
 							</td>
-							@foreach (var periodo in Model.periodo.Where(a => a.IdPeriodo == itemPagoCaja.IdPeriodo))
-							{
-								<td>
+								@{
+									var recinto = Model.recintos
+									.FirstOrDefault(a => a.IdRecinto == itemPagoCaja.IdRecinto);
+								}
+									<td>
 
-									@periodo.Periodo
+										@(string.IsNullOrWhiteSpace(recinto?.Recinto) ? "Sin Recinto" : recinto.Recinto)
 
-								</td>
-							}
+									</td>
+								
 							<td>
 									@(string.IsNullOrWhiteSpace(itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy"))
 																? " "

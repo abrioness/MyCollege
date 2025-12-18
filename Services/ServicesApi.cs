@@ -694,7 +694,7 @@ namespace WebColegio.Services
             using (var httpClient = new HttpClient())
             {
                 var login = new TblUsuarios();
-                var response = await httpClient.GetAsync(url + $"api/TblUsuarios/obtenerUsuario?login={usuario}");
+                var response = await httpClient.GetAsync(url + $"api/Usuarios/obtenerUsuario?login={usuario}");
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadAsStringAsync();
@@ -714,7 +714,7 @@ namespace WebColegio.Services
 
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.GetAsync(url + $"api/TblUsuarios/validarUsuario?login={login}");
+                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
                 if (response.IsSuccessStatusCode)
                 {
                     return true;
@@ -1554,19 +1554,19 @@ namespace WebColegio.Services
 
         }
 
-        public async Task<bool> validarUsuarios(string login)//, int idtematica)
-        {
+        //public async Task<bool> validarUsuarios(string login)//, int idtematica)
+        //{
 
-            using (var httpClient = new HttpClient())
-            {
-                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
-                return false;
-            }
-        }
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            return true;
+        //        }
+        //        return false;
+        //    }
+        //}
         public async Task<bool> ValidarProductos(string codigo, int categoria)
         {
             var existe = false;

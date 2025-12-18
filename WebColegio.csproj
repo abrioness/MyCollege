@@ -9,12 +9,16 @@
   <ItemGroup>
     <Compile Remove="Models\Models\**" />
     <Compile Remove="Pages\**" />
+    <Compile Remove="Views\ReciboCaja\**" />
     <Content Remove="Models\Models\**" />
     <Content Remove="Pages\**" />
+    <Content Remove="Views\ReciboCaja\**" />
     <EmbeddedResource Remove="Models\Models\**" />
     <EmbeddedResource Remove="Pages\**" />
+    <EmbeddedResource Remove="Views\ReciboCaja\**" />
     <None Remove="Models\Models\**" />
     <None Remove="Pages\**" />
+    <None Remove="Views\ReciboCaja\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -37,6 +37,8 @@ namespace WebColegio.Controllers
         // GET: UsuariosController/Create
         public ActionResult Create()
         {
+
+
             return View();
         }
 
@@ -69,7 +71,7 @@ namespace WebColegio.Controllers
 
                     viewmodel.usuarios.NombreUsuario = nombre;
                     viewmodel.usuarios.Password = passwordBytes;
-                    viewmodel.usuarios.UsuarioRegistro = 1;
+                    viewmodel.usuarios.UsuarioRegistro = idUsuario;
                     viewmodel.usuarios.FechaRegistro = DateTime.Now;
                     viewmodel.usuarios.Activo = true;
 

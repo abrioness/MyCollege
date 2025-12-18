@@ -163,22 +163,7 @@
                                     </div>
                                 </div>
                             </li>
-                            <!-- Inventario -->
-                            @* <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseInventario"
-                                aria-expanded="false" aria-controls="collapseInventario">
-                                    <i class="bi bi-clipboard-check"></i>
-                                    <span>Inventario</span>
-                                </a>
-                                <div id="collapseInventario" class="collapse">
-                                    <div class="bg-white py-2 collapse-inner rounded">
-                                        <a class="collapse-item" asp-controller="Inventario" asp-action="Index">Lista de Inventario</a>
-                                        <a class="collapse-item" asp-controller="Inventario" asp-action="Create">Agregar Inventario</a>
-
-
-                                    </div>
-                                </div>
-                            </li> *@
+                           
                         }
                         <!-- productos -->
                         @if (User.IsInRole("Secretaria") || User.IsInRole("Cajero") || User.IsInRole("Admin"))
@@ -232,6 +217,22 @@
                                 </div>
                             </div>  
                         </li>
+                            <!-- Usuario -->
+                            <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsuario"
+                                   aria-expanded="false" aria-controls="collapseInventario">
+                                    <i class="bi bi-person"></i>
+                                    <span>Usuario</span>
+                                </a>
+                                <div id="collapseUsuario" class="collapse">
+                                    <div class="bg-white py-2 collapse-inner rounded">
+                                        <a class="collapse-item" asp-controller="Inventario" asp-action="Index">Lista de Inventario</a>
+                                        <a class="collapse-item" asp-controller="Usuarios" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Usuario</a>
+
+
+                                    </div>
+                                </div>
+                            </li>
                     }
                         @if (User.IsInRole("Cajero") || User.IsInRole("Admin"))
                         {

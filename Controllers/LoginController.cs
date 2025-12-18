@@ -49,7 +49,12 @@ namespace WebColegio.Controllers
             var idrol = usuario.IdRol;
             var roles = await _IService.GetRol(idrol);
             
-
+            if(usuario.NombreUsuario==null || usuario.Password==null)
+            {
+                TempData["Mensaje"] = "El usuario ó la Contraseña no Existen!";
+                TempData["Tipo"] = "warning";
+                return View("Login");
+            }
             // Convertir contraseña guardada en byte[] a string (hash)
             string storedHash = Encoding.UTF8.GetString(usuario.Password);
             // Verificar contraseña

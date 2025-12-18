@@ -13,6 +13,7 @@ namespace WebColegio.Models.ViewModel
         public List<Turnos> turnos { get; set; } = new List<Turnos>();
         public int SiguienteNumero { get; set; }
         public int Mora { get; set; }
+        
         public List<TblPagoCaja> listPagoCaja { get; set; } = new();
         public List<SelectListItem> reciboCajas { get; set; } = new();
         public List<SelectListItem> pagosSelectListItem { get; set; } = new();

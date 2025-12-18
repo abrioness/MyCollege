@@ -72,9 +72,11 @@
         </div>
 
         <!-- I. DATOS DEL ESTUDIANTE -->
-        <fieldset class="p-3 mb-auto">
+        @* <fieldset class="p-3 mb-auto"> *@
             <legend class="w-auto px-2"><strong>I. DATOS PERSONALES DEL ESTUDIANTE</strong></legend>
-            <div class="col-lg-6">
+            <div class="row">
+               
+            <div class="col-md-4">
                 <div class="col-md-8 columna-izquierda">
                     <div class="fila-interna">
                         <div class="etiqueta">Nombres:</div>
@@ -82,13 +84,16 @@
 
 
                     </div>
-                </div>
+					</div>
+            </div>
+            <div class="col-md-4">
                 <div class="col-md-8 columna-izquierda">
                     <div class="fila-interna">
                         <div class="etiqueta">Apellidos:</div>
                         <div class="valor">@Model.alumnos.Apellido</div>
                     </div>
                 </div>
+            </div>
             </div>
             <div class="col-lg-6">
                 <div class="col-md-8 columna-izquierda">
@@ -163,7 +168,7 @@
             </div>
 
 
-        </fieldset>
+       @*  </fieldset> *@
 
         <!-- II. PADRES O TUTOR -->
         <fieldset class="border p-3 mb-4">

@@ -154,7 +154,7 @@ namespace WebColegio.Controllers
                     egresos.UsuarioRegistro = idUsuario;
                     egresos.Activo = true;
                     egresos.FechaRegistro = DateTime.Now;
-                    egresos.IdPeriodo = periodo.IdPeriodo;
+                   
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostEgresoAsync(egresos);
                     if (response)

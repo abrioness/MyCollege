@@ -15,113 +15,116 @@
 
 		<div class="card-body">
 			<div class="table-responsive" style="font-size:12px">
-			<div class="col-4 text-center">
-				@using (Html.BeginForm("Index", "Pagos", FormMethod.Get))
-				{
-					<div class="row">
-						<div class="col-4">
-							<label class="control-label">Desde:</label>
-							<input type="date" name="fechainicio" id="FechaInicio" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+				<div class="col-4 text-center">
+					@using (Html.BeginForm("Index", "Pagos", FormMethod.Get))
+					{
+						<div class="row">
+							<div class="col-4">
+								<label class="control-label">Desde:</label>
+								<input type="date" name="fechainicio" id="FechaInicio" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+							</div>
+							<div class="col-4">
+								<label class="control-label">Hasta:</label>
+								<input type="date" name="fechafin" id="FechaFin" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+							</div>
+							<div class="col-4">
+								<br />
+								<button type="submit" class="form-control btn btn-success">Filtrar</button>
+							</div>
 						</div>
-						<div class="col-4">
-							<label class="control-label">Hasta:</label>
-							<input type="date" name="fechafin" id="FechaFin" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-						</div>
-						<div class="col-4">
-							<br />
-							<button type="submit" class="form-control btn btn-success">Filtrar</button>
-						</div>
-					</div>
-				}
-			</div>
-			<div class="col-12 text-end">
+					}
+				</div>
+				<div class="col-12 text-end">
 
-				<a asp-action="Create" class="btn btn-primary">
-					<i class="bi bi-plus-circle"></i> Agregar Pago
-				</a>
-			</div>
+					<a asp-action="Create" class="btn btn-primary">
+						<i class="bi bi-plus-circle"></i> Agregar Pago
+					</a>
+				</div>
 
 				<table id="tablaPagos" class="table table-bordered table-sm">
-				@* class="display responsive nowrap" style="width:100%"> *@
-				<thead>
-					<tr>
-						<th>Número Recibo</th>
-						<th>Alumno</th>
-						<th>Concepto</th>
-						<th>Monto</th>
-						<th>Mora</th>
-						<th>Mes Pagado</th>						
-						<th>Tipo Recibo</th>
-						<th>Metodo Pago</th>
-						<th>Fecha Emisión</th>
-
-					</tr>
-				</thead>
-				<tbody>
-					@foreach (var itemPago in Model.pagos)
-					{
+					@* class="display responsive nowrap" style="width:100%"> *@
+					<thead>
 						<tr>
-							<td><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
+							<th>Número Recibo</th>
+							<th>Alumno</th>
+							<th>Concepto</th>
+							<th>Monto</th>
+							<th>Mora</th>
+							<th>Mes Pagado</th>						
+							<th>Tipo Recibo</th>
+							<th>Colegio</th>
+							<th>Fecha Emisión</th>
 
-							@foreach (var alumno in Model.alumno.Where(a => a.IdAlumno == itemPago.IdAlumno))
-							{
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var itemPago in Model.pagos)
+						{
+							<tr>
+								<td><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
+
+								@{
+									var alumno = Model.alumno.FirstOrDefault(a => a.IdAlumno == itemPago.IdAlumno);
+								}	
 								<td>
 
 									@alumno.Nombre  @alumno.Apellido
 
 								</td>
-							}
 
-							@foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPago.IdTipoMovimiento))
-							{
-								<td>
 
-									@tipoMovimiento.Concepto
-
-								</td>
-							}
-							<td>
-
-								C$ @itemPago.Monto
-							</td>
-							<td>
-
-								C$	@((itemPago.Mora== null) ? "0" : itemPago.Mora)
-							</td>
-                            @if (itemPago.IdMes == null)
-                            {
-                                <td>  </td>
-                            }
-                            else
-                            {
-								@foreach (var mesPagar in Model.meses.Where(a => a.IdMes == itemPago.IdMes))
-								{
-									<td>
-										@mesPagar.Mes
-									</td>
+								@{
+									var tipoMovimiento = Model.tipoMovimiento.FirstOrDefault(a => a.IdTipoMovimiento == itemPago.IdTipoMovimiento);
 								}
-                            }
-							
-							
-							@foreach (var tipoRecibo in Model.tipoRecibo.Where(a => a.IdTipoRecibo == itemPago.IdTipoRecibo))
-							{
 								<td>
 
-									@tipoRecibo.TipoRecibo
+									@tipoMovimiento?.Concepto
 
 								</td>
-							}
-							@foreach (var metodoPago in Model.metodoPago.Where(a => a.IdMetodoPago == itemPago.IdMetodoPago))
-							{
+
 								<td>
 
-									@metodoPago.MetodoPago
+									C$ @itemPago.Monto
+								</td>
+								<td>
+
+									C$	@((itemPago.Mora== null) ? "0" : itemPago.Mora)
+								</td>
+								@if (itemPago.IdMes == null)
+								{
+									<td>  </td>
+								}
+								else
+								{
+									
+								var mesPagar = Model.meses.FirstOrDefault(a => a.IdMes == itemPago.IdMes);
+
+									
+									<td>
+										@mesPagar?.Mes
+									</td>
+
+								}
+
+
+								@{
+									var tipoRecibo = Model.tipoRecibo.FirstOrDefault(a => a.IdTipoRecibo == itemPago.IdTipoRecibo);
+								}
+								<td>
+
+									@tipoRecibo?.TipoRecibo
 
 								</td>
-							}
-							
-							
 
+								@{
+									var recinto = Model.recintos.FirstOrDefault(a => a.IdRecinto == itemPago.IdRecinto);
+								}
+								<td>
+
+									@recinto?.Recinto
+
+								</td>
+							
 
 							 <td>
 								@itemPago.FechaRegistro.ToString("dd/MM/yyyy")

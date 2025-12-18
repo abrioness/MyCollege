@@ -10,7 +10,7 @@
         public string Serie { get; set; } = null!;
         public decimal Monto { get; set; }
         public DateTime? FechaEmision { get; set; }
-        public int? Anyo { get; set; }
+       
         public int IdPeriodo { get; set; }
         public int? IdRecinto { get; set; }
         public bool Activo { get; set; }

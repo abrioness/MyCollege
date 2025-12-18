@@ -29,6 +29,7 @@ namespace WebColegio.Controllers
             var _turnos = await _Iservices.GetTurnosAsync();
             var _periodo = await _Iservices.GetPeriodoAsync();
             var _tipoMovimiento=await _Iservices.GetTipoMovimientoAsync();
+            var _recinto = await _Iservices.GetRecintosAsync();
             //var _metodoPago = await _Iservices.GetMetodoPagoAsync();
             //var _meses = await _Iservices.GetMesesAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
@@ -49,8 +50,7 @@ namespace WebColegio.Controllers
                 turnos = _turnos,
                 tipoMovimiento = _tipoMovimiento,
                 periodo = _periodo,
-                //modalidades = _modalidad,
-                //grados = _grados    
+                recintos = _recinto,
 
             };
             if (VieModelPagoCaja == null)

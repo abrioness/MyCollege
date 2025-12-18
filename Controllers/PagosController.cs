@@ -34,6 +34,7 @@ namespace WebColegio.Controllers
             var _tipoRecibo = await _Iservices.GetTipoReciboAsync();
             var _metodoPago = await _Iservices.GetMetodoPagoAsync();
             var _meses = await _Iservices.GetMesesAsync();
+            var _recinto = await _Iservices.GetRecintosAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
             //var _grados = await _Iservices.GetGradosAsync();
             var query = _pagos;
@@ -53,7 +54,8 @@ namespace WebColegio.Controllers
                 tipoMovimiento = _tipoMovimiento,
                 tipoRecibo = _tipoRecibo,
                 metodoPago = _metodoPago,
-                meses=_meses
+                meses=_meses,
+                recintos=_recinto
                 //modalidades = _modalidad,
                 //grados = _grados    
 

@@ -41,15 +41,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label asp-for="Egresos.Anyo" class="control-label">Año</label>
-                            <select asp-for="Egresos.Anyo" id="anyo" class="form-select" required>
+                            <label asp-for="Egresos.IdPeriodo" class="control-label">Año</label>
+                            <select asp-for="Egresos.IdPeriodo"  asp-items="Model.periodo" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
-                                @for (int año = añosInicio; año <= añosFin; año++)
-                                {
-                                    <option value="@año">@año</option>
-                                }
+                               
                             </select>
-                            <span asp-validation-for="Egresos.Anyo" class="text-danger"></span>
+                            <span asp-validation-for="Egresos.IdPeriodo" class="text-danger"></span>
                         </div>
                         <!-- Sección de Meses - Se muestra/oculta según el tipo de movimiento -->
                         <br />
