@@ -706,15 +706,31 @@ namespace WebColegio.Services
 
 
         }
-
-
-        //Validación 
-        public async Task<bool> validarUsuarios(string login)//, int idtematica)
+        public async Task<List<TblRol>> GetRolAsync()
         {
 
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
+                var rol = new List<TblRol>();
+                var response = await httpClient.GetAsync(url + $"api/TblRol/ObtenerRol");
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadAsStringAsync();
+                    var respuesta = JsonConvert.DeserializeObject<List<TblRol>>(data);
+                    rol = respuesta;
+                }
+                return rol;
+            }
+        }
+
+
+        //Validación 
+        public async Task<bool> validarUsuarios(string login, string cedula)//, int idtematica)
+        {
+
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}&cedula={cedula}");
                 if (response.IsSuccessStatusCode)
                 {
                     return true;
@@ -1137,7 +1153,7 @@ namespace WebColegio.Services
             using (var httpClient = new HttpClient())
             {
                 var content = JsonContent.Create(usuario);
-                var guardarUsuario = await httpClient.PostAsync(url + "api/TblUsuario/Guardar", content);
+                var guardarUsuario = await httpClient.PostAsync(url + "api/Usuarios/Guardar", content);
                 if (guardarUsuario.IsSuccessStatusCode)
                 {
                     return true;
@@ -1479,10 +1495,41 @@ namespace WebColegio.Services
             }
 
         }
+        public async Task<bool> UpdateUsuario(TblUsuarios usuario)
+        {
+            var usuariosUpdate = await GetUsuarioIdAsync(usuario.IdUsuario);
+            // Actualizamos campos
+            usuariosUpdate.IdRol = usuario.IdRol;
+            usuariosUpdate.NombreCompleto = usuario.NombreCompleto;
+            usuariosUpdate.NombreUsuario = usuario.NombreUsuario;
+            usuariosUpdate.Password =usuario.Password;
+            usuariosUpdate.Cedula = usuario.Cedula;
+            usuariosUpdate.Correo = usuario.Correo;
+            usuariosUpdate.UsuarioActualiza = usuario.UsuarioActualiza;
+            usuariosUpdate.FechaActualiza = usuario.FechaActualiza;
+
+            if (usuariosUpdate == null)
+            {
+                return false;
+            }
+
+            using (var httpClient = new HttpClient())
+            {
+                // Convertimos el objeto a JSON
+                var json = JsonConvert.SerializeObject(usuariosUpdate);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                // Realizamos la solicitud PUT
+                var response = await httpClient.PutAsync(url + $"api/Usuarios/Actualizar?id={usuariosUpdate.IdUsuario}", content);
+
+                return response.IsSuccessStatusCode;
+            }
+
+        }
         #endregion
 
         #region Metodos de Validaciones
-        
+
         public async Task<bool> ValidarAlumnoDuplicado(string codigo)
         {
             var existe = false;
@@ -1554,19 +1601,19 @@ namespace WebColegio.Services
 
         }
 
-        //public async Task<bool> validarUsuarios(string login)//, int idtematica)
-        //{
+        public async Task<bool> validarUsuarios(string login)//, int idtematica)
+        {
 
-        //    using (var httpClient = new HttpClient())
-        //    {
-        //        var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            return true;
-        //        }
-        //        return false;
-        //    }
-        //}
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
         public async Task<bool> ValidarProductos(string codigo, int categoria)
         {
             var existe = false;
@@ -1606,7 +1653,7 @@ namespace WebColegio.Services
         //}
         #endregion
 
-                    #region Generar Código Estudiante
+        #region Generar Código Estudiante
         public async Task<string> GenerarCodigoAlumno()
         {
             // Obtiene el último alumno insertado

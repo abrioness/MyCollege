@@ -1,77 +1,70 @@
 ﻿@model WebColegio.Models.ViewModel.UsuarioViewModel
 
 @* @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Edit";
 } *@
-<script>
 
-    function msg(mensaje){
-        swal.fire({
-                title: 'warning',
-                text: mensaje,
-                icon: 'warning',
-                confirmbuttontext: 'aceptar'
-            });}
-
-    function msgconfirm(mensaje)
-    {
-        swal.fire({
-                title: 'info',
-                text: mensaje,
-                icon: 'info',
-                confirmbuttontext: 'aceptar',
-                confirmbuttontext:'cancelar'
-            });
-    }
-
-</script>
-<div class="container mt-4">
+<div class="container mt-6" style="padding:50px;">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Registro de Usuario</h4>
+            <h4 class="mb-0"><i class="bi bi-pencil"></i> Actualizar Datos del Usuario</h4>
         </div>
         <div class="card-body">
-            <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
+
+                            <input type="hidden" asp-for="usuarios.IdUsuario" class="form-control" />
+
+                        </div>
+                        <div class="form-group">
                             <label asp-for="usuarios.IdRol" class="control-label"> Rol </label>
                             <select asp-for="usuarios.IdRol" asp-items="Model.RolSelectList" class="form-select" required>
-                                <option value="">Seleccione el Rol</option>
+                                <option disabled selected>Seleccione el Rol</option>
                             </select>
-                            <span asp-validation-for="usuarios.IdRol" class="text-danger"></span>
+                            @* <span asp-validation-for="usuarios.IdRol" class="text-danger"></span> *@
                         </div>
                         <div class="form-group">
                             <label asp-for="usuarios.NombreCompleto" class="control-label">Nombre Completo</label>
                             <input asp-for="usuarios.NombreCompleto" class="form-control" />
-                            <span asp-validation-for="usuarios.NombreCompleto" class="text-danger"></span>
+                            @* <span asp-validation-for="usuarios.NombreCompleto" class="text-danger"></span> *@
                         </div>
                         <div class="form-group">
                             <label asp-for="usuarios.NombreUsuario" class="control-label">Nombre de Usuario</label>
                             <input asp-for="usuarios.NombreUsuario" class="form-control" />
-                            <span asp-validation-for="usuarios.NombreUsuario" class="text-danger"></span>
+                            @* <span asp-validation-for="usuarios.NombreUsuario" class="text-danger"></span> *@
                         </div>
                         <div class="form-group">
                             <label asp-for="usuarios.Cedula" class="control-label">Cedula</label>
                             <input asp-for="usuarios.Cedula" class="form-control" />
-                            <span asp-validation-for="usuarios.Cedula" class="text-danger"></span>
+                            @* <span asp-validation-for="usuarios.Cedula" class="text-danger"></span> *@
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label asp-for="Password" class="control-label">Contraseña</label>
                             <input type="password" asp-for="Password" class="form-control" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
+                            @* <span asp-validation-for="Password" class="text-danger"></span> *@
                         </div>
-                  
+
                         <div class="form-group">
                             <label asp-for="usuarios.Correo" class="control-label"></label>
-                            <input type="email" asp-for="usuarios.Correo" class="form-control" />
-                            <span asp-validation-for="usuarios.Correo" class="text-danger"></span>
-                        </div>                        
-                  </div>
-                  </div>
+                            <input asp-for="usuarios.Correo" class="form-control" />
+                            @* <span asp-validation-for="usuarios.Correo" class="text-danger"></span> *@
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="usuarios.Activo" class="control-label"> Estado del Usuario </label>
+                            <select asp-for="usuarios.Activo"  class="form-select" required>
+                                <option value="">Seleccione una Opción</option>
+                                <option value="true">Activo</option>
+                                <option value="false">Inactivo</option>
+                            </select>
+                            @* <span asp-validation-for="usuarios.Activo" class="text-danger"></span> *@
+                        </div>
+                    </div>
+                </div>
                 <!-- Botones -->
                 <div class="col-12 text-end">
                     <button type="submit" class="btn btn-success">
@@ -85,16 +78,14 @@
         </div>
     </div>
 </div>
-
-@* <div>
-    <a asp-action="Index">Back to List</a>
-</div> *@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-<script src="~/js/limpiarcampos.js"></script>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="~/js/limpiarcampos.js"></script>
+@* <script src="~/js/mensajecamprequerido.js"></script> *@
+<script src="~/seewtalert/sweetalert.all.min.js"></script>
+<script src="~/seewtalert/sweetalertstyle.js"></script>
+<link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
 
 @if (TempData["Mensaje"] != null)
 {

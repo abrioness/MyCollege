@@ -8,31 +8,31 @@
             <span>Bienvenido, @User.Identity.Name </span>
         </div>
     }
-    
+
     <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
         <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:8%;margin-left:55px">
 
         <div class="titulo" style="flex: 1;">
             <span class="nombre" style="font-size: 25px;
-  font-family: 'Arial', 'Trebuchet MS', sans-serif;
-  display: block;">Colegio Parroquial San Francisco Javier</span><br>
+              font-family: 'Arial', 'Trebuchet MS', sans-serif;
+              display: block;">Colegio Parroquial San Francisco Javier</span><br>
             <span class="lema" style="font-size: 20px;font-family: 'Arial', 'Trebuchet MS', sans-serif;">“En Todo Amar y Servir”</span>
         </div>
 
         <img src="~/image/SanFrancisco.png" alt="derecha" class="logo-derecha" style="width:28%;">
-        
+
     </div>
-   
-   @*  <div class="align-text-top text-center text-white"><span style="font-size:25px;font-family:'Arial', 'Trebuchet MS', sans-serif; margin-left:15px">Colegio Parroquial San Francisco Javier</span><br />
+
+    @*  <div class="align-text-top text-center text-white"><span style="font-size:25px;font-family:'Arial', 'Trebuchet MS', sans-serif; margin-left:15px">Colegio Parroquial San Francisco Javier</span><br />
         <span style="font-size:20px; font-family:'Arial', 'Trebuchet MS', sans-serif;margin-left:15px">”En Todo Amar y Servir”</span>
-       
-    
+
+
     <div class="text-start text-white" style="">
         <img src="~/image/colegiosanfrancisco.png" style="width:8%;margin-left:40px;" />
         <img src="~/image/SanFrancisco.png" style="width:28%;margin-left:58%;"/>
     </div>
     </div> *@
-    
+
 </nav>
 
 
@@ -62,7 +62,7 @@
 
     <!-- Opcional: Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
+
 
 
 
@@ -87,21 +87,21 @@
 
                     <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLogin"
-                           aria-expanded="false">
-                            
-                                <i class="bi bi-person-lock"></i> Login
-                            </a>
+                        aria-expanded="false">
+
+                            <i class="bi bi-person-lock"></i> Login
+                        </a>
                         <div id="collapseLogin" class="collapse" data-bs-parent="#accordionSidebar">
 
-                                <div class="bg-white py-2 collapse-inner rounded">
+                            <div class="bg-white py-2 collapse-inner rounded">
                                 <a class="collapse-item" asp-controller="Login" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Iniciar Sesión</a>
                                 <a class="collapse-item" asp-controller="Login" asp-action="Logout"> <i class="bi bi-arrow-return-right text-black"></i> Cerrar Sesión</a>
 
-                                </div>
                             </div>
-                        </li>                       
-                    
-                    
+                        </div>
+                    </li>                       
+
+
                     @if (User.Identity.IsAuthenticated)
                     {
 
@@ -114,8 +114,8 @@
                             <!-- Alumnos -->
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"  data-bs-target="#collapseAlumnos"
-                                   aria-expanded="false" aria-controls="collapseAlumnos" role="button">
-                                    
+                                aria-expanded="false" aria-controls="collapseAlumnos" role="button">
+
                                     <i class="bi bi-mortarboard-fill"></i>
                                     <span>Alumnos</span>
                                 </a>
@@ -132,7 +132,7 @@
                         {
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
-                                   aria-expanded="false" aria-controls="collapseNotas" role="button">
+                                aria-expanded="false" aria-controls="collapseNotas" role="button">
                                     <i class="bi bi-pencil-square"></i>
                                     <span>Notas</span>
                                 </a>
@@ -151,7 +151,7 @@
                             <!-- Facturación -->
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
-                                   aria-expanded="false" aria-controls="collapseRecibos" role="button">
+                                aria-expanded="false" aria-controls="collapseRecibos" role="button">
                                     <i class="bi bi-stickies"></i>
                                     <span>Arqueo Diario</span>
                                 </a>
@@ -159,18 +159,18 @@
                                     <div class="bg-white py-2 collapse-inner rounded">
 
                                         <a class="collapse-item" asp-controller="ArqueoDiario" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja" target="_blank"><i class="bi bi-arrow-return-right text-black"></i> Generar Arqueo</a>
-                                        
+
                                     </div>
                                 </div>
                             </li>
-                           
+
                         }
                         <!-- productos -->
                         @if (User.IsInRole("Secretaria") || User.IsInRole("Cajero") || User.IsInRole("Admin"))
                         {
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
-                                   aria-expanded="false" aria-controls="collapseProducto" role="button">
+                                aria-expanded="false" aria-controls="collapseProducto" role="button">
                                     <i class="bi bi-clipboard-check"></i>
                                     <span>Inventario</span>
                                 </a>
@@ -187,20 +187,20 @@
                         <!-- pagos -->
                         @if (User.IsInRole("Admin"))
                         {
-                        <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
-                               aria-expanded="false" aria-controls="collapsePago">
+                            <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
+                                aria-expanded="false" aria-controls="collapsePago">
                                     <i class="bi bi-collection"></i>                               
 
-                                <span>Reportes</span>
-                            </a>
+                                    <span>Reportes</span>
+                                </a>
                                 <div id="collapsePago" class="collapse" data-bs-parent="#accordionSidebar">
-                                <div class="bg-white py-2 collapse-inner rounded">
-                                    @if(User.IsInRole("Director") || User.IsInRole("Admin"))
-                                    {
+                                    <div class="bg-white py-2 collapse-inner rounded">
+                                        @if (User.IsInRole("Director") || User.IsInRole("Admin"))
+                                        {
                                             <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
                                             <a class="collapse-item" asp-controller="Notas" asp-action="Index"><i class="bi bi-arrow-return-right text-black"></i> Reporte de Notas</a>
-                                    }
+                                        }
 
                                         <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
                                         <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
@@ -212,21 +212,25 @@
 
                                         <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
                                         <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
-                                    
 
-                                </div>
-                            </div>  
-                        </li>
-                            <!-- Usuario -->
+
+                                    </div>
+                                </div>  
+                            </li>
+
+                        }
+                        @if (User.IsInRole("UserSystem"))
+                        {
+                        <!-- Usuario -->
                             <li class="nav-item" style="background:white;margin-left:10px;margin-right:10px">
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsuario"
                                    aria-expanded="false" aria-controls="collapseInventario">
                                     <i class="bi bi-person"></i>
                                     <span>Usuario</span>
                                 </a>
-                                <div id="collapseUsuario" class="collapse">
+                                <div id="collapseUsuario" class="collapse" data-bs-parent="#accordionSidebar">
                                     <div class="bg-white py-2 collapse-inner rounded">
-                                        <a class="collapse-item" asp-controller="Inventario" asp-action="Index">Lista de Inventario</a>
+                                        <a class="collapse-item" asp-controller="Usuarios" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Usuarios</a>
                                         <a class="collapse-item" asp-controller="Usuarios" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Usuario</a>
 
 
@@ -329,6 +333,7 @@
 	
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
 
     <!-- DataTables con Bootstrap 5 -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />

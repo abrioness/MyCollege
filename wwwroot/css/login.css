@@ -87,7 +87,8 @@ input {
 }
 
     #submit:hover {
-        background: #ecea6b;
+        background: gray;
+        
     }
 
 /* RESPONSIVE EXTRA */

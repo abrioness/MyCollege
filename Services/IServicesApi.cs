@@ -43,7 +43,8 @@ namespace WebColegio.Services
 
         Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync();
         Task<List<TblCostoMatricula>> GetCostosMatriculaAsync();
-        
+        Task<List<TblRol>> GetRolAsync();
+
         #endregion
         #region Metodos Post
         Task<bool> PostAlumnosAsync(TblAlumno alumnos);
@@ -63,6 +64,7 @@ namespace WebColegio.Services
         #region Metodos Put
         Task<bool> UpdateAlumnos(TblAlumno alumno);
         Task<bool> UpdateNotas(TblNotas nota);
+        Task<bool> UpdateUsuario(TblUsuarios usuario);
         #endregion
         #region Metodos Get por Id
         Task<TblAlumno> GetAlumnoIdAsync(int id);
@@ -86,7 +88,7 @@ namespace WebColegio.Services
         Task<bool> ValidarFacturas(int idTipoColegiatura, int idEstadoPago, int idAlumno, string mesFacturado, string anyoFacturado);
         Task<bool> ValidarProductos(string codigo, int categoria);
         Task<bool> ValidarAlumnoDuplicado(string codigo);
-        Task<bool> validarUsuarios(string login);
+        Task<bool> validarUsuarios(string cedula);
         //Task<int> ValidarMesesPendientes(List<TblPago> pagos, int idmes);
         #endregion
 

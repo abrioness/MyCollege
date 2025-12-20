@@ -32,10 +32,10 @@
         </div>
         <form class="form" method="post" asp-action="Login" enctype="multipart/form-data">
             <label for="NombreUsuario">Usuario</label>
-            <input type="text" name="NombreUsuario" id="user" required placeholder="Nombre de Usuario" />
+                    <i class="bi bi-person"></i><input type="text" name="NombreUsuario" id="user" required placeholder="Nombre de Usuario" />
             <label for="Password">Contraseña</label>
-            <input type="password" name="Password" id="password" required placeholder="Contraseña">
-                <input type="submit" id="submit" value="Iniciar Sesión">
+                    <i class="bi bi-person-lock"></i><input type="password" name="Password" id="password" required placeholder="Contraseña">
+                    <i class="bi bi-person-check"></i><input type="submit" class="bi bi-person-fill-check" id="submit" value="Iniciar Sesión">
                 
 
             @* ¿No tienes una Cuenta?<a href="@Url.Action("Create","Usuarios")"> Registrar!</a> *@

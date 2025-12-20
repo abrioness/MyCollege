@@ -4,7 +4,7 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+
 
 @* <p>
     <a asp-action="Create">Create New</a>
@@ -30,9 +30,17 @@
                         <th>
                             Nombre de Usuario
                         </th>
-
+                        <th>
+                            Cedula
+                        </th>
                         <th>
                             Correo
+                        </th>
+                        <th>
+                           Rol
+                        </th>
+                        <th>
+                            Estado
                         </th>
 
 
@@ -42,19 +50,36 @@
 @foreach (var item in Model.ListaUsuarios) {
         <tr>
             <td>
-                @item.NombreCompleto
+                 <a asp-action="Edit" asp-controller="Usuarios" asp-route-id="@item.IdUsuario" class="btn btn-sm btn-info">@item.NombreCompleto</a>
             </td>
 
             <td>
-                                @item.NombreUsuario
+                                 Nombre Completo
+                                
             </td>
-
+                            <td>
+                                @item.Cedula
+                            </td>
             <td>
                                 @item.Correo
             </td>
-                            <td>
-                                @item.Activo
-                            </td>
+            @{
+            var rol = Model.ListRol.FirstOrDefault(a=>a.IdRol==item.IdRol);
+            }
+            
+            <td>
+                @rol?.NombreRol
+            </td>
+            <td>
+                                @if ((item.Activo == true))
+                                {
+                                    <span class="badge bg-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactivo</span>
+                                }
+            </td>
             @* <td>
                 @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
                 @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |

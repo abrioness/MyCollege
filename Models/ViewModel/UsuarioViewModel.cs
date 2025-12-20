@@ -6,6 +6,7 @@ namespace WebColegio.Models.ViewModel
     {
         public TblUsuarios usuarios { get; set; } = new TblUsuarios();
         public List<TblUsuarios> ListaUsuarios { get; set; }= new List<TblUsuarios>();
+        public List<TblRol> ListRol { get; set; } = new List<TblRol>();
         public string Password { get; set; }
         public List<SelectListItem> SubsistemasSelectList { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> RolSelectList { get; set; } = new List<SelectListItem>();

@@ -1,33 +1,18 @@
-﻿/* ===== CONTENEDOR GENERAL ===== */
+﻿/* ===== CONTENEDOR ===== */
 .container {
     max-width: 1000px;
     background: #fff;
     padding: 20px;
-    
-    /*border: 2px solid #000;*/
 }
 
-/* ===== TITULO ===== */
-h5, h6 {
+/* ===== TITULOS ===== */
+h5 {
     color: #003366;
     font-weight: bold;
     text-transform: uppercase;
+    font-family: Arial;
+    font-size: smaller;
 }
-h5 {
-    background: #e6e6e6;
-    border: 1px solid #000;
-    padding: 5px 10px;
-}
-
-hr {
-    border-top: 2px solid #000;
-}
-
-/* ===== FIELDSET ESTILO FORMULARIO ===== */
-/*fieldset {
-    border: 2px solid #000 !important;
-    padding: 15px;
-}*/
 
 legend {
     font-size: 14px;
@@ -38,29 +23,172 @@ legend {
     padding: 5px 10px;
 }
 
-/* ===== FILAS TIPO TABLA ===== */
-.row {
-    margin: 0;
+/* ===== FILA FORMULARIO ===== */
+/*.fila-interna {
+            display: flex;
+            grid-template-columns: 160px 1fr;
+            border: 1px solid #000;
+            }*/
+
+/* Evita doble borde vertical */
+.row > div + div .fila-interna {
+    border-left: none;
 }
 
-    .row > div {
+/* ===== ETIQUETA / VALOR ===== */
+.etiqueta {
+    min-width: 160px;
+    padding: 6px 8px;
+    background: #f2f2f2;
+    font-weight: bold;
+    color: #003366;
+    border-right: 1px solid #000;
+    white-space: nowrap;
+}
+
+.valor {
+    padding: 6px 8px;
+    flex: 1;
+}
+
+.etiqueta {
+    background: #f2f2f2;
+    font-weight: bold;
+    color: #003366;
+    padding: 6px 8px;
+    border-right: 1px solid #000;
+    white-space: nowrap;
+}
+
+.fila-interna {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #000;
+}
+
+
+/* ===== ESPACIADO ===== */
+.row {
+    margin-bottom: 4px;
+}
+
+/* ===== IMPRESIÓN ===== */
+@media print {
+    body {
+        background: white;
+    }
+
+    .container {
+        max-width: 100%;
+        border: none;
+    }
+
+    legend {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .no-print {
+        display: none;
+    }
+}
+
+
+
+/* ===== CONTENEDOR GENERAL ===== */
+/*.container {
+    max-width: 1000px;
+    background: #fff;
+    padding: 20px;*/    
+    /*border: 2px solid #000;*/
+/*}*/
+
+/* ===== TITULO ===== */
+
+/*h5 {
+    color: #003366;
+    padding: 5px 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family:Arial;
+    font-size:smaller;
+}
+h6 {
+    background: #e6e6e6;
+    border: 1px solid #000;
+    border-radius: 5px;
+    font-size: large;
+    color: #003366;
+    font-family:Arial;
+    font-weight: bold;   
+}
+#fechapresentocentro {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    font-size:larger;
+}
+
+.tabla-fecha {
+    float: right;
+    border-collapse: collapse;
+    
+}
+
+    .tabla-fecha td {
         border: 1px solid #000;
-        padding: 6px 8px;
+        padding: 4px 8px;
+        text-align: center;
         font-size: 14px;
     }
 
-    /* Quitar doble borde */
-    .row + .row > div {
+
+hr {
+    border-top: 2px solid #000;
+}*/
+
+/* ===== FIELDSET ESTILO FORMULARIO ===== */
+/*fieldset {
+    border: 2px solid #000 !important;
+    padding: 15px;
+}*/
+
+/*legend {
+    font-size: 14px;
+    font-weight: bold;
+    color: #003366;
+    background: #e6e6e6;
+    border: 1px solid #000;
+    padding: 5px 10px;
+}*/
+
+/* ===== FILAS TIPO TABLA ===== */
+/*.row {
+    margin: 0;
+}*/
+
+    /*.row > div {
+        border: 1px solid #000;
+        padding: 6px 8px;*/
+        /*font-size: 14px;*/
+    /*}*/
+
+     /*Quitar doble borde*/ 
+   /* .row + .row > div {
         border-top: none;
-    }
+    }*/
 
 /* ===== ETIQUETAS ===== */
-strong {
+/*strong {
     color: #003366;
 }
 
+td {
+    border: 1px solid #000;
+}*/
 /* ===== ESPACIADO ===== */
-.mb-2 {
+/*.mb-2 {
     margin-bottom: 0 !important;
 }
 p{
@@ -68,10 +196,10 @@ p{
 }
 span{
     text-align:center;
-}
+}*/
 
 /* ===== IMPRESIÓN ===== */
-@media print {
+/*@media print {
     body {
         background: white;
     }
@@ -86,13 +214,13 @@ span{
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
-}
+}*/
 
-.fila-form {
+/*.fila-form {
     margin: 0;
-}
+}*/
 
-.columna-izquierda,
+/*.columna-izquierda,
 .columna-derecha {
     border: 1px solid #000;
     padding: 0;
@@ -100,10 +228,10 @@ span{
 
 .columna-derecha {
     border-left: none;
-}
+}*/
 
 /* Dirección */
-.columna-izquierda .etiqueta {
+/*.columna-izquierda .etiqueta {
     background: #f2f2f2;
     font-weight: bold;
     color: #003366;
@@ -115,20 +243,36 @@ span{
     padding: 6px 8px;
 }
 
-/* Peso y Talla */
-.fila-interna {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    border-bottom: 1px solid #000;
+
+.etiqueta {
+    font-weight: bold;
+    min-width: 160px;
 }
 
-    .fila-interna:last-child {
-        border-bottom: none;
-    }
+.valor {
+    flex: 1;
+}*/
+/*.fila-interna {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    border-bottom: 1px solid #000;
+}*/
 
-    .fila-interna .etiqueta {
-        white-space: nowrap; /* evita salto de línea */
-        background: #f2f2f2;
+/* Peso y Talla */
+/*.fila-interna {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    border: 1px solid #000;
+}*/
+
+    /*.fila-interna:last-child {
+        border-bottom: none;
+        
+    }*/
+
+    /*.fila-interna .etiqueta {
+        white-space: nowrap;*/ /* evita salto de línea */
+        /*background: #f2f2f2;
         font-weight: bold;
         color: #003366;
         padding: 6px 8px;
@@ -137,9 +281,9 @@ span{
 
     .fila-interna .valor {
         padding: 6px 8px;
-    }
+    }*/
 /* Botón imprimir */
-.print-button {
+/*.print-button {
     margin-top: 15px;
     padding: 6px 12px;
     font-size: 14px;
@@ -150,4 +294,4 @@ span{
     .no-print {
         display: none;
     }
-}
+}*/
