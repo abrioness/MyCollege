@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -19,6 +20,7 @@ namespace WebColegio.Controllers
             _Iservices = services;
         }
         // GET: AlumnosController
+        [Authorize]
         public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
 
@@ -34,18 +36,29 @@ namespace WebColegio.Controllers
                 var _modalidades = await _Iservices.GetModalidadesAsync();
                 var _recintos = await _Iservices.GetRecintosAsync();
             var _discapacidad = await _Iservices.GetDiscapacidadAsync();
-            var query = _alumnos;
+
+            IQueryable<TblAlumno> query = _alumnos.AsQueryable();
+
+            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
             if (fechainicio.HasValue)
             {
-                query = _alumnos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+                // Normalizar la fecha de inicio al inicio del día (00:00:00)
+                var fechaInicioNormalizada = fechainicio.Value.Date;
+                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
             }
             if (fechafin.HasValue)
             {
-                query = _alumnos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+                // Normalizar la fecha de fin al final del día (23:59:59)
+                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
             }
+
+            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
+            var alumnosFiltrados = query.ToList();
+
             var VieModelAlumnos = new ColeccionCatalogos
                 {
-                    alumno = query,
+                    alumno = alumnosFiltrados,
                     sexos = _sexos,
                     grupos = _grupos,
                     grados = _grados,
@@ -61,6 +74,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: AlumnosController/Details/5
+        [Authorize]
         public async Task<ActionResult> Details(int id)
         {
 
@@ -187,6 +201,7 @@ namespace WebColegio.Controllers
         }
 
         // POST: AlumnosController/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(TblAlumno alumnos)
@@ -236,6 +251,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: AlumnosController/Edit/5
+
         public async Task<ActionResult> Edit(int id)
         {
             var alumnos = await _Iservices.GetAlumnoIdAsync(id);
@@ -296,6 +312,7 @@ namespace WebColegio.Controllers
         }
 
         // POST: AlumnosController/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(AlumnosViewModel viewModel)

@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -18,6 +19,7 @@ namespace WebColegio.Controllers
             _Iservices = services;
         }
         // GET: NotasController
+        [Authorize]
         public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
             var _notas = await _Iservices.GetNotasAsync();
@@ -28,19 +30,27 @@ namespace WebColegio.Controllers
             var _modalidad = await _Iservices.GetModalidadesAsync();
             var _grados = await _Iservices.GetGradosAsync();
 
-            var query = _notas;
+            IQueryable<TblNotas> query = _notas.AsQueryable();
+
+            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
             if (fechainicio.HasValue)
             {
-                query = _notas.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+                // Normalizar la fecha de inicio al inicio del día (00:00:00)
+                var fechaInicioNormalizada = fechainicio.Value.Date;
+                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
             }
             if (fechafin.HasValue)
             {
-                query = _notas.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+                // Normalizar la fecha de fin al final del día (23:59:59)
+                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
             }
 
+            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
+            var notasFiltrados = query.ToList();
             var VieModelNotas = new ColeccionCatalogos
             {
-                notas = query,
+                notas = notasFiltrados,
                 alumno = _alumnos,
                 tipoEvaluaciones = _tipoEvaluacion,
                 periodoEvaluacions = _periodo,
@@ -61,6 +71,7 @@ namespace WebColegio.Controllers
           
         }
         // GET: NotasController/Details/ para Los tutores
+        [Authorize]
         public async Task<ActionResult> DetailsNotas(string cedulatutor)
         {
             
@@ -138,6 +149,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: NotasController/Details/5
+        [Authorize]
         public async Task<ActionResult> Details(int id)
         {
             var v_alumNota = await _Iservices.GetAlumnoIdAsync(id);
@@ -202,6 +214,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: NotasController/Create
+        [Authorize]
         public async Task<ActionResult> Create()
         {
             var viewmodel = new NotasViewModel
@@ -247,9 +260,10 @@ namespace WebColegio.Controllers
             };
 
             return View(viewmodel);
-        }   
+        }
 
         // POST: NotasController/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(TblNotas notas)
@@ -290,8 +304,9 @@ namespace WebColegio.Controllers
                 return View();
             }
         }
-        
+
         // GET: NotasController/Edit/5
+        [Authorize]
         public async Task<ActionResult> Edit(int id)
         {
             //var v_alumNota = await _Iservices.V_alumnoNotas(id);

@@ -24,7 +24,7 @@
                 }
                 <p>Fecha: @fecha</p>
                 <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="A" />
-                <input type="hidden" asp-for="@Model.arqueoDiario.NumeroRecibo" value="@Model.siguienteNumero" />
+                <input type="hidden" asp-for="@Model.arqueoDiario.NumeroArqueo" value="@Model.siguienteNumero" />
                 <input type="hidden" asp-for="@Model.arqueoDiario.IdRecinto" value="@Model.arqueoDiario.IdRecinto"/>
             </div>
         </div>
@@ -172,7 +172,7 @@
                             <tr>
                                 <td></td>
                                 <td class="totales">Total en Cordoba
-                                    <input type="hidden" asp-for="@Model.arqueoDiario.TotalCordobas" />
+                                    @* <input type="hidden" asp-for="@Model.arqueoDiario.TotalCordobas" /> *@
                                 </td>
                                 <td><input type="text" id="totalGeneralCordobas" readonly />
                                     
@@ -236,9 +236,9 @@
                     </tr>
                             <tr>
                                 <td></td>
-                                <td class="totales">Total Dolares
+                                @* <td class="totales">Total Dolares
                                     <input type="hidden" asp-for="@Model.arqueoDiario.TotalDolares" />
-                                </td>
+                                </td> *@
 
                                 <td><input type="text" id="totalGeneralDolares" readonly /></td>
                             </tr>
@@ -264,7 +264,7 @@
         <p class="totalDetalleDinero">
                 TOTAL DETALLE DE DINERO:  <u>C$ </u>
         </p>
-        <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleDinero" id="totDetalDinero"/>
+        @* <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleDinero" id="totDetalDinero"/> *@
         <p class="totalEfectivo">
             EFECTIVO VIA TRANSFERENCIA: <u>C$  </u>
         </p>

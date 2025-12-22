@@ -1,14 +1,13 @@
 ﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
-@* @{
-	ViewData["Title"] = "Index";
-} *@
-@* <script src="~/js/site.js"></script> *@
-@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
-<div class="container" style="margin:2px;">
+ @{
+	ViewData["Title"] = "Estado De Cuenta Cajera";
+} 
+
+
+<div class="container-fluid p-1" style="margin:2px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-cash"></i> Estado Cuenta del Estudiante</h5>
+			<h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i>  Estado Cuenta del Estudiante</h5>
 		</div>
 
 		<div class="card-body">
@@ -20,13 +19,13 @@
 				</a>
 			</div><br />
 			
-					<table id="tablaPagos" class="table table-bordered table-sm">
+					<table id="estadocuenta" class="table table-bordered table-sm">
 					@* class="display responsive nowrap" style="width:100%"> *@
 					<thead>
 						<tr>
 							<th>Alumno</th>
 							<th>Grado</th>
-							<th>Matricula</th>
+							<th>Matrícula</th>
 							<th>Enero</th>
 							<th>Febrero</th>
 							<th>Marzo</th>
@@ -43,9 +42,12 @@
 						</tr>
 					</thead>
 					<tbody>
-						@foreach (var alumno in Model.alumno)
+						@foreach (var pagos in Model.pagos)
 						{
 							<tr>
+								@{
+									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == pagos.IdAlumno);
+								}
 								<td>
 									<span class="btn btn-sm btn-info">
 										@alumno.Nombre @alumno.Apellido
@@ -55,10 +57,15 @@
 								@* Buscar grado y periodo asociados si aplica *@
 								@{
 									var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
-									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
+									
 								}
 
 								<td>@(grado?.NombreGrado ?? "-")</td>
+								@{
+
+									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == pagos.IdPeriodo);
+
+								}
 								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
 
 								@* Mostrar columnas de los 12 meses *@

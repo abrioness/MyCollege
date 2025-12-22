@@ -15,7 +15,7 @@
 <div class="container mt-6">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="bi bi-cash"></i> Registro de Recibo de Caja Egresos</h4>
+            <h4 class="mb-0"><i class="bi bi-cash-coin"></i> Registro de Recibo de Caja Egresos</h4>
         </div>
         <div class="card-body">
             <form asp-action="Create" method="post" enctype="multipart/form-data">
@@ -61,8 +61,12 @@
                             <span asp-validation-for="Egresos.Serie" class="text-danger"></span>
                     </div>
                         <div class="form-group">
+                            @{
+
+                                var fechapago = DateTime.Now.ToString("dd/MM/yyyy");
+                            }
                             <label asp-for="Egresos.FechaEmision" class="control-label">Fecha de Emisión</label>
-                            <input type="date" asp-for="Egresos.FechaEmision" id="FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" required />
+                            <input type="text" asp-for="Egresos.FechaEmision" value="@fechapago" class="form-control" readonly />
                             <span asp-validation-for="Egresos.FechaEmision" class="text-danger"></span>
                         </div>
                         <div class="form-group">

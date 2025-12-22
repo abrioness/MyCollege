@@ -1,35 +1,52 @@
 ﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
-@* @{
-	ViewData["Title"] = "Index";
-} *@
-@* <script src="~/js/site.js"></script> *@
-@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
+ @{
+	ViewData["Title"] = "Estado de Cuenta Administrador";
+} 
 
-<div class="container p-1" style="padding:2px;">
+
+<div class="container-fluid p-1" style="padding:2px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-cash-coin"></i> Estado Cuenta de Estudiante</h5>
+			<h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i>  Estado Cuenta de Estudiante</h5>
 		</div>
 
 		<div class="card-body">
-			<div class="table-responsive" style="font-size:12px">
-			<br />
-				@* <div class="col-12 text-end">
 
-				<a asp-action="Create" class="btn btn-primary">
-					<i class="bi bi-plus-circle"></i> Agregar Pago
-				</a>
-			</div> 
-			<br />*@
-			
+			<div class="table-responsive" style="font-size:12px">
+				<br />
+				<div class="col-12 text-end">
+					<div class="btn-goup">
+						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar Pagos Mensualidad</button>
+
+
+						<ul class="dropdown-menu">
+							<li>
+								<a class="dropdown-item" asp-action="Create" asp-controller="Pagos">
+									Agregar Pago de Mensualidad
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" asp-action="Index" asp-controller="Pagos">
+									Reporte de Pagos de Mensualidad
+								</a>
+							</li>
+							@* <li><hr class="dropdown-divider"></li>
+						<li><a class="dropdown-item" href="#">Otra opción</a></li> *@
+						</ul>
+					</div>
+
+				</div> 
+				<br />
+
 				<table id="estadocuenta" class="table table-bordered table-sm">
 					@* class="display responsive nowrap" style="width:100%"> *@
 					<thead>
 						<tr>
 							<th>Alumno</th>
 							<th>Grado</th>
-							<th>Matricula</th>
+							<th>Matrícula</th>
+							<th>Pago Rifa</th>
+							<th>Pago Mensualidad</th>
 							<th>Enero</th>
 							<th>Febrero</th>
 							<th>Marzo</th>
@@ -50,26 +67,116 @@
 						</tr>
 					</thead>
 					<tbody>
-						@foreach (var alumno in Model.alumno)
+						@foreach (var pagos in Model.pagos)
 						{
 							<tr>
+								@{
+									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == pagos.IdAlumno);
+								}
 								<td>
 
-									<span  class="btn btn-sm btn-info">
+									<a class="btn btn-sm btn-info" asp-action="Edit" asp-controller="Pagos" asp-route-id="@pagos.IdPago">
 
-										@alumno.Nombre @alumno.Apellido
-									</span>
+										@alumno?.Nombre @alumno?.Apellido
+									</a>
 								</td>
 
 								@* Buscar grado y periodo asociados si aplica *@
 								@{
 									var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
-									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
-									
+									// var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
+
 								}
 
-							<td>@(grado?.NombreGrado ?? "-")</td>
-							<td>@(periodo?.Periodo.ToString() ?? "-")</td>
+								<td>@(grado?.NombreGrado ?? "-")</td>
+								@{
+
+									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == pagos.IdPeriodo);
+
+								}
+								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
+
+								@* Columna: Estado de Rifa (por semestre) *@
+								@{
+									// Obtener el año actual
+									int añoActual = DateTime.Now.Year;
+									
+									// Buscar el IdTipoMovimiento para "Rifa" 
+									// Ajusta el filtro según cómo tengas configurado en tu base de datos
+									var tipoRifa = Model.tipoMovimiento.FirstOrDefault(tm => 
+										tm.Concepto.ToLower().Contains("rifas"));
+									
+									// Semestre 1: Enero-Junio (meses 1-6)
+									// Semestre 2: Julio-Diciembre (meses 7-12)
+									bool tieneRifaSemestre1 = false;
+									bool tieneRifaSemestre2 = false;
+									
+									if (tipoRifa != null)
+									{
+										// Verificar si tiene pago de rifa del semestre 1 (meses 1-6)
+										tieneRifaSemestre1 = Model.pagos.Any(p => 
+											p.IdAlumno == alumno.IdAlumno && 
+											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
+											p.IdMes.HasValue && p.IdMes >= 1 && p.IdMes <= 6 &&
+											p.Anyo == añoActual &&
+											p.Activo == true);
+										
+										// Verificar si tiene pago de rifa del semestre 2 (meses 7-12)
+										tieneRifaSemestre2 = Model.pagos.Any(p => 
+											p.IdAlumno == alumno.IdAlumno && 
+											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
+											p.IdMes.HasValue && p.IdMes >= 7 && p.IdMes <= 12 &&
+											p.Anyo == añoActual &&
+											p.Activo == true);
+									}
+									
+									string estadoRifa = (tieneRifaSemestre1 && tieneRifaSemestre2) ? "Solvente" : "Insolvente";
+									string claseRifa = (tieneRifaSemestre1 && tieneRifaSemestre2) ? "success" : "danger";
+								}
+								<td>
+									<span class="badge bg-@claseRifa">@estadoRifa</span>
+								</td>
+
+								@* Columna: Estado de Mensualidad *@
+								@{
+									// Buscar el IdTipoMovimiento para "Mensualidad"
+									// Ajusta el filtro según cómo tengas configurado en tu base de datos
+									var tipoMensualidad = Model.tipoMovimiento.FirstOrDefault(tm => 
+										tm.Concepto.ToLower().Contains("mensualidad") || 
+										tm.Concepto.ToLower().Contains("mensual"));
+									
+									int mesActual = DateTime.Now.Month;
+									int añoActualMensualidad = DateTime.Now.Year;
+									
+									// Si estamos en diciembre (mes 12), debe tener pagado noviembre (mes 11)
+									// Si estamos en cualquier otro mes, debe tener pagado el mes anterior
+									int mesRequerido = mesActual == 12 ? 11 : (mesActual - 1);
+									
+									bool tieneMensualidadAlDia = false;
+									
+									if (tipoMensualidad != null && mesRequerido > 0)
+									{
+										// Verificar si tiene pago de mensualidad del mes requerido
+										tieneMensualidadAlDia = Model.pagos.Any(p => 
+											p.IdAlumno == alumno.IdAlumno && 
+											p.IdTipoMovimiento == tipoMensualidad.IdTipoMovimiento &&
+											p.IdMes.HasValue && p.IdMes == mesRequerido &&
+											p.Anyo == añoActualMensualidad &&
+											p.Activo == true);
+									}
+									
+									string estadoMensualidad = tieneMensualidadAlDia ? "Solvente" : "Insolvente";
+									string claseMensualidad = tieneMensualidadAlDia ? "success" : "danger";
+								}
+								<td>
+									<span class="badge bg-@claseMensualidad">@estadoMensualidad</span>
+								</td>
+
+
+								@* @{
+									var tipoMovimiento = Model.tipoMovimiento.FirstOrDefault(tip => tip.IdTipoMovimiento == pagos.IdTipoMovimiento);
+								}
+								<td>@(tipoMovimiento.Concepto.ToString() ?? "-")</td> *@
 						@if(User.Identity.IsAuthenticated)
 							{
 									@if (User.IsInRole("Cajero"))
@@ -136,14 +243,8 @@
 		</div>
 	</div>
 </div>
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script>
+
+<script> 
 	$(document).ready(function () {
 			$('#estadocuenta').DataTable({
 			responsive: false,

@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,7 @@ namespace WebColegio.Controllers
             _Iservices = services;
            
         }
+        [Authorize]
         // GET: PagoCajaController
         public async Task<ActionResult> Index(DateTime? fechainicio,DateTime? fechafin)
         {
@@ -34,18 +36,28 @@ namespace WebColegio.Controllers
             //var _meses = await _Iservices.GetMesesAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
             //var _grados = await _Iservices.GetGradosAsync();
-            var query = _pagoscaja;
-            if(fechainicio.HasValue)
+            IQueryable<TblPagoCaja> query = _pagoscaja.AsQueryable();
+
+            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
+            if (fechainicio.HasValue)
             {
-                query= _pagoscaja.Where(a=>a.FechaRegistro >= fechainicio.Value).ToList();
+                // Normalizar la fecha de inicio al inicio del día (00:00:00)
+                var fechaInicioNormalizada = fechainicio.Value.Date;
+                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
             }
             if (fechafin.HasValue)
             {
-                query = _pagoscaja.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+                // Normalizar la fecha de fin al final del día (23:59:59)
+                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
             }
+
+            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
+            var pagosFiltrados = query.ToList();
+
             var VieModelPagoCaja = new ColeccionCatalogos
             {
-                pagoCajas = query,
+                pagoCajas = pagosFiltrados,
                 grados = _grados,
                 turnos = _turnos,
                 tipoMovimiento = _tipoMovimiento,
@@ -55,15 +67,17 @@ namespace WebColegio.Controllers
             };
             if (VieModelPagoCaja == null)
             {
-                TempData["Message"] = "No existen registros";
-                TempData["Tipo"] = "warning";
+                TempData["Message"] = "No hay Pagos registrados";
                 return View("NotFound"); // Redirige a una vista de error o no encontrado
             }
-            
+            else
+            {
+                TempData["Message"] = "Pagos encontrados";
                 return View(VieModelPagoCaja);
-            
-        }
+            }
 
+        }
+        [Authorize]
         // GET: PagoCajaController/Details/5
         public async Task<ActionResult> Details(int id)
         {
@@ -97,6 +111,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: PagoCajaController/Create
+        [Authorize]
         public async Task<ActionResult> Create()
         {
             var recibos = await _Iservices.GetPagoCajaAsync();
@@ -153,7 +168,7 @@ namespace WebColegio.Controllers
 
             return View(viewmodel);
         }
-
+        [Authorize]
         // POST: PagoCajaController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -252,6 +267,7 @@ namespace WebColegio.Controllers
         //}
 
         //}
+        [Authorize]
         public async Task<ActionResult> EstadoCuenta()
         {
 
@@ -297,6 +313,7 @@ namespace WebColegio.Controllers
         }
 
         // POST: PagoCajaController/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int id, IFormCollection collection)
@@ -318,6 +335,7 @@ namespace WebColegio.Controllers
         }
 
         // POST: PagoCajaController/Delete/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Delete(int id, IFormCollection collection)

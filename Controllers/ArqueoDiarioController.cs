@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace WebColegio.Controllers
         {
             _Iservices = services;
         }
-
+        [Authorize]
         // GET: ArqueoDiarioController
         public ActionResult Index()
         {
@@ -38,12 +39,13 @@ namespace WebColegio.Controllers
 
             var maxNumero = recibos
                 .Where(r => r.Serie == "A")
-                .Max(r => (int?)r.NumeroRecibo);
+                .Max(r => (int?)r.NumeroArqueo);
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 40001;
             return View(siguienteNumero);
         }
 
         // POST: ArqueoDiarioController/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(ArqueoDiarioViewModel arqueoDia)
@@ -52,22 +54,30 @@ namespace WebColegio.Controllers
             bool response = false;
             bool validarDuplicado = false;
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            //arqueoDia.arqueoDiario.UsuarioRegistro = idUsuario;
-            //arqueoDia.arqueoDiario.FechaRegistro = DateTime.Now;
-            //arqueoDia.arqueoDiario.Activo = true;
-            //arqueoDia.arqueoDiario.Serie = "A";
+            arqueoDia.arqueoDiario.UsuarioRegistro = idUsuario;
+            arqueoDia.arqueoDiario.FechaRegistro = DateTime.Now;
+            arqueoDia.arqueoDiario.Activo = true;
+            arqueoDia.arqueoDiario.Serie = "A";
             //int mensualidad = 640;
             //int total = 0;
             var buscarIdGuardado = await _Iservices.GetArqueoDiarioAsync();
             //var buscarperiodo = await _Iservices.GetPeriodoAsync();
             //var periodo = buscarperiodo.Where(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true).FirstOrDefault();
           
-            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == arqueoDia.arqueoDiario.NumeroRecibo && r.Serie == "A" && r.Activo == true);
+            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroArqueo == arqueoDia.arqueoDiario.NumeroArqueo && r.Serie == "A" && r.Activo == true);
             if (validarDuplicado)
             {
                 TempData["Mensaje"] = "El número de Arqueo ya Existe.";
                 TempData["Tipo"] = "warning";
-                return RedirectToAction("Create");
+                if (idUsuario == 1)
+                {
+                    return RedirectToAction("estadocuenta", "Pagos");
+                }
+                if (idUsuario == 2)
+                {
+                    return RedirectToAction("estadocuenta","PagoCaja");
+                }
+                
             }
             try
             {
@@ -97,13 +107,13 @@ namespace WebColegio.Controllers
                         //var idPag = buscarIdGuardado.Max(a => a.IdArqueo);
                         TempData["Mensaje"] = "Se Guardo Correctamente el Arqueo del Día.";
                         TempData["Tipo"] = "success";
-                        return RedirectToAction("ArqueoDiario");
+                        return RedirectToAction("Create","Pagos");
                     }
                     else
                     {
                         TempData["Mensaje"] = "No se proceso el Arqueo.";
                         TempData["Tipo"] = "warning";
-                        return RedirectToAction("Create");
+                        return RedirectToAction("ArqueoCaja");
 
                     }
                 }
@@ -117,7 +127,7 @@ namespace WebColegio.Controllers
             }
 
         }
-
+        [Authorize]
         public async Task<ActionResult> ArqueoCaja(DateTime fecha)
         {
             var recintos = await _Iservices.GetRecintosAsync();
@@ -125,7 +135,7 @@ namespace WebColegio.Controllers
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));  
             var maxNumero = recibos
                 .Where(r => r.Serie == "A")
-                .Max(r => (int?)r.NumeroRecibo);
+                .Max(r => (int?)r.NumeroArqueo);
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 40001;
             //listar pagos mensualidad
             var recintoNombre = 0;
@@ -330,7 +340,7 @@ namespace WebColegio.Controllers
         {
             return View();
         }
-
+        [Authorize]
         // POST: ArqueoDiarioController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -351,7 +361,7 @@ namespace WebColegio.Controllers
         {
             return View();
         }
-
+        [Authorize]
         // POST: ArqueoDiarioController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]

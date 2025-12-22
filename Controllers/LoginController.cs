@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebColegio.Services;
 using WebColegio.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebColegio.Controllers
 {
@@ -30,12 +31,14 @@ namespace WebColegio.Controllers
         //}
         // GET: /Login/Login
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Login()
         {
             return View();
         }
-
+        
         [HttpPost]
+        [AllowAnonymous]  // Debe ser AllowAnonymous porque el usuario aún no está autenticado
         public async Task<IActionResult> Login(string NombreUsuario, string Password)
         {
             // Buscar usuario por cédula
@@ -151,7 +154,7 @@ namespace WebColegio.Controllers
 
         //    return User.Identity.Name;
         //}
-
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> CambiarPassword(string Login)
         {
@@ -195,16 +198,49 @@ namespace WebColegio.Controllers
         //    TempData["Mensaje"] = "Contraseña actualizada correctamente. Inicie sesión.";
         //    return RedirectToAction("Index", "Login");
         //}
+        /// <summary>
+        /// Método GET para logout (alternativa si no usas POST)
+        /// </summary>
+        //[HttpGet]
+        //[Authorize]
+        //public async Task<IActionResult> Logout()
+        //{
+        //    // Cerrar la autenticación de cookies
+        //    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
+        //    // Limpiar todas las cookies de sesión
+        //    foreach (var cookie in Request.Cookies.Keys)
+        //    {
+        //        Response.Cookies.Delete(cookie);
+        //    }
 
-        //[HttpPost]
+        //    // Limpiar la sesión
+        //    HttpContext.Session.Clear();
+
+        //    // Redirigir a la página de login
+        //    return RedirectToAction("Index", "Login");
+        //}
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
+            // 1. Cerrar la autenticación de cookies
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // Limpiar toda la sesión manualmente
+            // 2. Limpiar todas las cookies de sesión
+            foreach (var cookie in Request.Cookies.Keys)
+            {
+                Response.Cookies.Delete(cookie);
+            }
+
+            // 3. Limpiar la sesión
             HttpContext.Session.Clear();
-            return RedirectToAction("Login");
+
+            // 4. Redirigir a la página de login
+            return RedirectToAction("Login", "Login");
         }
+
     }
 }

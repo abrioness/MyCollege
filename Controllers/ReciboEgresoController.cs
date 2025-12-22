@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
@@ -17,6 +18,7 @@ namespace WebColegio.Controllers
             _Iservices = services;
 
         }
+        [Authorize]
         // GET: ReciboEgresoController
         public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
@@ -25,19 +27,28 @@ namespace WebColegio.Controllers
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             var _recinto = await _Iservices.GetRecintosAsync();
 
-            var query = _egresos;
+            IQueryable<TblEgreso> query = _egresos.AsQueryable();
+
+            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
             if (fechainicio.HasValue)
             {
-                query = _egresos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+                // Normalizar la fecha de inicio al inicio del día (00:00:00)
+                var fechaInicioNormalizada = fechainicio.Value.Date;
+                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
             }
             if (fechafin.HasValue)
             {
-                query = _egresos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+                // Normalizar la fecha de fin al final del día (23:59:59)
+                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
             }
+
+            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
+            var egresosFiltrados = query.ToList();
 
             var VieModelEgresado = new ColeccionCatalogos
             {
-                egresos = query,               
+                egresos = egresosFiltrados,               
                 tipoMovimiento = _tipoMovimiento,
                 periodo = _periodo,
                 recintos=_recinto
@@ -45,14 +56,18 @@ namespace WebColegio.Controllers
             };
             if (VieModelEgresado == null)
             {
-                TempData["Message"] = "No existen registros";
+                TempData["Message"] = "No hay egresos registrados";
                 return View("NotFound"); // Redirige a una vista de error o no encontrado
             }
-
-            return View(VieModelEgresado);
+            else
+            {
+                TempData["Message"] = "Pagos de Egresos encontrados";
+                return View(VieModelEgresado);
+            }
         }
 
         // GET: ReciboEgresoController/Details/5
+        [Authorize]
         public async Task<ActionResult> Details(int id)
         {
             var reciboPagoCaja = await _Iservices.GetEgresoCajaById(id);
@@ -77,6 +92,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: ReciboEgresoController/Create
+        [Authorize]
         public async Task<ActionResult> Create()
         {
             var recibos = await _Iservices.GetEgresoAsync();
@@ -121,6 +137,7 @@ namespace WebColegio.Controllers
         }
 
         // POST: ReciboEgresoController/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(TblEgreso egresos)

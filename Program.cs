@@ -2,6 +2,7 @@
 
 
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using WebColegio.Services;
 
 namespace WebColegio
@@ -16,7 +17,12 @@ namespace WebColegio
             //builder.Services.AddRazorPages();
             builder.Services.AddControllers();
             builder.Services.AddScoped<IServicesApi, ServicesApi>();
-            builder.Services.AddControllersWithViews();
+            //builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews(options =>
+            {
+                // Proteger todas las acciones por defecto
+                options.Filters.Add(new AuthorizeFilter());
+            });
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddDistributedMemoryCache(); // Requerido para sesione
@@ -31,11 +37,16 @@ namespace WebColegio
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
-                    options.LoginPath = "/Login";
-                    options.AccessDeniedPath = "/Login/AccessDenied";
+                    options.LoginPath = "/Login/Login";  // Ruta completa al método Login
+                    options.AccessDeniedPath = "/Login/Login";  // Redirigir a login si no tiene acceso
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                    options.SlidingExpiration = true;
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 });
 
-
+            // En Program.cs (ASP.NET Core 6+)
+          
             var app = builder.Build();
 
 

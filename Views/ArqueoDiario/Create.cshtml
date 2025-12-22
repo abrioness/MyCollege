@@ -1,1 +1,71 @@
-﻿
+﻿@model int
+@{
+    ViewData["Title"] = "Crear Arqueo Diario";
+}
+
+<div class="container mt-auto" style="padding:2px;">
+    <div class="card shadow-lg p-3 mb-5 bg-white rounded">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Crear Arqueo Diario</h5>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["Mensaje"] != null)
+            {
+                <div class="alert alert-@(TempData["Tipo"]?.ToString() ?? "info") alert-dismissible fade show" role="alert">
+                    @TempData["Mensaje"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Número de Arqueo</label>
+                            <input type="number" class="form-control" name="arqueoDiario.NumeroArqueo" 
+                                   value="@Model" required />
+                            <small class="form-text text-muted">Este número se genera automáticamente</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" 
+                                   disabled />
+                            <small class="form-text text-muted">La fecha se registra automáticamente</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 
+                            <strong>Nota:</strong> El arqueo diario se registrará con la fecha actual y el período activo. 
+                            Los demás campos se completarán automáticamente.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar Arqueo
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

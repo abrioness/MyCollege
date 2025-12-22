@@ -3,6 +3,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -25,6 +26,7 @@ namespace WebColegio.Controllers
             _Iservices = services;
         }
         // GET: PagosController
+        
         public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
 
@@ -37,32 +39,43 @@ namespace WebColegio.Controllers
             var _recinto = await _Iservices.GetRecintosAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
             //var _grados = await _Iservices.GetGradosAsync();
-            var query = _pagos;
+            
+            // Convertir a IQueryable para aplicar filtros de manera eficiente
+            IQueryable<TblPago> query = _pagos.AsQueryable();
+
+            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
             if (fechainicio.HasValue)
             {
-                query = _pagos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+                // Normalizar la fecha de inicio al inicio del día (00:00:00)
+                var fechaInicioNormalizada = fechainicio.Value.Date;
+                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
             }
             if (fechafin.HasValue)
             {
-                query = _pagos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+                // Normalizar la fecha de fin al final del día (23:59:59)
+                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
             }
 
+            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
+            var pagosFiltrados = query.ToList();
+   
             var VieModelPagos = new ColeccionCatalogos
             {
-                pagos=query,
+                pagos = pagosFiltrados,
                 alumno = _alumnos,
                 tipoMovimiento = _tipoMovimiento,
                 tipoRecibo = _tipoRecibo,
                 metodoPago = _metodoPago,
-                meses=_meses,
-                recintos=_recinto
+                meses = _meses,
+                recintos = _recinto
                 //modalidades = _modalidad,
                 //grados = _grados    
 
             };
             if (VieModelPagos == null)
             {
-                TempData["Message"] = "No hay notas registradas";
+                TempData["Message"] = "No hay Pagos registrados";
                 return View("NotFound"); // Redirige a una vista de error o no encontrado
             }
             else
@@ -71,6 +84,7 @@ namespace WebColegio.Controllers
                 return View(VieModelPagos);
             }
         }
+        [Authorize]
         public async Task<ActionResult> EstadoCuenta()
         {
 
@@ -109,9 +123,10 @@ namespace WebColegio.Controllers
             }
         }
         //Formato Matricula
-       
+
 
         // GET: PagosController/Details/5
+        [Authorize]
         public async Task<ActionResult> Details(int id)
         {
 
@@ -148,6 +163,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: PagosController/Create
+        [Authorize]
         public async Task<ActionResult> Create()
         {
             var recibos = await _Iservices.GetPagosAsync();
@@ -222,6 +238,7 @@ namespace WebColegio.Controllers
         }
 
         // POST: PagosController/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(PagosViewModel pagos, string MesesSeleccionados)//List<int> MesesSeleccionados)
@@ -569,6 +586,7 @@ namespace WebColegio.Controllers
 
         //    return mesesAtrasados * MoraPorMes;
         //}
+        [Authorize]
         [HttpGet]
         public IActionResult ObtenerMora(int idAlumno,int idTipoMovimiento,int periodo)
         {
@@ -664,6 +682,7 @@ namespace WebColegio.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public IActionResult ObtenerMensualidad(int? idRecinto, int idGrado, int idPeriodo)
         {
             var mensualidad = _Iservices.GetCostosMensualidadAsync().Result
@@ -680,6 +699,7 @@ namespace WebColegio.Controllers
             return Json(mensualidad);
         }
         [HttpGet]
+        [Authorize]
         public IActionResult ObtenerMatricula(int? idRecinto, int? idModalidad, int idPeriodo)
         {
             var matricula= _Iservices.GetCostosMatriculaAsync().Result
@@ -725,23 +745,133 @@ namespace WebColegio.Controllers
         //    }
 
         // GET: PagosController/Edit/5
-        public ActionResult Edit(int id)
+        [Authorize]
+        public async Task<ActionResult> Edit(int id)
         {
-            return View();
+            var pago = await _Iservices.GetPagoById(id);
+            
+            if (pago == null)
+            {
+                TempData["Mensaje"] = "Pago no encontrado.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var viewmodel = new PagosViewModel
+            {
+                Pago = pago,
+                SiguienteNumero = pago.NumeroRecibo ?? 0,
+                tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
+                                   .Select(r => new SelectListItem
+                                   {
+                                       Value = r.IdTipoMovimiento.ToString(),
+                                       Text = r.Concepto,
+                                       Selected = r.IdTipoMovimiento == pago.IdTipoMovimiento
+                                   }).ToList(),
+                tipoRecibosSelectListItem = (await _Iservices.GetTipoReciboAsync())
+                                   .Select(r => new SelectListItem
+                                   {
+                                       Value = r.IdTipoRecibo.ToString(),
+                                       Text = r.TipoRecibo,
+                                       Selected = r.IdTipoRecibo == pago.IdTipoRecibo
+                                   }).ToList(),
+                metodoPagoSelectListItem = (await _Iservices.GetMetodoPagoAsync())
+                                   .Select(r => new SelectListItem
+                                   {
+                                       Value = r.IdMetodoPago.ToString(),
+                                       Text = r.MetodoPago,
+                                       Selected = r.IdMetodoPago == pago.IdMetodoPago
+                                   }).ToList(),
+                meses = await _Iservices.GetMesesAsync(),
+                periodo = (await _Iservices.GetPeriodoAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdPeriodo.ToString(),
+                    Text = r.Periodo.ToString(),
+                    Selected = r.IdPeriodo == pago.IdPeriodo
+                }).ToList(),
+                gradosSelectListItem = (await _Iservices.GetGradosAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdGrado.ToString(),
+                    Text = r.NombreGrado,
+                    Selected = r.IdGrado == pago.IdGrado
+                }).ToList(),
+                recintos = (await _Iservices.GetRecintosAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdRecinto.ToString(),
+                    Text = r.Recinto.ToString(),
+                    Selected = r.IdRecinto == pago.IdRecinto
+                }).ToList(),
+                modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdModalidad.ToString(),
+                    Text = r.Modalidad.ToString(),
+                    Selected = r.IdModalidad == pago.IdModalidad
+                }).ToList(),
+                alumnos = await _Iservices.GetAlumnosAsync()
+            };
+
+            return View(viewmodel);
         }
 
         // POST: PagosController/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(int id, PagosViewModel pagosViewModel)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                if (id != pagosViewModel.Pago.IdPago)
+                {
+                    TempData["Mensaje"] = "El ID del pago no coincide.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Obtener el pago original para preservar algunos campos
+                var pagoOriginal = await _Iservices.GetPagoById(id);
+                if (pagoOriginal == null)
+                {
+                    TempData["Mensaje"] = "Pago no encontrado.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Actualizar campos
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                pagosViewModel.Pago.UsuarioActualizo = idUsuario;
+                pagosViewModel.Pago.FechaActualizo = DateTime.Now;
+                
+                // Preservar campos que no deben cambiar
+                pagosViewModel.Pago.UsuarioRegistro = pagoOriginal.UsuarioRegistro;
+                pagosViewModel.Pago.FechaRegistro = pagoOriginal.FechaRegistro;
+                pagosViewModel.Pago.Serie = pagoOriginal.Serie; // No cambiar la serie
+
+                // Llamar al servicio de actualización
+                bool response = await _Iservices.UpdatePago(pagosViewModel.Pago);
+
+                if (response)
+                {
+                    TempData["Mensaje"] = "Pago actualizado correctamente.";
+                    TempData["Tipo"] = "success";
+                    return RedirectToAction(nameof(Details), new { id = id });
+                }
+                else
+                {
+                    TempData["Mensaje"] = "No se pudo actualizar el pago.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(Edit), new { id = id });
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                TempData["Mensaje"] = $"Ocurrió un error al actualizar el pago: {ex.Message}";
+                TempData["Tipo"] = "danger";
+                return RedirectToAction(nameof(Edit), new { id = id });
             }
         }
 
@@ -752,6 +882,7 @@ namespace WebColegio.Controllers
         }
 
         // POST: PagosController/Delete/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Delete(int id, IFormCollection collection)

@@ -65,6 +65,7 @@ namespace WebColegio.Services
         Task<bool> UpdateAlumnos(TblAlumno alumno);
         Task<bool> UpdateNotas(TblNotas nota);
         Task<bool> UpdateUsuario(TblUsuarios usuario);
+        Task<bool> UpdatePago(TblPago pago);
         #endregion
         #region Metodos Get por Id
         Task<TblAlumno> GetAlumnoIdAsync(int id);

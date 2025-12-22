@@ -28,17 +28,26 @@ namespace WebColegio.Controllers
             var _movInvebtario = await _Iservices.GetMovInventarioAsync();
             var _categoriaProducto = await _Iservices.GetCategoriaProductoAsync();
             var _usuarioId = await _Iservices.GetUsuarioIdAsync(idUsuario);
-            var query = _productos;
+
+
+            IQueryable<Productos> query = _productos.AsQueryable();
+
+            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
             if (fechainicio.HasValue)
             {
-                query = _productos.Where(a => a.FechaRegistro >= fechainicio.Value).ToList();
+                // Normalizar la fecha de inicio al inicio del día (00:00:00)
+                var fechaInicioNormalizada = fechainicio.Value.Date;
+                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
             }
             if (fechafin.HasValue)
             {
-                query = _productos.Where(a => a.FechaRegistro <= fechafin.Value).ToList();
+                // Normalizar la fecha de fin al final del día (23:59:59)
+                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
             }
 
-
+            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
+            var productosFiltrados = query.ToList();
 
             if (_usuarioId.IdRol == 2 || _usuarioId.IdRol == 5)
             {
@@ -58,7 +67,7 @@ namespace WebColegio.Controllers
                 var viewModel = new ColeccionCatalogos
                 {
 
-                    producto = _productos,
+                    producto = productosFiltrados,
                     categoriasProducto = _categoriaProducto,
                     movinventario = _movInvebtario
                 };

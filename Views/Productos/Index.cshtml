@@ -12,26 +12,27 @@
 		</div>
 		<div class="card-body">
 			<div class="table-responsive" style="font-size:12px">
-			<div class="col-4 text-center">
-				@using (Html.BeginForm("Index", "Productos", FormMethod.Get))
-				{
-					<div class="row">
-						<div class="col-4">
-							<label class="control-label">Desde:</label>
-							<input type="date" name="fechainicio" id="FechaInicio" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+				<div class="col-4 text-center">
+					@using (Html.BeginForm("Index", "Productos", FormMethod.Get))
+					{
+						<div class="row">
+							<div class="col-4">
+								<label class="control-label">Desde:</label>
+								<input type="date" name="fechainicio" id="FechaInicio" class="form-control"
+									   value="@@(Request.QueryString[" fechainicio"])" />
+							</div>
+							<div class="col-4">
+								<label class="control-label">Hasta:</label>
+								<input type="date" name="fechafin" id="FechaFin" class="form-control"
+									   value="@@(Request.QueryString[" fechafin"])" />
+							</div>
+							<div class="col-4">
+								<br />
+								<button type="submit" class="form-control btn btn-success">Filtrar</button>
+							</div>
 						</div>
-						<div class="col-4">
-							<label class="control-label">Hasta:</label>
-							<input type="date" name="fechafin" id="FechaFin" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-						</div>
-						<div class="col-4">
-							<br />
-							<button type="submit" class="form-control btn btn-success">Filtrar</button>
-						</div>
-					</div>
-
-				}
-			</div>
+					}
+				</div>
 			<div class="col-12 text-end">
 
 				<a asp-action="Create" class="btn btn-primary">

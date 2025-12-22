@@ -1109,10 +1109,7 @@ namespace WebColegio.Services
         public async Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo)
         {
             bool respuesta = false;
-
-           
-            
-
+                    
             try
             {
                 using (var httpClient = new HttpClient())
@@ -1525,6 +1522,77 @@ namespace WebColegio.Services
                 return response.IsSuccessStatusCode;
             }
 
+        }
+        
+        // Update para el registro de pagos
+        public async Task<bool> UpdatePago(TblPago pago)
+        {
+            bool respuesta = false;
+            
+            try
+            {
+                var existingPago = await GetPagoById(pago.IdPago);
+                
+                if (existingPago == null)
+                {
+                    Debug.WriteLine("Pago no encontrado para actualizar: " + pago.IdPago);
+                    return false;
+                }
+                
+                // Actualizamos campos editables
+                existingPago.IdAlumno = pago.IdAlumno;
+                existingPago.Monto = pago.Monto;
+                existingPago.NumeroRecibo = pago.NumeroRecibo;
+                existingPago.Anyo = pago.Anyo;
+                existingPago.IdMes = pago.IdMes;
+                existingPago.FechaEmision = pago.FechaEmision;
+                existingPago.Mora = pago.Mora;
+                existingPago.TotalPagar = pago.TotalPagar;
+                existingPago.Descripcion = pago.Descripcion;
+                existingPago.IdMetodoPago = pago.IdMetodoPago;
+                existingPago.IdTipoMovimiento = pago.IdTipoMovimiento;
+                existingPago.IdTipoRecibo = pago.IdTipoRecibo;
+                existingPago.IdRecinto = pago.IdRecinto;
+                existingPago.IdPeriodo = pago.IdPeriodo;
+                existingPago.IdGrado = pago.IdGrado;
+                existingPago.IdModalidad = pago.IdModalidad;
+                existingPago.Activo = pago.Activo;
+                existingPago.UsuarioActualizo = pago.UsuarioActualizo;
+                existingPago.FechaActualizo = pago.FechaActualizo;
+                
+                // Preservar campos que no deben cambiar
+                // existingPago.UsuarioRegistro se mantiene
+                // existingPago.FechaRegistro se mantiene
+                // existingPago.Serie se mantiene
+
+                using (var httpClient = new HttpClient())
+                {
+                    // Convertimos el objeto a JSON
+                    var json = JsonConvert.SerializeObject(existingPago);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    // Realizamos la solicitud PUT
+                    // Ajusta la URL según tu endpoint de API si es diferente
+                    var response = await httpClient.PutAsync(url + $"api/Pagos/{existingPago.IdPago}", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        respuesta = true;
+                    }
+                    else
+                    {
+                        // Para debug: mostrar mensaje de error
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en PUT Pago: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en UpdatePago: " + ex.Message);
+            }
+
+            return respuesta;
         }
         #endregion
 
