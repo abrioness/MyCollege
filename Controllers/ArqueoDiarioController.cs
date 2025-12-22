@@ -107,7 +107,7 @@ namespace WebColegio.Controllers
                         //var idPag = buscarIdGuardado.Max(a => a.IdArqueo);
                         TempData["Mensaje"] = "Se Guardo Correctamente el Arqueo del Día.";
                         TempData["Tipo"] = "success";
-                        return RedirectToAction("Create","Pagos");
+                        return RedirectToAction("ArqueoCaja");
                     }
                     else
                     {

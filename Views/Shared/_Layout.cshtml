@@ -2,13 +2,7 @@
 @inject IHttpContextAccessor HttpContextAccessor *@
 @inject IConfiguration Configuration
 @* <nav style="background-color:royalblue;height:30%;">
-    @if (User.Identity.IsAuthenticated)
-    {
-        <div class="text-start text-white">
-            <span>Bienvenido, @User.Identity.Name </span>
-        </div>
-    }
-
+    
     <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
         <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:8%;margin-left:55px">
 
@@ -354,6 +348,12 @@
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="text-start text-white">
+                                <span>Bienvenido, @User.Identity.Name </span>
+                            </div>
+                        }
 
                         @* <div class="topbar-divider d-none d-sm-block"></div> *@
 
