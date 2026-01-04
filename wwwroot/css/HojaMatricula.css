@@ -1,12 +1,12 @@
 ﻿/* ===== CONTENEDOR ===== */
-.container {
+/*.container {
     max-width: 1000px;
     background: #fff;
     padding: 20px;
-}
+}*/
 
 /* ===== TITULOS ===== */
-h5 {
+/*h5 {
     color: #003366;
     font-weight: bold;
     text-transform: uppercase;
@@ -21,7 +21,7 @@ legend {
     background: #e6e6e6;
     border: 1px solid #000;
     padding: 5px 10px;
-}
+}*/
 
 /* ===== FILA FORMULARIO ===== */
 /*.fila-interna {
@@ -31,12 +31,12 @@ legend {
             }*/
 
 /* Evita doble borde vertical */
-.row > div + div .fila-interna {
+/*.row > div + div .fila-interna {
     border-left: none;
-}
+}*/
 
 /* ===== ETIQUETA / VALOR ===== */
-.etiqueta {
+/*.etiqueta {
     min-width: 160px;
     padding: 6px 8px;
     background: #f2f2f2;
@@ -64,16 +64,16 @@ legend {
     display: flex;
     align-items: stretch;
     border: 1px solid #000;
-}
+}*/
 
 
 /* ===== ESPACIADO ===== */
-.row {
+/*.row {
     margin-bottom: 4px;
-}
+}*/
 
 /* ===== IMPRESIÓN ===== */
-@media print {
+/*@media print {
     body {
         background: white;
     }
@@ -91,21 +91,21 @@ legend {
     .no-print {
         display: none;
     }
-}
+}*/
 
 
 
-/* ===== CONTENEDOR GENERAL ===== */
-/*.container {
+ /*===== CONTENEDOR GENERAL =====*/ 
+.container {
     max-width: 1000px;
     background: #fff;
-    padding: 20px;*/    
-    /*border: 2px solid #000;*/
-/*}*/
+    padding: 20px;    
+    border: 2px solid #000;
+}
 
-/* ===== TITULO ===== */
+ /*===== TITULO =====*/ 
 
-/*h5 {
+h5 {
     color: #003366;
     padding: 5px 10px;
     font-weight: bold;
@@ -146,49 +146,50 @@ h6 {
 
 hr {
     border-top: 2px solid #000;
-}*/
-
-/* ===== FIELDSET ESTILO FORMULARIO ===== */
-/*fieldset {
+}
+/*
+ ===== FIELDSET ESTILO FORMULARIO ===== */
+fieldset {
     border: 2px solid #000 !important;
     padding: 15px;
-}*/
+}
 
-/*legend {
+legend {
     font-size: 14px;
     font-weight: bold;
     color: #003366;
     background: #e6e6e6;
     border: 1px solid #000;
     padding: 5px 10px;
-}*/
 
-/* ===== FILAS TIPO TABLA ===== */
-/*.row {
+}
+
+ /*===== FILAS TIPO TABLA =====*/ 
+.row {
     margin: 0;
-}*/
+}
 
-    /*.row > div {
+    .row > div {
         border: 1px solid #000;
-        padding: 6px 8px;*/
-        /*font-size: 14px;*/
-    /*}*/
+        padding: 6px 8px;
+        font-size: 14px;
+    }
 
-     /*Quitar doble borde*/ 
-   /* .row + .row > div {
+     Quitar doble borde 
+    .row + .row > div {
         border-top: none;
-    }*/
+    }
 
-/* ===== ETIQUETAS ===== */
-/*strong {
+ /*===== ETIQUETAS =====*/ 
+strong {
     color: #003366;
 }
 
 td {
     border: 1px solid #000;
-}*/
-/* ===== ESPACIADO ===== */
-/*.mb-2 {
+}
+ /*===== ESPACIADO =====*/ 
+.mb-2 {
     margin-bottom: 0 !important;
 }
 p{
@@ -196,10 +197,10 @@ p{
 }
 span{
     text-align:center;
-}*/
+}
 
-/* ===== IMPRESIÓN ===== */
-/*@media print {
+ /*===== IMPRESIÓN =====*/ 
+@media print {
     body {
         background: white;
     }
@@ -214,13 +215,13 @@ span{
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
-}*/
+}
 
-/*.fila-form {
+.fila-form {
     margin: 0;
-}*/
+}
 
-/*.columna-izquierda,
+.columna-izquierda,
 .columna-derecha {
     border: 1px solid #000;
     padding: 0;
@@ -228,10 +229,10 @@ span{
 
 .columna-derecha {
     border-left: none;
-}*/
+}
 
-/* Dirección */
-/*.columna-izquierda .etiqueta {
+ /*Dirección*/ 
+.columna-izquierda .etiqueta {
     background: #f2f2f2;
     font-weight: bold;
     color: #003366;
@@ -251,28 +252,30 @@ span{
 
 .valor {
     flex: 1;
-}*/
-/*.fila-interna {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    border-bottom: 1px solid #000;
-}*/
+}
 
-/* Peso y Talla */
-/*.fila-interna {
+.fila-interna {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #000;
+}
+
+
+/*Peso y Talla
+.fila-interna {
     display: grid;
     grid-template-columns: auto 1fr;
     border: 1px solid #000;
 }*/
 
-    /*.fila-interna:last-child {
+    .fila-interna:last-child {
         border-bottom: none;
         
-    }*/
+    }
 
-    /*.fila-interna .etiqueta {
-        white-space: nowrap;*/ /* evita salto de línea */
-        /*background: #f2f2f2;
+    .fila-interna .etiqueta {
+        white-space: nowrap;  evita salto de línea 
+        background: #f2f2f2;
         font-weight: bold;
         color: #003366;
         padding: 6px 8px;
@@ -281,9 +284,9 @@ span{
 
     .fila-interna .valor {
         padding: 6px 8px;
-    }*/
-/* Botón imprimir */
-/*.print-button {
+    }
+ /*Botón imprimir*/ 
+.print-button {
     margin-top: 15px;
     padding: 6px 12px;
     font-size: 14px;
@@ -294,4 +297,4 @@ span{
     .no-print {
         display: none;
     }
-}*/
+}

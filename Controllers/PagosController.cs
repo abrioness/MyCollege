@@ -97,6 +97,8 @@ namespace WebColegio.Controllers
             var _notas = await _Iservices.GetNotasAsync();
             var _periodo = await _Iservices.GetPeriodoAsync();
             var _grados = await _Iservices.GetGradosAsync();
+            var _recinto = await _Iservices.GetRecintosAsync();
+
 
 
             var VieModelEstadoCuenta = new ColeccionCatalogos
@@ -108,7 +110,8 @@ namespace WebColegio.Controllers
                 metodoPago = _metodoPago,
                 meses = _meses,
                 periodo = _periodo,
-                grados = _grados    
+                grados = _grados,
+                recintos=_recinto
 
             };
             if (VieModelEstadoCuenta == null)

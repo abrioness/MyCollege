@@ -65,6 +65,7 @@
 							<th>Número Recibo</th>
 							<th>Nombre</th>
 							<th>Concepto</th>
+							<th>Estado Pagos Rifas</th>
 							<th>Monto</th>
 							<th>Nivel</th>
 							<th>Turno</th>
@@ -119,6 +120,7 @@
 																							: itemPagoCaja.Monto.ToString())
 
 								</td>
+
 								@{
 									var nivel = Model.grados.
 									FirstOrDefault(a => a.IdGrado == itemPagoCaja.IdGrado);

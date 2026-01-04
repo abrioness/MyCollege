@@ -45,6 +45,8 @@
 							<th>Alumno</th>
 							<th>Grado</th>
 							<th>Matrícula</th>
+							<th>Colegio</th>
+							<th>Concepto</th>
 							<th>Pago Rifa</th>
 							<th>Pago Mensualidad</th>
 							<th>Enero</th>
@@ -95,16 +97,28 @@
 
 								}
 								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
+								@{
+
+									var colegio = Model.recintos.FirstOrDefault(p => p.IdRecinto == pagos.IdRecinto);
+
+								}
+								<td>@(colegio?.Recinto.ToString() ?? "-")</td>
+								@{
+
+									var concepto = Model.tipoMovimiento.FirstOrDefault(p => p.IdTipoMovimiento == pagos.IdTipoMovimiento);
+
+								}
+								<td>@(concepto?.Concepto.ToString() ?? "-")</td>
 
 								@* Columna: Estado de Rifa (por semestre) *@
-								@{
+								 @{
 									// Obtener el año actual
-									int añoActual = DateTime.Now.Year;
+									int añoActual = periodo.IdPeriodo;
 									
 									// Buscar el IdTipoMovimiento para "Rifa" 
 									// Ajusta el filtro según cómo tengas configurado en tu base de datos
 									var tipoRifa = Model.tipoMovimiento.FirstOrDefault(tm => 
-										tm.Concepto.ToLower().Contains("rifas"));
+										tm.Concepto.Contains("Rifas"));
 									
 									// Semestre 1: Enero-Junio (meses 1-6)
 									// Semestre 2: Julio-Diciembre (meses 7-12)
@@ -117,16 +131,16 @@
 										tieneRifaSemestre1 = Model.pagos.Any(p => 
 											p.IdAlumno == alumno.IdAlumno && 
 											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
-											p.IdMes.HasValue && p.IdMes >= 1 && p.IdMes <= 6 &&
-											p.Anyo == añoActual &&
+											p.IdMes.HasValue && p.IdMes >= 1 &&//&& p.IdMes <= 6 &&
+											p.IdPeriodo == añoActual &&
 											p.Activo == true);
 										
 										// Verificar si tiene pago de rifa del semestre 2 (meses 7-12)
 										tieneRifaSemestre2 = Model.pagos.Any(p => 
 											p.IdAlumno == alumno.IdAlumno && 
 											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
-											p.IdMes.HasValue && p.IdMes >= 7 && p.IdMes <= 12 &&
-											p.Anyo == añoActual &&
+											p.IdMes.HasValue && p.IdMes >= 7 &&// p.IdMes <= 12 &&
+											p.IdPeriodo == añoActual &&
 											p.Activo == true);
 									}
 									
@@ -135,7 +149,7 @@
 								}
 								<td>
 									<span class="badge bg-@claseRifa">@estadoRifa</span>
-								</td>
+								</td> 
 
 								@* Columna: Estado de Mensualidad *@
 								@{

@@ -91,7 +91,7 @@
                 <!-- Divider -->
                 <hr class="sidebar-divider my-0">
 
-                @if (User.IsInRole("Admin"))
+                @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                 {
                     <!-- Nav Item - Dashboard -->
                     <li class="nav-item active">
@@ -155,7 +155,7 @@
                 @* <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-controller="Alumnos" asp-action="Index"> *@
                 @* <div class="sidebar-brand-text mx-3">Menú</div> *@
                 @* </a> *@
-                @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Docente"))
+                @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Docente") || User.IsInRole("UserSystem"))
                 {
                     <!-- Alumnos -->
                     <li class="nav-item active">
@@ -174,7 +174,7 @@
                     </li>
                 }
                 <!-- Notas -->
-                @if (User.IsInRole("Docente") || User.IsInRole("Secretaria") || User.IsInRole("Admin"))
+                @if (User.IsInRole("Docente") || User.IsInRole("Secretaria") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
@@ -194,7 +194,7 @@
                 }
               
                 <!-- productos -->
-                @if (User.IsInRole("Secretaria") || User.IsInRole("Cajero") || User.IsInRole("Admin"))
+                @if (User.IsInRole("Secretaria") || User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
@@ -212,7 +212,7 @@
                         </div>
                     </li>
                 }
-                @if (User.IsInRole("Cajero") || User.IsInRole("Admin"))
+                @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePagoCaja"
@@ -235,7 +235,7 @@
                     </li>
                 }
                 <!-- pagos -->
-                @if (User.IsInRole("Admin"))
+                @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
@@ -246,7 +246,7 @@
                         </a>
                         <div id="collapsePago" class="collapse" data-bs-parent="#accordionSidebar">
                             <div class="bg-white py-2 container-fluid collapse-inner rounded">
-                                @if (User.IsInRole("Director") || User.IsInRole("Admin"))
+                                @if (User.IsInRole("Director") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                                 {
                                     <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
                                     <a class="collapse-item" asp-controller="Notas" asp-action="Index"><i class="bi bi-arrow-return-right text-black"></i> Reporte de Notas</a>
@@ -267,7 +267,7 @@
                     </li>
 
                 }
-                @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Secretaria"))
+                @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Secretaria") || User.IsInRole("UserSystem"))
                 {
                     <!-- Facturación -->
                     <li class="nav-item active">

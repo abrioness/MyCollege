@@ -91,7 +91,7 @@ namespace WebColegio.Controllers
             HttpContext.Session.SetString("UsuarioCedula", NombreUsuario);
             HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario);
             HttpContext.Session.SetInt32("RolUsuario", usuario.IdRol);// si tienes Id
-            if (usuario.IdRol == 1)
+            if (usuario.IdRol == 1 || usuario.IdRol==6)
             {
                 return RedirectToAction("Index", "Pagos");
             }
