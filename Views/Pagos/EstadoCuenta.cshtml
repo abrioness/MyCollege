@@ -69,54 +69,56 @@
 						</tr>
 					</thead>
 					<tbody>
-						@foreach (var pagos in Model.pagos)
+						@{
+							// Agrupar pagos por IdAlumno para evitar duplicados
+							var alumnosUnicos = Model.pagos
+							.Where(p => p.IdAlumno != 0) // Filtra los que no sean 0
+							.Select(p => p.IdAlumno)
+							.Distinct()
+							.ToList();
+						}
+						@foreach (var idAlumno in alumnosUnicos)
 						{
 							<tr>
 								@{
-									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == pagos.IdAlumno);
+									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == idAlumno);
+									if (alumno == null) continue;
+									
+									// Obtener el primer pago del alumno para datos comunes (periodo, recinto, etc.)
+									var primerPago = Model.pagos.FirstOrDefault(p => p.IdAlumno == idAlumno);
+									if (primerPago == null) continue;
 								}
 								<td>
-
-									<a class="btn btn-sm btn-info" asp-action="Edit" asp-controller="Pagos" asp-route-id="@pagos.IdPago">
-
-										@alumno?.Nombre @alumno?.Apellido
+									<a class="btn btn-sm btn-info" asp-action="Edit" asp-controller="Pagos" asp-route-id="@primerPago.IdPago">
+										@alumno.Nombre @alumno.Apellido
 									</a>
 								</td>
 
 								@* Buscar grado y periodo asociados si aplica *@
 								@{
 									var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
-									// var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == alumno.IdPeriodo);
-
 								}
 
 								<td>@(grado?.NombreGrado ?? "-")</td>
 								@{
-
-									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == pagos.IdPeriodo);
-
+									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == primerPago.IdPeriodo);
 								}
 								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
 								@{
-
-									var colegio = Model.recintos.FirstOrDefault(p => p.IdRecinto == pagos.IdRecinto);
-
+									var colegio = Model.recintos.FirstOrDefault(p => p.IdRecinto == primerPago.IdRecinto);
 								}
 								<td>@(colegio?.Recinto.ToString() ?? "-")</td>
 								@{
-
-									var concepto = Model.tipoMovimiento.FirstOrDefault(p => p.IdTipoMovimiento == pagos.IdTipoMovimiento);
-
+									var concepto = Model.tipoMovimiento.FirstOrDefault(p => p.IdTipoMovimiento == primerPago.IdTipoMovimiento);
 								}
 								<td>@(concepto?.Concepto.ToString() ?? "-")</td>
 
 								@* Columna: Estado de Rifa (por semestre) *@
-								 @{
+								@{
 									// Obtener el año actual
-									int añoActual = periodo.IdPeriodo;
+									int añoActual = periodo?.IdPeriodo ?? 0;
 									
 									// Buscar el IdTipoMovimiento para "Rifa" 
-									// Ajusta el filtro según cómo tengas configurado en tu base de datos
 									var tipoRifa = Model.tipoMovimiento.FirstOrDefault(tm => 
 										tm.Concepto.Contains("Rifas"));
 									
@@ -125,21 +127,21 @@
 									bool tieneRifaSemestre1 = false;
 									bool tieneRifaSemestre2 = false;
 									
-									if (tipoRifa != null)
+									if (tipoRifa != null && añoActual > 0)
 									{
 										// Verificar si tiene pago de rifa del semestre 1 (meses 1-6)
 										tieneRifaSemestre1 = Model.pagos.Any(p => 
-											p.IdAlumno == alumno.IdAlumno && 
+											p.IdAlumno == idAlumno && 
 											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
-											p.IdMes.HasValue && p.IdMes >= 1 &&//&& p.IdMes <= 6 &&
+											p.IdMes.HasValue && p.IdMes >= 1 &&
 											p.IdPeriodo == añoActual &&
 											p.Activo == true);
 										
 										// Verificar si tiene pago de rifa del semestre 2 (meses 7-12)
 										tieneRifaSemestre2 = Model.pagos.Any(p => 
-											p.IdAlumno == alumno.IdAlumno && 
+											p.IdAlumno == idAlumno && 
 											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
-											p.IdMes.HasValue && p.IdMes >= 7 &&// p.IdMes <= 12 &&
+											p.IdMes.HasValue && p.IdMes >= 7 &&
 											p.IdPeriodo == añoActual &&
 											p.Activo == true);
 									}
@@ -154,7 +156,6 @@
 								@* Columna: Estado de Mensualidad *@
 								@{
 									// Buscar el IdTipoMovimiento para "Mensualidad"
-									// Ajusta el filtro según cómo tengas configurado en tu base de datos
 									var tipoMensualidad = Model.tipoMovimiento.FirstOrDefault(tm => 
 										tm.Concepto.ToLower().Contains("mensualidad") || 
 										tm.Concepto.ToLower().Contains("mensual"));
@@ -172,7 +173,7 @@
 									{
 										// Verificar si tiene pago de mensualidad del mes requerido
 										tieneMensualidadAlDia = Model.pagos.Any(p => 
-											p.IdAlumno == alumno.IdAlumno && 
+											p.IdAlumno == idAlumno && 
 											p.IdTipoMovimiento == tipoMensualidad.IdTipoMovimiento &&
 											p.IdMes.HasValue && p.IdMes == mesRequerido &&
 											p.Anyo == añoActualMensualidad &&
@@ -186,23 +187,22 @@
 									<span class="badge bg-@claseMensualidad">@estadoMensualidad</span>
 								</td>
 
-
-								@* @{
-									var tipoMovimiento = Model.tipoMovimiento.FirstOrDefault(tip => tip.IdTipoMovimiento == pagos.IdTipoMovimiento);
-								}
-								<td>@(tipoMovimiento.Concepto.ToString() ?? "-")</td> *@
-						@if(User.Identity.IsAuthenticated)
-							{
+								@if(User.Identity.IsAuthenticated)
+								{
 									@if (User.IsInRole("Cajero"))
 									{
+										@* Mostrar columnas de los 12 meses para Cajero *@
 										@for (int mes = 1; mes <= 12; mes++)
 										{
 											var pagoMes = Model.pagos
-											.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
+												.FirstOrDefault(p => p.IdAlumno == idAlumno && 
+													p.IdMes == mes && 
+													p.IdTipoMovimiento == 1 && 
+													p.Activo == true);
 
 											if (pagoMes != null)
 											{
-												<td> <span class="badge bg-success">Pagado</span></td>
+												<td><span class="badge bg-success">Pagado</span></td>
 											}
 											else
 											{
@@ -210,45 +210,38 @@
 											}
 										}
 									}
-						else
-							{
-							
-								decimal subtotal = 0;
-							
-														@* Mostrar columnas de los 12 meses *@
-							@for (int mes = 1; mes <= 12; mes++)
-							{
-								var pagoMes = Model.pagos
-								.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes && p.Activo==true);
+									else
+									{
+										decimal subtotal = 0;
+										
+										@* Mostrar columnas de los 12 meses con montos *@
+										@for (int mes = 1; mes <= 12; mes++)
+										{
+											var pagoMes = Model.pagos
+												.FirstOrDefault(p => p.IdAlumno == idAlumno && 
+													p.IdMes == mes && 
+													p.Activo == true);
 
-								if (pagoMes != null)
-								{
+											if (pagoMes != null)
+											{
 												subtotal += pagoMes.Monto;
-									<td>C$ @pagoMes.Monto</td>
-									
-												@* <td>C$ @pagoMes.Monto</td>
-												<td>C$ @pagoMes.Monto</td>
-												<td>C$ @pagoMes.Monto</td>
-												<td>C$ @pagoMes.Monto</td>
-												<td>C$ @pagoMes.Monto</td> *@
-								}
-								else
-								{
-									<td>C$ 0.00</td>
-												
+												<td>C$ @pagoMes.Monto.ToString("N2")</td>
+											}
+											else
+											{
+												<td>C$ 0.00</td>
+											}
+										}
 
-								}
-							}
-
-										<td><strong>C$ @subtotal</strong></td>
+										<td><strong>C$ @subtotal.ToString("N2")</strong></td>
 										<td><strong>C$ 0.00</strong></td>
 										<td><strong>C$ 0.00</strong></td>
 										<td><strong>C$ 0.00</strong></td>
 										<td><strong>C$ 0.00</strong></td>
 									}
-													}
-						</tr>
-					}
+								}
+							</tr>
+						}
 				</tbody>
 
 			</table>

@@ -22,7 +22,7 @@
     <link href="~/css/hojamatricula.css" rel="stylesheet" />
 
     <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
-    
+
     <script src="~/js/limpiarcampos.js"></script>
 </head>
 <body >
@@ -32,6 +32,7 @@
             @{
                 var recinto = Model.recintosSelectListItem
                 .FirstOrDefault(s => s.Value == Model.alumnos.IdRecinto.ToString());
+
             }
             @{
                 var periodo = Model.periodoSelectListItem
@@ -47,34 +48,42 @@
             }
 
             <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
-                <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:12%;margin-left:55px">
+                @if (recinto?.Text == "COLEGIO PARROQUIAL SAN FRANCISCO JAVIER")
+                {
+
+                    <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:12%;margin-left:55px">
+                }
+                @if (recinto?.Text == "CENTRO EDUCATIVO PARROQUIAL SAN MIGUEL ARCANGEL")
+                {
+                    <img src="~/image/colegiosanmiguelarcangel.png" alt="izquierda" class="logo-izquierda" style="width:12%;margin-left:55px">
+                }
                 <div class="titulo" style="flex:0.9;width:contain">
                     <h6>
-                       
-                            @recinto?.Text
-                       
+
+                        @recinto?.Text
+
                     </h6>
-                     @{
-                        int periodoActual = 0;
-                        if (Convert.ToInt32(@periodo.Text) == DateTime.Now.Year)
-                        {
-                            periodoActual = Convert.ToInt32(@periodo.Text)+1;
-                        }
-                        else
-                        {
-                            @periodo.Text// debe agregar el nombre completo colegio parroquil
-                        }
+                    @{
+                        int periodoActual = DateTime.Now.Year;
+                        // if (Convert.ToInt32(@periodo.Text) == DateTime.Now.Year)
+                        // {
+                        //     periodoActual = Convert.ToInt32(@periodo.Text);
+                        // }
+                        // else
+                        // {
+                        // @periodo.Text// debe agregar el nombre completo colegio parroquil
+                        // }
 
                     }
                     <h5>HOJA DE MATRÍCULA DE @modalidad?.Text  @periodoActual</h5>
                 </div>
             </div>
-        
+
             <hr />
             @{
                 var today = DateTime.Now;
             }
-           
+
         </div>
         <div id="fechapresentocentro">
             Fecha que se presentó al centro a matricularse
@@ -89,25 +98,25 @@
                 </tr>
             </table>
         </div>
-        
-           
+
+
         <!-- I. DATOS DEL ESTUDIANTE -->
         <fieldset class="border p-3 mb-4">
             <legend class="w-auto px-2"><strong>I. DATOS PERSONALES DEL ESTUDIANTE</strong></legend>
 
-            <div class="row">
-                <div class="col-md-8 columna-izquierda">
-                    <div class="fila-interna">
-                        <div class="etiqueta"><strong>Nombre:</strong> </div>
-                        <div class="valor">@Model.alumnos.Nombre</div>
-                        <div class="etiqueta"><strong>Apellidos:</strong> </div>
-                        <div class="valor">@Model.alumnos.Apellido</div>
 
-                    </div>
+            <div class="col-md-4 columna-izquierda">
+                <div class="fila-interna">
+                    <div class="etiqueta"><strong>Nombre:</strong> </div>
+                    <div class="valor">@Model.alumnos.Nombre</div>
+                    <div class="etiqueta"><strong>Apellidos:</strong> </div>
+                    <div class="valor">@Model.alumnos.Apellido</div>
+
                 </div>
-
             </div>
-        
+
+
+
             <div class="col-lg-6">
                 <div class="col-md-8 columna-izquierda">
                     <div class="fila-interna">
@@ -167,16 +176,20 @@
                 </div>
             </div>
 
-            <!-- COLUMNA DERECHA -->
-            <div class="col-md-4 columna-derecha">
+            <!-- COLUMNA IZQUIERDA -->
+            <div class="col-md-4 columna-izquierda">
                 <div class="fila-interna">
-                    <div class="etiqueta">Peso:</div>
-                    <div class="valor">@Model.alumnos.Peso</div>
-                </div>
+                    <div class="etiqueta">Origen Étnico:</div>
+                    <div class="valor">@Model.alumnos.GrupoEtnico</div>
 
-                <div class="fila-interna">
-                    <div class="etiqueta">Talla:</div>
-                    <div class="valor">@Model.alumnos.Talla</div>
+                    <div class="etiqueta">Discapacidad:</div>
+                    <div class="valor">
+                        @{
+                            var discapacidad = Model.discapacidadSelectListItem
+                            .FirstOrDefault(s => s.Value == Model.alumnos.IdDiscapacidad.ToString());
+                        }
+                        @discapacidad?.Text
+                    </div>
                 </div>
             </div>
 
@@ -195,8 +208,7 @@
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Número de Cédula de la Madre:</strong> </div>
                     <div class="valor">@Model.alumnos.CedulaMadre</div>
-                </div>
-                <div class="fila-interna">
+
                     <div class="etiqueta"><strong>Teléfono de la Madre:</strong></div>
                     <div class="valor"> @Model.alumnos.TelefonoMadre </div>
                 </div>
@@ -207,8 +219,11 @@
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Nombre y Apellido del Padre:</strong> </div>
                     <div class="valor">@Model.alumnos.NombrePadre</div>
+                </div>
+                <div class="fila-interna">
                     <div class="etiqueta"><strong>Número de Cédula del Padre:</strong></div>
                     <div class="valor"> @Model.alumnos.CedulaPadre</div>
+
                     <div class="etiqueta"><strong>Teléfono del Padre:</strong> </div>
                     <div class="valor">@Model.alumnos.TelefonoPadre</div>
                 </div>
@@ -217,7 +232,7 @@
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Nombre y Apellido del Tutor:</strong> </div>
                     <div class="valor">@Model.alumnos.NombreTutor</div>
-                    </div>
+                </div>
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Número de Cédula del Tutor:</strong> </div>
                     <div class="valor">@Model.alumnos.CedulaTutor</div>
@@ -235,12 +250,39 @@
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Código del Estudiante:</strong></div>
                     <div class="valor">@Model.alumnos.CodigoAlumno</div>
-
+                    
                     <div class="etiqueta"><strong>Código único del Establecimiento Escolar:</strong></div>
-                    <div class="valor">13715</div>
+                    @{
+                        var codigoUnicoEstablecimientoSFJ = 13715;
+                        var codigoCentroEscolarSFJ = 21054;
+                        var codigoUnicoEstablecimientoSMA = 13749;
+                        var codigoCentroEscolarSMA = 22600;
+                    }
+                    <div class="valor">
+                        
+                        @if (recinto?.Value == "1")
+                        {
+                            @codigoUnicoEstablecimientoSFJ
+                        }
+                        @if (recinto?.Value == "2")
+                         {
+                                @codigoUnicoEstablecimientoSMA
+                         }
+
+                    </div>
 
                     <div class="etiqueta"><strong>Código del Centro Escolar:</strong></div>
-                    <div class="valor">21054</div>
+                    <div class="valor">
+                            @if (recinto?.Value == "1")
+                            {
+                                @codigoCentroEscolarSFJ
+                            }
+                            @if (recinto?.Value == "2")
+                            {
+                                @codigoCentroEscolarSMA
+                            }
+                    </div>
+                    
                 </div>
             </div>
 

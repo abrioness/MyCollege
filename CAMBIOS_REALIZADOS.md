@@ -88,3 +88,5 @@ Ahora cuando un usuario cierre sesión:
 3. ✅ No puede acceder directamente a URLs protegidas
 4. ✅ Debe iniciar sesión nuevamente para acceder
 
+
+

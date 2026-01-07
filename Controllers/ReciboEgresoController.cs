@@ -78,7 +78,15 @@ namespace WebColegio.Controllers
             var viewModel = new EgresoViewModel
             {
                 Egresos = reciboPagoCaja,
-                tipoMovimiento = _tipoMovimiento,              
+                tipoMovimiento = _tipoMovimiento, 
+                recintos=(await _Iservices.GetRecintosAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdRecinto.ToString(),
+                    Text = r.Recinto,
+                    //Selected = r.IdPregunta == respuestas.IdPregunta
+                }).ToList(),
+                
                 
 
             };

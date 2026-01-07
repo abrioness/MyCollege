@@ -96,14 +96,29 @@
     </style>
 </head>
 <body>
-    <div class="voucher">
+    @{
+        var recinto = Model.recintos
+        .FirstOrDefault(s => s.Value == Model.Egresos.IdRecinto.ToString());
 
+    }
+    <div class="voucher">
 
         <!-- Encabezado -->
         <div class="v-header">
-            <div class="title">COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</div>
-            <div class="sub">VICARIA DE EDUCACIÓN CATÓLICA</div>
-            <div class="sub">Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</div>
+            <div class="title">
+
+                @recinto?.Text
+            </div>
+            @if (recinto?.Text == "COLEGIO PARROQUIAL SAN FRANCISCO JAVIER")
+            {
+                <div class="sub">VICARIA DE EDUCACIÓN CATÓLICA</div>
+                <div class="sub">Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</div>
+            }
+            @if (recinto?.Text == "CENTRO EDUCATIVO PARROQUIAL SAN MIGUEL ARCANGEL")
+            {
+                <div class="sub">VICARIA DE EDUCACIÓN CATÓLICA</div>
+                <div class="sub">Ciudad Sandino, Frente de donde fue la Bomba de la Ruta 172, Zona #11 Managua</div>
+            }
         </div>
         <div class="v-section">
             <div class="v-row center bold">RECIBO DE CAJA</div>

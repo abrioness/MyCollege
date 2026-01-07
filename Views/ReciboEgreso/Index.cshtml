@@ -49,8 +49,9 @@
 						<th>Nombre</th>
 						<th>Concepto</th>
 						<th>Monto</th>						
-						<th>Descripción</th>
+						<th>Descripción</th>						
 						<th>Año</th>
+						<th>Colegio</th>
 						<th>Fecha Registro</th>
 
 					</tr>
@@ -106,6 +107,14 @@
 
 								</td>
 							}
+								@foreach (var recinto in Model.recintos.Where(s => s.IdRecinto == itemEgreso.IdRecinto))
+								{
+									
+								<td>
+								@recinto?.Recinto
+								</td>
+								}
+							
 							<td>
 
 								@itemEgreso.FechaRegistro.ToString("dd/MM/yyyy")

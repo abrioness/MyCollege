@@ -184,3 +184,5 @@ string claseRifa = (tieneRifaSemestre1 && tieneRifaSemestre2) ? "success" : "dan
 4. **Probar con un alumno al día en mensualidad:**
    - Debe mostrar "Solvente" en la columna de mensualidad
 
+
+

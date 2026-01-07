@@ -14,96 +14,115 @@
     <style>
         /* CONTENEDOR estilo voucher */
         .voucher {
-            width: 260px; /* tamaño típico de voucher/ticket */
-            padding: 10px;
-            margin: auto;
-            font-family: "Courier New", monospace;
-            font-size: 13px;
-            border: 1px solid #000;
+        width: 260px; /* tamaño típico de voucher/ticket */
+        padding: 10px;
+        margin: auto;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        border: 1px solid #000;
         }
 
         /* Encabezado */
         .v-header {
-            text-align: center;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 8px;
+        text-align: center;
+        border-bottom: 1px dashed #000;
+        padding-bottom: 8px;
         }
 
-            .v-header .title {
-                font-weight: bold;
-                font-size: 14px;
-            }
+        .v-header .title {
+        font-weight: bold;
+        font-size: 14px;
+        }
 
-            .v-header .sub {
-                font-size: 12px;
-            }
+        .v-header .sub {
+        font-size: 12px;
+        }
 
         /* Secciones */
         .v-section {
-            border-bottom: 1px dashed #000;
-            margin-top: 6px;
-            padding-bottom: 6px;
+        border-bottom: 1px dashed #000;
+        margin-top: 6px;
+        padding-bottom: 6px;
         }
 
         /* Filas */
         .v-row {
-            padding: 2px 0;
+        padding: 2px 0;
         }
 
         .center {
-            text-align: center;
+        text-align: center;
         }
 
         .bold {
-            font-weight: bold;
+        font-weight: bold;
         }
 
         /* Firma */
         .firma {
-            margin-top: 15px;
-            text-align: center;
+        margin-top: 15px;
+        text-align: center;
         }
 
-            .firma .line {
-                border-top: 1px solid #000;
-                width: 80%;
-                margin: auto;
-                margin-bottom: 4px;
-            }
+        .firma .line {
+        border-top: 1px solid #000;
+        width: 80%;
+        margin: auto;
+        margin-bottom: 4px;
+        }
 
-            .firma .txt {
-                font-size: 12px;
-            }
+        .firma .txt {
+        font-size: 12px;
+        }
 
         /* Botón imprimir */
         .print-button {
-            margin-top: 15px;
-            padding: 6px 12px;
-            font-size: 14px;
-            cursor: pointer;
+        margin-top: 15px;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
         }
 
         @@media print {
-            .no-print {
-                display: none;
-            }
-            /* Ajustar todo al ancho del voucher */
-            .voucher {
-                border: none;
-                width: 220px;
-            }
+        .no-print {
+        display: none;
+        }
+        /* Ajustar todo al ancho del voucher */
+        .voucher {
+        border: none;
+        width: 220px;
+        }
         }
     </style>
 </head>
 <body>
+    @{
+        var recinto = Model.recintos
+        .FirstOrDefault(s => s.Value == Model.PagosCaja.IdRecinto.ToString());
+
+    }
     <div class="voucher">
 
 
         <!-- Encabezado -->
         <div class="v-header">
-            <div class="title">COLEGIO PARROQUIAL SAN FRANCISCO JAVIER</div>
-            <div class="sub">VICARIA DE EDUCACIÓN CATÓLICA</div>
-            <div class="sub">Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</div>
+			
+            <div class="title">
+				
+					@recinto?.Text
+                </div>
+           @if (recinto?.Text == "COLEGIO PARROQUIAL SAN FRANCISCO JAVIER")
+			{
+                    <div class="sub">VICARIA DE EDUCACIÓN CATÓLICA</div>
+                    <div class="sub">Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua</div>
+            }
+           @if (recinto?.Text == "CENTRO EDUCATIVO PARROQUIAL SAN MIGUEL ARCANGEL")
+			{
+                <div class="sub">VICARIA DE EDUCACIÓN CATÓLICA</div>
+                <div class="sub">Ciudad Sandino, Frente de donde fue la Bomba de la Ruta 172, Zona #11 Managua</div>
+            }
+                
+           
         </div>
 
         <div class="v-section">

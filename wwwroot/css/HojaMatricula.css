@@ -298,3 +298,15 @@ span{
         display: none;
     }
 }
+@media print {
+    @page {
+        size: legal;
+        margin: 1.5cm;
+    }
+
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+       
+    }
+}

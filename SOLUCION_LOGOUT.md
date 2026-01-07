@@ -146,3 +146,5 @@ Después de implementar estos cambios:
    - No puedes acceder a páginas protegidas sin volver a iniciar sesión
    - Las cookies de sesión se eliminaron del navegador (verifica en DevTools > Application > Cookies)
 
+
+

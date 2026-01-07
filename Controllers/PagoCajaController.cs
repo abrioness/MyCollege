@@ -86,13 +86,20 @@ namespace WebColegio.Controllers
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             var _grados = await _Iservices.GetGradosAsync();
             var _turnos = await _Iservices.GetTurnosAsync();
-            //var _metodoPago = await _Iservices.GetMetodoPagoAsync();
+            //var _recinto = await _Iservices.GetRecintosAsync();
             var viewModel = new pagoCajasViewModel
             {
                 PagosCaja = reciboPagoCaja,
                 tipoMovimiento = _tipoMovimiento,
                 turnos=_turnos,
-                grados = _grados
+                grados = _grados,
+                recintos =  (await _Iservices.GetRecintosAsync())
+                                   .Select(r => new SelectListItem
+                                   {
+                                       Value = r.IdRecinto.ToString(),
+                                       Text = r.Recinto,
+                                       //Selected = r.IdPregunta == respuestas.IdPregunta
+                                   }).ToList(),
 
             };
 

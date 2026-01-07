@@ -42,15 +42,23 @@
 						</tr>
 					</thead>
 					<tbody>
-						@foreach (var pagos in Model.pagos)
+						@{
+							// Filtrar solo mensualidades y agrupar por IdAlumno e IdPeriodo para evitar duplicados
+							var mensualidades = Model.pagos.Where(p => p.IdTipoMovimiento == 1).ToList();
+							var gruposUnicos = mensualidades
+								.GroupBy(p => new { p.IdAlumno, p.IdPeriodo })
+								.Select(g => g.First())
+								.ToList();
+						}
+						@foreach (var pagoGrupo in gruposUnicos)
 						{
 							<tr>
 								@{
-									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == pagos.IdAlumno);
+									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == pagoGrupo.IdAlumno);
 								}
 								<td>
 									<span class="btn btn-sm btn-info">
-										@alumno.Nombre @alumno.Apellido
+										@alumno?.Nombre @alumno?.Apellido
 									</span>
 								</td>
 
@@ -63,31 +71,16 @@
 								<td>@(grado?.NombreGrado ?? "-")</td>
 								@{
 
-									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == pagos.IdPeriodo);
+									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == pagoGrupo.IdPeriodo);
 
 								}
 								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
 
 								@* Mostrar columnas de los 12 meses *@
-								@* @for (int mes = 1; mes <= 12; mes++)
-								{
-									var pagoMes = Model.pagos
-									.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
-
-									if (pagoMes != null)
-									{
-										<td>✔️</td>
-									}
-									else
-									{
-										<td>❌</td>
-									}
-								} *@
-								@* Mostrar columnas de los 12 meses *@
 								@for (int mes = 1; mes <= 12; mes++)
 								{
-									var pagoMes = Model.pagos
-									.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes);
+									var pagoMes = mensualidades
+									.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes && p.IdPeriodo == pagoGrupo.IdPeriodo);
 									@if (pagoMes != null)
 									{
 										<td>

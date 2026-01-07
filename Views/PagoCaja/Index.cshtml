@@ -65,7 +65,7 @@
 							<th>Número Recibo</th>
 							<th>Nombre</th>
 							<th>Concepto</th>
-							<th>Estado Pagos Rifas</th>
+							@* <th>Estado Pagos Rifas</th> *@
 							<th>Monto</th>
 							<th>Nivel</th>
 							<th>Turno</th>
@@ -147,9 +147,8 @@
 							
 							<td>
 
-									@(string.IsNullOrWhiteSpace(itemPagoCaja.Descripcion)
-																? " "
-																: itemPagoCaja.Descripcion)
+									@(string.IsNullOrWhiteSpace(itemPagoCaja.Descripcion) ? "Ninguna" : itemPagoCaja.Descripcion)
+																
 							</td>
 								@{
 									var recinto = Model.recintos

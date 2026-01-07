@@ -228,3 +228,5 @@ Basándome en tu layout, estos controladores deben tener `[Authorize]`:
 - Más fácil de mantener
 - Solo necesitas marcar explícitamente lo que es público
 
+
+

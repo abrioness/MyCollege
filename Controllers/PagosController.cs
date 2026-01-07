@@ -147,8 +147,15 @@ namespace WebColegio.Controllers
                 tipoMovimiento = _tipoMovimiento,
                 cantidadEnLetras = NumeroALetras(listpagos.Monto),
                 grados = _grados,
-                turnos=_turnos
-                
+                turnos=_turnos,
+                recintos = (await _Iservices.GetRecintosAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdRecinto.ToString(),
+                    Text = r.Recinto,
+                    //Selected = r.IdPregunta == respuestas.IdPregunta
+                }).ToList(),
+
             };
 
             if (listpagos == null)
@@ -330,7 +337,7 @@ namespace WebColegio.Controllers
                         var mesesPagadosBD = listpagos
                         .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
                                     p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
-                                    p.Anyo == pagos.Pago.Anyo)
+                                    p.IdPeriodo == periodo)
                         .Select(p => p.IdMes)
                         .ToHashSet();
                         //crear meses pagados virtualmente
