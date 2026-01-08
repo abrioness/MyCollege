@@ -242,15 +242,49 @@
 
             // Constantes para tipos de movimiento
             const TIPO_MENSUALIDAD = 1;
-            const TIPO_MATRICULA = 2;
+            const TIPO_MATRICULA_COMPLETA = 2; // Matrícula Completa
+            const TIPO_MATRICULA = 4; // Confirmación de Matrícula
             const TIPO_RIFA = 10;
             const tiposConMeses = [TIPO_MENSUALIDAD, TIPO_RIFA];
+            
+            // Tipos de movimiento que requieren cargar matrícula
+            const tiposMatricula = [TIPO_MATRICULA_COMPLETA, TIPO_MATRICULA];
+
+            // Función para obtener abonos previos
+            function obtenerAbonosPrevios(idAlumno, idTipoMovimiento, periodo, callback) {
+                if (!idAlumno || !idTipoMovimiento || !periodo) {
+                    console.log('obtenerAbonosPrevios: Faltan parámetros', { idAlumno, idTipoMovimiento, periodo });
+                    if (callback) callback(0);
+                    return;
+                }
+
+                console.log('Obteniendo abonos previos:', { idAlumno, idTipoMovimiento, periodo });
+
+                $.getJSON("/Pagos/ObtenerAbonosPrevios", {
+                    idAlumno: idAlumno,
+                    idTipoMovimiento: idTipoMovimiento,
+                    idPeriodo: periodo
+                }, function(data) {
+                    console.log('Abonos previos recibidos:', data);
+                    const totalAbonos = data && data.totalAbonos ? parseFloat(data.totalAbonos) : 0;
+                    if (callback) callback(totalAbonos);
+                }).fail(function(xhr, status, error) {
+                    console.error('Error al cargar abonos previos:', error, xhr);
+                    if (callback) callback(0);
+                });
+            }
 
             // Función para cargar matrícula
             function cargarMatricula() {
                 const recinto = $recinto.val();
                 const modalidad = $modalidad.val();
                 const periodo = $periodo.val();
+                const idAlumno = $idAlumno.val();
+                const tipoMovimientoId = parseInt($tipoMovimiento.val()) || 0;
+                // Usar el tipo de movimiento seleccionado para buscar abonos
+                const idTipoMovimiento = tipoMovimientoId || TIPO_MATRICULA_COMPLETA;
+
+                console.log('cargarMatricula llamado', { recinto, modalidad, periodo, idAlumno, tipoMovimientoId });
 
                 if (recinto && modalidad && periodo) {
                     $.getJSON("/Pagos/ObtenerMatricula", {
@@ -258,13 +292,38 @@
                         idModalidad: modalidad,
                         idPeriodo: periodo
                     }, function(data) {
+                        console.log('Datos de matrícula recibidos:', data);
                         if (data && data.costo) {
-                            $monto.val(data.costo);
-                            calcularTotalPagar(); // Recalcular total después de cargar
+                            const costoMatricula = parseFloat(data.costo) || 0;
+                            
+                            // Obtener abonos previos y restarlos (solo si hay alumno seleccionado)
+                            if (idAlumno) {
+                                obtenerAbonosPrevios(idAlumno, idTipoMovimiento, periodo, function(totalAbonos) {
+                                    const montoFinal = Math.max(0, costoMatricula - totalAbonos);
+                                    $monto.val(montoFinal.toFixed(2));
+                                    
+                                    // Si hay abonos, mostrar mensaje informativo
+                                    if (totalAbonos > 0) {
+                                        console.log(`Se restaron C$ ${totalAbonos.toFixed(2)} de abonos previos.`);
+                                    }
+                                    
+                                    calcularTotalPagar(); // Recalcular total después de cargar
+                                });
+                            } else {
+                                // Si no hay alumno, solo mostrar el costo base
+                                $monto.val(costoMatricula.toFixed(2));
+                                calcularTotalPagar();
+                            }
+                        } else {
+                            console.warn('No se recibió el costo de matrícula');
                         }
-                    }).fail(function() {
-                        console.error('Error al cargar matricula');
+                    }).fail(function(xhr, status, error) {
+                        console.error('Error al cargar matricula:', error, xhr);
+                        console.error('Status:', status);
+                        console.error('Response:', xhr.responseText);
                     });
+                } else {
+                    console.log('Faltan campos requeridos para cargar matrícula:', { recinto, modalidad, periodo });
                 }
             }
 
@@ -273,6 +332,10 @@
                 const recinto = $recinto.val();
                 const grado = $grado.val();
                 const periodo = $periodo.val();
+                const idAlumno = $idAlumno.val();
+                const idTipoMovimiento = TIPO_MENSUALIDAD; // 1
+
+                console.log('cargarMensualidad llamado', { recinto, grado, periodo, idAlumno });
 
                 if (recinto && grado && periodo) {
                     $.getJSON("/Pagos/ObtenerMensualidad", {
@@ -280,13 +343,34 @@
                         idGrado: grado,
                         idPeriodo: periodo
                     }, function(data) {
+                        console.log('Datos de mensualidad recibidos:', data);
                         if (data && data.costo) {
-                            $monto.val(data.costo);
-                            calcularTotalPagar(); // Recalcular total después de cargar
+                            const costoMensualidad = parseFloat(data.costo) || 0;
+                            
+                            // Obtener abonos previos y restarlos (solo si hay alumno seleccionado)
+                            if (idAlumno) {
+                                obtenerAbonosPrevios(idAlumno, idTipoMovimiento, periodo, function(totalAbonos) {
+                                    const montoFinal = Math.max(0, costoMensualidad - totalAbonos);
+                                    $monto.val(montoFinal.toFixed(2));
+                                    
+                                    // Si hay abonos, mostrar mensaje informativo
+                                    if (totalAbonos > 0) {
+                                        console.log(`Se restaron C$ ${totalAbonos.toFixed(2)} de abonos previos.`);
+                                    }
+                                    
+                                    calcularTotalPagar(); // Recalcular total después de cargar
+                                });
+                            } else {
+                                // Si no hay alumno, solo mostrar el costo base
+                                $monto.val(costoMensualidad.toFixed(2));
+                                calcularTotalPagar();
+                            }
                         }
-                    }).fail(function() {
-                        console.error('Error al cargar mensualidad');
+                    }).fail(function(xhr, status, error) {
+                        console.error('Error al cargar mensualidad:', error, xhr);
                     });
+                } else {
+                    console.log('Faltan campos requeridos para cargar mensualidad');
                 }
             }
 
@@ -324,7 +408,7 @@
 
                 if (tipoMovimientoId === TIPO_MENSUALIDAD) {
                     $totalPagar.val((costomensualidad + totalmora).toFixed(2));
-                } else if (tipoMovimientoId === TIPO_MATRICULA) {
+                } else if (tiposMatricula.includes(tipoMovimientoId)) {
                     $totalPagar.val(costomatricula.toFixed(2));
                 }
             }
@@ -338,21 +422,44 @@
             // Configurar listeners según el tipo de movimiento
             function configurarListenersPorTipo(tipoId) {
                 limpiarListeners(); // Limpiar antes de agregar nuevos
+                console.log('Configurando listeners para tipo:', tipoId);
 
                 if (tipoId === TIPO_MENSUALIDAD) {
                     // Mensualidad: recinto + grado + periodo → cargar mensualidad
                     $recinto.add($grado).add($periodo)
-                        .on('change.tipoMovimiento', cargarMensualidad);
+                        .on('change.tipoMovimiento', function() {
+                            console.log('Cambio detectado en campos de mensualidad');
+                            cargarMensualidad();
+                        });
                     // Grado → cargar mora
-                    $grado.on('change.tipoMovimiento', cargarMora);
+                    $grado.on('change.tipoMovimiento', function() {
+                        console.log('Cambio detectado en grado, cargando mora');
+                        cargarMora();
+                    });
                     // Año → calcular total
                     $anyo.on('change.tipoMovimiento', calcularTotalPagar);
-                } else if (tipoId === TIPO_MATRICULA) {
-                    // Matrícula: recinto + modalidad + periodo → cargar matrícula
+                    
+                    // Si ya hay valores, ejecutar inmediatamente
+                    if ($recinto.val() && $grado.val() && $periodo.val()) {
+                        console.log('Ejecutando cargarMensualidad inmediatamente');
+                        cargarMensualidad();
+                    }
+                } else if (tiposMatricula.includes(tipoId)) {
+                    // Matrícula (tipo 2 o 4): recinto + modalidad + periodo → cargar matrícula
+                    console.log('Configurando listeners para matrícula (tipo ' + tipoId + ')');
                     $recinto.add($modalidad).add($periodo)
-                        .on('change.tipoMovimiento', cargarMatricula);
+                        .on('change.tipoMovimiento', function() {
+                            console.log('Cambio detectado en campos de matrícula');
+                            cargarMatricula();
+                        });
                     // Año → calcular total
                     $anyo.on('change.tipoMovimiento', calcularTotalPagar);
+                    
+                    // Si ya hay valores, ejecutar inmediatamente
+                    if ($recinto.val() && $modalidad.val() && $periodo.val()) {
+                        console.log('Ejecutando cargarMatricula inmediatamente');
+                        cargarMatricula();
+                    }
                 }
             }
 
@@ -368,9 +475,9 @@
                 if (tipoMovimientoId === TIPO_MENSUALIDAD) {
                     $moraDiv.show();
                     configurarListenersPorTipo(TIPO_MENSUALIDAD);
-                } else if (tipoMovimientoId === TIPO_MATRICULA) {
+                } else if (tiposMatricula.includes(tipoMovimientoId)) {
                     $moraDiv.hide();
-                    configurarListenersPorTipo(TIPO_MATRICULA);
+                    configurarListenersPorTipo(tipoMovimientoId);
                 } else {
                     // Tipo no configurado: ocultar y limpiar listeners
                     $moraDiv.hide();
@@ -405,6 +512,33 @@
                 minLength: 2,
                 select: function(event, ui) {
                     $idAlumno.val(ui.item.id);
+                    console.log('Alumno seleccionado:', ui.item.id, ui.item.label);
+                    
+                    // Si ya hay tipo de movimiento, recinto, grado/modalidad y periodo seleccionados,
+                    // recargar los valores para aplicar los abonos
+                    const tipoMovimientoId = parseInt($tipoMovimiento.val()) || 0;
+                    console.log('Tipo de movimiento actual:', tipoMovimientoId);
+                    
+                    if (tiposMatricula.includes(tipoMovimientoId)) {
+                        const recinto = $recinto.val();
+                        const modalidad = $modalidad.val();
+                        const periodo = $periodo.val();
+                        console.log('Verificando campos para matrícula:', { recinto, modalidad, periodo });
+                        if (recinto && modalidad && periodo) {
+                            console.log('Recargando matrícula con abonos...');
+                            cargarMatricula();
+                        }
+                    } else if (tipoMovimientoId === TIPO_MENSUALIDAD) {
+                        const recinto = $recinto.val();
+                        const grado = $grado.val();
+                        const periodo = $periodo.val();
+                        console.log('Verificando campos para mensualidad:', { recinto, grado, periodo });
+                        if (recinto && grado && periodo) {
+                            console.log('Recargando mensualidad con abonos...');
+                            cargarMensualidad();
+                            cargarMora(); // También recargar mora
+                        }
+                    }
                 }
             });
 

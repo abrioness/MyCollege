@@ -471,14 +471,14 @@ namespace WebColegio.Controllers
                         if (pagos.Pago.IdTipoMovimiento == 2)
                         {
                             int periodoMatricula = 0;
-                            if (periodo == pagos.Pago.IdPeriodo)
-                            {
-                                periodoMatricula = pagos.Pago.IdPeriodo + 1;
-                            }
-                            else
-                            {
-                                periodoMatricula = pagos.Pago.IdPeriodo;
-                            }
+                            //if (periodo == pagos.Pago.IdPeriodo)
+                            //{
+                            //    periodoMatricula = pagos.Pago.IdPeriodo+1;
+                            //}
+                            //else
+                            //{
+                               periodoMatricula = pagos.Pago.IdPeriodo;
+                            //}
                                 decimal restarMensualidad = await ObtenerMensualidadDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula);
                                 decimal obtenerMat = await ObtenerMatriculaDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, periodoMatricula);
 
@@ -535,6 +535,10 @@ namespace WebColegio.Controllers
                                     TempData["Tipo"] = "warning";
                                     return RedirectToAction("Create");
                                 }
+                            }
+                            else
+                            {
+
                             }
                            
                         }
@@ -724,6 +728,95 @@ namespace WebColegio.Controllers
                 .FirstOrDefault();
 
             return Json(matricula);
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult ObtenerAbonosPrevios(int idAlumno, int idTipoMovimiento, int idPeriodo)
+        {
+            try
+            {
+                var listpagos = _Iservices.GetPagosAsync().Result;
+                var tiposMovimiento = _Iservices.GetTipoMovimientoAsync().Result;
+                
+                // Buscar abonos previos según el tipo de movimiento
+                decimal totalAbonos = 0;
+                
+                if (idTipoMovimiento == 2 || idTipoMovimiento == 4) // Matrícula Completa o Confirmación de Matrícula
+                {
+                    // Si es Confirmación de Matrícula (tipo 4), buscar abonos previos del mismo tipo
+                    // Si es Matrícula Completa (tipo 2), buscar abonos de confirmación de matrícula (tipo 4)
+                    int tipoAbonoBuscado = idTipoMovimiento == 4 ? 4 : 4; // Ambos casos buscan tipo 4
+                    
+                    // Buscar abonos de confirmación de matrícula
+                    var abonosMatricula = listpagos
+                        .Where(p => p.IdAlumno == idAlumno &&
+                                    p.IdPeriodo == idPeriodo &&
+                                    p.IdTipoMovimiento == tipoAbonoBuscado &&
+                                    p.Activo == true)
+                        .ToList();
+                    
+                    totalAbonos = abonosMatricula.Sum(p => p.Monto);
+                    
+                    // Si no encuentra por ID, intentar buscar por concepto
+                    if (totalAbonos == 0)
+                    {
+                        var tipoConfirmacion = tiposMovimiento
+                            .FirstOrDefault(tm => tm.Concepto.ToLower().Contains("confirmación") || 
+                                                 tm.Concepto.ToLower().Contains("reserva") ||
+                                                 (tm.Concepto.ToLower().Contains("abono") && tm.Concepto.ToLower().Contains("matrícula")));
+                        
+                        if (tipoConfirmacion != null && tipoConfirmacion.IdTipoMovimiento != idTipoMovimiento)
+                        {
+                            var abonosPorConcepto = listpagos
+                                .Where(p => p.IdAlumno == idAlumno &&
+                                            p.IdPeriodo == idPeriodo &&
+                                            p.IdTipoMovimiento == tipoConfirmacion.IdTipoMovimiento &&
+                                            p.Activo == true)
+                                .ToList();
+                            
+                            totalAbonos = abonosPorConcepto.Sum(p => p.Monto);
+                        }
+                    }
+                }
+                else if (idTipoMovimiento == 1) // Mensualidad
+                {
+                    // Buscar abonos de mensualidad previos
+                    // Buscar el tipo de movimiento que corresponde a "Abono de Mensualidad"
+                    var tipoAbonoMensualidad = tiposMovimiento
+                        .FirstOrDefault(tm => (tm.Concepto.ToLower().Contains("Abono Mensualidad") && 
+                                               tm.Concepto.ToLower().Contains("Mensualidad")) ||
+                                              tm.Concepto.ToLower().Contains("abono mensualidad"));
+                    
+                    if (tipoAbonoMensualidad != null)
+                    {
+                        // Buscar abonos de mensualidad
+                        var abonosMensualidad = listpagos
+                            .Where(p => p.IdAlumno == idAlumno &&
+                                        p.IdPeriodo == idPeriodo &&
+                                        p.IdTipoMovimiento == tipoAbonoMensualidad.IdTipoMovimiento &&
+                                        p.Activo == true)
+                            .ToList();
+                        
+                        totalAbonos = abonosMensualidad.Sum(p => p.Monto);
+                    }
+                    // Si no hay tipo específico de abono de mensualidad, no se restan abonos
+                    // porque las mensualidades pagadas no son abonos, son pagos completos
+                }
+
+                return Json(new { 
+                    totalAbonos = totalAbonos,
+                    tieneAbonos = totalAbonos > 0
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { 
+                    totalAbonos = 0,
+                    tieneAbonos = false,
+                    error = ex.Message
+                });
+            }
         }
         //    public (bool tienePendientes, List<int> mesesPendientes, decimal moraAcumulada, bool puedePagar)
         //ValidarPagoConMora(int idAlumno, int idTipoMovimiento, int periodo, int mesDeseado)
