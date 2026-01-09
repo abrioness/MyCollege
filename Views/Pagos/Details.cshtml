@@ -195,3 +195,17 @@
         });
     </script>
 }
+
+@* Script para imprimir automáticamente cuando se guarda un nuevo pago *@
+@* @if (ViewBag.Imprimir == true)
+{
+    <script>
+        // Esperar a que la página se cargue completamente antes de imprimir
+        window.addEventListener('load', function() {
+            // Pequeño delay para asegurar que todo esté renderizado
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        });
+    </script>
+} *@

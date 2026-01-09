@@ -130,7 +130,7 @@ namespace WebColegio.Controllers
 
         // GET: PagosController/Details/5
         [Authorize]
-        public async Task<ActionResult> Details(int id)
+        public async Task<ActionResult> Details(int id, bool imprimir = false)
         {
 
             var listpagos = await _Iservices.GetPagoById(id);
@@ -162,6 +162,9 @@ namespace WebColegio.Controllers
             {
                 return NotFound();
             }
+
+            // Pasar el parámetro de impresión a la vista
+            ViewBag.Imprimir = imprimir;
 
             return View(viewModel);
         }
@@ -256,17 +259,104 @@ namespace WebColegio.Controllers
             bool response = false;
             bool validarDuplicado = false;
            
+            // Validar que pagos y pagos.Pago no sean null primero
+            if (pagos == null || pagos.Pago == null)
+            {
+                TempData["Mensaje"] = "Error: Los datos del pago no fueron recibidos correctamente.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Create");
+            }
+
+            // Validar campos críticos manualmente antes de validar el ModelState
+            var erroresManuales = new List<string>();
+            
+            if (pagos.Pago.IdAlumno == 0)
+            {
+                erroresManuales.Add("Debe seleccionar un alumno");
+            }
+            
+            if (pagos.Pago.IdTipoMovimiento == 0)
+            {
+                erroresManuales.Add("Debe seleccionar un tipo de movimiento");
+            }
+            
+            if (pagos.Pago.IdTipoRecibo == 0)
+            {
+                erroresManuales.Add("Debe seleccionar un tipo de recibo");
+            }
+            
+            if (pagos.Pago.IdMetodoPago == 0)
+            {
+                erroresManuales.Add("Debe seleccionar un método de pago");
+            }
+            
+            if (pagos.Pago.IdRecinto == 0)
+            {
+                erroresManuales.Add("Debe seleccionar un centro de estudio");
+            }
+            
+            if (pagos.Pago.Monto <= 0)
+            {
+                erroresManuales.Add("El monto debe ser mayor a cero");
+            }
+
+            if (erroresManuales.Any())
+            {
+                TempData["Mensaje"] = "Error de validación: " + string.Join(", ", erroresManuales);
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Create");
+            }
+
+            // Limpiar errores del ModelState para campos opcionales que pueden causar problemas
+            ModelState.Remove("Pago.Anyo");
+            ModelState.Remove("Pago.IdMes");
+            ModelState.Remove("Pago.IdModalidad"); // Puede ser opcional según el tipo de movimiento
+            ModelState.Remove("Pago.IdGrado"); // Puede ser opcional según el tipo de movimiento
+            ModelState.Remove("Pago.Serie"); // Se establece automáticamente en el código
+            ModelState.Remove("cantidadEnLetras"); // Campo calculado, no requerido
+            ModelState.Remove("MesesSeleccionados"); // Parámetro opcional del método
+            
+            // Validar el modelo solo para campos críticos
+            if (!ModelState.IsValid)
+            {
+                var erroresValidacion = ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .SelectMany(x => x.Value.Errors.Select(e => $"{x.Key}: {e.ErrorMessage}"))
+                    .ToList();
+                
+                // Solo mostrar errores si son de campos críticos
+                var erroresCriticos = erroresValidacion
+                    .Where(e => !e.Contains("Anyo") && 
+                               !e.Contains("IdMes") && 
+                               !e.Contains("IdModalidad") && 
+                               !e.Contains("IdGrado"))
+                    .ToList();
+                
+                if (erroresCriticos.Any())
+                {
+                    TempData["Mensaje"] = "Error de validación: " + string.Join("; ", erroresCriticos);
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
+                }
+            }
 
             var buscarIdGuardado = await _Iservices.GetPagosAsync();
            
             try
             {
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                int periodo= await _Iservices.GetPeriodoAsync().ContinueWith(p=>p.Result.FirstOrDefault(a=>a.Activo && a.Actual)?.IdPeriodo) ?? 0;
-                pagos.Pago.IdPeriodo = periodo;
+                
+                // Solo usar el período actual como fallback si el usuario no seleccionó ninguno
+                // Si el usuario seleccionó un período en la vista, usar ese
+                if (pagos.Pago.IdPeriodo == 0)
+                {
+                    int periodoActual = await _Iservices.GetPeriodoAsync().ContinueWith(p=>p.Result.FirstOrDefault(a=>a.Activo && a.Actual)?.IdPeriodo) ?? 0;
+                    pagos.Pago.IdPeriodo = periodoActual;
+                }
+                // Si ya tiene un valor (seleccionado por el usuario), mantenerlo
 
 
-                if (pagos != null)
+                if (pagos != null && pagos.Pago != null)
                 {
                     pagos.Pago.UsuarioRegistro = idUsuario;
                     pagos.Pago.FechaRegistro = DateTime.Now;
@@ -298,7 +388,7 @@ namespace WebColegio.Controllers
 
                             TempData["Mensaje"] = "Pago registrado correctamente.";
                             TempData["Tipo"] = "success";
-                            return RedirectToAction("Details", "Pagos", new { id = idPag + 1 });
+                            return RedirectToAction("Details", "Pagos", new { id = idPag + 1, imprimir = true });
                         }
                         else
                         {
@@ -337,7 +427,7 @@ namespace WebColegio.Controllers
                         var mesesPagadosBD = listpagos
                         .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
                                     p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
-                                    p.IdPeriodo == periodo)
+                                    p.IdPeriodo == pagos.Pago.IdPeriodo)
                         .Select(p => p.IdMes)
                         .ToHashSet();
                         //crear meses pagados virtualmente
@@ -360,7 +450,7 @@ namespace WebColegio.Controllers
                             // 1️⃣ Validar duplicado
 
                             
-                            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagos.Pago.NumeroRecibo && r.IdMes ==idMes && r.IdPeriodo==periodo && r.Serie == "A" && r.Activo == true);
+                            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagos.Pago.NumeroRecibo && r.IdMes ==idMes && r.IdPeriodo==pagos.Pago.IdPeriodo && r.Serie == "A" && r.Activo == true);
                             if (validarDuplicado)
                             {
                                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
@@ -440,26 +530,23 @@ namespace WebColegio.Controllers
 
                                 //await _Iservices.InsertarPagoAsync(nuevoPago);
                                 response = await _Iservices.PostPagosAsync(nuevoPago);
+                                
+                                if (!response)
+                                {
+                                    TempData["Mensaje"] = $"No se logro procesar el pago del mes {Mes(idMes).Result}.";
+                                    TempData["Tipo"] = "warning";
+                                    return RedirectToAction("Create");
+                                }
+                                
                                 mesesPagadosAcumulados.Add(idMes);
-                            if (response)
-                            {
-                                var idPag = buscarIdGuardado.Max(a => a.IdPago);
-
-
-                                TempData["Mensaje"] = "Pago registrado correctamente.";
-                                TempData["Tipo"] = "success";
-                                return RedirectToAction("Details", "Pagos", new { id = idPag + 1 });
-                            }
-                            else
-                            {
-                                //var idPag = buscarIdGuardado.Max(a => a.IdPago);
-
-
-                                TempData["Mensaje"] = "No se logro procesar el pago.";
-                                TempData["Tipo"] = "warning";
-                                return RedirectToAction("Create");
-                            }
                         }
+                        
+                        // Si todos los meses se procesaron correctamente, obtener el ID del último pago
+                        var pagosActualizados = await _Iservices.GetPagosAsync();
+                        var idPag = pagosActualizados.Max(a => a.IdPago);
+                        TempData["Mensaje"] = "Pago registrado correctamente.";
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction("Details", "Pagos", new { id = idPag, imprimir = true });
                         // 4️⃣ Mensaje final
                        
                         
@@ -470,37 +557,143 @@ namespace WebColegio.Controllers
                     {
                         if (pagos.Pago.IdTipoMovimiento == 2)
                         {
-                            int periodoMatricula = 0;
-                            //if (periodo == pagos.Pago.IdPeriodo)
-                            //{
-                            //    periodoMatricula = pagos.Pago.IdPeriodo+1;
-                            //}
-                            //else
-                            //{
-                               periodoMatricula = pagos.Pago.IdPeriodo;
-                            //}
-                                decimal restarMensualidad = await ObtenerMensualidadDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula);
-                                decimal obtenerMat = await ObtenerMatriculaDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, periodoMatricula);
+                            int periodoMatricula = pagos.Pago.IdPeriodo;
+                            
+                            // Validar que los campos requeridos estén presentes
+                            if (pagos.Pago.IdGrado == 0)
+                            {
+                                TempData["Mensaje"] = "Debe seleccionar el Nivel (Grado) para procesar la matrícula completa.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
+                            
+                            if (!pagos.Pago.IdModalidad.HasValue || pagos.Pago.IdModalidad.Value == 0)
+                            {
+                                TempData["Mensaje"] = "Debe seleccionar la Modalidad para procesar la matrícula completa.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
+                            
+                            decimal restarMensualidad = await ObtenerMensualidadDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula);
+                            decimal obtenerMat = await ObtenerMatriculaDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, periodoMatricula);
+                            
+                            // Validar que se obtuvieron los valores correctamente
+                            if (obtenerMat == 0)
+                            {
+                                TempData["Mensaje"] = "No se encontró el costo de matrícula para los parámetros seleccionados.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
 
                             var totalMatricual = Convert.ToDecimal(pagos.Pago.Monto);
-                            if (totalMatricual == obtenerMat)
+                            
+                            // Calcular cuánto se ha pagado ya de matrícula (tipo 2 o 4)
+                            var pagosMatriculaPrevios = _Iservices.GetPagosAsync().Result
+                                .Where(a => a.IdAlumno == pagos.Pago.IdAlumno && 
+                                           (a.IdTipoMovimiento == 2 || a.IdTipoMovimiento == 4) && 
+                                           a.IdPeriodo == periodoMatricula &&
+                                           a.Activo == true)
+                                .ToList();
+                            
+                            decimal totalPagadoMatricula = pagosMatriculaPrevios.Sum(p => p.Monto);
+                            decimal faltaPorPagar = obtenerMat - totalPagadoMatricula;
+                            
+                            // Validar que el monto ingresado no exceda lo que falta por pagar
+                            if (totalMatricual > faltaPorPagar)
                             {
+                                TempData["Mensaje"] = $"El monto ingresado (C$ {totalMatricual:N2}) excede lo que falta por pagar (C$ {faltaPorPagar:N2}). Total de matrícula: C$ {obtenerMat:N2}, ya pagado: C$ {totalPagadoMatricula:N2}.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
+                            
+                            // Si ya se pagó el total completo, no permitir más pagos
+                            if (faltaPorPagar <= 0.01m)
+                            {
+                                TempData["Mensaje"] = "La matrícula ya está completamente pagada.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
+                            
+                            // Comparar decimales con tolerancia (0.01) para evitar problemas de precisión
+                            // Verificar si el monto ingresado completa el pago de matrícula
+                            decimal diferencia = Math.Abs(totalMatricual - faltaPorPagar);
+                            bool esMontoCompleto = diferencia < 0.01m;
+                            
+                            // Si el monto completa el pago pendiente de matrícula, procesar como matrícula completa
+                            if (esMontoCompleto)
+                            {
+                                // El monto ingresado completa lo que falta, restar la mensualidad
                                 decimal valormatricula = totalMatricual - restarMensualidad;
                                 pagos.Pago.Monto = valormatricula;
-                                var validarExistePagoMatricula =  _Iservices.GetPagosAsync().Result.Where(a => a.IdAlumno == pagos.Pago.IdAlumno && a.IdTipoMovimiento==pagos.Pago.IdTipoMovimiento && a.IdPeriodo == periodoMatricula).Count()>0;
-                                if(validarExistePagoMatricula)
-                                {
-                                    TempData["Mensaje"] = "El Pago de la Matricula ya se hizo efectiva.";
-                                    TempData["Tipo"] = "waring";
-                                    return RedirectToAction("Create", "Pagos");
-                                }
                                 pagos.Pago.IdPeriodo = periodoMatricula;
-                                await _Iservices.PostPagosAsync(pagos.Pago);
+                                response = await _Iservices.PostPagosAsync(pagos.Pago);
+                                
+                                if (!response)
+                                {
+                                    TempData["Mensaje"] = "No se pudo registrar el pago de matrícula.";
+                                    TempData["Tipo"] = "warning";
+                                    return RedirectToAction("Create");
+                                }
                                 
                                 var pagoprimermes = new TblPago
                                 {
                                     IdAlumno = pagos.Pago.IdAlumno,
-
+                                    NumeroRecibo = pagos.Pago.NumeroRecibo,
+                                    Anyo = pagos.Pago.Anyo,
+                                    IdMes = 1,
+                                    IdTipoRecibo = pagos.Pago.IdTipoRecibo,
+                                    IdTipoMovimiento = pagos.Pago.IdTipoMovimiento,
+                                    IdMetodoPago = pagos.Pago.IdMetodoPago,
+                                    IdGrado = pagos.Pago.IdGrado,
+                                    IdPeriodo = periodoMatricula,
+                                    IdRecinto = pagos.Pago.IdRecinto,
+                                    FechaEmision = pagos.Pago.FechaEmision,
+                                    Mora = 0,
+                                    Monto = valormatricula,
+                                    Descripcion = pagos.Pago.Descripcion,
+                                    UsuarioRegistro = pagos.Pago.UsuarioRegistro,
+                                    Activo = pagos.Pago.Activo,
+                                    FechaRegistro = pagos.Pago.FechaRegistro,
+                                    Serie = pagos.Pago.Serie
+                                };
+                                
+                                response = await _Iservices.PostPagosAsync(pagoprimermes);
+                                if (response)
+                                {
+                                    // Obtener el ID del último pago guardado (el de matrícula)
+                                    var pagosActualizados = await _Iservices.GetPagosAsync();
+                                    var idPag = pagosActualizados.Max(a => a.IdPago);
+                                    TempData["Mensaje"] = "Pago registrado correctamente.";
+                                    TempData["Tipo"] = "success";
+                                    return RedirectToAction("Details", "Pagos", new { id = idPag, imprimir = true });
+                                }
+                                else
+                                {
+                                    TempData["Mensaje"] = "No se proceso el Pago del primer mes.";
+                                    TempData["Tipo"] = "warning";
+                                    return RedirectToAction("Create");
+                                }
+                            }
+                            else
+                            {
+                                // Si el monto es diferente (pago parcial), procesar como abono de matrícula
+                                // Restar siempre la mensualidad del monto, similar al if anterior
+                                decimal valormatricula = totalMatricual - restarMensualidad;
+                                pagos.Pago.Monto = valormatricula;
+                                pagos.Pago.IdPeriodo = periodoMatricula;
+                                response = await _Iservices.PostPagosAsync(pagos.Pago);
+                                
+                                if (!response)
+                                {
+                                    TempData["Mensaje"] = "No se pudo registrar el abono de matrícula.";
+                                    TempData["Tipo"] = "warning";
+                                    return RedirectToAction("Create");
+                                }
+                                
+                                // Crear el pago del primer mes con el valor de la mensualidad
+                                var pagoprimermes = new TblPago
+                                {
+                                    IdAlumno = pagos.Pago.IdAlumno,
                                     NumeroRecibo = pagos.Pago.NumeroRecibo,
                                     Anyo = pagos.Pago.Anyo,
                                     IdMes = 1,
@@ -518,27 +711,24 @@ namespace WebColegio.Controllers
                                     Activo = pagos.Pago.Activo,
                                     FechaRegistro = pagos.Pago.FechaRegistro,
                                     Serie = pagos.Pago.Serie
-
-                                    // otros campos...
                                 };
+                                
                                 response = await _Iservices.PostPagosAsync(pagoprimermes);
                                 if (response)
                                 {
-                                    var idPag = buscarIdGuardado.Max(a => a.IdPago);
-                                    TempData["Mensaje"] = "Pago registrado correctamente.";
+                                    // Obtener el ID del último pago guardado (el de matrícula)
+                                    var pagosActualizados = await _Iservices.GetPagosAsync();
+                                    var idPag = pagosActualizados.Max(a => a.IdPago);
+                                    TempData["Mensaje"] = "Abono de matrícula registrado correctamente.";
                                     TempData["Tipo"] = "success";
-                                    return RedirectToAction("Details", "Pagos", new { id =idPag +1 });
+                                    return RedirectToAction("Details", "Pagos", new { id = idPag, imprimir = true });
                                 }
                                 else
                                 {
-                                    TempData["Mensaje"] = "No se proceso el Pago.";
+                                    TempData["Mensaje"] = "No se proceso el Pago del primer mes.";
                                     TempData["Tipo"] = "warning";
                                     return RedirectToAction("Create");
                                 }
-                            }
-                            else
-                            {
-
                             }
                            
                         }
@@ -553,7 +743,7 @@ namespace WebColegio.Controllers
 
                                 TempData["Mensaje"] = "Pago registrado correctamente.";
                                 TempData["Tipo"] = "success";
-                                return RedirectToAction("Details", "Pagos", new { id = idPag + 1 });
+                                return RedirectToAction("Details", "Pagos", new { id = idPag + 1, imprimir = true });
                             }
                             else
                             {
@@ -563,17 +753,21 @@ namespace WebColegio.Controllers
                             }
                         }
                     }
-                   
-                    
-
                 }
-                return NoContent();
+                else
+                {
+                    TempData["Mensaje"] = "Error: Los datos del pago no son válidos.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
+                }
             }
             catch (Exception ex)
             {
                 // En caso de error, redirigir a Create para que se cargue el modelo correctamente
-                TempData["Mensaje"] = "Ocurrió un error al procesar el pago. Por favor, intente nuevamente.";
+                TempData["Mensaje"] = $"Ocurrió un error al procesar el pago: {ex.Message}";
                 TempData["Tipo"] = "warning";
+                // Log del error completo para debugging
+                System.Diagnostics.Debug.WriteLine($"Error en Create de Pagos: {ex}");
                 return RedirectToAction("Create");
             }
         }

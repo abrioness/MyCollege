@@ -119,7 +119,7 @@
                             <label asp-for="Pago.Monto" class="control-label">Monto a pagar</label>
 
                             <input asp-for="Pago.Monto" id="cantidad" class="form-control"  />
-                            <span asp-validation-for="Pago.Monto" class="text-danger"></span>
+                            <span id="mensajemontomatricual" class="text-info fw-bold" style="display: none;"></span>
                         </div>
 
                         <div class="form-group" id="moraDiv">
@@ -233,7 +233,7 @@
             const $grado = $('#grado');
             const $periodo = $('#periodo');
             const $monto = $('#cantidad');
-
+            const $mensajeMontoMatricula=$('#mensajemontomatricual')
             const $totalMora = $('#totalMora');
             const $totalPagar = $('#totalPagar');
             const $moraDiv=$('#moraDiv');
@@ -296,28 +296,35 @@
                         if (data && data.costo) {
                             const costoMatricula = parseFloat(data.costo) || 0;
                             
+                            // Ocultar mensaje de mensualidad cuando se carga matrícula
+                            $mensajeMontoMatricula.text('').css('display', 'none');
+                            
                             // Obtener abonos previos y restarlos (solo si hay alumno seleccionado)
                             if (idAlumno) {
                                 obtenerAbonosPrevios(idAlumno, idTipoMovimiento, periodo, function(totalAbonos) {
                                     const montoFinal = Math.max(0, costoMatricula - totalAbonos);
                                     $monto.val(montoFinal.toFixed(2));
                                     
-                                    // Si hay abonos, mostrar mensaje informativo
+                                    // Si hay abonos previos, mostrar mensaje informativo
                                     if (totalAbonos > 0) {
-                                        console.log(`Se restaron C$ ${totalAbonos.toFixed(2)} de abonos previos.`);
+                                        $mensajeMontoMatricula.text('Se le restó C$ ' + totalAbonos.toFixed(2) + ' de abonos previos de Confirmación de Matrícula. Monto final: C$ ' + montoFinal.toFixed(2));
+                                        $mensajeMontoMatricula.css('display', 'block');
+                                    } else {
+                                        $mensajeMontoMatricula.text('').css('display', 'none');
                                     }
                                     
                                     calcularTotalPagar(); // Recalcular total después de cargar
                                 });
                             } else {
-                                // Si no hay alumno, solo mostrar el costo base
+                                // Si no hay alumno, solo mostrar el costo base y ocultar mensaje
                                 $monto.val(costoMatricula.toFixed(2));
+                                $mensajeMontoMatricula.text('').css('display', 'none');
                                 calcularTotalPagar();
                             }
                         } 
-                        else {
-                            console.warn('No se recibió el costo de matrícula');
-                        }
+                        // else {
+                        //     console.warn('No se recibió el costo de matrícula');
+                        // }
                     }).fail(function(xhr, status, error) {
                         console.error('Error al cargar matricula:', error, xhr);
                         console.error('Status:', status);
@@ -348,22 +355,29 @@
                         if (data && data.costo) {
                             const costoMensualidad = parseFloat(data.costo) || 0;
                             
+                            // Ocultar mensaje de matrícula cuando se carga mensualidad
+                            $mensajeMontoMatricula.text('').css('display', 'none');
+                            
                             // Obtener abonos previos y restarlos (solo si hay alumno seleccionado)
                             if (idAlumno) {
                                 obtenerAbonosPrevios(idAlumno, idTipoMovimiento, periodo, function(totalAbonos) {
                                     const montoFinal = Math.max(0, costoMensualidad - totalAbonos);
                                     $monto.val(montoFinal.toFixed(2));
                                     
-                                    // Si hay abonos, mostrar mensaje informativo
+                                    // Si hay abonos previos, mostrar mensaje informativo
                                     if (totalAbonos > 0) {
-                                        console.log(`Se restaron C$ ${totalAbonos.toFixed(2)} de abonos previos.`);
+                                        $mensajeMontoMatricula.text('Se le restó C$ ' + totalAbonos.toFixed(2) + ' de abonos previos de Mensualidad. Monto final: C$ ' + montoFinal.toFixed(2));
+                                        $mensajeMontoMatricula.css('display', 'block');
+                                    } else {
+                                        $mensajeMontoMatricula.text('').css('display', 'none');
                                     }
                                     
                                     calcularTotalPagar(); // Recalcular total después de cargar
                                 });
                             } else {
-                                // Si no hay alumno, solo mostrar el costo base
+                                // Si no hay alumno, solo mostrar el costo base y ocultar mensaje
                                 $monto.val(costoMensualidad.toFixed(2));
+                                $mensajeMontoMatricula.text('').css('display', 'none');
                                 calcularTotalPagar();
                             }
                         }
@@ -586,21 +600,20 @@
 
     
 
-    @* @if (TempData["Mensaje"] != null)
+    @if (TempData["Mensaje"] != null)
     {
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                const tipo = "@TempData["Tipo"];
-                const titulo = tipo === 'success' ? 'Éxito' :
-                              tipo === 'warning' ? 'Atención' : 'Información';
-
+                var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
                 Swal.fire({
-                    title: titulo,
-                    text: '@Html.Raw(TempData["Mensaje"])',
-                    icon: tipo || 'info',
+                    title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+     "Información")',
+                    text: mensaje,
+                    icon: '@TempData["Tipo"]',
                     confirmButtonText: 'Aceptar'
                 });
             });
         </script>
-    } *@
+    }
 }
