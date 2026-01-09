@@ -314,7 +314,8 @@
                                 $monto.val(costoMatricula.toFixed(2));
                                 calcularTotalPagar();
                             }
-                        } else {
+                        } 
+                        else {
                             console.warn('No se recibió el costo de matrícula');
                         }
                     }).fail(function(xhr, status, error) {
