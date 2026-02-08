@@ -155,7 +155,7 @@
                 @* <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-controller="Alumnos" asp-action="Index"> *@
                 @* <div class="sidebar-brand-text mx-3">Menú</div> *@
                 @* </a> *@
-                @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Docente") || User.IsInRole("UserSystem"))
+                @if (User.IsInRole("Cajero") || User.IsInRole("Admin")  || User.IsInRole("UserSystem"))
                 {
                     <!-- Alumnos -->
                     <li class="nav-item active">
@@ -227,9 +227,11 @@
                                 <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create"><i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Egresos</a>
 
                                 <a class="collapse-item" asp-controller="Pagos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Mensualidad</a>
-
-
+                                <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
+                                <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
+                                         @* <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Arqueo Diarío</a> *@
                                 <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
+                                
                             </div>
                         </div>
                     </li>

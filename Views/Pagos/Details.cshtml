@@ -14,86 +14,86 @@
     <style>
         /* CONTENEDOR estilo voucher */
         .voucher {
-            width: 260px; /* tamaño típico de voucher/ticket */
-            padding: 10px;
-            margin: auto;
-            font-family: "Courier New", monospace;
-            font-size: 13px;
-            border: 1px solid #000;
+        width: 260px; /* tamaño típico de voucher/ticket */
+        padding: 10px;
+        margin: auto;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        border: 1px solid #000;
         }
 
         /* Encabezado */
         .v-header {
-            text-align: center;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 8px;
+        text-align: center;
+        border-bottom: 1px dashed #000;
+        padding-bottom: 8px;
         }
 
-            .v-header .title {
-                font-weight: bold;
-                font-size: 14px;
-            }
+        .v-header .title {
+        font-weight: bold;
+        font-size: 14px;
+        }
 
-            .v-header .sub {
-                font-size: 12px;
-            }
+        .v-header .sub {
+        font-size: 12px;
+        }
 
         /* Secciones */
         .v-section {
-            border-bottom: 1px dashed #000;
-            margin-top: 6px;
-            padding-bottom: 6px;
+        border-bottom: 1px dashed #000;
+        margin-top: 6px;
+        padding-bottom: 6px;
         }
 
         /* Filas */
         .v-row {
-            padding: 2px 0;
+        padding: 2px 0;
         }
 
         .center {
-            text-align: center;
+        text-align: center;
         }
 
         .bold {
-            font-weight: bold;
+        font-weight: bold;
         }
 
         /* Firma */
         .firma {
-            margin-top: 15px;
-            text-align: center;
+        margin-top: 15px;
+        text-align: center;
         }
 
-            .firma .line {
-                border-top: 1px solid #000;
-                width: 80%;
-                margin: auto;
-                margin-bottom: 4px;
-            }
+        .firma .line {
+        border-top: 1px solid #000;
+        width: 80%;
+        margin: auto;
+        margin-bottom: 4px;
+        }
 
-            .firma .txt {
-                font-size: 12px;
-            }
+        .firma .txt {
+        font-size: 12px;
+        }
 
         /* Botón imprimir */
         .print-button {
-            margin-top: 15px;
-            padding: 6px 12px;
-            font-size: 14px;
-            cursor: pointer;
+        margin-top: 15px;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
         }
 
         @@media print {
-            .no-print
+        .no-print
 
         {
-            display: none;
+        display: none;
         }
 
         /* Ajustar todo al ancho del voucher */
         .voucher {
-            border: none;
-            width: 220px;
+        border: none;
+        width: 220px;
         }
 
         }
@@ -147,6 +147,7 @@
             <div class="v-row"><b>Fecha Pago:</b> <span> @Model.Pago.FechaRegistro.ToString("dd/mm/yyyy")</span></div>
             <div class="v-row"><b>Concepto:</b> <span>@tipoMovimiento?.Concepto, @Model.Pago.Descripcion</span></div>
             <div class="v-row"><b>Método Pago:</b> <span>@metodopago?.MetodoPago</span></div>
+            
             <div class="v-row"><b>Monto:</b> <span>C$ @Model.Pago.Monto.ToString("N2")</span></div>
             <div class="v-row"><b>En letras:</b><br />@Model.cantidadEnLetras (C$ @Model.Pago.Monto)</div>
         </div>

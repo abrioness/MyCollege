@@ -12,13 +12,37 @@
 
 		<div class="card-body">
 			<div class="table-responsive" style="font-size: 12px;">
-			<div class="col-12 text-end">
+			@* <div class="col-12 text-end">
 
 				<a asp-action="Create" class="btn btn-primary">
 					<i class="bi bi-plus-circle"></i> Agregar Pago
 				</a>
-			</div><br />
-			
+			</div><br /> *@
+				<br />
+				<div class="col-12 text-end">
+					<div class="btn-goup">
+						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar Pagos</button>
+
+
+						<ul class="dropdown-menu">
+							<li>
+								<a class="dropdown-item" asp-action="Create" asp-controller="Pagos">
+									Agregar Pago de Mensualidad
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" asp-action="Create" asp-controller="PagoCaja">
+									Agregar Pagos Varios
+								</a>
+							</li>
+							
+							@* <li><hr class="dropdown-divider"></li>
+						<li><a class="dropdown-item" href="#">Otra opción</a></li> *@
+						</ul>
+					</div>
+
+				</div>
+				<br />
 					<table id="estadocuenta" class="table table-bordered table-sm">
 					@* class="display responsive nowrap" style="width:100%"> *@
 					<thead>

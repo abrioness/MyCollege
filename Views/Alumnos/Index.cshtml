@@ -19,12 +19,12 @@
 							<div class="col-4">
 								<label class="control-label">Desde:</label>
 								<input type="date" name="fechainicio" id="FechaInicio" class="form-control"
-									   value="@@(Request.QueryString[" fechainicio"])" />
+								value="@@(Request.QueryString[" fechainicio"])" />
 							</div>
 							<div class="col-4">
 								<label class="control-label">Hasta:</label>
 								<input type="date" name="fechafin" id="FechaFin" class="form-control"
-									   value="@@(Request.QueryString[" fechafin"])" />
+								value="@@(Request.QueryString[" fechafin"])" />
 							</div>
 							<div class="col-4">
 								<br />
@@ -33,74 +33,74 @@
 						</div>
 					}
 				</div>
-			<div class="col-12 text-end">
+				<div class="col-12 text-end">
 
-				<a asp-action="Create" class="btn btn-primary">
-					<i class="bi bi-plus-circle"></i> Agregar Alumno
-				</a>
-			</div>
+					<a asp-action="Create" class="btn btn-primary">
+						<i class="bi bi-plus-circle"></i> Agregar Alumno
+					</a>
+				</div>
 				<table id="tablaAlumnos" class="table table-bordered table-sm">
-				<thead>
-					<tr>
-						<th>Código Alumno</th>
-						<th>Código MINED</th>
-						<th>Nombre</th>
-						<th>Apellido</th>
-						<th>Edad</th>
-						@* <th>Cedula</th> *@
-						<th>Grado</th>
-						<th>Turno</th> 
-						<th>Sexo</th>
-						<th>Colegio</th>
-						<th>Fecha Registro</th>
-						<th>Estado</th>
-						<th>Hoja Matrícula</th>
-					</tr>
-				</thead>
-				<tbody>
-					@foreach(var itemAlumno in Model.alumno){
+					<thead>
 						<tr>
-							<td>
-								<a asp-action="Edit" asp-controller="Alumnos" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-info">	@itemAlumno.CodigoAlumno</a>
-							</td>
-							<td>
-								@itemAlumno.CodigoMINED
-							</td>
-							<td>
-								@itemAlumno.Nombre
-							</td>
-							<td>
-								@itemAlumno.Apellido
-							</td>
-							<td>
-								@itemAlumno.Edad
-							</td>
-							@* <td>
+							<th>Código Alumno</th>
+							<th>Código MINED</th>
+							<th>Nombre</th>
+							<th>Apellido</th>
+							<th>Edad</th>
+							@* <th>Cedula</th> *@
+							<th>Grado</th>
+							<th>Turno</th> 
+							<th>Sexo</th>
+							<th>Colegio</th>
+							<th>Fecha Registro</th>
+							<th>Estado</th>
+							<th>Hoja Matrícula</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach(var itemAlumno in Model.alumno){
+							<tr>
+								<td>
+									<a asp-action="Edit" asp-controller="Alumnos" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-info">	@itemAlumno.CodigoAlumno</a>
+								</td>
+								<td>
+									@itemAlumno.CodigoMINED
+								</td>
+								<td>
+									@itemAlumno.Nombre
+								</td>
+								<td>
+									@itemAlumno.Apellido
+								</td>
+								<td>
+									@itemAlumno.Edad
+								</td>
+								@* <td>
 					@itemAlumno.Cedula
 				</td> *@
-							@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
-							{
-								<td>
+								@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
+								{
+									<td>
 
-									@grado.NombreGrado 
+										@grado.NombreGrado 
 
-								</td>
-							}
-							@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemAlumno.IdTurno))
-							{
-								<td>
-									@turno.NombreTurno
+									</td>
+								}
+								@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemAlumno.IdTurno))
+								{
+									<td>
+										@turno.NombreTurno
 
-								</td>
-							}
-							@foreach (var sexo in Model.sexos.Where(a => a.IdSexo == itemAlumno.IdSexo))
-							{
-								<td>
+									</td>
+								}
+								@foreach (var sexo in Model.sexos.Where(a => a.IdSexo == itemAlumno.IdSexo))
+								{
+									<td>
 
-									@sexo.Sexo
+										@sexo.Sexo
 
-								</td>
-							}
+									</td>
+								}
 								@foreach (var recinto in Model.recintos.Where(a => a.IdRecinto == itemAlumno.IdRecinto))
 								{
 									<td>
@@ -111,39 +111,39 @@
 								}
 								<td>
 
-								@itemAlumno.FechaRegistro.ToString("dd/MM/yyyy")
-							</td>
-							@{
-								
-								var activo = @itemAlumno.Activo;
-								
-							}
-							
-									@if (activo == true)
-									{
+									@itemAlumno.FechaRegistro.ToString("dd/MM/yyyy")
+								</td>
+								@{
+
+									var activo = @itemAlumno.Activo;
+
+								}
+
+								@if (activo == true)
+								{
 									<td>
 										<span class="badge bg-success">
 											Activo
 										</span></td>
-									}
-									else
-									{
+								}
+								else
+								{
 									<td><span class="badge bg-warning text-dark">Inactivo</span></td>
-									}
-									
+								}
 
-							
-				<td>
-								<a asp-action="Details" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-printer-fill"></i></a>
-				</td>
-    </tr>
-		}
-	</tbody>
-	
-</table>
-</div>
-</div>
-</div>
+
+
+								<td>
+									<a asp-action="Details" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-printer-fill"></i></a>
+								</td>
+							</tr>
+						}
+					</tbody>
+
+				</table>
+			</div>
+		</div>
+	</div>
 </div>
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -153,17 +153,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
-$(document).ready(function () {
-		$('#tablaAlumnos').DataTable({
-		responsive: false,
-		dom: 'Bfrtip', // Botones + filtro + tabla
-		buttons: [
-			{
-				extend: 'excelHtml5',
-				text: 'Exportar a Excel',
-				className: 'btn btn-success'
-			}
-		],
+	$(document).ready(function () {
+	$('#tablaAlumnos').DataTable({
+	responsive: false,
+	dom: 'Bfrtip', // Botones + filtro + tabla
+		
+	buttons: [
+		{
+		extend: 'excelHtml5',
+		text: 'Exportar a Excel',
+		className: 'btn btn-success'
+		}
+		]
+	,
 		language: {
 			url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 		}

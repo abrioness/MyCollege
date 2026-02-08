@@ -47,7 +47,7 @@
                 .FirstOrDefault(s => s.Value == Model.alumnos.IdTurno.ToString());
             }
 
-            <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
+            <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 50px;">
                 @if (recinto?.Text == "COLEGIO PARROQUIAL SAN FRANCISCO JAVIER")
                 {
 
@@ -249,8 +249,14 @@
             <div class="col-md-8 columna-izquierda">
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Código del Estudiante:</strong></div>
-                    <div class="valor">@Model.alumnos.CodigoAlumno</div>
+                    <div class="valor">@Model.alumnos.CodigoMINED</div>
                     
+                               </div>
+                               </div>
+            <div class="col-md-8 columna-izquierda">
+                <div class="fila-interna">
+                    
+
                     <div class="etiqueta"><strong>Código único del Establecimiento Escolar:</strong></div>
                     @{
                         var codigoUnicoEstablecimientoSFJ = 13715;
@@ -259,30 +265,30 @@
                         var codigoCentroEscolarSMA = 22600;
                     }
                     <div class="valor">
-                        
+
                         @if (recinto?.Value == "1")
                         {
                             @codigoUnicoEstablecimientoSFJ
                         }
                         @if (recinto?.Value == "2")
-                         {
-                                @codigoUnicoEstablecimientoSMA
-                         }
+                        {
+                            @codigoUnicoEstablecimientoSMA
+                        }
 
                     </div>
 
                     <div class="etiqueta"><strong>Código del Centro Escolar:</strong></div>
                     <div class="valor">
-                            @if (recinto?.Value == "1")
-                            {
-                                @codigoCentroEscolarSFJ
-                            }
-                            @if (recinto?.Value == "2")
-                            {
-                                @codigoCentroEscolarSMA
-                            }
+                        @if (recinto?.Value == "1")
+                        {
+                            @codigoCentroEscolarSFJ
+                        }
+                        @if (recinto?.Value == "2")
+                        {
+                            @codigoCentroEscolarSMA
+                        }
                     </div>
-                    
+
                 </div>
             </div>
 

@@ -315,7 +315,7 @@ namespace WebColegio.Controllers
             ModelState.Remove("Pago.Serie"); // Se establece automáticamente en el código
             ModelState.Remove("cantidadEnLetras"); // Campo calculado, no requerido
             ModelState.Remove("MesesSeleccionados"); // Parámetro opcional del método
-            
+         
             // Validar el modelo solo para campos críticos
             if (!ModelState.IsValid)
             {
@@ -511,7 +511,7 @@ namespace WebColegio.Controllers
                                     Anyo=pagos.Pago.Anyo,
                                     IdMes = idMes,
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
-                                    IdTipoMovimiento = pagos.Pago.IdTipoMovimiento,
+                                    IdTipoMovimiento = 1,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
                                     IdGrado=pagos.Pago.IdGrado,
                                     IdPeriodo=pagos.Pago.IdPeriodo,
@@ -642,14 +642,14 @@ namespace WebColegio.Controllers
                                     Anyo = pagos.Pago.Anyo,
                                     IdMes = 1,
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
-                                    IdTipoMovimiento = pagos.Pago.IdTipoMovimiento,
+                                    IdTipoMovimiento = 1,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
                                     IdGrado = pagos.Pago.IdGrado,
                                     IdPeriodo = periodoMatricula,
                                     IdRecinto = pagos.Pago.IdRecinto,
                                     FechaEmision = pagos.Pago.FechaEmision,
                                     Mora = 0,
-                                    Monto = valormatricula,
+                                    Monto = restarMensualidad,
                                     Descripcion = pagos.Pago.Descripcion,
                                     UsuarioRegistro = pagos.Pago.UsuarioRegistro,
                                     Activo = pagos.Pago.Activo,
@@ -679,7 +679,7 @@ namespace WebColegio.Controllers
                                 // Si el monto es diferente (pago parcial), procesar como abono de matrícula
                                 // Restar siempre la mensualidad del monto, similar al if anterior
                                 decimal valormatricula = totalMatricual - restarMensualidad;
-                                pagos.Pago.Monto = valormatricula;
+                                /*pagos.Pago.Monto = valormatricula*/;
                                 pagos.Pago.IdPeriodo = periodoMatricula;
                                 response = await _Iservices.PostPagosAsync(pagos.Pago);
                                 

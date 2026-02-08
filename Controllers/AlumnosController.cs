@@ -123,6 +123,22 @@ namespace WebColegio.Controllers
                     Text = r.NombreTurno.ToString(),
                 }
                 ).ToList(),
+                sexosSelectListItem = (await _Iservices.GetSexosAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.IdSexo.ToString(),
+                    Text = r.Sexo.ToString(),
+                }
+                ).ToList(),
+                discapacidadSelectListItem = (await _Iservices.GetDiscapacidadAsync())
+                .Select(r => new SelectListItem
+                {
+
+                    Value = r.Id_Discapacidad.ToString(),
+                    Text = r.Discapacidad.ToString(),
+                }
+                ).ToList(),
 
 
 
@@ -214,7 +230,7 @@ namespace WebColegio.Controllers
                 alumnos.IdPeriodo = await _Iservices.GetPeriodoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.Actual)?.IdPeriodo) ?? 0;
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoUnico);
+                existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoMINED);
                 if (existe)
                 {
                     TempData["Mensaje"] = "Ya existe un alumno con el mismo Código";

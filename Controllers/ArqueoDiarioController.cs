@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -128,55 +128,58 @@ namespace WebColegio.Controllers
 
         }
         [Authorize]
-        public async Task<ActionResult> ArqueoCaja(DateTime fecha)
+        public async Task<ActionResult> ArqueoCaja(DateTime fecha, int? idRecinto = null)
         {
-            var recintos = await _Iservices.GetRecintosAsync();
-            var recibos = await _Iservices.GetArqueoDiarioAsync();
-            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));  
-            var maxNumero = recibos
-                .Where(r => r.Serie == "A")
-                .Max(r => (int?)r.NumeroArqueo);
+            // Si no viene fecha (ej. entrada directa a la URL), usar hoy
+            if (fecha == default)
+                fecha = DateTime.Now.Date;
+
+            var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var recibos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            var arqueosSerieA = recibos.Where(r => r.Serie == "A").ToList();
+            var maxNumero = arqueosSerieA.Count > 0 ? (int?)arqueosSerieA.Max(r => r.NumeroArqueo) : null;
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 40001;
-            //listar pagos mensualidad
-            var recintoNombre = 0;
-            var Recintos = await _Iservices.GetRecintosAsync();
-            var arqueo = new ArqueoDiarioViewModel();
 
-            var pagosDelDia = await _Iservices.GetPagosAsync();
-           
-            pagosDelDia = pagosDelDia.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList();
-            //listar pagos de caja
-            var pagosCajaDia = await _Iservices.GetPagoCajaAsync();
-            pagosCajaDia = pagosCajaDia.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList();
-
-            foreach (var itemPago in pagosDelDia)
+            var Recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var arqueo = new ArqueoDiarioViewModel
             {
-                //pagosDelDia.Where(r=>r.IdRecinto == 1  && itemPago.UsuarioRegistro==idUsuario && itemPago.Activo && itemPago.FechaRegistro.Date==fecha).Select(r=>r.IdRecinto).FirstOrDefault() ?? 0;
+                Serie = "A",
+                Fecha = fecha,
+                siguienteNumero = siguienteNumero
+            };
 
+            var pagosDelDia = (await _Iservices.GetPagosAsync())?.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPago>();
+            var pagosCajaDia = (await _Iservices.GetPagoCajaAsync())?.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPagoCaja>();
 
-                if (itemPago.IdRecinto == 1)
+            // Filtrar por recinto cuando el usuario eligió uno
+            if (idRecinto.HasValue && idRecinto.Value > 0)
+            {
+                pagosDelDia = pagosDelDia.Where(r => r.IdRecinto == idRecinto.Value).ToList();
+                pagosCajaDia = pagosCajaDia.Where(r => r.IdRecinto == idRecinto.Value).ToList();
+                arqueo.arqueoDiario.IdRecinto = idRecinto.Value;
+                // Asignar nombre y dirección del recinto
+                var recintoSel = Recintos.FirstOrDefault(r => r.IdRecinto == idRecinto.Value);
+                if (recintoSel != null)
                 {
-                    arqueo = new ArqueoDiarioViewModel
-                    {
-
-                        Colegio = "COLEGIO SAN FRANCISCO JAVIER",
-                        Direccion= "Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua",
-                        Serie = "A",
-                        Fecha = fecha,
-                        siguienteNumero = siguienteNumero
-                    };
+                    arqueo.Colegio = recintoSel.Recinto?.ToUpper() ?? "RECINTO";
+                    arqueo.Direccion = ObtenerDireccionRecinto(idRecinto.Value);
                 }
-                if (itemPago.IdRecinto == 2)
+            }
+            else
+            {
+                // Sin filtro: preseleccionar primer recinto con datos
+                var primerRecintoConDatos = pagosDelDia.FirstOrDefault()?.IdRecinto ?? pagosCajaDia.FirstOrDefault()?.IdRecinto;
+                if (primerRecintoConDatos.HasValue && primerRecintoConDatos.Value > 0)
                 {
-                    arqueo = new ArqueoDiarioViewModel
+                    arqueo.arqueoDiario.IdRecinto = primerRecintoConDatos.Value;
+                    var recintoSel = Recintos.FirstOrDefault(r => r.IdRecinto == primerRecintoConDatos.Value);
+                    if (recintoSel != null)
                     {
-
-                        Colegio = "COLEGIO SAN MIGUEL",
-                        Direccion="Zona Once",
-                        Serie = "A",
-                        Fecha = fecha,
-                        siguienteNumero = siguienteNumero
-                    };
+                        arqueo.Colegio = recintoSel.Recinto?.ToUpper() ?? "RECINTO";
+                        arqueo.Direccion = ObtenerDireccionRecinto(primerRecintoConDatos.Value);
+                    }
                 }
             }
 
@@ -199,22 +202,21 @@ namespace WebColegio.Controllers
             //var ordenarNumeroRecibo.pagosCajaDia.OrderBy(pc => pc.NumeroRecibo).ToList();
             var primerRecibo = ordenarNumeroRecibo.FirstOrDefault();
             var ultimoRecibo = ordenarNumeroRecibo.LastOrDefault();
-            //Egresos del día
-            var egresosDelDia = await _Iservices.GetEgresoAsync();
-            egresosDelDia = egresosDelDia
-                .Where(p => p.UsuarioRegistro==idUsuario  && p.FechaRegistro.Date == fecha.Date && p.Activo)
-                .ToList();
+            // Egresos del día (filtrar por recinto si se eligió uno)
+            var egresosDelDia = (await _Iservices.GetEgresoAsync())?
+                .Where(p => p.UsuarioRegistro == idUsuario && p.FechaRegistro.Date == fecha.Date && p.Activo)
+                .ToList() ?? new List<TblEgreso>();
+            if (idRecinto.HasValue && idRecinto.Value > 0)
+                egresosDelDia = egresosDelDia.Where(p => p.IdRecinto == idRecinto.Value).ToList();
 
             // 2️⃣ Obtener los tipos movimientos relacionados
-            var tipmov = await _Iservices.GetTipoMovimientoAsync();
-            tipmov = tipmov
+            var tipmov = (await _Iservices.GetTipoMovimientoAsync())?
                 .Where(r => r.Activo == true && r.Concepto != string.Empty)
-                .ToList();
+                .ToList() ?? new List<CatTipoMovimiento>();
             // 2️⃣ Obtener los metodo pago relacionados
-            var metpago = await _Iservices.GetMetodoPagoAsync();
-            metpago = metpago
+            var metpago = (await _Iservices.GetMetodoPagoAsync())?
                 .Where(r => r.Activo == true && r.MetodoPago != string.Empty)
-                .ToList();
+                .ToList() ?? new List<CatMetodoPago>();
 
             // 2️⃣ Obtener los recibos relacionados
             //var recibos = await _Iservices.GetRecibosCajaAsync();
@@ -317,7 +319,21 @@ namespace WebColegio.Controllers
             // 8️⃣ Convertir total en letras
             arqueo.TotalEnLetras = NumeroALetras(arqueo.TotalEfectivo);
 
+            // 9️⃣ Lista de recintos para que el usuario elija cuál arquear
+            arqueo.TblRecintos = Recintos?.Where(r => r.Activo).ToList() ?? new List<Recintos>();
+
             return View(arqueo);
+        }
+
+        /// <summary>Devuelve la dirección conocida del recinto (1 y 2 configurados; otros vacío).</summary>
+        private static string ObtenerDireccionRecinto(int idRecinto)
+        {
+            return idRecinto switch
+            {
+                1 => "Ciudad Sandino, Plaza Padre Miguel, 2c. al Norte, Zona #4 Managua",
+                2 => "Zona Once",
+                _ => ""
+            };
         }
 
 

@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.ArqueoDiarioViewModel
+@model WebColegio.Models.ViewModel.ArqueoDiarioViewModel
 
 @{
     Layout = null; // Para que se imprima sin master page
@@ -10,7 +10,27 @@
 
 </head>
 <body>
-    <form method="post" asp-action="Create" enctype="multipart/form-data">
+    <div class="seleccion-recinto no-print" style="margin: 1rem 0; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+        <p style="margin: 0 0 0.5rem 0;"><strong>Recinto a arquear:</strong></p>
+        @if (Model.TblRecintos != null && Model.TblRecintos.Any())
+        {
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                @foreach (var rec in Model.TblRecintos.Where(r => r.Activo))
+                {
+                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" class="recinto-checkbox" value="@rec.IdRecinto"
+                        @(Model.arqueoDiario?.IdRecinto == rec.IdRecinto ? "checked" : "") />
+                        <span style="margin-left: 0.35rem;">@rec.Recinto __</span>
+                    </label>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="margin: 0; color: #666;">No hay recintos disponibles.</p>
+        }
+    </div>
+    <form method="post" asp-action="Create" enctype="multipart/form-data" id="formArqueo">
         <div class="titulo">
             @* <h3>@Model.Colegio</h3> *@
             <div class="subtitulo">
@@ -25,9 +45,12 @@
                 <p>Fecha: @fecha</p>
                 <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="A" />
                 <input type="hidden" asp-for="@Model.arqueoDiario.NumeroArqueo" value="@Model.siguienteNumero" />
-                <input type="hidden" asp-for="@Model.arqueoDiario.IdRecinto" value="@Model.arqueoDiario.IdRecinto"/>
+                <input type="hidden" asp-for="@Model.arqueoDiario.IdRecinto" id="IdRecintoHidden" value="@(Model.arqueoDiario?.IdRecinto ?? 0)" />
             </div>
         </div>
+
+        <!-- Selección de recinto a arquear -->
+       
 
         <!-- Ingresos -->
         <h4>Ingresos</h4>
@@ -305,6 +328,38 @@
 </html>
 <script src="https://cdn.jsdelivr.net/npm/numero-a-letras@1.0.6/index.min.js"></script>
 <script>
+    // Selección de recinto: solo un checkbox a la vez; actualiza el hidden IdRecinto
+    document.querySelectorAll(".recinto-checkbox").forEach(function (cb) {
+        cb.addEventListener("change", function () {
+            if (this.checked) {
+                document.querySelectorAll(".recinto-checkbox").forEach(function (other) { other.checked = false; });
+                this.checked = true;
+                document.getElementById("IdRecintoHidden").value = this.value;
+            } else {
+                document.getElementById("IdRecintoHidden").value = "";
+            }
+        });
+    });
+    // Al cargar, sincronizar hidden con el checkbox marcado
+    document.addEventListener("DOMContentLoaded", function () {
+        var checked = document.querySelector(".recinto-checkbox:checked");
+        if (checked) document.getElementById("IdRecintoHidden").value = checked.value;
+    });
+
+    // Validar que se haya elegido un recinto antes de guardar
+    document.getElementById("formArqueo").addEventListener("submit", function (e) {
+        var idRecinto = document.getElementById("IdRecintoHidden").value;
+        if (!idRecinto || idRecinto === "0") {
+            e.preventDefault();
+            if (typeof Swal !== "undefined") {
+                Swal.fire({ title: "Atención", text: "Debe seleccionar el recinto a arquear.", icon: "warning", confirmButtonText: "Aceptar" });
+            } else {
+                alert("Debe seleccionar el recinto a arquear.");
+            }
+            return false;
+        }
+    });
+
     function totalGeneralCordobas() {
         let total = 0;
 

@@ -16,13 +16,18 @@
 				<br />
 				<div class="col-12 text-end">
 					<div class="btn-goup">
-						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar Pagos Mensualidad</button>
+						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar Pagos/Ver Reporte</button>
 
 
 						<ul class="dropdown-menu">
 							<li>
 								<a class="dropdown-item" asp-action="Create" asp-controller="Pagos">
 									Agregar Pago de Mensualidad
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" asp-action="Create" asp-controller="PagoCaja">
+									Agregar Pagos Varios
 								</a>
 							</li>
 							<li>
