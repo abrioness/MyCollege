@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.productoViewModel
+@model WebColegio.Models.ViewModel.productoViewModel
 @* @{
     ViewData["Title"] = "Create";
 } *@
@@ -50,8 +50,9 @@
                             <span asp-validation-for="tblproducto.IdCateProducto" class="text-danger"></span>
                 </div>
                         <div class="form-group">
-                            <label asp-for="tblproducto.ExistenciaInicial" class="control-label">Existencia Actual</label>
-                            <input asp-for="tblproducto.ExistenciaInicial" id="existenciaActual" class="form-control" />
+                            <label asp-for="tblproducto.ExistenciaInicial" class="control-label">Cantidad / Existencia inicial</label>
+                            <input asp-for="tblproducto.ExistenciaInicial" id="existenciaInicial" class="form-control" />
+                            <span class="text-muted small">Producto nuevo: stock inicial. Si el código ya existe: cantidad que ingresa (se sumará al stock actual).</span>
                             <span asp-validation-for="tblproducto.ExistenciaInicial" class="text-danger"></span>
                         </div>
                         <div class="form-group">
@@ -71,8 +72,9 @@
                         </div>
                         
             <div class="form-group">
-                            <label asp-for="tblproducto.StockActual" class="control-label">Stock Actual</label>
-                            <input asp-for="tblproducto.StockActual" id="stockActual" class="form-control"  />
+                            <label asp-for="tblproducto.StockActual" class="control-label">Stock actual (solo producto nuevo)</label>
+                            <input asp-for="tblproducto.StockActual" id="stockActual" class="form-control" />
+                            <span class="text-muted small">En producto nuevo se iguala a la existencia inicial. En ingreso a existente no se usa.</span>
                             <span asp-validation-for="tblproducto.StockActual" class="text-danger"></span>
             </div>
                         <div class="form-group">
@@ -160,16 +162,23 @@
         });
 
         function calcularImporteInventario() {
-             let stockActual=parseFloat($("#stockActual").val()) || 0;
-        let costoUnitario=parseFloat($("#costoUnitario").val()) || 0;
-            let importeInventario = stockActual * costoUnitario;
-            $("#importeInventario").val(importeInventario.toFixed(1));
-            
+            var existenciaInicial = parseFloat($("#existenciaInicial").val()) || 0;
+            var stockActual = parseFloat($("#stockActual").val()) || 0;
+            var costoUnitario = parseFloat($("#costoUnitario").val()) || 0;
+            // Para producto nuevo: importe = existencia * costo. Si solo llenan existencia, usarla como base.
+            var cantidad = stockActual > 0 ? stockActual : existenciaInicial;
+            var importeInventario = cantidad * costoUnitario;
+            $("#importeInventario").val(importeInventario.toFixed(2));
         }
         $(document).ready(function() {
-            // 2. CONFIGURAR EVENTOS DE CÁLCULO
-            $("#costoUnitario, #stockActual").on("input", calcularImporteInventario);
-        calcularImporteInventario();
+            $("#costoUnitario, #stockActual, #existenciaInicial").on("input", calcularImporteInventario);
+            // Si cambian existencia inicial y stock está vacío, sugerir mismo valor para producto nuevo
+            $("#existenciaInicial").on("change", function() {
+                var ex = $(this).val();
+                if (ex && !$("#stockActual").val()) $("#stockActual").val(ex);
+                calcularImporteInventario();
+            });
+            calcularImporteInventario();
         });
 
     </script>

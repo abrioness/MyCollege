@@ -13,6 +13,8 @@
         public string NombreCompleto { get; set; } = null!;
 
         public string? Cedula { get; set; }
+        
+        public int? IdRecinto { get; set; }
 
         public int IdRol { get; set; }
 

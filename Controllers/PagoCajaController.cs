@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -169,7 +169,9 @@ namespace WebColegio.Controllers
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
 
-
+                DetalleItems = new List<DetallePagoCajaItem>(),
+                CategoriasProducto = (await _Iservices.GetCategoriaProductoAsync()).Where(c => c.Activo).ToList(),
+                Productos = (await _Iservices.GetProductosAsync()).Where(p => p.Activo).ToList(),
 
             };
 
@@ -179,12 +181,10 @@ namespace WebColegio.Controllers
         // POST: PagoCajaController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(TblPagoCaja pagoscaja)
+        public async Task<ActionResult> Create(TblPagoCaja pagoscaja, List<DetallePagoCajaItem>? DetalleItems)
         {
             bool response = false;
             bool validarDuplicado = false;
-            //int mensualidad = 640;
-            //int total = 0;
             var buscarIdGuardado = await _Iservices.GetPagoCajaAsync();
             var buscarperiodo = await _Iservices.GetPeriodoAsync();
             var periodo = buscarperiodo.Where(r=>r.Periodo==DateTime.Now.Year && r.Activo==true && r.Actual==true).FirstOrDefault();
@@ -198,44 +198,57 @@ namespace WebColegio.Controllers
             }
             try
             {
-
-                //if (numRecibo==null)
-                //{
-                //    TempData["Mensaje"] = "El numero de Recibo ya existe.";
-                //}
                 if (pagoscaja != null)
                 {
-
-                   
-
-                    //var userId = _userManager.GetUserId(User); // o UserManager.GetUserId(User)
                     pagoscaja.UsuarioRegistro = idUsuario;
                     pagoscaja.Activo = true;
                     pagoscaja.FechaRegistro = DateTime.Now;
                     pagoscaja.IdPeriodo = periodo.IdPeriodo;
 
-
-                    //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostPagosCajaAsync(pagoscaja);
                     if (response)
                     {
-                       
                         var idPag = buscarIdGuardado.Max(a=>a.IdPagoCaja);
+                        int idNuevoRecibo = idPag + 1;
+
+                        // Afectar inventario: descontar StockActual y registrar salida por cada ítem
+                        if (DetalleItems != null && DetalleItems.Count > 0)
+                        {
+                            foreach (var item in DetalleItems.Where(x => x.IdProducto > 0 && x.Cantidad > 0))
+                            {
+                                var producto = await _Iservices.GetProductoByIdAsync(item.IdProducto);
+                                if (producto != null && producto.StockActual >= item.Cantidad)
+                                {
+                                    producto.StockActual -= item.Cantidad;
+                                    await _Iservices.UpdateProductoAsync(producto);
+                                    // Registrar movimiento de salida para reportes
+                                    await _Iservices.PostMovimientoInventarioAsync(new MovimientoInventario
+                                    {
+                                        IdProducto = item.IdProducto,
+                                        TipoMovimiento = TipoMovimientoInventario.Salida,
+                                        Cantidad = item.Cantidad,
+                                        FechaMovimiento = DateTime.Now,
+                                        ReferenciaDocumento = $"RECIBO-{idNuevoRecibo}",
+                                        Descripcion = "Venta recibo caja",
+                                        Activo = true,
+                                        UsuarioRegistro = idUsuario,
+                                        FechaRegistro = DateTime.Now
+                                    });
+                                }
+                            }
+                        }
                         TempData["Mensaje"] = "Se Proceso Correctamente el Pago.";
                         TempData["Tipo"] = "success";
-                        return RedirectToAction("Details","PagoCaja", new {id= idPag+1 });
+                        return RedirectToAction("Details","PagoCaja", new { id = idNuevoRecibo });
                     }
                     else
                     {
                         TempData["Mensaje"] = "No se proceso el Pago.";
                         TempData["Tipo"] = "warning";
                         return RedirectToAction("Create");
-                     
                     }
                 }
                 return NoContent();
-
-
             }
             catch
             {

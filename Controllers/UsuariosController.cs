@@ -68,6 +68,13 @@ namespace WebColegio.Controllers
                                   Text = r.NombreRol,
                                   //Selected = r.IdPregunta == respuestas.IdPregunta
                               }).ToList(),
+                RecintosSelectList = (await _Iservices.GetRecintosAsync())
+                              .Select(r => new SelectListItem
+                              {
+                                  Value = r.IdRecinto.ToString(),
+                                  Text = r.Recinto,
+                                  //Selected = r.IdPregunta == respuestas.IdPregunta
+                              }).ToList(),
             };
 
             return View(viewModel);

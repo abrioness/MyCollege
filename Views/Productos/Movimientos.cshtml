@@ -1,0 +1,98 @@
+@model List<WebColegio.Models.MovimientoInventario>
+@{
+    ViewData["Title"] = "Movimientos de inventario";
+    var productos = ViewBag.Productos as List<WebColegio.Models.Productos> ?? new List<WebColegio.Models.Productos>();
+    var desde = ViewBag.Desde as DateTime?;
+    var hasta = ViewBag.Hasta as DateTime?;
+    var idProducto = ViewBag.IdProducto as int?;
+    string NombreProducto(int id)
+    {
+        var p = productos.FirstOrDefault(x => x.IdProducto == id);
+        return p?.NombreProducto ?? id.ToString();
+    }
+}
+
+<div class="container mt-3">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> Entradas y salidas de inventario</h5>
+        </div>
+        <div class="card-body">
+            @using (Html.BeginForm("Movimientos", "Productos", FormMethod.Get))
+            {
+                <div class="row g-2 mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label">Desde</label>
+                        <input type="date" name="desde" class="form-control" value="@(desde?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Hasta</label>
+                        <input type="date" name="hasta" class="form-control" value="@(hasta?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Producto</label>
+                        <select name="idProducto" class="form-select">
+                            <option value="">Todos</option>
+                            @foreach (var p in productos)
+                            {
+                                if (idProducto == p.IdProducto)
+                                {
+                                    <option value="@p.IdProducto" selected="selected">@p.NombreProducto (@p.CodigoBarra)</option>
+                                }
+                                else
+                                {
+                                    <option value="@p.IdProducto">@p.NombreProducto (@p.CodigoBarra)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                    </div>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Producto</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Referencia</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var m in Model.OrderByDescending(x => x.FechaMovimiento))
+                            {
+                                <tr>
+                                    <td>@m.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@NombreProducto(m.IdProducto)</td>
+                                    <td>
+                                        @if (m.TipoMovimiento == WebColegio.Models.TipoMovimientoInventario.Entrada)
+                                        { <span class="badge bg-success">Entrada</span> }
+                                        else
+                                        { <span class="badge bg-danger">Salida</span> }
+                                    </td>
+                                    <td>@m.Cantidad</td>
+                                    <td>@(m.ReferenciaDocumento ?? "-")</td>
+                                    <td>@(m.Descripcion ?? "-")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="text-center text-muted">No hay movimientos para los filtros seleccionados. Ajuste fechas o producto.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-2">
+                <a asp-action="Index" class="btn btn-secondary">Volver al inventario</a>
+            </div>
+        </div>
+    </div>
+</div>

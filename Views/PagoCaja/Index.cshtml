@@ -126,7 +126,7 @@
 									FirstOrDefault(a => a.IdGrado == itemPagoCaja.IdGrado);
 									}
 								<td>
-										@(string.IsNullOrEmpty(nivel.NombreGrado)
+										@(string.IsNullOrEmpty(nivel?.NombreGrado)
 																	? "Sin Datos"
 																	: nivel.NombreGrado)
 									

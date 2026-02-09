@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using WebColegio.Models;
 
 namespace WebColegio.Models.ViewModel
 {
@@ -6,6 +7,9 @@ namespace WebColegio.Models.ViewModel
     {
         //public TblReciboCaja ReciboCaja { get; set; }
         public TblPagoCaja PagosCaja { get; set; } = new();
+
+        /// <summary>Productos vendidos en este recibo; al procesar el pago se descuenta el StockActual de cada uno.</summary>
+        public List<DetallePagoCajaItem> DetalleItems { get; set; } = new();
 
         public List<CatTipoMovimiento> tipoMovimiento { get; set; } = new List<CatTipoMovimiento>();
         public List<CatMetodoPago> metodoPago { get; set; } = new List<CatMetodoPago>();
@@ -35,5 +39,10 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> turnosSelectListItem { get; set; } = new();
         public List<TblCatMeses> meses { get; set; } = new List<TblCatMeses>();
         public List<SelectListItem> periodo { get; set; } =  new();
+
+        /// <summary>Para el modal de productos: listado de categorías (ej. Librería, Uniforme).</summary>
+        public List<CategoriaProducto> CategoriasProducto { get; set; } = new();
+        /// <summary>Para el modal de productos: listado de productos y filtrar por categoría.</summary>
+        public List<Productos> Productos { get; set; } = new();
     }
 }

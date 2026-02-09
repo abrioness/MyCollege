@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.pagoCajasViewModel
+@model WebColegio.Models.ViewModel.pagoCajasViewModel
 
 @*@{
     ViewData["Title"] = "Create";
@@ -117,9 +117,62 @@
                             <textarea asp-for="PagosCaja.Descripcion" class="form-control"></textarea>
 
                         </div>
+
+                        <!-- Productos del recibo: afectar inventario -->
+                        <div class="form-group mt-3">
+                            <label class="control-label">Productos (afectar inventario)</label>
+                            <p class="text-muted small">Si este recibo incluye venta de librería, uniformes, etc., agregue los productos para descontar el stock automáticamente.</p>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalProductos">
+                                <i class="bi bi-plus-circle"></i> Agregar producto
+                            </button>
+                            <div id="contenedorDetalle" class="mt-2" style="display: none;">
+                                <table class="table table-sm table-bordered" id="tablaDetalleItems">
+                                    <thead><tr><th>Categoría</th><th>Producto</th><th>Cantidad</th><th></th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
                           
                 </div>
-                    <!-- Modal -->
+                    <!-- Modal Productos (inventario) -->
+                    <div class="modal fade" id="modalProductos" tabindex="-1" aria-labelledby="modalProductosLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalProductosLabel">Agregar producto al recibo</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-2">
+                                        <label class="form-label">Categoría</label>
+                                        <select id="modalCategoria" class="form-select">
+                                            <option value="">Seleccione categoría (ej. Librería, Uniforme)</option>
+                                            @foreach (var cat in Model.CategoriasProducto ?? new List<WebColegio.Models.CategoriaProducto>())
+                                            {
+                                                <option value="@cat.IdCateProducto">@cat.NombreCategoria</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Producto</label>
+                                        <select id="modalProducto" class="form-select">
+                                            <option value="">Seleccione producto</option>
+                                        </select>
+                                        <span class="text-muted small" id="modalStockInfo"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Cantidad</label>
+                                        <input type="number" id="modalCantidad" class="form-control" min="1" value="1" />
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                    <button type="button" class="btn btn-primary" id="btnAgregarProducto">Agregar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Modal meses (comentado) -->
 					@*  <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
@@ -161,6 +214,9 @@
 
                 </div>
 
+
+                <!-- Hidden inputs para DetalleItems (se rellenan por JS) -->
+                <div id="detalleItemsHidden"></div>
 
                 <br />
                 <!-- Botones -->
@@ -225,6 +281,88 @@
                    // }
                });
                })();
+
+        // --- Productos / inventario en recibo ---
+        var productosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Productos ?? new List<WebColegio.Models.Productos>()));
+        var categoriasData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CategoriasProducto ?? new List<WebColegio.Models.CategoriaProducto>()));
+        var detalleItems = [];
+
+        function getCategoriaNombre(id) {
+            var c = categoriasData.find(function(x) { return (x.idCateProducto || x.IdCateProducto) === id; });
+            return c ? (c.nombreCategoria || c.NombreCategoria) : '';
+        }
+
+        function getProd(obj, key) {
+            return obj[key] !== undefined ? obj[key] : obj[key.charAt(0).toLowerCase() + key.slice(1)];
+        }
+
+        $('#modalCategoria').on('change', function() {
+            var idCat = parseInt($(this).val(), 10);
+            var $sel = $('#modalProducto');
+            $sel.empty().append('<option value="">Seleccione producto</option>');
+            $('#modalStockInfo').text('');
+            if (!idCat) return;
+            var list = productosData.filter(function(p) { return (p.IdCateProducto || p.idCateProducto) === idCat; });
+            list.forEach(function(p) {
+                var id = getProd(p, 'IdProducto');
+                var nombre = getProd(p, 'NombreProducto');
+                var stock = getProd(p, 'StockActual');
+                $sel.append('<option value="' + id + '" data-stock="' + stock + '">' + nombre + ' (Stock: ' + stock + ')</option>');
+            });
+        });
+
+        $('#modalProducto').on('change', function() {
+            var opt = $(this).find('option:selected');
+            var stock = opt.data('stock');
+            $('#modalStockInfo').text(stock !== undefined ? 'Stock actual: ' + stock : '');
+        });
+
+        function refrescarTablaYHidden() {
+            var $tbody = $('#tablaDetalleItems tbody');
+            $tbody.empty();
+            var $hidden = $('#detalleItemsHidden');
+            $hidden.empty();
+            detalleItems.forEach(function(item, i) {
+                $tbody.append(
+                    '<tr><td>' + item.nombreCategoria + '</td><td>' + item.nombreProducto + '</td><td>' + item.cantidad + '</td>' +
+                    '<td><button type="button" class="btn btn-outline-danger btn-sm quitar-item" data-idx="' + i + '"><i class="bi bi-trash"></i></button></td></tr>'
+                );
+                $hidden.append('<input type="hidden" name="DetalleItems[' + i + '].IdProducto" value="' + item.idProducto + '" />');
+                $hidden.append('<input type="hidden" name="DetalleItems[' + i + '].Cantidad" value="' + item.cantidad + '" />');
+            });
+            $('#contenedorDetalle').toggle(detalleItems.length > 0);
+        }
+
+        $('#btnAgregarProducto').on('click', function() {
+            var idProd = parseInt($('#modalProducto').val(), 10);
+            var cant = parseInt($('#modalCantidad').val(), 10) || 1;
+            if (!idProd) {
+                Swal.fire({ title: 'Atención', text: 'Seleccione un producto.', icon: 'warning' });
+                return;
+            }
+            var prod = productosData.find(function(p) { return (p.IdProducto || p.idProducto) === idProd; });
+            if (!prod) return;
+            var stockActual = getProd(prod, 'StockActual');
+            if (cant > stockActual) {
+                Swal.fire({ title: 'Atención', text: 'La cantidad no puede superar el stock actual (' + stockActual + ').', icon: 'warning' });
+                return;
+            }
+            detalleItems.push({
+                idProducto: getProd(prod, 'IdProducto'),
+                cantidad: cant,
+                nombreProducto: getProd(prod, 'NombreProducto'),
+                nombreCategoria: getCategoriaNombre(getProd(prod, 'IdCateProducto'))
+            });
+            refrescarTablaYHidden();
+            $('#modalCantidad').val(1);
+            $('#modalProductos').modal('hide');
+        });
+
+        $(document).on('click', '.quitar-item', function() {
+            var idx = parseInt($(this).data('idx'), 10);
+            detalleItems.splice(idx, 1);
+            refrescarTablaYHidden();
+        });
 </script>
 
 

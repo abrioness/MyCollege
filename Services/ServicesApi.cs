@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Security;
 //using System.Security.Cryptography.X509Certificates;
@@ -430,6 +430,28 @@ namespace WebColegio.Services
                 return productos;
             }
 
+        }
+
+        public async Task<Productos?> GetProductoByIdAsync(int id)
+        {
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + $"api/TblProductos/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<Productos>(content);
+                }
+            }
+            return null;
+        }
+
+        public async Task<Productos?> GetProductoByCodigoYCategoriaAsync(string codigo, int idCategoria)
+        {
+            var productos = await GetProductosAsync();
+            return productos?.FirstOrDefault(p =>
+                string.Equals(p.CodigoBarra, codigo?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                p.IdCateProducto == idCategoria);
         }
 
         public async Task<List<CatDiscapacidad>> GetDiscapacidadAsync()
@@ -1105,6 +1127,78 @@ namespace WebColegio.Services
             return respuesta;
         }
 
+        public async Task<bool> UpdateProductoAsync(Productos producto)
+        {
+            bool respuesta = false;
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(producto);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var response = await httpClient.PutAsync(url + $"api/TblProductos/{producto.IdProducto}", content);
+                    if (response.IsSuccessStatusCode)
+                        respuesta = true;
+                    else
+                    {
+                        var errorMsg = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine("Error en PUT Producto: " + errorMsg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en UpdateProductoAsync: " + ex.Message);
+            }
+            return respuesta;
+        }
+
+        public async Task<bool> PostMovimientoInventarioAsync(MovimientoInventario movimiento)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(movimiento);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync(url + "api/Inventario", content);
+                    return response.IsSuccessStatusCode;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostMovimientoInventarioAsync: " + ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<List<MovimientoInventario>> GetMovimientosInventarioAsync(int? idProducto, DateTime? desde, DateTime? hasta)
+        {
+            var list = new List<MovimientoInventario>();
+            try
+            {
+                var query = new List<string>();
+                if (idProducto.HasValue) query.Add($"idProducto={idProducto.Value}");
+                if (desde.HasValue) query.Add($"desde={desde.Value:yyyy-MM-dd}");
+                if (hasta.HasValue) query.Add($"hasta={hasta.Value:yyyy-MM-dd}");
+                var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
+                using (var httpclient = new HttpClient())
+                {
+                    var response = await httpclient.GetAsync(url + "api/Inventario" + qs);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+                        var resultado = JsonConvert.DeserializeObject<List<MovimientoInventario>>(content);
+                        if (resultado != null) list = resultado;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en GetMovimientosInventarioAsync: " + ex.Message);
+            }
+            return list;
+        }
 
         public async Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo)
         {

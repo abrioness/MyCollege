@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@model WebColegio.Models.ViewModel.ColeccionCatalogos
 @* @{
 	ViewData["Title"] = "Index";
 } *@
@@ -34,7 +34,9 @@
 					}
 				</div>
 			<div class="col-12 text-end">
-
+				<a asp-action="Movimientos" class="btn btn-outline-secondary me-1">
+					<i class="bi bi-arrow-left-right"></i> Entradas y salidas
+				</a>
 				<a asp-action="Create" class="btn btn-primary">
 					<i class="bi bi-plus-circle"></i> Agregar Inventario
 				</a>

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
@@ -31,6 +31,9 @@ namespace WebColegio.Services
         Task<List<TblArqueoDiario>> GetArqueoDiarioAsync();
 
         Task<List<Productos>> GetProductosAsync();
+        Task<Productos?> GetProductoByIdAsync(int id);
+        /// <summary>Obtiene el producto por código y categoría (para ingreso a producto existente).</summary>
+        Task<Productos?> GetProductoByCodigoYCategoriaAsync(string codigo, int idCategoria);
         Task<List<CategoriaProducto>> GetCategoriaProductoAsync();
         //Task<List<TblInventario>> GetInventarioAsync();
         Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync();
@@ -55,8 +58,10 @@ namespace WebColegio.Services
         Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja);
         Task<bool> PostEgresoAsync(TblEgreso egresos);
         Task<bool> PostReciboCajaAsync(TblReciboCaja reciboCaja);
-        //Task<bool> PostInventarioAsync(TblInventario inventario);
+        Task<bool> PostMovimientoInventarioAsync(MovimientoInventario movimiento);
+        Task<List<MovimientoInventario>> GetMovimientosInventarioAsync(int? idProducto, DateTime? desde, DateTime? hasta);
         Task<bool> PostProductosAsync(Productos producto);
+        Task<bool> UpdateProductoAsync(Productos producto);
         Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
         Task<bool> PostUsuarios(TblUsuarios usuario);
 

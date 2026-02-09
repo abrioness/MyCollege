@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -129,39 +129,105 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Create(productoViewModel producto)
         {
             bool response = false;
-            bool ExisteProducto = false;
             try
             {
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                ExisteProducto = await _Iservices.ValidarProductos(producto.tblproducto.CodigoBarra,producto.tblproducto.IdCateProducto);
-                if (ExisteProducto)
-                {
-                    TempData["Mensaje"] = "El Producto ya Posee un Registro.";
-                    TempData["Tipo"] = "warning";
-                    return RedirectToAction("Create", "Productos");
-                }
+                bool existeProducto = await _Iservices.ValidarProductos(producto.tblproducto.CodigoBarra, producto.tblproducto.IdCateProducto);
 
-                if (producto != null)
+                if (producto == null)
+                    return NoContent();
+
+                producto.tblproducto.Activo = true;
+                producto.tblproducto.UsuarioRegistro = idUsuario;
+                producto.tblproducto.FechaRegistro = DateTime.Now;
+
+                if (existeProducto)
                 {
-                    producto.tblproducto.Activo = true;
-                    producto.tblproducto.UsuarioRegistro = idUsuario;
-                    producto.tblproducto.FechaRegistro = DateTime.Now;
-                    //producto.tblproducto.CodigoBarra = await GenerarCodigoAutomaticoAsync(producto.tblproducto.NombreProducto);
+                    // Ingreso a producto existente: sumar cantidad al StockActual
+                    var existente = await _Iservices.GetProductoByCodigoYCategoriaAsync(producto.tblproducto.CodigoBarra!, producto.tblproducto.IdCateProducto);
+                    if (existente == null)
+                    {
+                        TempData["Mensaje"] = "No se encontró el producto existente.";
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction("Create", "Productos");
+                    }
+                    // Cantidad que ingresa: usar Existencia Inicial del formulario como "cantidad a sumar"
+                    int cantidadEntrante = producto.tblproducto.ExistenciaInicial > 0
+                        ? producto.tblproducto.ExistenciaInicial
+                        : (producto.tblproducto.StockActual > 0 ? producto.tblproducto.StockActual : 0);
+                    if (cantidadEntrante <= 0)
+                    {
+                        TempData["Mensaje"] = "Indique la cantidad que ingresa (Existencia inicial o Stock actual).";
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction("Create", "Productos");
+                    }
+                    existente.StockActual += cantidadEntrante;
+                    existente.ImporteInventario = existente.StockActual * existente.CostoUnitario;
+                    existente.UsuarioActualiza = idUsuario;
+                    existente.FechaActualiza = DateTime.Now;
+                    response = await _Iservices.UpdateProductoAsync(existente);
+                    if (response)
+                    {
+                        // Registrar movimiento de entrada para reportes
+                        await _Iservices.PostMovimientoInventarioAsync(new MovimientoInventario
+                        {
+                            IdProducto = existente.IdProducto,
+                            TipoMovimiento = TipoMovimientoInventario.Entrada,
+                            Cantidad = cantidadEntrante,
+                            FechaMovimiento = DateTime.Now,
+                            ReferenciaDocumento = "INGRESO-MANUAL",
+                            Descripcion = "Ingreso por registro de inventario",
+                            Activo = true,
+                            UsuarioRegistro = idUsuario,
+                            FechaRegistro = DateTime.Now
+                        });
+                        TempData["Mensaje"] = $"Se actualizó el producto. Se sumaron {cantidadEntrante} unidades. Stock actual: {existente.StockActual}.";
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction("Create", "Productos");
+                    }
+                }
+                else
+                {
+                    // Producto nuevo: StockActual = Existencia Inicial al dar de alta
+                    producto.tblproducto.StockActual = producto.tblproducto.ExistenciaInicial >= 0
+                        ? producto.tblproducto.ExistenciaInicial
+                        : producto.tblproducto.StockActual;
+                    producto.tblproducto.ImporteInventario = producto.tblproducto.StockActual * producto.tblproducto.CostoUnitario;
                     response = await _Iservices.PostProductosAsync(producto.tblproducto);
                     if (response)
                     {
-                        TempData["Mensaje"] = "Se Guardo Correctamente el Producto.";
-                        TempData["Tipo"] = "info";
-
-                        return  RedirectToAction("Create","Productos");
+                        // Registrar movimiento de entrada (stock inicial) para reportes
+                        var nuevoProducto = await _Iservices.GetProductoByCodigoYCategoriaAsync(producto.tblproducto.CodigoBarra!, producto.tblproducto.IdCateProducto);
+                        if (nuevoProducto != null && producto.tblproducto.StockActual > 0)
+                        {
+                            await _Iservices.PostMovimientoInventarioAsync(new MovimientoInventario
+                            {
+                                IdProducto = nuevoProducto.IdProducto,
+                                TipoMovimiento = TipoMovimientoInventario.Entrada,
+                                Cantidad = producto.tblproducto.StockActual,
+                                FechaMovimiento = DateTime.Now,
+                                ReferenciaDocumento = "ALTA-PRODUCTO",
+                                Descripcion = "Stock inicial al dar de alta producto",
+                                Activo = true,
+                                UsuarioRegistro = idUsuario,
+                                FechaRegistro = DateTime.Now
+                            });
+                        }
+                        TempData["Mensaje"] = "Se guardó correctamente el producto.";
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction("Create", "Productos");
                     }
-
                 }
-                return NoContent();
+
+                TempData["Mensaje"] = "No se pudo guardar.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Create", "Productos");
             }
-            catch
+            catch (Exception)
             {
-                return View();
+                TempData["Mensaje"] = "Error al procesar.";
+                TempData["Tipo"] = "error";
+                return RedirectToAction("Create", "Productos");
             }
         }
         
@@ -184,6 +250,19 @@ namespace WebColegio.Controllers
             {
                 return View();
             }
+        }
+
+        /// <summary>Reporte de entradas y salidas de inventario para trazabilidad.</summary>
+        [HttpGet]
+        public async Task<ActionResult> Movimientos(DateTime? desde, DateTime? hasta, int? idProducto)
+        {
+            var movimientos = await _Iservices.GetMovimientosInventarioAsync(idProducto, desde, hasta);
+            var productos = await _Iservices.GetProductosAsync();
+            ViewBag.Productos = productos ?? new List<Productos>();
+            ViewBag.Desde = desde;
+            ViewBag.Hasta = hasta;
+            ViewBag.IdProducto = idProducto;
+            return View(movimientos ?? new List<MovimientoInventario>());
         }
 
         // GET: ProductosController/Delete/5
