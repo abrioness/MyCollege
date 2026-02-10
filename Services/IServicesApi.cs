@@ -43,6 +43,7 @@ namespace WebColegio.Services
         Task<List<CatPeriodo>> GetPeriodoAsync();
         Task<List<CatDiscapacidad>> GetDiscapacidadAsync();
         Task<List<CatMovInventario>> GetMovInventarioAsync();
+        Task<List<MovimientoInventario>> GetMovimientoInventarioAsync();
 
         Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync();
         Task<List<TblCostoMatricula>> GetCostosMatriculaAsync();

@@ -486,7 +486,22 @@ namespace WebColegio.Services
             }
 
         }
-       
+    public async Task<List<MovimientoInventario>> GetMovimientoInventarioAsync()
+        {
+            List<MovimientoInventario> movimientoInventario = new List<MovimientoInventario>();
+            using (var httpclient = new HttpClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/MovimientoInventario");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<MovimientoInventario>>(content);
+                    movimientoInventario = resultado;
+                }
+                return movimientoInventario;
+            }
+
+        }
         public async Task<List<CategoriaProducto>> GetCategoriaProductoAsync()
         {
             List<CategoriaProducto> categoriaProducto = new List<CategoriaProducto>();
