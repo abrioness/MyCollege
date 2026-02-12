@@ -177,10 +177,12 @@ h6 {
 
 #fechapresentocentro {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     align-items: center;
     gap: 10px;
-    font-size:larger;
+    font-size: larger;
+    font-weight: bold;
+    text-align: center;
 }
 
 .tabla-fecha {
@@ -214,7 +216,8 @@ legend {
     background: #e6e6e6;
     border: 1px solid #000;
     padding: 5px 10px;
-
+    text-align: center;
+    width: 100%;
 }
 
  /*===== FILAS TIPO TABLA =====*/ 
@@ -245,11 +248,18 @@ td {
 .mb-2 {
     margin-bottom: 0 !important;
 }
-p{
-    text-align:justify;
+p {
+    text-align: justify;
 }
-span{
-    text-align:center;
+
+span {
+    text-align: center;
+}
+
+/* Títulos de cada párrafo/sección: centrados y en negrita */
+.titulo-parrafo {
+    text-align: center !important;
+    font-weight: bold !important;
 }
 
  /*===== IMPRESIÓN =====*/ 
