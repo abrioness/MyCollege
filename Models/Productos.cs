@@ -15,6 +15,7 @@
         public int IdCateProducto { get; set; }
 
         public int? IdProveedor { get; set; }
+        public int? IdRecinto { get; set; }
 
         public decimal CostoUnitario { get; set; }
 

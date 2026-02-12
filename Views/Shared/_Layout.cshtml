@@ -1,4 +1,4 @@
-﻿@* @using Microsoft.AspNetCore.Http
+@* @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor *@
 @inject IConfiguration Configuration
 @* <nav style="background-color:royalblue;height:30%;">
@@ -72,6 +72,8 @@
 
 </head>
 <body id="page-top">
+    <!-- Overlay para cerrar el menú en móvil (solo visible cuando sidebar está abierto) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
     @{
         int rol = 0;
         var usrol = 0;
@@ -81,7 +83,7 @@
 
         @if (User.Identity.IsAuthenticated)
         {
-            <ul class="navbar-nav sidebar sidebar-dark accordion text-black" id="accordionSidebar" style="background-color: mediumseagreen;width:250px;">
+            <ul class="navbar-nav sidebar sidebar-dark accordion text-black" id="accordionSidebar" style="background-color: mediumseagreen; width: 250px; flex-shrink: 0;">
                 <a class="sidebar-brand d-flex align-items-center justify-content-center">
                     @* <div class="sidebar-brand-icon rotate-n-15">
                 </div> *@
@@ -280,15 +282,14 @@
                         </a>
                         <div id="collapseRecibos" class="collapse" data-bs-parent="#accordionSidebar">
                             <div class="bg-white py-2 collapse-inner rounded">
-
+                                <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="Index"><i class="bi bi-list-ul text-black"></i> Lista de Arqueos</a>
                                 <a class="collapse-item" asp-controller="ArqueoDiario" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja" target="_blank"><i class="bi bi-arrow-return-right text-black"></i> Generar Arqueo</a>
-
                             </div>
                         </div>
                     </li>
 
                 }
-                @if (User.IsInRole("UserSystem"))
+                @if (User.IsInRole("UserSystem") || User.IsInRole("Admin"))
                 {
                     <!-- Usuario -->
                     <li class="nav-item active">
@@ -321,8 +322,7 @@
 
             <!-- Main Content -->
             <div id="content">
-                <nav class="navbar navbar-expand bg-gradient-primary navbar-light topbar  mb-1 static-top shadow">@* class="text-blue bg-success p-3" id="sidebar" style="width:240px;">
-                *@
+                <nav class="navbar navbar-expand navbar-light  bg-gradient-primary topbar mb-1 static-top shadow topbar-nav">
                     @* <div class="container-fluid mt-1" style="width:125px;margin-left:1px">
                 <a class="navbar-brand" asp-area="" asp-page="/Index">Inicio</a> 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
@@ -331,8 +331,8 @@
                 </button>
 *@ 
 
-    <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
-                        <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:8%;margin-left:55px">
+    <div class="header topbar-header">
+                        <img src="~/image/colegiosanfrancisco.png" alt="Colegio" class="logo-izquierda">
 
                         <div class="titulo" style="flex: 1;">
                             <span class="nombre" style="font-size: 25px;
@@ -347,6 +347,10 @@
 
 
 
+                    <!-- Botón menú (solo en pantallas pequeñas) -->
+                    <button type="button" class="btn btn-link text-light d-md-none me-2" id="sidebarToggle" aria-label="Abrir/cerrar menú">
+                        <i class="fas fa-bars fa-lg"></i>
+                    </button>
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
@@ -530,6 +534,24 @@
                 }
             }, true); // true = usar capture phase para interceptar antes de Bootstrap
 
+            // Toggle del sidebar en pantallas pequeñas
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var sidebarOverlay = document.getElementById('sidebarOverlay');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('sidebar-open');
+                });
+            }
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    document.body.classList.remove('sidebar-open');
+                });
+            }
+            // Cerrar sidebar al redimensionar por encima de 768px
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 768) document.body.classList.remove('sidebar-open');
+            });
+
             // Inicializar todos los collapse para asegurar que funcionen correctamente
             const collapseElements = document.querySelectorAll('.collapse');
             collapseElements.forEach(function(element) {
@@ -548,11 +570,13 @@
 </html>
 
 <style>
-    /* Estilos para el sidebar - Mayor especificidad para sobrescribir sb-admin-2.css */
+    /* Sidebar: ancho fijo, nunca se expande */
     #accordionSidebar.sidebar,
     #accordionSidebar {
         min-width: 250px !important;
+        max-width: 250px !important;
         width: 250px !important;
+        flex-shrink: 0 !important;
     }
 
         /* Sobrescribir estilos de sb-admin-2.css para nav-link en el sidebar */
@@ -654,31 +678,114 @@
         width: calc(100% - 250px);
     }
 
-    /* Sobrescribir media query de sb-admin-2.css para mantener el ancho de 250px */
+    /* Desde 768px en adelante: sidebar siempre visible a la izquierda */
     @@media (min-width: 768px) {
-        #accordionSidebar.sidebar, #accordionSidebar
-
-    {
-        width: 250px !important;
-        min-width: 250px !important;
+        #accordionSidebar.sidebar,
+        #accordionSidebar {
+            position: relative !important;
+            left: auto !important;
+        }
     }
 
+    /* Encabezado: evitar texto distorsionado y cortes raros */
+    .topbar-nav {
+        background: linear-gradient(135deg,#1 0%, #1b5e20 100%) !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+    }
+    .topbar-nav .navbar-nav { flex-shrink: 0 !important; }
+    .topbar-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        text-align: center !important;
+        color: white !important;
+        padding: 0.5rem 1rem !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    .topbar-header .logo-izquierda {
+        width: auto !important;
+        max-height: 50px !important;
+        margin-right: 0.75rem !important;
+        flex-shrink: 0 !important;
+    }
+    .topbar-header .logo-derecha {
+        width: auto !important;
+        max-height: 50px !important;
+        margin-left: 0.75rem !important;
+        flex-shrink: 0 !important;
+    }
+    .topbar-header .titulo {
+        flex: 1 !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+    }
+    .topbar-header .nombre,
+    .topbar-header .lema {
+        font-family: 'Arial', 'Trebuchet MS', sans-serif !important;
+        white-space: normal !important;
+        word-wrap: normal !important;
+        overflow-wrap: normal !important;
+        line-height: 1.2 !important;
+        display: block !important;
+    }
+    .topbar-header .nombre {
+        font-size: clamp(0.9rem, 2.2vw, 1.4rem) !important;
+    }
+    .topbar-header .lema {
+        font-size: clamp(0.75rem, 1.6vw, 1.1rem) !important;
+    }
+    @@media (max-width: 576px) {
+        .topbar-header { padding: 0.35rem 0.5rem !important; }
+        .topbar-header .logo-izquierda,
+        .topbar-header .logo-derecha { max-height: 36px !important; }
     }
 
-    /* Ajuste responsive para pantallas pequeñas */
-    @@media (max-width: 768px) {
-        #accordionSidebar.sidebar, #accordionSidebar
+    /* Pantallas pequeñas: sidebar oculto por defecto, se abre con el botón (no se expande al 100%) */
+    @@media (max-width: 767.98px) {
+        #accordionSidebar.sidebar,
+        #accordionSidebar {
+            position: fixed !important;
+            top: 0;
+            left: -250px;
+            width: 250px !important;
+            min-width: 250px !important;
+            max-width: 250px !important;
+            height: 100vh !important;
+            z-index: 1040;
+            transition: left 0.25s ease;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.15);
+        }
 
-    {
-        width: 100% !important;
-        min-width: 100% !important;
-    }
+        body.sidebar-open #accordionSidebar.sidebar,
+        body.sidebar-open #accordionSidebar {
+            left: 0 !important;
+        }
 
-    #content-wrapper {
-        width: 100% !important;
-        margin-left: 0 !important;
-    }
+        /* Overlay al abrir el menú */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1035;
+        }
 
+        body.sidebar-open .sidebar-overlay {
+            display: block;
+        }
+
+        #content-wrapper {
+            width: 100% !important;
+            margin-left: 0 !important;
+        }
     }
 
     .navbar.topbar {

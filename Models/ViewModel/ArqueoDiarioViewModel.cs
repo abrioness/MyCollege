@@ -1,7 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WebColegio.Models.ViewModel
 {
+    /// <summary>ViewModel para la lista de arqueos (Index) con filtros por fecha y recinto.</summary>
+    public class ArqueoDiarioIndexViewModel
+    {
+        public List<TblArqueoDiario> ListaArqueos { get; set; } = new();
+        public List<Recintos> Recintos { get; set; } = new();
+        public DateTime? FechaInicio { get; set; }
+        public DateTime? FechaFin { get; set; }
+        public int? IdRecintoFilter { get; set; }
+    }
+
     public class ArqueoDiarioViewModel
     {
         public TblArqueoDiario arqueoDiario { get; set; } = new();
@@ -37,6 +47,9 @@ namespace WebColegio.Models.ViewModel
         public decimal EquivalenteCordobas { get; set; }
 
         public string TotalEnLetras { get; set; }
+
+        /// <summary>True si el usuario es Admin y puede elegir recinto; false para Cajero (solo su recinto).</summary>
+        public bool EsAdministrador { get; set; }
     }
 
     public class IngresoDto

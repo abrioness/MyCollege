@@ -1,4 +1,4 @@
-﻿@*
+@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
@@ -28,11 +28,10 @@
 <body >
     <div class="container p-3" >
 
-        <div class="text-center mb-3">
+        <div class="encabezado-matricula text-center">
             @{
                 var recinto = Model.recintosSelectListItem
                 .FirstOrDefault(s => s.Value == Model.alumnos.IdRecinto.ToString());
-
             }
             @{
                 var periodo = Model.periodoSelectListItem
@@ -47,39 +46,26 @@
                 .FirstOrDefault(s => s.Value == Model.alumnos.IdTurno.ToString());
             }
 
-            <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 50px;">
-                @if (recinto?.Text == "COLEGIO PARROQUIAL SAN FRANCISCO JAVIER")
-                {
-
-                    <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:12%;margin-left:55px">
-                }
-                @if (recinto?.Text == "CENTRO EDUCATIVO PARROQUIAL SAN MIGUEL ARCANGEL")
-                {
-                    <img src="~/image/colegiosanmiguelarcangel.png" alt="izquierda" class="logo-izquierda" style="width:12%;margin-left:55px">
-                }
-                <div class="titulo" style="flex:0.9;width:contain">
-                    <h6>
-
-                        @recinto?.Text
-
-                    </h6>
-                    @{
-                        int periodoActual = DateTime.Now.Year;
-                        // if (Convert.ToInt32(@periodo.Text) == DateTime.Now.Year)
-                        // {
-                        //     periodoActual = Convert.ToInt32(@periodo.Text);
-                        // }
-                        // else
-                        // {
-                        // @periodo.Text// debe agregar el nombre completo colegio parroquil
-                        // }
-
+            <div class="header">
+                <div class="header-logo header-logo-izq">
+                    @if (recinto?.Text == "COLEGIO PARROQUIAL SAN FRANCISCO JAVIER")
+                    {
+                        <img src="~/image/colegiosanfrancisco.png" alt="Colegio" class="logo-izquierda" />
                     }
-                    <h5>HOJA DE MATRÍCULA DE @modalidad?.Text  @periodoActual</h5>
+                    @if (recinto?.Text == "CENTRO EDUCATIVO PARROQUIAL SAN MIGUEL ARCANGEL")
+                    {
+                        <img src="~/image/colegiosanmiguelarcangel.png" alt="Colegio" class="logo-izquierda" />
+                    }
                 </div>
+                <div class="header-titulo">
+                    <h6>@recinto?.Text</h6>
+                    @{ int periodoActual = DateTime.Now.Year; }
+                    <h5>HOJA DE MATRÍCULA DE @modalidad?.Text @periodoActual</h5>
+                </div>
+                <div class="header-logo header-logo-der"></div>
             </div>
 
-            <hr />
+            <hr class="hr-encabezado" />
             @{
                 var today = DateTime.Now;
             }

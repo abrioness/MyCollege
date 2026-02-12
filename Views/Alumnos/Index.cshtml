@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@model WebColegio.Models.ViewModel.ColeccionCatalogos
 @* @{
 	ViewData["Title"] = "Index";
 } *@
@@ -39,6 +39,7 @@
 						<i class="bi bi-plus-circle"></i> Agregar Alumno
 					</a>
 				</div>
+				<br />
 				<table id="tablaAlumnos" class="table table-bordered table-sm">
 					<thead>
 						<tr>
@@ -154,18 +155,18 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
 	$(document).ready(function () {
-	$('#tablaAlumnos').DataTable({
-	responsive: false,
-	dom: 'Bfrtip', // Botones + filtro + tabla
-		
-	buttons: [
+	var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
+	var botones = esCajero ? [] : [
 		{
 		extend: 'excelHtml5',
 		text: 'Exportar a Excel',
 		className: 'btn btn-success'
 		}
-		]
-	,
+	];
+	$('#tablaAlumnos').DataTable({
+	responsive: false,
+	dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
+	buttons: botones,
 		language: {
 			url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 		}

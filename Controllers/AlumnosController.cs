@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -71,6 +71,26 @@ namespace WebColegio.Controllers
                 };
 
                 return View(VieModelAlumnos);
+        }
+
+        /// <summary>Buscar alumnos por nombre/apellido para autocompletado. Devuelve JSON con id y nombreCompleto.</summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Buscar(string q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+                return Json(new List<object>());
+            var alumnos = await _Iservices.GetAlumnosAsync() ?? new List<TblAlumno>();
+            var term = q.Trim().ToUpperInvariant();
+            var lista = alumnos
+                .Where(a => a.Activo == true && (
+                    (a.Nombre != null && a.Nombre.ToUpperInvariant().Contains(term)) ||
+                    (a.Apellido != null && a.Apellido.ToUpperInvariant().Contains(term)) ||
+                    ((a.Nombre + " " + a.Apellido).ToUpperInvariant().Contains(term))))
+                .Take(20)
+                .Select(a => new { id = a.IdAlumno, nombreCompleto = (a.Nombre ?? "") + " " + (a.Apellido ?? "") })
+                .ToList();
+            return Json(lista);
         }
 
         // GET: AlumnosController/Details/5

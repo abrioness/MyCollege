@@ -40,7 +40,7 @@
                             Correo
                         </th>
                         <th>
-                           Rol
+                            Rol
                         </th>
                         <th>
                             Estado
@@ -49,15 +49,23 @@
 
                     </tr>
                 </thead>
-                   <tbody>
-@foreach (var item in Model.ListaUsuarios) {
+                <tbody>
+                    @foreach (var item in Model.ListaUsuarios) {
+                        {
+                            var rol = Model.ListRol.FirstOrDefault(a=>a.IdRol==item.IdRol);
+                        
+                        
+                            @if (@rol?.NombreRol != "UserSystem")
+                            {
+                                
+                       
         <tr>
             <td>
                  <a asp-action="Edit" asp-controller="Usuarios" asp-route-id="@item.IdUsuario" class="btn btn-sm btn-info">@item.NombreCompleto</a>
             </td>
 
             <td>
-                                 Nombre Completo
+                                 @item.NombreCompleto
                                 
             </td>
 
@@ -77,9 +85,7 @@
             <td>
                                 @item.Correo
             </td>
-            @{
-            var rol = Model.ListRol.FirstOrDefault(a=>a.IdRol==item.IdRol);
-            }
+           
             
             <td>
                 @rol?.NombreRol
@@ -100,6 +106,8 @@
                 @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
             </td>  *@
         </tr>
+                            }
+                        }
 }
     </tbody>
             </table>

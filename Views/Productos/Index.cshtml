@@ -89,7 +89,7 @@
 									.FirstOrDefault(a => a.IdMovInventario == itemProducto.IdMovInventario);
 								}
 
-								@itemMovInventario.MovimientoInventario
+								@itemMovInventario?.MovimientoInventario
 							</td>
 							
 							<td>
@@ -109,12 +109,12 @@
 										var itemCategoriaProducto = Model.categoriasProducto
 										.FirstOrDefault(a => a.IdCateProducto == itemProducto.IdCateProducto);
 									}
-								@itemCategoriaProducto.NombreCategoria
+								@itemCategoriaProducto?.NombreCategoria
 							</td>
 							
 							<td>
 
-								C$ @(@itemProducto.StockActual * @itemProducto.CostoUnitario)
+								C$ @((@itemProducto.StockActual + itemProducto.ExistenciaInicial) * @itemProducto.CostoUnitario)
 
 							</td>
 							<td>

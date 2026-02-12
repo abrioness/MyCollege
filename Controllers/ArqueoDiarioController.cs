@@ -20,9 +20,30 @@ namespace WebColegio.Controllers
         }
         [Authorize]
         // GET: ArqueoDiarioController
-        public ActionResult Index()
+        public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin, int? idRecinto)
         {
-            return View();
+            var arqueos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
+            var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+
+            // Solo arqueos activos, serie A
+            arqueos = arqueos.Where(a => a.Activo && a.Serie == "A").OrderByDescending(a => a.FechaRegistro).ToList();
+
+            if (fechainicio.HasValue)
+                arqueos = arqueos.Where(a => a.FechaRegistro.Date >= fechainicio.Value.Date).ToList();
+            if (fechafin.HasValue)
+                arqueos = arqueos.Where(a => a.FechaRegistro.Date <= fechafin.Value.Date).ToList();
+            if (idRecinto.HasValue && idRecinto.Value > 0)
+                arqueos = arqueos.Where(a => a.IdRecinto == idRecinto.Value).ToList();
+
+            var model = new ArqueoDiarioIndexViewModel
+            {
+                ListaArqueos = arqueos,
+                Recintos = recintos.Where(r => r.Activo).ToList(),
+                FechaInicio = fechainicio,
+                FechaFin = fechafin,
+                IdRecintoFilter = idRecinto
+            };
+            return View(model);
         }
 
         // GET: ArqueoDiarioController/Details/5
@@ -137,6 +158,8 @@ namespace WebColegio.Controllers
             var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
             var recibos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            bool esAdmin = User.IsInRole("Admin");
+            var usuarioActual = await _Iservices.GetUsuarioIdAsync(idUsuario);
 
             var arqueosSerieA = recibos.Where(r => r.Serie == "A").ToList();
             var maxNumero = arqueosSerieA.Count > 0 ? (int?)arqueosSerieA.Max(r => r.NumeroArqueo) : null;
@@ -147,29 +170,63 @@ namespace WebColegio.Controllers
             {
                 Serie = "A",
                 Fecha = fecha,
-                siguienteNumero = siguienteNumero
+                siguienteNumero = siguienteNumero,
+                EsAdministrador = esAdmin
             };
 
-            var pagosDelDia = (await _Iservices.GetPagosAsync())?.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPago>();
-            var pagosCajaDia = (await _Iservices.GetPagoCajaAsync())?.Where(r => r.UsuarioRegistro == idUsuario && r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPagoCaja>();
-
-            // Filtrar por recinto cuando el usuario eligió uno
-            if (idRecinto.HasValue && idRecinto.Value > 0)
+            // Cajero: solo puede ver el arqueo de su recinto; se ignora idRecinto y se usa el del usuario
+            int? recintoEfectivo = idRecinto;
+            if (!esAdmin)
             {
-                pagosDelDia = pagosDelDia.Where(r => r.IdRecinto == idRecinto.Value).ToList();
-                pagosCajaDia = pagosCajaDia.Where(r => r.IdRecinto == idRecinto.Value).ToList();
-                arqueo.arqueoDiario.IdRecinto = idRecinto.Value;
-                // Asignar nombre y dirección del recinto
-                var recintoSel = Recintos.FirstOrDefault(r => r.IdRecinto == idRecinto.Value);
-                if (recintoSel != null)
+                recintoEfectivo = usuarioActual?.IdRecinto ?? 0;
+                if (recintoEfectivo == 0) recintoEfectivo = null;
+            }
+
+            // Obtener pagos y pagos caja del día: Admin por recinto (todos los usuarios), Cajero solo los suyos en su recinto
+            var todosPagosDia = (await _Iservices.GetPagosAsync())?.Where(r => r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPago>();
+            var todosPagosCajaDia = (await _Iservices.GetPagoCajaAsync())?.Where(r => r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPagoCaja>();
+
+            List<TblPago> pagosDelDia;
+            List<TblPagoCaja> pagosCajaDia;
+            if (esAdmin)
+            {
+                if (recintoEfectivo.HasValue && recintoEfectivo.Value > 0)
                 {
-                    arqueo.Colegio = recintoSel.Recinto?.ToUpper() ?? "RECINTO";
-                    arqueo.Direccion = ObtenerDireccionRecinto(idRecinto.Value);
+                    pagosDelDia = todosPagosDia.Where(r => r.IdRecinto == recintoEfectivo.Value).ToList();
+                    pagosCajaDia = todosPagosCajaDia.Where(r => r.IdRecinto == recintoEfectivo.Value).ToList();
+                }
+                else
+                {
+                    pagosDelDia = new List<TblPago>();
+                    pagosCajaDia = new List<TblPagoCaja>();
                 }
             }
             else
             {
-                // Sin filtro: preseleccionar primer recinto con datos
+                pagosDelDia = todosPagosDia.Where(r => r.UsuarioRegistro == idUsuario && r.IdRecinto == (recintoEfectivo ?? 0)).ToList();
+                pagosCajaDia = todosPagosCajaDia.Where(r => r.UsuarioRegistro == idUsuario && r.IdRecinto == (recintoEfectivo ?? 0)).ToList();
+            }
+
+            // Asignar recinto al arqueo y nombre/dirección
+            if (recintoEfectivo.HasValue && recintoEfectivo.Value > 0)
+            {
+                arqueo.arqueoDiario.IdRecinto = recintoEfectivo.Value;
+                var recintoSel = Recintos.FirstOrDefault(r => r.IdRecinto == recintoEfectivo.Value);
+                if (recintoSel != null)
+                {
+                    arqueo.Colegio = recintoSel.Recinto?.ToUpper() ?? "RECINTO";
+                    arqueo.Direccion = ObtenerDireccionRecinto(recintoEfectivo.Value);
+                }
+            }
+            else if (esAdmin)
+            {
+                // Admin sin recinto elegido: no preseleccionar; el usuario debe elegir en la vista
+                arqueo.arqueoDiario.IdRecinto = null;
+                arqueo.Colegio = "SELECCIONE RECINTO";
+                arqueo.Direccion = "";
+            }
+            else
+            {
                 var primerRecintoConDatos = pagosDelDia.FirstOrDefault()?.IdRecinto ?? pagosCajaDia.FirstOrDefault()?.IdRecinto;
                 if (primerRecintoConDatos.HasValue && primerRecintoConDatos.Value > 0)
                 {
@@ -202,12 +259,17 @@ namespace WebColegio.Controllers
             //var ordenarNumeroRecibo.pagosCajaDia.OrderBy(pc => pc.NumeroRecibo).ToList();
             var primerRecibo = ordenarNumeroRecibo.FirstOrDefault();
             var ultimoRecibo = ordenarNumeroRecibo.LastOrDefault();
-            // Egresos del día (filtrar por recinto si se eligió uno)
-            var egresosDelDia = (await _Iservices.GetEgresoAsync())?
-                .Where(p => p.UsuarioRegistro == idUsuario && p.FechaRegistro.Date == fecha.Date && p.Activo)
+            // Egresos del día: Admin por recinto (todos), Cajero solo los suyos en su recinto
+            var todosEgresosDia = (await _Iservices.GetEgresoAsync())?
+                .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)
                 .ToList() ?? new List<TblEgreso>();
-            if (idRecinto.HasValue && idRecinto.Value > 0)
-                egresosDelDia = egresosDelDia.Where(p => p.IdRecinto == idRecinto.Value).ToList();
+            List<TblEgreso> egresosDelDia;
+            if (esAdmin && recintoEfectivo.HasValue && recintoEfectivo.Value > 0)
+                egresosDelDia = todosEgresosDia.Where(p => p.IdRecinto == recintoEfectivo.Value).ToList();
+            else if (!esAdmin)
+                egresosDelDia = todosEgresosDia.Where(p => p.UsuarioRegistro == idUsuario && p.IdRecinto == (recintoEfectivo ?? 0)).ToList();
+            else
+                egresosDelDia = new List<TblEgreso>();
 
             // 2️⃣ Obtener los tipos movimientos relacionados
             var tipmov = (await _Iservices.GetTipoMovimientoAsync())?
@@ -347,8 +409,13 @@ namespace WebColegio.Controllers
 
         private string NumeroALetras(decimal numero)
         {
-            return Humanizer.NumberToWordsExtension.ToWords((long)numero, new System.Globalization.CultureInfo("es"))
-                .ToUpper() + " CÓRDOBAS";
+            var entero = (long)Math.Truncate(numero);
+            var centavos = (int)Math.Round((numero - entero) * 100);
+            var cultura = new System.Globalization.CultureInfo("es");
+            var parteEntera = Humanizer.NumberToWordsExtension.ToWords(entero, cultura).ToUpper() + " CÓRDOBAS";
+            if (centavos > 0)
+                return parteEntera + " CON " + centavos.ToString("00", cultura) + "/100";
+            return parteEntera;
         }
 
         // GET: ArqueoDiarioController/Edit/5

@@ -28,19 +28,16 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Index()
         {
 
-            var usuarios = await _Iservices.GetUsuariosAsync();
+            var _usuarios = await _Iservices.GetUsuariosAsync();
+            var _recintos = await _Iservices.GetRecintosAsync();
+            var _roles = await _Iservices.GetRolAsync();
             
 
             var viewmodel = new UsuarioViewModel
             {
-                ListaUsuarios = usuarios,
-                RolSelectList = (await _Iservices.GetRolAsync())
-                              .Select(r => new SelectListItem
-                              {
-                                  Value = r.IdRol.ToString(),
-                                  Text = r.NombreRol,
-                                  //Selected = r.IdPregunta == respuestas.IdPregunta
-                              }).ToList(),
+                ListaUsuarios = _usuarios,
+                ListRol=_roles,
+                ListRecintos=_recintos
 
             };
 

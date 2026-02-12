@@ -1,4 +1,4 @@
-﻿/* ===== CONTENEDOR ===== */
+/* ===== CONTENEDOR ===== */
 /*.container {
     max-width: 1000px;
     background: #fff;
@@ -95,33 +95,86 @@ legend {
 
 
 
- /*===== CONTENEDOR GENERAL =====*/ 
+/* ===== CONTENEDOR GENERAL ===== */
 .container {
     max-width: 1000px;
     background: #fff;
-    padding: 20px;    
+    padding: 20px;
     border: 2px solid #000;
 }
 
- /*===== TITULO =====*/ 
+/* ===== ENCABEZADO COMPACTO - TÍTULOS CENTRADOS ===== */
+.encabezado-matricula {
+    margin-bottom: 0.5rem;
+}
 
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+    gap: 0.5rem;
+}
+
+.header-logo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+.header-logo-izq {
+    justify-content: flex-start;
+}
+
+.header-logo-der {
+    justify-content: flex-end;
+}
+
+.header .logo-izquierda {
+    width: 70px;
+    height: auto;
+    max-height: 52px;
+    object-fit: contain;
+}
+
+.header-titulo {
+    flex: 1.2;
+    text-align: center;
+    min-width: 0;
+}
+
+.header-titulo h5,
+.header-titulo h6 {
+    margin: 0.15rem 0;
+    line-height: 1.2;
+}
+
+.hr-encabezado {
+    margin: 0.35rem 0 0.5rem 0;
+}
+
+/* ===== TÍTULOS ===== */
 h5 {
     color: #003366;
-    padding: 5px 10px;
+    padding: 2px 8px;
     font-weight: bold;
     text-transform: uppercase;
-    font-family:Arial;
-    font-size:smaller;
+    font-family: Arial, sans-serif;
+    font-size: smaller;
 }
+
 h6 {
     background: #e6e6e6;
     border: 1px solid #000;
     border-radius: 5px;
     font-size: large;
     color: #003366;
-    font-family:Arial;
-    font-weight: bold;   
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    padding: 2px 8px;
 }
+
 #fechapresentocentro {
     display: flex;
     justify-content: flex-end;
@@ -298,15 +351,84 @@ span{
         display: none;
     }
 }
+
+/* ===== IMPRESIÓN: UNA HOJA DOS CARAS, FORMATO LEGAL ===== */
 @media print {
     @page {
         size: legal;
-        margin: 1.5cm;
+        margin: 1cm;
     }
 
     body {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-       
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0.5cm;
+        border: none;
+        margin: 0;
+    }
+
+    /* Encabezado más compacto al imprimir */
+    .encabezado-matricula {
+        margin-bottom: 0.25rem;
+    }
+
+    .header {
+        padding: 0.1rem 0.25rem;
+    }
+
+    .header .logo-izquierda {
+        width: 50px;
+        max-height: 38px;
+    }
+
+    .header-titulo h6 {
+        font-size: 0.85rem;
+        padding: 1px 6px;
+    }
+
+    .header-titulo h5 {
+        font-size: 0.8rem;
+        padding: 1px 6px;
+    }
+
+    .hr-encabezado {
+        margin: 0.2rem 0 0.35rem 0;
+    }
+
+    /* Reducir espacios en fieldsets y filas para caber en una hoja */
+    fieldset {
+        padding: 8px 10px;
+        margin-bottom: 6px;
+    }
+
+    legend {
+        padding: 2px 8px;
+        font-size: 12px;
+    }
+
+    .row > div {
+        padding: 3px 6px;
+        font-size: 12px;
+    }
+
+    #fechapresentocentro {
+        font-size: 12px;
+    }
+
+    .tabla-fecha td {
+        padding: 2px 6px;
+        font-size: 12px;
+    }
+
+    p {
+        font-size: 11px;
+        line-height: 1.25;
+        margin-bottom: 4px;
     }
 }

@@ -143,19 +143,22 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
 	$(document).ready(function () {
-			$('#tablaNotas').DataTable({
-			responsive: false,
-			dom: 'Bfrtip', // Botones + filtro + tabla
-			buttons: [
-				{
-					extend: 'excelHtml5',
-					text: 'Exportar a Excel',
-					className: 'btn btn-success'
-				}
-			],
+		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
+		var botones = esCajero ? [] : [
+			{
+			extend: 'excelHtml5',
+			text: 'Exportar a Excel',
+			className: 'btn btn-success'
+			}
+		];
+		$('#tablaNotas').DataTable({
+		responsive: false,
+		dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
+		buttons: botones,
 			language: {
 				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 			}
 		});
+	});
 	});
 </script>
