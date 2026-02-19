@@ -84,12 +84,9 @@
 
                         </div> *@
                         <div class="form-group">
-                            @{
-
-                                var fechaEmision = DateTime.Now.ToString("dd/MM/yyyy");
-                            }
+                           
                             <label asp-for="PagosCaja.FechaEmision" class="control-label">Fecha de Emisión</label>
-                            <input type="text" asp-for="PagosCaja.FechaEmision" value="@fechaEmision" class="form-control" readonly />
+                            <input type="date" asp-for="PagosCaja.FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control"  />
                             <span asp-validation-for="PagosCaja.FechaEmision" class="text-danger"></span>
                         </div>
                     <div class="form-group">

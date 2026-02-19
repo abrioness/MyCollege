@@ -106,12 +106,9 @@
                         </div>
 
                         <div class="form-group">
-                            @{
-
-                                var fechaMatricula = DateTime.Now.ToString("dd/MM/yyyy");
-                            }
+                      
                             <label asp-for="Pago.FechaEmision" class="control-label">Fecha que se presentó a matricularse</label>
-                            <input type="text" asp-for="Pago.FechaEmision" value="@fechaMatricula"  class="form-control"  />
+                            <input type="date" asp-for="Pago.FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy"  class="form-control"  />
                             <span asp-validation-for="Pago.FechaEmision" class="text-danger"></span>
                         </div>
                       
