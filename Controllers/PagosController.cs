@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Security.Claims;
@@ -161,6 +161,57 @@ namespace WebColegio.Controllers
             if (listpagos == null)
             {
                 return NotFound();
+            }
+
+            // Si es pago de matrícula (IdTipoMovimiento 2), sumar matrícula + mensualidad del mismo recibo para mostrar el total
+            const int idTipoMatricula = 2;
+            const int idTipoMensualidad = 1;
+            if (listpagos.NumeroRecibo.HasValue && !string.IsNullOrEmpty(listpagos.Serie))
+            {
+                var todosPagos = await _Iservices.GetPagosAsync();
+                if (listpagos.IdTipoMovimiento == idTipoMatricula)
+                {
+                    var pagosMismoRecibo = todosPagos
+                        .Where(p => p.NumeroRecibo == listpagos.NumeroRecibo
+                            && p.Serie == listpagos.Serie
+                            && p.IdAlumno == listpagos.IdAlumno
+                            && p.Activo)
+                        .Where(p => p.IdTipoMovimiento == idTipoMatricula || p.IdTipoMovimiento == idTipoMensualidad)
+                        .ToList();
+                    decimal totalRecibo = pagosMismoRecibo.Sum(p => p.Monto);
+                    if (totalRecibo > 0)
+                    {
+                        viewModel.MontoTotalRecibo = totalRecibo;
+                        viewModel.CantidadEnLetrasTotalRecibo = NumeroALetras(totalRecibo);
+                    }
+                }
+                else if (listpagos.IdTipoMovimiento == idTipoMensualidad)
+                {
+                    // Mensualidad: sumar todas las mensualidades del mismo recibo (varios meses en un solo recibo)
+                    var pagosMismoRecibo = todosPagos
+                        .Where(p => p.NumeroRecibo == listpagos.NumeroRecibo
+                            && p.Serie == listpagos.Serie
+                            && p.IdAlumno == listpagos.IdAlumno
+                            && p.IdPeriodo == listpagos.IdPeriodo
+                            && p.IdTipoMovimiento == idTipoMensualidad
+                            && p.Activo)
+                        .ToList();
+                    decimal totalRecibo = pagosMismoRecibo.Sum(p => p.Monto);
+                    if (totalRecibo > 0)
+                    {
+                        viewModel.MontoTotalRecibo = totalRecibo;
+                        viewModel.CantidadEnLetrasTotalRecibo = NumeroALetras(totalRecibo);
+                        var mesesCatalog = await _Iservices.GetMesesAsync();
+                        var idsMeses = pagosMismoRecibo.Where(p => p.IdMes.HasValue).Select(p => p.IdMes!.Value).OrderBy(m => m).Distinct().ToList();
+                        if (idsMeses.Any())
+                        {
+                            var nombresMeses = idsMeses.Select(id => mesesCatalog.FirstOrDefault(m => m.IdMes == id)?.Mes ?? id.ToString()).ToList();
+                            viewModel.DetalleMesesRecibo = string.Join(", ", nombresMeses);
+                        }
+                        else
+                            viewModel.DetalleMesesRecibo = pagosMismoRecibo.Count > 1 ? $"{pagosMismoRecibo.Count} mensualidades" : null;
+                    }
+                }
             }
 
             // Pasar el parámetro de impresión a la vista
@@ -423,15 +474,18 @@ namespace WebColegio.Controllers
                         //total = ids * mensualidad;
                         //if((ids* mensualidad)=pagos.Pago.Monto)
 
-                        //crear meses pagados previos
+                        //crear meses pagados previos (mensualidad tipo 1)
                         var mesesPagadosBD = listpagos
                         .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
                                     p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento &&
-                                    p.IdPeriodo == pagos.Pago.IdPeriodo)
-                        .Select(p => p.IdMes)
+                                    p.IdPeriodo == pagos.Pago.IdPeriodo &&
+                                    p.IdMes.HasValue)
+                        .Select(p => p.IdMes!.Value)
                         .ToHashSet();
+                        // Primer mes del alumno en este período: si se matricularon en marzo, no se exige pagar enero/febrero
+                        int primerMesAlumno = mesesPagadosBD.Any() ? mesesPagadosBD.Min() : 1;
                         //crear meses pagados virtualmente
-                        var mesesPagadosAcumulados = new HashSet<int?>(mesesPagadosBD);
+                        var mesesPagadosAcumulados = new HashSet<int?>(mesesPagadosBD.Select(x => (int?)x));
 
                         var idsOrdenados = ids.OrderBy(m => m).ToList();
                         if (duplicado)
@@ -472,18 +526,15 @@ namespace WebColegio.Controllers
                             .Distinct()
                             .Where(x => x >= 1 && x <= 12)
                             .ToList();
-                            // 2. Verificar si hay meses anteriores sin pagar
-                            var mesesPendientes = Enumerable.Range(1, idMes - 1)
-                            .Except(mesesPagadosAcumulados.Cast<int>())
-                            .Distinct()
-                            .ToList();
-                            //var mesesPendientes = Enumerable.Range(1, idMes - 1)
-                            //    .Except(mesesPagadosAcumulados)
-                            //    .ToList();
+                            // 2. Verificar meses pendientes solo desde el primer mes del alumno en el período
+                            // (ej. si se matricularon en marzo, no se exige enero/febrero)
+                            var mesesPendientes = idMes > primerMesAlumno
+                                ? Enumerable.Range(primerMesAlumno, idMes - primerMesAlumno)
+                                    .Except(mesesPagadosAcumulados.Where(x => x.HasValue).Select(x => x!.Value))
+                                    .Distinct()
+                                    .ToList()
+                                : new List<int>();
 
-                            //int anioActual =(int) pagos.Pago.Anyo; //pagos.Pago.IdPeriodo;
-
-                            
                             if (mesesPendientes.Any())
                             {
                                 var primerMesFaltante = mesesPendientes.Min();
@@ -574,6 +625,14 @@ namespace WebColegio.Controllers
                                 return RedirectToAction("Create", "Pagos");
                             }
                             
+                            // Mes que paga con la matrícula: el mes en que se presenta (ej. marzo → paga matrícula + marzo)
+                            // Preescolar puede matricular hasta junio; traslado hasta agosto.
+                            int primerMesMatricula = 1;
+                            if (pagos.Pago.FechaEmision.HasValue)
+                                primerMesMatricula = Math.Clamp(pagos.Pago.FechaEmision.Value.Month, 1, 12);
+                            else
+                                primerMesMatricula = Math.Clamp(DateTime.Now.Month, 1, 12);
+                            
                             decimal restarMensualidad = await ObtenerMensualidadDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula);
                             decimal obtenerMat = await ObtenerMatriculaDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, periodoMatricula);
                             
@@ -585,7 +644,7 @@ namespace WebColegio.Controllers
                                 return RedirectToAction("Create", "Pagos");
                             }
 
-                            var totalMatricual = Convert.ToDecimal(pagos.Pago.Monto);
+                            var totalMatricula = Convert.ToDecimal(pagos.Pago.Monto);
                             
                             // Calcular cuánto se ha pagado ya de matrícula (tipo 2 o 4)
                             var pagosMatriculaPrevios = _Iservices.GetPagosAsync().Result
@@ -599,9 +658,9 @@ namespace WebColegio.Controllers
                             decimal faltaPorPagar = obtenerMat - totalPagadoMatricula;
                             
                             // Validar que el monto ingresado no exceda lo que falta por pagar
-                            if (totalMatricual > faltaPorPagar)
+                            if (totalMatricula > faltaPorPagar)
                             {
-                                TempData["Mensaje"] = $"El monto ingresado (C$ {totalMatricual:N2}) excede lo que falta por pagar (C$ {faltaPorPagar:N2}). Total de matrícula: C$ {obtenerMat:N2}, ya pagado: C$ {totalPagadoMatricula:N2}.";
+                                TempData["Mensaje"] = $"El monto ingresado (C$ {totalMatricula:N2}) excede lo que falta por pagar (C$ {faltaPorPagar:N2}). Total de matrícula: C$ {obtenerMat:N2}, ya pagado: C$ {totalPagadoMatricula:N2}.";
                                 TempData["Tipo"] = "warning";
                                 return RedirectToAction("Create", "Pagos");
                             }
@@ -616,14 +675,14 @@ namespace WebColegio.Controllers
                             
                             // Comparar decimales con tolerancia (0.01) para evitar problemas de precisión
                             // Verificar si el monto ingresado completa el pago de matrícula
-                            decimal diferencia = Math.Abs(totalMatricual - faltaPorPagar);
+                            decimal diferencia = Math.Abs(totalMatricula - faltaPorPagar);
                             bool esMontoCompleto = diferencia < 0.01m;
                             
                             // Si el monto completa el pago pendiente de matrícula, procesar como matrícula completa
                             if (esMontoCompleto)
                             {
                                 // El monto ingresado completa lo que falta, restar la mensualidad
-                                decimal valormatricula = totalMatricual - restarMensualidad;
+                                decimal valormatricula = totalMatricula - restarMensualidad;
                                 pagos.Pago.Monto = valormatricula;
                                 pagos.Pago.IdPeriodo = periodoMatricula;
                                 response = await _Iservices.PostPagosAsync(pagos.Pago);
@@ -635,12 +694,20 @@ namespace WebColegio.Controllers
                                     return RedirectToAction("Create");
                                 }
                                 
+                                // Obtener el ID del pago de matrícula recién guardado para mostrar su recibo (no el del primer mes)
+                                var pagosDespuesMatricula = await _Iservices.GetPagosAsync();
+                                int idPagoMatricula = pagosDespuesMatricula
+                                    .Where(p => p.IdTipoMovimiento == 2 && p.NumeroRecibo == pagos.Pago.NumeroRecibo && p.IdAlumno == pagos.Pago.IdAlumno)
+                                    .OrderByDescending(p => p.IdPago)
+                                    .Select(p => p.IdPago)
+                                    .FirstOrDefault();
+                                
                                 var pagoprimermes = new TblPago
                                 {
                                     IdAlumno = pagos.Pago.IdAlumno,
                                     NumeroRecibo = pagos.Pago.NumeroRecibo,
                                     Anyo = pagos.Pago.Anyo,
-                                    IdMes = 1,
+                                    IdMes = primerMesMatricula,
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
                                     IdTipoMovimiento = 1,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
@@ -660,12 +727,11 @@ namespace WebColegio.Controllers
                                 response = await _Iservices.PostPagosAsync(pagoprimermes);
                                 if (response)
                                 {
-                                    // Obtener el ID del último pago guardado (el de matrícula)
-                                    var pagosActualizados = await _Iservices.GetPagosAsync();
-                                    var idPag = pagosActualizados.Max(a => a.IdPago);
+                                    // Redirigir al recibo del pago de matrícula (tipoMovimiento Matrícula), no al del primer mes
+                                    int idParaRecibo = idPagoMatricula > 0 ? idPagoMatricula : (await _Iservices.GetPagosAsync()).Max(a => a.IdPago);
                                     TempData["Mensaje"] = "Pago registrado correctamente.";
                                     TempData["Tipo"] = "success";
-                                    return RedirectToAction("Details", "Pagos", new { id = idPag, imprimir = true });
+                                    return RedirectToAction("Details", "Pagos", new { id = idParaRecibo, imprimir = true });
                                 }
                                 else
                                 {
@@ -678,8 +744,8 @@ namespace WebColegio.Controllers
                             {
                                 // Si el monto es diferente (pago parcial), procesar como abono de matrícula
                                 // Restar siempre la mensualidad del monto, similar al if anterior
-                                decimal valormatricula = totalMatricual - restarMensualidad;
-                                /*pagos.Pago.Monto = valormatricula*/;
+                                decimal valormatricula = totalMatricula - restarMensualidad;
+                                pagos.Pago.Monto = valormatricula;
                                 pagos.Pago.IdPeriodo = periodoMatricula;
                                 response = await _Iservices.PostPagosAsync(pagos.Pago);
                                 
@@ -690,13 +756,21 @@ namespace WebColegio.Controllers
                                     return RedirectToAction("Create");
                                 }
                                 
-                                // Crear el pago del primer mes con el valor de la mensualidad
+                                // Obtener el ID del pago de matrícula recién guardado para mostrar su recibo (no el del primer mes)
+                                var pagosDespuesAbonoMat = await _Iservices.GetPagosAsync();
+                                int idPagoMatriculaAbono = pagosDespuesAbonoMat
+                                    .Where(p => p.IdTipoMovimiento == 2 && p.NumeroRecibo == pagos.Pago.NumeroRecibo && p.IdAlumno == pagos.Pago.IdAlumno)
+                                    .OrderByDescending(p => p.IdPago)
+                                    .Select(p => p.IdPago)
+                                    .FirstOrDefault();
+                                
+                                // Crear el pago del primer mes con el valor de la mensualidad (mes en que se matricula)
                                 var pagoprimermes = new TblPago
                                 {
                                     IdAlumno = pagos.Pago.IdAlumno,
                                     NumeroRecibo = pagos.Pago.NumeroRecibo,
                                     Anyo = pagos.Pago.Anyo,
-                                    IdMes = 1,
+                                    IdMes = primerMesMatricula,
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
                                     IdTipoMovimiento = 1,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
@@ -716,12 +790,11 @@ namespace WebColegio.Controllers
                                 response = await _Iservices.PostPagosAsync(pagoprimermes);
                                 if (response)
                                 {
-                                    // Obtener el ID del último pago guardado (el de matrícula)
-                                    var pagosActualizados = await _Iservices.GetPagosAsync();
-                                    var idPag = pagosActualizados.Max(a => a.IdPago);
+                                    // Redirigir al recibo del pago de matrícula (tipoMovimiento Matrícula), no al del primer mes
+                                    int idParaRecibo = idPagoMatriculaAbono > 0 ? idPagoMatriculaAbono : (await _Iservices.GetPagosAsync()).Max(a => a.IdPago);
                                     TempData["Mensaje"] = "Abono de matrícula registrado correctamente.";
                                     TempData["Tipo"] = "success";
-                                    return RedirectToAction("Details", "Pagos", new { id = idPag, imprimir = true });
+                                    return RedirectToAction("Details", "Pagos", new { id = idParaRecibo, imprimir = true });
                                 }
                                 else
                                 {
@@ -796,25 +869,40 @@ namespace WebColegio.Controllers
         //}
         [Authorize]
         [HttpGet]
-        public IActionResult ObtenerMora(int idAlumno,int idTipoMovimiento,int periodo)
+        public IActionResult ObtenerMora(int idAlumno, int idTipoMovimiento, int periodo)
         {
+            const int idTipoMensualidad = 1;
+            if (idTipoMovimiento != idTipoMensualidad)
+            {
+                return Json(new { mora = 0, mes = DateTime.Now.Month, aplicaMora = false });
+            }
+
             int mes = DateTime.Now.Month;
-            var listpagos =  _Iservices.GetPagosAsync().Result;
-            var mesesPagadosBD = listpagos
-                       .Where(p => p.IdAlumno == idAlumno &&
-                                   p.IdTipoMovimiento == idTipoMovimiento &&
-                                   p.IdPeriodo == periodo)
-                       .Select(p => p.IdMes)
-                       .ToHashSet();
-            //crear meses pagados virtualmente
-            var mesesPagadosAcumulados = new HashSet<int?>(mesesPagadosBD);
+            var listpagos = _Iservices.GetPagosAsync().Result;
+            var pagosMensualidad = listpagos
+                .Where(p => p.IdAlumno == idAlumno &&
+                            p.IdTipoMovimiento == idTipoMensualidad &&
+                            p.IdPeriodo == periodo &&
+                            p.IdMes.HasValue)
+                .ToList();
+            var mesesPagadosBD = pagosMensualidad.Select(p => p.IdMes!.Value).ToHashSet();
+
+            // Primer mes del alumno en el período: si se matricularon en marzo, no aplica mora
+            int primerMesAlumno = mesesPagadosBD.Any() ? mesesPagadosBD.Min() : 1;
+
+            // Mora solo aplica cuando la matrícula inicia en enero (primer mes del período)
+            if (primerMesAlumno > 1)
+            {
+                return Json(new { mora = 0, mes, aplicaMora = false });
+            }
+
             var mesesPendientes = Enumerable.Range(1, mes - 1)
-                            .Except(mesesPagadosAcumulados.Cast<int>())
-                            .Distinct()
-                            .ToList();
+                .Except(mesesPagadosBD)
+                .Distinct()
+                .ToList();
             int moraTotal = 10 * mesesPendientes.Count();
 
-            return Json(new { mora = moraTotal, mes });
+            return Json(new { mora = moraTotal, mes, aplicaMora = true });
         }
         //Obtener nombre del mes.
         public async Task<string> Mes(int idmes)

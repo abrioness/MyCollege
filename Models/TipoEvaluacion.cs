@@ -5,6 +5,7 @@
         public int IdTipoEvaluacion { get; set; }
 
         public string NombreTipEvaluacion { get; set; } = null!;
+        public string Descripcion { get; set; } = null!;
 
         public decimal Porcentaje { get; set; }
 

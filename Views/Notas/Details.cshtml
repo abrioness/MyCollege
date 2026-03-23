@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.NotasViewModel
+@model WebColegio.Models.ViewModel.NotasViewModel
 
 <script src="~/js/site.js"></script>
 
@@ -103,7 +103,7 @@
                             @nota.Examen1
                         </td>
         <td>
-                        @nota.PrimerCorte
+                        @(string.IsNullOrEmpty(nota.PrimerCorteCualitativo) ? nota.PrimerCorte?.ToString("N1") : nota.PrimerCorteCualitativo + (nota.PrimerCorte.HasValue ? " (" + nota.PrimerCorte.Value.ToString("N1") + ")" : ""))
         </td>
                         <td>
                             @nota.Acumulado2
@@ -112,7 +112,7 @@
                             @nota.Examen2
                         </td>
         <td>
-                        @nota.SegundoCorte
+                        @(string.IsNullOrEmpty(nota.SegundoCorteCualitativo) ? nota.SegundoCorte?.ToString("N1") : nota.SegundoCorteCualitativo + (nota.SegundoCorte.HasValue ? " (" + nota.SegundoCorte.Value.ToString("N1") + ")" : ""))
         </td>
                         <td>
                             @nota.Acumulado3
@@ -121,7 +121,7 @@
                             @nota.Examen3
                         </td>
         <td>
-                        @nota.TercerCorte
+                        @(string.IsNullOrEmpty(nota.TercerCorteCualitativo) ? nota.TercerCorte?.ToString("N1") : nota.TercerCorteCualitativo + (nota.TercerCorte.HasValue ? " (" + nota.TercerCorte.Value.ToString("N1") + ")" : ""))
         </td>
                         <td>
                             @nota.Acumulado4
@@ -130,10 +130,10 @@
                             @nota.Examen4
                         </td>
         <td>
-                        @nota.CuartoCorte
+                        @(string.IsNullOrEmpty(nota.CuartoCorteCualitativo) ? nota.CuartoCorte?.ToString("N1") : nota.CuartoCorteCualitativo + (nota.CuartoCorte.HasValue ? " (" + nota.CuartoCorte.Value.ToString("N1") + ")" : ""))
         </td>
         <td>
-                        @nota.NotaFinal
+                        @(string.IsNullOrEmpty(nota.NotaFinalCualitativa) ? nota.NotaFinal?.ToString("N2") : nota.NotaFinalCualitativa + (nota.NotaFinal.HasValue ? " (" + nota.NotaFinal.Value.ToString("N2") + ")" : ""))
         </td>
     </tr>
     }            

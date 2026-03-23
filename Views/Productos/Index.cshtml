@@ -19,12 +19,12 @@
 							<div class="col-4">
 								<label class="control-label">Desde:</label>
 								<input type="date" name="fechainicio" id="FechaInicio" class="form-control"
-									   value="@@(Request.QueryString[" fechainicio"])" />
+								value="@@(Request.QueryString[" fechainicio"])" />
 							</div>
 							<div class="col-4">
 								<label class="control-label">Hasta:</label>
 								<input type="date" name="fechafin" id="FechaFin" class="form-control"
-									   value="@@(Request.QueryString[" fechafin"])" />
+								value="@@(Request.QueryString[" fechafin"])" />
 							</div>
 							<div class="col-4">
 								<br />
@@ -33,14 +33,21 @@
 						</div>
 					}
 				</div>
-			<div class="col-12 text-end">
-				<a asp-action="Movimientos" class="btn btn-outline-secondary me-1">
-					<i class="bi bi-arrow-left-right"></i> Entradas y salidas
-				</a>
-				<a asp-action="Create" class="btn btn-primary">
+				<div class="col-12 text-end">
+					<a asp-action="Movimientos" class="btn btn-outline-secondary me-1">
+						<i class="bi bi-arrow-left-right"></i> Entradas y salidas
+					</a>
+					@{
+						var userRol = User.IsInRole("Cajero") ? true : false;
+						@if(!userRol)
+					 {
+				<a asp-action="Create" class="btn btn-primary" >
 					<i class="bi bi-plus-circle"></i> Agregar Inventario
 				</a>
+					 }
+				}
 			</div>
+			<br />
 			<div class="table-responsive" style="font-size: 12px;">
 					<table id="tablaProducto" class="table table-bordered table-sm">
 				@* class="display responsive nowrap" style="width:100%"> *@
@@ -139,17 +146,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
-	$(document).ready(function () {
-			$('#tablaProducto').DataTable({
-			responsive: false,
-			dom: 'Bfrtip', // Botones + filtro + tabla
-			buttons: [
-				{
-					extend: 'excelHtml5',
-					text: 'Exportar a Excel',
-					className: 'btn btn-success'
-				}
-			],
+		$(document).ready(function () {
+		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
+		var botones = esCajero ? [] : [
+			{
+			extend: 'excelHtml5',
+			text: 'Exportar a Excel',
+			className: 'btn btn-success'
+			}
+		];
+		$('#tablaProducto').DataTable({
+		responsive: false,
+		dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
+		buttons: botones,
 			language: {
 				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 			}

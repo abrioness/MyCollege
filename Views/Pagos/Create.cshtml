@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.PagosViewModel
+@model WebColegio.Models.ViewModel.PagosViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -386,7 +386,7 @@
                 }
             }
 
-            // Función para cargar mora
+            // Función para cargar mora (solo aplica cuando la matrícula del alumno inicia en enero)
             function cargarMora() {
                 const idAlumno = $idAlumno.val();
                 const idTipoMovimiento = $tipoMovimiento.val();
@@ -398,16 +398,21 @@
                         idTipoMovimiento: idTipoMovimiento,
                         periodo: periodo
                     }, function(data) {
-                        if (data && data.mora) {
+                        if (data && data.aplicaMora === true && data.mora) {
                             $totalMora.val(data.mora);
+                            $moraDiv.show();
                         } else {
                             $totalMora.val("0");
+                            $moraDiv.hide(); // No aplicar mora si se matriculó en marzo u otro mes (no enero)
                         }
                         calcularTotalPagar(); // Recalcular total después de cargar mora
                     }).fail(function() {
                         $totalMora.val("0");
+                        $moraDiv.hide();
                         calcularTotalPagar(); // Recalcular aunque falle
                     });
+                } else {
+                    $moraDiv.hide();
                 }
             }
 
@@ -485,8 +490,8 @@
 
                 // Configurar listeners y visibilidad según tipo
                 if (tipoMovimientoId === TIPO_MENSUALIDAD) {
-                    $moraDiv.show();
                     configurarListenersPorTipo(TIPO_MENSUALIDAD);
+                    cargarMora(); // Muestra mora solo si aplica (matrícula desde enero)
                 } else if (tiposMatricula.includes(tipoMovimientoId)) {
                     $moraDiv.hide();
                     configurarListenersPorTipo(tipoMovimientoId);

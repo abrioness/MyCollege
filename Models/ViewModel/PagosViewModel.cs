@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WebColegio.Models.ViewModel
 {
@@ -21,6 +21,12 @@ namespace WebColegio.Models.ViewModel
 
       
         public string cantidadEnLetras { get; set; } = null!;
+        /// <summary>Cuando es pago de matrícula, total del recibo (matrícula + mensualidad primer mes mismo recibo).</summary>
+        public decimal? MontoTotalRecibo { get; set; }
+        /// <summary>Monto total del recibo en letras (para matrícula o mensualidades).</summary>
+        public string? CantidadEnLetrasTotalRecibo { get; set; }
+        /// <summary>Detalle de meses en el recibo (ej. "Enero, Febrero, Marzo" o "3 mensualidades").</summary>
+        public string? DetalleMesesRecibo { get; set; }
         public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
         public List<TblPago> listPagos {get;set;} = new();
        

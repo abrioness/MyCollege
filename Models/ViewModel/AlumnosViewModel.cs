@@ -6,7 +6,8 @@ namespace WebColegio.Models.ViewModel
     {
         public TblAlumno alumnos { get; set; } = new();
         
-        public string codigoestudiante { get; set; }
+        public string codigoestudiante { get; set; } 
+        public List<Grados> ListGrados { get; set; } = new();
         public List<SelectListItem> tipoEvaluacionesSelectListItem { get; set; } = new();
         public List<SelectListItem> materiasSelectListItem { get; set; } = new();
         public List<SelectListItem> notasSelectListItem { get; set; } = new();

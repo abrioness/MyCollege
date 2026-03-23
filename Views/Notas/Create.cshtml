@@ -64,77 +64,71 @@
                             </div>
                             </div>
                 <div class="col-lg-4">
+                        <p class="text-muted small mb-2"><strong>Escala cualitativa:</strong> AA = Aprendizaje alcanzado (100-90), AS = Aprendizaje satisfactorio (89-76), AF = Aprendizaje fundamental (75-60), AI = Aprendizaje inicial (59-0). En 3.° a 11.° aplica AI en 59-0.</p>
                         <div class="form-group">
-                            <label asp-for="notas.Acumulado1" class="control-label">Acumulado Primer Corte</label>
-                            <input type="number" asp-for="notas.Acumulado1" id="acumulado1" class="form-control"  />
-                            <span asp-validation-for="notas.Acumulado1" class="text-danger"></span>
+                            <label asp-for="notas.PrimerCorteCualitativo" class="control-label">Primer Corte (cualitativo)</label>
+                            <select asp-for="notas.PrimerCorteCualitativo" asp-items="Model.NotasCualitativasSelectListItem" class="form-select corte-cualitativo" id="primerCorteCual">
+                                <option value="">Seleccione...</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.Examen1" class="control-label">Examen Primer Corte</label>
-                            <input type="number" asp-for="notas.Examen1" id="examen1" class="form-control" />
-                            <span asp-validation-for="notas.Examen1" class="text-danger"></span>
-                        </div>
-            <div class="form-group">
-                        <label asp-for="notas.PrimerCorte" class="control-label">Primer Corte</label>
-                            <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control corte-input" readonly />
-                                <span asp-validation-for="notas.PrimerCorte" class="text-danger"></span>
-            </div>
-                        <div class="form-group">
-                            <label asp-for="notas.Acumulado2" class="control-label">Acumulado Segundo Corte</label>
-                            <input asp-for="notas.Acumulado2" id="acumulado2" class="form-control" />
-                            <span asp-validation-for="notas.Acumulado2" class="text-danger"></span>
+                            <label asp-for="notas.SegundoCorteCualitativo" class="control-label">Segundo Corte (cualitativo)</label>
+                            <select asp-for="notas.SegundoCorteCualitativo" asp-items="Model.NotasCualitativasSelectListItem" class="form-select corte-cualitativo" id="segundoCorteCual">
+                                <option value="">Seleccione...</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.Examen2" class="control-label">Examen Segundo Corte</label>
-                            <input asp-for="notas.Examen2" id="examen2" class="form-control" />
-                            <span asp-validation-for="notas.Examen2" class="text-danger"></span>
+                            <label asp-for="notas.TercerCorteCualitativo" class="control-label">Tercer Corte (cualitativo)</label>
+                            <select asp-for="notas.TercerCorteCualitativo" asp-items="Model.NotasCualitativasSelectListItem" class="form-select corte-cualitativo" id="tercerCorteCual">
+                                <option value="">Seleccione...</option>
+                            </select>
                         </div>
-                        
-             <div class="form-group">
-                                <label asp-for="notas.SegundoCorte" class="control-label">Segundo Corte</label>
-                            <input asp-for="notas.SegundoCorte" id="segundoCorte" class="form-control corte-input" readonly />
-                                <span asp-validation-for="notas.SegundoCorte" class="text-danger"></span>
-            </div>
-                        
-                    </div>
+                        <div class="form-group">
+                            <label asp-for="notas.CuartoCorteCualitativo" class="control-label">Cuarto Corte (cualitativo)</label>
+                            <select asp-for="notas.CuartoCorteCualitativo" asp-items="Model.NotasCualitativasSelectListItem" class="form-select corte-cualitativo" id="cuartoCorteCual">
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="notas.NotaFinalCualitativa" class="control-label">Nota Final (cualitativa)</label>
+                            <select asp-for="notas.NotaFinalCualitativa" asp-items="Model.NotasCualitativasSelectListItem" class="form-select" id="notaFinalCual">
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span class="small text-muted">Se puede completar manualmente o se sugiere según los cortes.</span>
+                        </div>
+						</div>
                         <div class="col-lg-4">
+                        <p class="text-muted small mb-2"><strong>Opcional – Modo mixto:</strong> si ingresa valores numéricos (acumulado + examen), se calcula el corte y la equivalencia cualitativa (90-100 = AA, …).</p>
+                        <input type="hidden" asp-for="notas.Acumulado1" id="acumulado1" />
+                        <input type="hidden" asp-for="notas.Examen1" id="examen1" />
+                        <input type="hidden" asp-for="notas.PrimerCorte" id="primerCorte" />
+                        <input type="hidden" asp-for="notas.Acumulado2" id="acumulado2" />
+                        <input type="hidden" asp-for="notas.Examen2" id="examen2" />
+                        <input type="hidden" asp-for="notas.SegundoCorte" id="segundoCorte" />
+                        <input type="hidden" asp-for="notas.Acumulado3" id="acumulado3" />
+                        <input type="hidden" asp-for="notas.Examen3" id="examen3" />
+                        <input type="hidden" asp-for="notas.TercerCorte" id="tercerCorte" />
+                        <input type="hidden" asp-for="notas.Acumulado4" id="acumulado4" />
+                        <input type="hidden" asp-for="notas.Examen4" id="examen4" />
+                        <input type="hidden" asp-for="notas.CuartoCorte" id="cuartoCorte" />
+                        <input type="hidden" asp-for="notas.NotaFinal" id="notaFinal" />
                         <div class="form-group">
-                            <label asp-for="notas.Acumulado3" class="control-label">Acumulado Tercer Corte</label>
-                            <input asp-for="notas.Acumulado3" id="acumulado3" class="form-control" />
-                            <span asp-validation-for="notas.Acumulado3" class="text-danger"></span>
+                            <label class="control-label">Acumulado + Examen 1</label>
+                            <input type="number" min="0" max="100" step="0.5" id="acumulado1_opt" class="form-control" placeholder="Ej. 35" /> + <input type="number" min="0" max="100" step="0.5" id="examen1_opt" class="form-control d-inline-block w-25" placeholder="35" /> &rarr; <span id="primerCorteResumen"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.Examen3" class="control-label">Examen Tercer Corte</label>
-                            <input asp-for="notas.Examen3" id="examen3" class="form-control" />
-                            <span asp-validation-for="notas.Examen3" class="text-danger"></span>
+                            <label class="control-label">Acumulado + Examen 2</label>
+                            <input type="number" min="0" max="100" id="acumulado2_opt" class="form-control" placeholder="Opcional" /> + <input type="number" min="0" max="100" id="examen2_opt" class="form-control d-inline-block w-25" /> &rarr; <span id="segundoCorteResumen"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.TercerCorte" class="control-label">Tercer Corte</label>
-                            <input asp-for="notas.TercerCorte" id="tercerCorte" class="form-control corte-input" readonly />
-                            <span asp-validation-for="notas.TercerCorte" class="text-danger"></span>
+                            <label class="control-label">Acumulado + Examen 3</label>
+                            <input type="number" min="0" max="100" id="acumulado3_opt" class="form-control" /> + <input type="number" min="0" max="100" id="examen3_opt" class="form-control d-inline-block w-25" /> &rarr; <span id="tercerCorteResumen"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.Acumulado4" class="control-label">Acumulado Cuarto Corte</label>
-                            <input asp-for="notas.Acumulado4" id="acumulado4" class="form-control" />
-                            <span asp-validation-for="notas.Acumulado4" class="text-danger"></span>
+                            <label class="control-label">Acumulado + Examen 4</label>
+                            <input type="number" min="0" max="100" id="acumulado4_opt" class="form-control" /> + <input type="number" min="0" max="100" id="examen4_opt" class="form-control d-inline-block w-25" /> &rarr; <span id="cuartoCorteResumen"></span>
                         </div>
-                        <div class="form-group">
-                            <label asp-for="notas.Examen4" class="control-label">Examen Cuarto Corte</label>
-                            <input asp-for="notas.Examen4" id="examen4" class="form-control" />
-                            <span asp-validation-for="notas.Examen4" class="text-danger"></span>
-                        </div>
-                    <div class="form-group">
-                                <label asp-for="notas.CuartoCorte" class="control-label">Cuarto Corte</label>
-                            <input asp-for="notas.CuartoCorte" id="cuartoCorte" class="form-control corte-input" readonly />
-                                <span asp-validation-for="notas.CuartoCorte" class="text-danger"></span>
-                    </div>
-
-
-                        <div class="form-group">
-                            <label asp-for="notas.NotaFinal" class="control-label">Nota Final</label>
-                            <input asp-for="notas.NotaFinal" id="notaFinal" class="form-control" readonly />
-                            @* <span asp-validation-for="CuartoCorte" class="text-danger"></span> *@
-                        </div>
+                        <p class="small">Al enviar, se guardan los cualitativos; si además ingresó números, el servidor puede completar la equivalencia (p. ej. 90-100 → AA).</p>
 						</div>
                     
 					</div>
@@ -206,69 +200,47 @@
                 }
             });
 
-            // Eventos de cálculo de cortes
+            // Escala: AA 90-100, AS 76-89, AF 60-75, AI 0-59 (3.°-11.°: AI = Aprendizaje inicial 59-0)
+            function numeroACualitativo(n) {
+                if (n == null || isNaN(n)) return "";
+                if (n >= 90) return "AA";
+                if (n >= 76) return "AS";
+                if (n >= 60) return "AF";
+                return "AI";
+            }
 
+            function actualizarCortesDesdeNumericos() {
+                var a1 = parseFloat($("#acumulado1_opt").val()) || 0, e1 = parseFloat($("#examen1_opt").val()) || 0;
+                var a2 = parseFloat($("#acumulado2_opt").val()) || 0, e2 = parseFloat($("#examen2_opt").val()) || 0;
+                var a3 = parseFloat($("#acumulado3_opt").val()) || 0, e3 = parseFloat($("#examen3_opt").val()) || 0;
+                var a4 = parseFloat($("#acumulado4_opt").val()) || 0, e4 = parseFloat($("#examen4_opt").val()) || 0;
+                var pc1 = a1 + e1, pc2 = a2 + e2, pc3 = a3 + e3, pc4 = a4 + e4;
+                $("#acumulado1").val(a1); $("#examen1").val(e1); $("#primerCorte").val(pc1.toFixed(1));
+                $("#acumulado2").val(a2); $("#examen2").val(e2); $("#segundoCorte").val(pc2.toFixed(1));
+                $("#acumulado3").val(a3); $("#examen3").val(e3); $("#tercerCorte").val(pc3.toFixed(1));
+                $("#acumulado4").val(a4); $("#examen4").val(e4); $("#cuartoCorte").val(pc4.toFixed(1));
+                var nf = (pc1 + pc2 + pc3 + pc4) / 4;
+                $("#notaFinal").val(nf.toFixed(2));
+                $("#primerCorteResumen").text(pc1 ? pc1.toFixed(1) + " (" + numeroACualitativo(pc1) + ")" : "");
+                $("#segundoCorteResumen").text(pc2 ? pc2.toFixed(1) + " (" + numeroACualitativo(pc2) + ")" : "");
+                $("#tercerCorteResumen").text(pc3 ? pc3.toFixed(1) + " (" + numeroACualitativo(pc3) + ")" : "");
+                $("#cuartoCorteResumen").text(pc4 ? pc4.toFixed(1) + " (" + numeroACualitativo(pc4) + ")" : "");
+                if (pc1 || pc2 || pc3 || pc4) $("#notaFinalCual").val(numeroACualitativo(nf));
+            }
 
-        // FUNCIONES DE CÁLCULO (definidas globalmente dentro del script)
-        function calcularCorte1() {
-            let acu1 = parseFloat($("#acumulado1").val()) || 0;
-            let exam1 = parseFloat($("#examen1").val()) || 0;
-            let pc1 = acu1 + exam1;
-            $("#primerCorte").val(pc1.toFixed(1));
-            calcularNotaFinal();
-        }
+            $(".corte-cualitativo").on("change", function () {
+                var c1 = $("#primerCorteCual").val(), c2 = $("#segundoCorteCual").val(), c3 = $("#tercerCorteCual").val(), c4 = $("#cuartoCorteCual").val();
+                if (c1 && c2 && c3 && c4 && !$("#notaFinalCual").val()) {
+                    var orden = [c1, c2, c3, c4].sort(), mayor = orden[0], count = 1, maxCount = 1, prev = orden[0];
+                    for (var i = 1; i < 4; i++) {
+                        if (orden[i] === prev) count++; else { count = 1; prev = orden[i]; }
+                        if (count > maxCount) { maxCount = count; mayor = orden[i]; }
+                    }
+                    $("#notaFinalCual").val(mayor);
+                }
+            });
 
-        function calcularCorte2() {
-            let acu2 = parseFloat($("#acumulado2").val()) || 0;
-            let exam2 = parseFloat($("#examen2").val()) || 0;
-            let pc2 = acu2 + exam2;
-            $("#segundoCorte").val(pc2.toFixed(1));
-            calcularNotaFinal();
-        }
-
-        function calcularCorte3() {
-            let acu3 = parseFloat($("#acumulado3").val()) || 0;
-            let exam3 = parseFloat($("#examen3").val()) || 0;
-            let pc3 = acu3 + exam3;
-            $("#tercerCorte").val(pc3.toFixed(1));
-            calcularNotaFinal();
-        }
-
-        function calcularCorte4() {
-            let acu4 = parseFloat($("#acumulado4").val()) || 0;
-            let exam4 = parseFloat($("#examen4").val()) || 0;
-            let pc4 = acu4 + exam4;
-            $("#cuartoCorte").val(pc4.toFixed(1));
-            calcularNotaFinal();
-        }
-
-        function calcularNotaFinal() {
-            let t1 = parseFloat($("#primerCorte").val()) || 0;
-            let t2 = parseFloat($("#segundoCorte").val()) || 0;
-            let t3 = parseFloat($("#tercerCorte").val()) || 0;
-            let t4 = parseFloat($("#cuartoCorte").val()) || 0;
-
-            let notaFinal = (t1 + t2 + t3 + t4) / 4;
-            $("#notaFinal").val(notaFinal.toFixed(2));
-        }
-
-        // INITIALIZATION - Separar autocomplete de los cálculos
-       
-            // 2. CONFIGURAR EVENTOS DE CÁLCULO
-            $("#acumulado1, #examen1").on("input", calcularCorte1);
-            $("#acumulado2, #examen2").on("input", calcularCorte2);
-            $("#acumulado3, #examen3").on("input", calcularCorte3);
-            $("#acumulado4, #examen4").on("input", calcularCorte4);
-
-            // Eventos para cambios directos en cortes
-            $("#primerCorte, #segundoCorte, #tercerCorte, #cuartoCorte").on("input", calcularNotaFinal);
-
-            // 3. CALCULAR VALORES INICIALES
-            calcularCorte1();
-            calcularCorte2();
-            calcularCorte3();
-            calcularCorte4();
-            calcularNotaFinal();
+            $("#acumulado1_opt, #examen1_opt, #acumulado2_opt, #examen2_opt, #acumulado3_opt, #examen3_opt, #acumulado4_opt, #examen4_opt").on("input", actualizarCortesDesdeNumericos);
         });
     </script>
 

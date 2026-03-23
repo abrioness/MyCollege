@@ -1,4 +1,4 @@
-﻿namespace WebColegio.Models
+namespace WebColegio.Models
 {
     public class TblNotas
     {
@@ -29,6 +29,13 @@
         public decimal? CuartoCorte { get; set; }
 
         public decimal? NotaFinal { get; set; }
+
+        /// <summary>Calificación cualitativa: AA (100-90), AS (89-76), AF (75-60), AI (59-0). En 3.°-11.° AI = Aprendizaje inicial (59-0).</summary>
+        public string? PrimerCorteCualitativo { get; set; }
+        public string? SegundoCorteCualitativo { get; set; }
+        public string? TercerCorteCualitativo { get; set; }
+        public string? CuartoCorteCualitativo { get; set; }
+        public string? NotaFinalCualitativa { get; set; }
 
         public string? Descripcion { get; set; }
 

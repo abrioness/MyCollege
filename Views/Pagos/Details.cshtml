@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.PagosViewModel
+@model WebColegio.Models.ViewModel.PagosViewModel
 
 @{
     Layout = null;
@@ -145,17 +145,50 @@
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
             <div class="v-row"><b>Fecha Emisión:</b> <span> @Model.Pago.FechaEmision</span></div>
             <div class="v-row"><b>Fecha Pago:</b> <span> @Model.Pago.FechaRegistro.ToString("dd/mm/yyyy")</span></div>
-            <div class="v-row"><b>Concepto:</b> <span>@tipoMovimiento?.Concepto, @Model.Pago.Descripcion</span></div>
+            <div class="v-row"><b>Concepto:</b>
+                <span>@(tipoMovimiento?.Concepto ?? "—")@(Model.Pago.IdTipoMovimiento == 1 && !string.IsNullOrEmpty(Model.DetalleMesesRecibo) ? " (" + Model.DetalleMesesRecibo + ")" : ""), @(Model.Pago?.Descripcion ?? "")</span>
+            </div>
             <div class="v-row"><b>Método Pago:</b> <span>@metodopago?.MetodoPago</span></div>
-            
-            <div class="v-row"><b>Monto:</b> <span>C$ @Model.Pago.Monto.ToString("N2")</span></div>
-            <div class="v-row"><b>En letras:</b><br />@Model.cantidadEnLetras (C$ @Model.Pago.Monto)</div>
+
+            <div class="v-row"><b>Monto:</b>
+                @if (Model.Pago.IdTipoMovimiento == 2 && Model.MontoTotalRecibo.HasValue && Model.MontoTotalRecibo > 0)
+                {
+                    <span>C$ @Model.MontoTotalRecibo.Value.ToString("N2")</span>
+                    <span class="v-row" style="font-size: 11px;">(Matrícula + 1ª mensualidad)</span>
+                }
+                else if (Model.Pago.IdTipoMovimiento == 1 && Model.MontoTotalRecibo.HasValue && Model.MontoTotalRecibo > 0)
+                {
+                    <span>C$ @Model.MontoTotalRecibo.Value.ToString("N2")</span>
+                    @if (!string.IsNullOrEmpty(Model.DetalleMesesRecibo))
+                    {
+                        <span class="v-row" style="font-size: 11px;">(@(Model.DetalleMesesRecibo))</span>
+                    }
+                }
+                else
+                {
+                    <span>C$ @Model.Pago.Monto.ToString("N2")</span>
+                }
+            </div>
+            <div class="v-row"><b>En letras:</b><br />
+                @if (Model.Pago.IdTipoMovimiento == 2 && !string.IsNullOrEmpty(Model.CantidadEnLetrasTotalRecibo))
+                {
+                    @(Model.CantidadEnLetrasTotalRecibo) @(string.Format("(C$ {0:N2})", Model.MontoTotalRecibo))
+                }
+                else if (Model.Pago.IdTipoMovimiento == 1 && !string.IsNullOrEmpty(Model.CantidadEnLetrasTotalRecibo))
+                {
+                    @(Model.CantidadEnLetrasTotalRecibo) @(string.Format("(C$ {0:N2})", Model.MontoTotalRecibo))
+                }
+                else
+                {
+                    @(Model.cantidadEnLetras) @(string.Format("(C$ {0:N2})", Model.Pago.Monto))
+                }
+            </div>
         </div>
 
         <div class="v-section center">
             Managua: @fecha.Day de
             @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(fecha.Month)
-            del 20@{@fecha.ToString("yy")}
+            del 20@(fecha.ToString("yy"))
         </div>
 
         <!-- Firma -->

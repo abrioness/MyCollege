@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -219,7 +219,9 @@ namespace WebColegio.Controllers
         {
             var viewmodel = new NotasViewModel
             {
-
+                NotasCualitativasSelectListItem = EscalaCualitativa.Opciones
+                    .Select(o => new SelectListItem { Value = o.Codigo, Text = $"{o.Codigo} - {o.Descripcion} ({o.Rango})" })
+                    .ToList(),
                 tipoEvaluacionesSelectListItem = (await _Iservices.GetTipEvaluacionAsync())
                                   .Select(r => new SelectListItem
                                   {
@@ -288,6 +290,18 @@ namespace WebColegio.Controllers
                     notas.UsuarioRegistro = idUsuario;
                     notas.FechaRegistro = DateTime.Now;
 
+                    // Si hay nota numérica pero no cualitativa, derivar cualitativa (90-100→AA, 76-89→AS, 60-75→AF, 0-59→AI)
+                    if (notas.NotaFinal.HasValue && string.IsNullOrEmpty(notas.NotaFinalCualitativa))
+                        notas.NotaFinalCualitativa = EscalaCualitativa.NumeroACualitativo(notas.NotaFinal);
+                    if (notas.PrimerCorte.HasValue && string.IsNullOrEmpty(notas.PrimerCorteCualitativo))
+                        notas.PrimerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.PrimerCorte);
+                    if (notas.SegundoCorte.HasValue && string.IsNullOrEmpty(notas.SegundoCorteCualitativo))
+                        notas.SegundoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.SegundoCorte);
+                    if (notas.TercerCorte.HasValue && string.IsNullOrEmpty(notas.TercerCorteCualitativo))
+                        notas.TercerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.TercerCorte);
+                    if (notas.CuartoCorte.HasValue && string.IsNullOrEmpty(notas.CuartoCorteCualitativo))
+                        notas.CuartoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.CuartoCorte);
+
                     response = await _Iservices.PostNotasAsync(notas);
                     if (response)
                     {
@@ -319,7 +333,9 @@ namespace WebColegio.Controllers
             var viewmodel = new NotasViewModel
             {
                 notas = notas,
-               
+                NotasCualitativasSelectListItem = EscalaCualitativa.Opciones
+                    .Select(o => new SelectListItem { Value = o.Codigo, Text = $"{o.Codigo} - {o.Descripcion} ({o.Rango})" })
+                    .ToList(),
                 alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
                                   .Select(r => new SelectListItem
                                   {
@@ -366,6 +382,18 @@ namespace WebColegio.Controllers
                     ModelState.AddModelError("", "Los datos de las notas del alumno son inválidos.");
                     return View(viewModel);
                 }
+
+                var n = viewModel.notas;
+                if (n.NotaFinal.HasValue && string.IsNullOrEmpty(n.NotaFinalCualitativa))
+                    n.NotaFinalCualitativa = EscalaCualitativa.NumeroACualitativo(n.NotaFinal);
+                if (n.PrimerCorte.HasValue && string.IsNullOrEmpty(n.PrimerCorteCualitativo))
+                    n.PrimerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.PrimerCorte);
+                if (n.SegundoCorte.HasValue && string.IsNullOrEmpty(n.SegundoCorteCualitativo))
+                    n.SegundoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.SegundoCorte);
+                if (n.TercerCorte.HasValue && string.IsNullOrEmpty(n.TercerCorteCualitativo))
+                    n.TercerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.TercerCorte);
+                if (n.CuartoCorte.HasValue && string.IsNullOrEmpty(n.CuartoCorteCualitativo))
+                    n.CuartoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.CuartoCorte);
 
                 if (!ModelState.IsValid)
                 {

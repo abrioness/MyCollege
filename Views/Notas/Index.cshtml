@@ -1,4 +1,4 @@
-﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@model WebColegio.Models.ViewModel.ColeccionCatalogos
 @* @{
 	ViewData["Title"] = "Index";
 } *@
@@ -96,24 +96,19 @@
 							</td>
 						}
 						<td>
-
-								@itemNotas.PrimerCorte
+								@(string.IsNullOrEmpty(itemNotas.PrimerCorteCualitativo) ? itemNotas.PrimerCorte?.ToString("N1") : itemNotas.PrimerCorteCualitativo + (itemNotas.PrimerCorte.HasValue ? " (" + itemNotas.PrimerCorte.Value.ToString("N1") + ")" : ""))
 						</td>
 						<td>
-
-							@itemNotas.SegundoCorte
+							@(string.IsNullOrEmpty(itemNotas.SegundoCorteCualitativo) ? itemNotas.SegundoCorte?.ToString("N1") : itemNotas.SegundoCorteCualitativo + (itemNotas.SegundoCorte.HasValue ? " (" + itemNotas.SegundoCorte.Value.ToString("N1") + ")" : ""))
 						</td>
 						<td>
-
-							@itemNotas.TercerCorte
+							@(string.IsNullOrEmpty(itemNotas.TercerCorteCualitativo) ? itemNotas.TercerCorte?.ToString("N1") : itemNotas.TercerCorteCualitativo + (itemNotas.TercerCorte.HasValue ? " (" + itemNotas.TercerCorte.Value.ToString("N1") + ")" : ""))
 						</td>
 						<td>
-
-							@itemNotas.CuartoCorte
+							@(string.IsNullOrEmpty(itemNotas.CuartoCorteCualitativo) ? itemNotas.CuartoCorte?.ToString("N1") : itemNotas.CuartoCorteCualitativo + (itemNotas.CuartoCorte.HasValue ? " (" + itemNotas.CuartoCorte.Value.ToString("N1") + ")" : ""))
 						</td>
 						<td>
-
-							@itemNotas.NotaFinal
+							@(string.IsNullOrEmpty(itemNotas.NotaFinalCualitativa) ? itemNotas.NotaFinal?.ToString("N2") : itemNotas.NotaFinalCualitativa + (itemNotas.NotaFinal.HasValue ? " (" + itemNotas.NotaFinal.Value.ToString("N2") + ")" : ""))
 						</td>
 						
 						<td>
