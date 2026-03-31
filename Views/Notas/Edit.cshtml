@@ -85,8 +85,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.NotaFinalCualitativa" class="control-label">Nota Final (cualitativa)</label>
-                            <select asp-for="notas.NotaFinalCualitativa" asp-items="Model.NotasCualitativasSelectListItem" class="form-select">
+                            <label asp-for="notas.NotaFinalCualitativo" class="control-label">Nota Final (cualitativa)</label>
+                            <select asp-for="notas.NotaFinalCualitativo" asp-items="Model.NotasCualitativasSelectListItem" class="form-select">
                                 <option value="">Seleccione...</option>
                             </select>
                         </div>
@@ -102,8 +102,8 @@
                             <input asp-for="notas.Examen1" id="examen1" class="form-control" type="number" min="0" max="100" />
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.PrimerCorte" class="control-label">Primer Corte</label>
-                            <input asp-for="notas.PrimerCorte" id="primerCorte" class="form-control" readonly />
+                            <label asp-for="notas.PrimerCorteCuantitativo" class="control-label">Primer Corte</label>
+                            <input asp-for="notas.PrimerCorteCuantitativo" id="primerCorte" class="form-control" readonly />
                         </div>
                         <div class="form-group">
                             <label asp-for="notas.Acumulado2" class="control-label">Acumulado 2</label>
@@ -114,8 +114,8 @@
                             <input asp-for="notas.Examen2" id="examen2" class="form-control" type="number" min="0" max="100" />
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.SegundoCorte" class="control-label">Segundo Corte</label>
-                            <input asp-for="notas.SegundoCorte" id="segundoCorte" class="form-control" readonly />
+                            <label asp-for="notas.SegundoCorteCuantitativo" class="control-label">Segundo Corte</label>
+                            <input asp-for="notas.SegundoCorteCuantitativo" id="segundoCorte" class="form-control" readonly />
                         </div>
                     </div>
                     <div class="col-lg-4">
@@ -128,8 +128,8 @@
                             <input asp-for="notas.Examen3" id="examen3" class="form-control" type="number" min="0" max="100" />
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.TercerCorte" class="control-label">Tercer Corte</label>
-                            <input asp-for="notas.TercerCorte" id="tercerCorte" class="form-control" readonly />
+                            <label asp-for="notas.TercerCorteCuantitativo" class="control-label">Tercer Corte</label>
+                            <input asp-for="notas.TercerCorteCuantitativo" id="tercerCorte" class="form-control" readonly />
                         </div>
                         <div class="form-group">
                             <label asp-for="notas.Acumulado4" class="control-label">Acumulado 4</label>
@@ -140,12 +140,12 @@
                             <input asp-for="notas.Examen4" id="examen4" class="form-control" type="number" min="0" max="100" />
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.CuartoCorte" class="control-label">Cuarto Corte</label>
-                            <input asp-for="notas.CuartoCorte" id="cuartoCorte" class="form-control" readonly />
+                            <label asp-for="notas.CuartoCorteCuantitativo" class="control-label">Cuarto Corte</label>
+                            <input asp-for="notas.CuartoCorteCuantitativo" id="cuartoCorte" class="form-control" readonly />
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.NotaFinal" class="control-label">Nota Final</label>
-                            <input asp-for="notas.NotaFinal" id="notaFinal" class="form-control" readonly step="0.01" />
+                            <label asp-for="notas.NotaFinalCuantitativo" class="control-label">Nota Final</label>
+                            <input asp-for="notas.NotaFinalCuantitativo" id="notaFinal" class="form-control" readonly step="0.01" />
                         </div>
             <br />
         </div>

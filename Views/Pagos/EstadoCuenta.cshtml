@@ -1,276 +1,155 @@
-﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
- @{
-	ViewData["Title"] = "Estado de Cuenta Administrador";
-} 
-
+@model WebColegio.Models.ViewModel.EstadoCuentaViewModel
+@using System.Globalization
+@{
+	ViewData["Title"] = "Estado de Cuenta";
+	var colsMes = 12;
+	var cultMes = CultureInfo.GetCultureInfo("es-NI");
+}
 
 <div class="container-fluid p-1" style="padding:2px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i>  Estado Cuenta de Estudiante</h5>
+			<h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Estado de cuenta por alumno</h5>
 		</div>
 
 		<div class="card-body">
+			@if (!string.IsNullOrEmpty(Model.MensajePeriodo))
+			{
+				<p class="text-muted small mb-2">@Model.MensajePeriodo</p>
+			}
+			@if (Model.Filas == null || !Model.Filas.Any())
+			{
+				<div class="alert alert-warning">No hay alumnos activos para listar.</div>
+			}
 
 			<div class="table-responsive" style="font-size:12px">
-				<br />
-				<div class="col-12 text-end">
-					<div class="btn-goup">
-						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar Pagos/Ver Reporte</button>
-
-
+				<div class="col-12 text-end mb-2">
+					<div class="btn-group">
+						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar pagos / reportes</button>
 						<ul class="dropdown-menu">
-							<li>
-								<a class="dropdown-item" asp-action="Create" asp-controller="Pagos">
-									Agregar Pago de Mensualidad
-								</a>
-							</li>
-							<li>
-								<a class="dropdown-item" asp-action="Create" asp-controller="PagoCaja">
-									Agregar Pagos Varios
-								</a>
-							</li>
-							<li>
-								<a class="dropdown-item" asp-action="Index" asp-controller="Pagos">
-									Reporte de Pagos de Mensualidad
-								</a>
-							</li>
-							@* <li><hr class="dropdown-divider"></li>
-						<li><a class="dropdown-item" href="#">Otra opción</a></li> *@
+							<li><a class="dropdown-item" asp-action="Create" asp-controller="Pagos">Agregar pago de mensualidad</a></li>
+							<li><a class="dropdown-item" asp-action="Create" asp-controller="PagoCaja">Agregar pagos varios</a></li>
+							<li><a class="dropdown-item" asp-action="Index" asp-controller="Pagos">Reporte de pagos</a></li>
 						</ul>
 					</div>
+				</div>
 
-				</div> 
-				<br />
-
-				<table id="estadocuenta" class="table table-bordered table-sm">
-					@* class="display responsive nowrap" style="width:100%"> *@
-					<thead>
+				<table id="estadocuenta" class="table table-bordered table-sm table-hover">
+					<thead class="table-light">
 						<tr>
 							<th>Alumno</th>
 							<th>Grado</th>
-							<th>Matrícula</th>
+							<th>Año lectivo</th>
 							<th>Colegio</th>
-							<th>Concepto</th>
-							<th>Pago Rifa</th>
-							<th>Pago Mensualidad</th>
-							<th>Enero</th>
-							<th>Febrero</th>
-							<th>Marzo</th>
-							<th>Abril</th>
-							<th>Mayo</th>
-							<th>Junio</th>
-							<th>Julio</th>
-							<th>Agosto</th>
-							<th>Septiembre</th>
-							<th>Octubre</th>
-							<th>Noviembre</th>
-							<th>Diciembre</th>
-							<th>Sub Total</th>
-							<th>Mora Anterior</th>
-							<th>Abono Cta Morosa</th>
-							<th>Gran Total</th>
-							<th>Saldo 2024</th>
+							<th class="text-end">Tarifa mensual</th>
+							<th class="text-center">Matrícula</th>
+							@for (int m = 1; m <= colsMes; m++)
+							{
+								<th class="text-end" style="min-width:72px" title="@cultMes.DateTimeFormat.GetMonthName(m)">@cultMes.DateTimeFormat.GetAbbreviatedMonthName(m)</th>
+							}
+							<th class="text-end">Subtotal mensualidades</th>
+							<th class="text-end">Total pendiente</th>
 						</tr>
 					</thead>
 					<tbody>
-						@{
-							// Agrupar pagos por IdAlumno para evitar duplicados
-							var alumnosUnicos = Model.pagos
-							.Where(p => p.IdAlumno != 0) // Filtra los que no sean 0
-							.Select(p => p.IdAlumno)
-							.Distinct()
-							.ToList();
-						}
-						@foreach (var idAlumno in alumnosUnicos)
+						@foreach (var fila in Model.Filas ?? Enumerable.Empty<WebColegio.Models.ViewModel.EstadoCuentaFilaAlumno>())
 						{
+							if (fila.DatosIncompletos)
+							{
+								<tr class="table-warning">
+									<td colspan="@(6 + colsMes + 2)">
+										<strong>@fila.NombreCompleto</strong> — @fila.MotivoIncompleto
+									</td>
+								</tr>
+							}
+							else
+							{
 							<tr>
-								@{
-									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == idAlumno);
-									if (alumno == null) continue;
-									
-									// Obtener el primer pago del alumno para datos comunes (periodo, recinto, etc.)
-									var primerPago = Model.pagos.FirstOrDefault(p => p.IdAlumno == idAlumno);
-									if (primerPago == null) continue;
-								}
 								<td>
-									<a class="btn btn-sm btn-info" asp-action="Edit" asp-controller="Pagos" asp-route-id="@primerPago.IdPago">
-										@alumno.Nombre @alumno.Apellido
-									</a>
-								</td>
-
-								@* Buscar grado y periodo asociados si aplica *@
-								@{
-									var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
-								}
-
-								<td>@(grado?.NombreGrado ?? "-")</td>
-								@{
-									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == primerPago.IdPeriodo);
-								}
-								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
-								@{
-									var colegio = Model.recintos.FirstOrDefault(p => p.IdRecinto == primerPago.IdRecinto);
-								}
-								<td>@(colegio?.Recinto.ToString() ?? "-")</td>
-								@{
-									var concepto = Model.tipoMovimiento.FirstOrDefault(p => p.IdTipoMovimiento == primerPago.IdTipoMovimiento);
-								}
-								<td>@(concepto?.Concepto.ToString() ?? "-")</td>
-
-								@* Columna: Estado de Rifa (por semestre) *@
-								@{
-									// Obtener el año actual
-									int añoActual = periodo?.IdPeriodo ?? 0;
-									
-									// Buscar el IdTipoMovimiento para "Rifa" 
-									var tipoRifa = Model.tipoMovimiento.FirstOrDefault(tm => 
-										tm.Concepto.Contains("Rifas"));
-									
-									// Semestre 1: Enero-Junio (meses 1-6)
-									// Semestre 2: Julio-Diciembre (meses 7-12)
-									bool tieneRifaSemestre1 = false;
-									bool tieneRifaSemestre2 = false;
-									
-									if (tipoRifa != null && añoActual > 0)
+									@if (fila.IdPagoParaEnlace.HasValue)
 									{
-										// Verificar si tiene pago de rifa del semestre 1 (meses 1-6)
-										tieneRifaSemestre1 = Model.pagos.Any(p => 
-											p.IdAlumno == idAlumno && 
-											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
-											p.IdMes.HasValue && p.IdMes >= 1 &&
-											p.IdPeriodo == añoActual &&
-											p.Activo == true);
-										
-										// Verificar si tiene pago de rifa del semestre 2 (meses 7-12)
-										tieneRifaSemestre2 = Model.pagos.Any(p => 
-											p.IdAlumno == idAlumno && 
-											p.IdTipoMovimiento == tipoRifa.IdTipoMovimiento &&
-											p.IdMes.HasValue && p.IdMes >= 7 &&
-											p.IdPeriodo == añoActual &&
-											p.Activo == true);
-									}
-									
-									string estadoRifa = (tieneRifaSemestre1 && tieneRifaSemestre2) ? "Solvente" : "Insolvente";
-									string claseRifa = (tieneRifaSemestre1 && tieneRifaSemestre2) ? "success" : "danger";
-								}
-								<td>
-									<span class="badge bg-@claseRifa">@estadoRifa</span>
-								</td> 
-
-								@* Columna: Estado de Mensualidad *@
-								@{
-									// Buscar el IdTipoMovimiento para "Mensualidad"
-									var tipoMensualidad = Model.tipoMovimiento.FirstOrDefault(tm => 
-										tm.Concepto.ToLower().Contains("mensualidad") || 
-										tm.Concepto.ToLower().Contains("mensual"));
-									
-									int mesActual = DateTime.Now.Month;
-									int añoActualMensualidad = DateTime.Now.Year;
-									
-									// Si estamos en diciembre (mes 12), debe tener pagado noviembre (mes 11)
-									// Si estamos en cualquier otro mes, debe tener pagado el mes anterior
-									int mesRequerido = mesActual == 12 ? 11 : (mesActual - 1);
-									
-									bool tieneMensualidadAlDia = false;
-									
-									if (tipoMensualidad != null && mesRequerido > 0)
-									{
-										// Verificar si tiene pago de mensualidad del mes requerido
-										tieneMensualidadAlDia = Model.pagos.Any(p => 
-											p.IdAlumno == idAlumno && 
-											p.IdTipoMovimiento == tipoMensualidad.IdTipoMovimiento &&
-											p.IdMes.HasValue && p.IdMes == mesRequerido &&
-											p.Anyo == añoActualMensualidad &&
-											p.Activo == true);
-									}
-									
-									string estadoMensualidad = tieneMensualidadAlDia ? "Solvente" : "Insolvente";
-									string claseMensualidad = tieneMensualidadAlDia ? "success" : "danger";
-								}
-								<td>
-									<span class="badge bg-@claseMensualidad">@estadoMensualidad</span>
-								</td>
-
-								@if(User.Identity.IsAuthenticated)
-								{
-									@if (User.IsInRole("Cajero"))
-									{
-										@* Mostrar columnas de los 12 meses para Cajero *@
-										@for (int mes = 1; mes <= 12; mes++)
-										{
-											var pagoMes = Model.pagos
-												.FirstOrDefault(p => p.IdAlumno == idAlumno && 
-													p.IdMes == mes && 
-													p.IdTipoMovimiento == 1 && 
-													p.Activo == true);
-
-											if (pagoMes != null)
-											{
-												<td><span class="badge bg-success">Pagado</span></td>
-											}
-											else
-											{
-												<td><span class="badge bg-warning text-dark">Pendiente</span></td>
-											}
-										}
+										<a class="btn btn-sm btn-info" asp-action="Edit" asp-controller="Pagos" asp-route-id="@fila.IdPagoParaEnlace.Value">@fila.NombreCompleto</a>
 									}
 									else
 									{
-										decimal subtotal = 0;
-										
-										@* Mostrar columnas de los 12 meses con montos *@
-										@for (int mes = 1; mes <= 12; mes++)
-										{
-											var pagoMes = Model.pagos
-												.FirstOrDefault(p => p.IdAlumno == idAlumno && 
-													p.IdMes == mes && 
-													p.Activo == true);
-
-											if (pagoMes != null)
-											{
-												subtotal += pagoMes.Monto;
-												<td>C$ @pagoMes.Monto.ToString("N2")</td>
-											}
-											else
-											{
-												<td>C$ 0.00</td>
-											}
-										}
-
-										<td><strong>C$ @subtotal.ToString("N2")</strong></td>
-										<td><strong>C$ 0.00</strong></td>
-										<td><strong>C$ 0.00</strong></td>
-										<td><strong>C$ 0.00</strong></td>
-										<td><strong>C$ 0.00</strong></td>
+										<a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-controller="Alumnos" asp-route-id="@fila.IdAlumno">@fila.NombreCompleto</a>
+									}
+								</td>
+								<td>@(fila.NombreGrado ?? "—")</td>
+								<td>@fila.AnioPeriodo</td>
+								<td>@(fila.Recinto ?? "—")</td>
+								<td class="text-end">
+									@if (fila.SinTarifaMensualidad)
+									{
+										<span class="badge bg-secondary">Sin tarifa en catálogo</span>
+									}
+									else
+									{
+										<text>C$ @fila.MensualidadReferencia.ToString("N2")</text>
+									}
+								</td>
+								<td class="text-center @(fila.MatriculaCancelada ? "table-success" : "")">
+									@if (fila.MatriculaReferencia <= 0)
+									{
+										<span class="text-muted">—</span>
+									}
+									else if (fila.MatriculaCancelada)
+									{
+										<strong class="text-success">C$ 0,00</strong><br /><small class="text-success">Pagada</small>
+									}
+									else
+									{
+										<span>C$ @fila.SaldoMatricula.ToString("N2")</span>
+									}
+								</td>
+								@foreach (var cel in fila.Meses ?? Array.Empty<WebColegio.Models.ViewModel.EstadoCuentaMesCelda>())
+								{
+									var titulo = $"Esperado C$ {cel.MontoEsperado:N2} · Pagado C$ {cel.MontoPagado:N2}";
+									if (cel.Cancelado)
+									{
+										<td class="table-success text-center" title="@titulo">
+											<strong>C$ 0,00</strong><br /><small class="text-success">Pagado</small>
+										</td>
+									}
+									else
+									{
+										<td class="text-end table-danger text-danger fw-semibold" title="@titulo">C$ @cel.Saldo.ToString("N2")</td>
 									}
 								}
+								<td class="text-end fw-semibold">C$ @fila.TotalSaldoMensualidades.ToString("N2")</td>
+								<td class="text-end fw-bold">C$ @fila.GranTotalPendiente.ToString("N2")</td>
 							</tr>
+							}
 						}
-				</tbody>
-
-			</table>
-			
-		</div>
+					</tbody>
+				</table>
+			</div>
 		</div>
 	</div>
 </div>
 
-<script> 
-	$(document).ready(function () {
-			$('#estadocuenta').DataTable({
-			responsive: false,
-			dom: 'Bfrtip', // Botones + filtro + tabla
-			buttons: [
-				{
-					extend: 'excelHtml5',
-					text: 'Exportar a Excel',
-					className: 'btn btn-success'
-				}
-			],
-			language: {
-				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+@section Scripts {
+	<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+	<script>
+		$(document).ready(function () {
+			if ($.fn.DataTable.isDataTable('#estadocuenta')) {
+				$('#estadocuenta').DataTable().destroy();
 			}
+			$('#estadocuenta').DataTable({
+				responsive: false,
+				scrollX: true,
+				pageLength: 25,
+				dom: 'Bfrtip',
+				buttons: [
+					{ extend: 'excelHtml5', text: 'Exportar a Excel', className: 'btn btn-success btn-sm' }
+				],
+				language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' }
+			});
 		});
-	});
-</script>
+	</script>
+}

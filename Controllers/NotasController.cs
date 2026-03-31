@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -18,6 +20,109 @@ namespace WebColegio.Controllers
         {
             _Iservices = services;
         }
+
+        private static int? ObtenerNumeroGrado(string? nombreGrado)
+        {
+            if (string.IsNullOrWhiteSpace(nombreGrado)) return null;
+            var normalizado = nombreGrado.Trim().ToLowerInvariant();
+            var m = Regex.Match(normalizado, @"\d+");
+            if (m.Success && int.TryParse(m.Value, out var numero))
+                return numero;
+
+            if (normalizado.Contains("primero") || normalizado.Contains("primer")) return 1;
+            if (normalizado.Contains("segundo")) return 2;
+            if (normalizado.Contains("tercero") || normalizado.Contains("tercer")) return 3;
+            if (normalizado.Contains("cuarto")) return 4;
+            if (normalizado.Contains("quinto")) return 5;
+            if (normalizado.Contains("sexto")) return 6;
+            if (normalizado.Contains("setimo") || normalizado.Contains("séptimo") || normalizado.Contains("septimo")) return 7;
+            if (normalizado.Contains("octavo")) return 8;
+            if (normalizado.Contains("noveno")) return 9;
+            if (normalizado.Contains("decimo") || normalizado.Contains("décimo")) return 10;
+            if (normalizado.Contains("undecimo") || normalizado.Contains("undécimo")) return 11;
+            return null;
+        }
+
+        private static bool EsCualitativoSolo(string? modalidad, string? nombreGrado)
+        {
+            var mod = modalidad?.Trim().ToLowerInvariant() ?? string.Empty;
+            if (mod.Contains("preescolar") || mod.Contains("pre escolar")) return true;
+
+            var grado = ObtenerNumeroGrado(nombreGrado);
+            return grado == 1 || grado == 2;
+        }
+
+        private static (string? Cualitativo, decimal? Cuantitativo) CompletarParCualiCuanti(string? cualitativo, decimal? cuantitativo)
+        {
+            if (string.IsNullOrWhiteSpace(cualitativo) && cuantitativo.HasValue)
+                cualitativo = EscalaCualitativa.NumeroACualitativo(cuantitativo);
+
+            if (!cuantitativo.HasValue && !string.IsNullOrWhiteSpace(cualitativo))
+                cuantitativo = EscalaCualitativa.CualitativoANumero(cualitativo);
+
+            return (cualitativo, cuantitativo);
+        }
+
+        /// <summary>Período evaluativo vigente por fechas; si no hay coincidencia, el primero activo.</summary>
+        private static int? ResolverIdPeriodoEvaluacionPreferido(IEnumerable<PeriodoEvaluacion>? periodos)
+        {
+            var lista = periodos?
+                .Where(p => p.Activo)
+                .OrderBy(p => p.FechaInicio)
+                .ToList() ?? new List<PeriodoEvaluacion>();
+            if (lista.Count == 0) return null;
+            var hoy = DateTime.Now.Date;
+            var enCurso = lista.FirstOrDefault(p => hoy >= p.FechaInicio.Date && hoy <= p.FechaFin.Date);
+            return (enCurso ?? lista[0]).IdPeriodo;
+        }
+
+        private static CatPeriodo? ObtenerPeriodoLectivoActual(IEnumerable<CatPeriodo>? periodos)
+        {
+            var lista = periodos?.Where(p => p.Activo).ToList() ?? new List<CatPeriodo>();
+            return lista.FirstOrDefault(p => p.Actual)
+                   ?? lista.OrderByDescending(p => p.Periodo).ThenByDescending(p => p.IdPeriodo).FirstOrDefault();
+        }
+
+        /// <summary>JSON para precargar modalidad y grado si la matrícula del alumno corresponde al período lectivo actual.</summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> MatriculaAlumnoPeriodoActual(int idAlumno)
+        {
+            if (idAlumno <= 0)
+                return Json(new { ok = false, mensaje = "Debe seleccionar un alumno válido." });
+
+            var periodosLectivos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodoActual = ObtenerPeriodoLectivoActual(periodosLectivos);
+            var alumno = await _Iservices.GetAlumnoIdAsync(idAlumno);
+            if (alumno == null || alumno.IdAlumno <= 0)
+                return Json(new { ok = false, mensaje = "No se encontró el alumno." });
+
+            var matriculaEnPeriodoActual = periodoActual == null
+                || !alumno.IdPeriodo.HasValue
+                || alumno.IdPeriodo.Value == periodoActual.IdPeriodo;
+
+            if (!matriculaEnPeriodoActual)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    matriculaEnPeriodoActual = false,
+                    mensaje = "La ficha del alumno no está en el período lectivo actual. Seleccione modalidad y nivel manualmente o actualice la matrícula."
+                });
+            }
+
+            if (!alumno.IdModalidad.HasValue || !alumno.IdGrado.HasValue)
+                return Json(new { ok = false, mensaje = "El alumno no tiene modalidad o grado registrados en su ficha." });
+
+            return Json(new
+            {
+                ok = true,
+                matriculaEnPeriodoActual = true,
+                idModalidad = alumno.IdModalidad.Value,
+                idGrado = alumno.IdGrado.Value
+            });
+        }
+
         // GET: NotasController
         [Authorize]
         public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
@@ -98,10 +203,13 @@ namespace WebColegio.Controllers
 
             }
             List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(v_alumNota.IdAlumno);
+            var periodosCatDet = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodoLectivoActual = ObtenerPeriodoLectivoActual(periodosCatDet);
             var viewModel = new NotasViewModel
             {
                 listNotas = listnota,
                 alumnoNotas = v_alumNota,
+                PeriodoLectivoActualTexto = periodoLectivoActual?.Periodo.ToString(),
 
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
                                             .Select(r => new SelectListItem
@@ -109,7 +217,7 @@ namespace WebColegio.Controllers
                                                 Value = r.IdAsignatura.ToString(),
                                                 Text = r.NombreAsignatura
                                             }).ToList(),
-                periodoSelectListItem = (await _Iservices.GetPeriodoAsync())
+                periodoSelectListItem = periodosCatDet
                                   .Select(r => new SelectListItem
                                   {
                                       Value = r.IdPeriodo.ToString(),
@@ -162,10 +270,13 @@ namespace WebColegio.Controllers
             {
                 return NotFound();
             }
+            var periodosCatDet = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodoLectivoActual = ObtenerPeriodoLectivoActual(periodosCatDet);
             var viewModel = new NotasViewModel
             {
                 listNotas = listnota,
                 alumnoNotas=v_alumNota,
+                PeriodoLectivoActualTexto = periodoLectivoActual?.Periodo.ToString(),
 
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
                                             .Select(r => new SelectListItem
@@ -173,7 +284,7 @@ namespace WebColegio.Controllers
                                                 Value = r.IdAsignatura.ToString(),
                                                 Text = r.NombreAsignatura
                                             }).ToList(),
-                periodoSelectListItem = (await _Iservices.GetPeriodoAsync())
+                periodoSelectListItem = periodosCatDet
                                   .Select(r => new SelectListItem
                                   {
                                       Value = r.IdPeriodo.ToString(),
@@ -217,8 +328,12 @@ namespace WebColegio.Controllers
         [Authorize]
         public async Task<ActionResult> Create()
         {
+            var periodosEval = await _Iservices.GetPeriodoEvaluacionAsync() ?? new List<PeriodoEvaluacion>();
+            var idPeriodoEvalPreferido = ResolverIdPeriodoEvaluacionPreferido(periodosEval) ?? 0;
+
             var viewmodel = new NotasViewModel
             {
+                notas = new TblNotas { IdPeriodo = idPeriodoEvalPreferido },
                 NotasCualitativasSelectListItem = EscalaCualitativa.Opciones
                     .Select(o => new SelectListItem { Value = o.Codigo, Text = $"{o.Codigo} - {o.Descripcion} ({o.Rango})" })
                     .ToList(),
@@ -258,6 +373,15 @@ namespace WebColegio.Controllers
                                       Text = r.NombreGrado,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
+                periodoEvaluacionsSelectListItem = periodosEval
+                    .Where(p => p.Activo)
+                    .OrderBy(p => p.FechaInicio)
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdPeriodo.ToString(),
+                        Text = r.NombrePeriodo,
+                        Selected = idPeriodoEvalPreferido > 0 && r.IdPeriodo == idPeriodoEvalPreferido
+                    }).ToList(),
 
             };
 
@@ -270,11 +394,32 @@ namespace WebColegio.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(TblNotas notas)
         {
-            bool response = false;
             bool validarDuplicado= false;
             try
             {
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                if (notas.IdAlumno <= 0)
+                {
+                    TempData["Mensaje"] = "Debe buscar y seleccionar un alumno de la lista.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
+                }
+
+                if (notas.IdPeriodo <= 0)
+                {
+                    var periodosEval = await _Iservices.GetPeriodoEvaluacionAsync() ?? new List<PeriodoEvaluacion>();
+                    var idPe = ResolverIdPeriodoEvaluacionPreferido(periodosEval);
+                    if (idPe.HasValue) notas.IdPeriodo = idPe.Value;
+                }
+
+                if (notas.IdPeriodo <= 0)
+                {
+                    TempData["Mensaje"] = "No hay período de evaluación configurado. Configure períodos evaluativos o seleccione uno.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
+                }
+
                 validarDuplicado =await _Iservices.ValidarNotas(notas.IdAsignatura,notas.IdPeriodo,notas.IdAlumno);
                 if (validarDuplicado == true)
                 {
@@ -289,33 +434,62 @@ namespace WebColegio.Controllers
                     notas.Activo = true;
                     notas.UsuarioRegistro = idUsuario;
                     notas.FechaRegistro = DateTime.Now;
+                    var modalidad = (await _Iservices.GetModalidadesAsync())
+                        .FirstOrDefault(m => m.IdModalidad == notas.IdModalidad)?.Modalidad;
+                    var nombreGrado = (await _Iservices.GetGradosAsync())
+                        .FirstOrDefault(g => g.IdGrado == notas.IdGrado)?.NombreGrado;
+                    var esSoloCualitativo = EsCualitativoSolo(modalidad, nombreGrado);
 
-                    // Si hay nota numérica pero no cualitativa, derivar cualitativa (90-100→AA, 76-89→AS, 60-75→AF, 0-59→AI)
-                    if (notas.NotaFinal.HasValue && string.IsNullOrEmpty(notas.NotaFinalCualitativa))
-                        notas.NotaFinalCualitativa = EscalaCualitativa.NumeroACualitativo(notas.NotaFinal);
-                    if (notas.PrimerCorte.HasValue && string.IsNullOrEmpty(notas.PrimerCorteCualitativo))
-                        notas.PrimerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.PrimerCorte);
-                    if (notas.SegundoCorte.HasValue && string.IsNullOrEmpty(notas.SegundoCorteCualitativo))
-                        notas.SegundoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.SegundoCorte);
-                    if (notas.TercerCorte.HasValue && string.IsNullOrEmpty(notas.TercerCorteCualitativo))
-                        notas.TercerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.TercerCorte);
-                    if (notas.CuartoCorte.HasValue && string.IsNullOrEmpty(notas.CuartoCorteCualitativo))
-                        notas.CuartoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(notas.CuartoCorte);
-
-                    response = await _Iservices.PostNotasAsync(notas);
-                    if (response)
+                    if (esSoloCualitativo)
                     {
-                        TempData["Mensaje"] = "Se agrego la Nota del Alumno Correctamente.";
-                        TempData["Tipo"] = "success";
-                        return RedirectToAction("create");
+                        notas.Acumulado1 = null;
+                        notas.Examen1 = null;
+                        notas.PrimerCorteCuantitativo = null;
+                        notas.Acumulado2 = null;
+                        notas.Examen2 = null;
+                        notas.SegundoCorteCuantitativo = null;
+                        notas.Acumulado3 = null;
+                        notas.Examen3 = null;
+                        notas.TercerCorteCuantitativo = null;
+                        notas.Acumulado4 = null;
+                        notas.Examen4 = null;
+                        notas.CuartoCorteCuantitativo = null;
+                        notas.NotaFinalCuantitativo = null;
+                    }
+                    else
+                    {
+                        (notas.PrimerCorteCualitativo, notas.PrimerCorteCuantitativo) = CompletarParCualiCuanti(notas.PrimerCorteCualitativo, notas.PrimerCorteCuantitativo);
+                        (notas.SegundoCorteCualitativo, notas.SegundoCorteCuantitativo) = CompletarParCualiCuanti(notas.SegundoCorteCualitativo, notas.SegundoCorteCuantitativo);
+                        (notas.TercerCorteCualitativo, notas.TercerCorteCuantitativo) = CompletarParCualiCuanti(notas.TercerCorteCualitativo, notas.TercerCorteCuantitativo);
+                        (notas.CuartoCorteCualitativo, notas.CuartoCorteCuantitativo) = CompletarParCualiCuanti(notas.CuartoCorteCualitativo, notas.CuartoCorteCuantitativo);
+                        (notas.NotaFinalCualitativo, notas.NotaFinalCuantitativo) = CompletarParCualiCuanti(notas.NotaFinalCualitativo, notas.NotaFinalCuantitativo);
                     }
 
+                    var (exito, detalleApi) = await _Iservices.PostNotasAsync(notas);
+                    if (exito)
+                    {
+                        TempData["Mensaje"] = "Se agregó la nota del alumno correctamente.";
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction(nameof(Create));
+                    }
+
+                    var msgError = string.IsNullOrWhiteSpace(detalleApi)
+                        ? "No se pudo guardar la nota. Revise la consola de la API o la conexión."
+                        : (detalleApi.Length > 800 ? detalleApi[..800] + "…" : detalleApi);
+                    TempData["Mensaje"] = "Error al guardar en la API: " + msgError;
+                    TempData["Tipo"] = "error";
+                    return RedirectToAction(nameof(Create));
                 }
-                return NoContent();
+
+                TempData["Mensaje"] = "Los datos enviados no son válidos.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Create));
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                TempData["Mensaje"] = "Error inesperado al guardar: " + ex.Message;
+                TempData["Tipo"] = "error";
+                return RedirectToAction(nameof(Create));
             }
         }
 
@@ -384,16 +558,16 @@ namespace WebColegio.Controllers
                 }
 
                 var n = viewModel.notas;
-                if (n.NotaFinal.HasValue && string.IsNullOrEmpty(n.NotaFinalCualitativa))
-                    n.NotaFinalCualitativa = EscalaCualitativa.NumeroACualitativo(n.NotaFinal);
-                if (n.PrimerCorte.HasValue && string.IsNullOrEmpty(n.PrimerCorteCualitativo))
-                    n.PrimerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.PrimerCorte);
-                if (n.SegundoCorte.HasValue && string.IsNullOrEmpty(n.SegundoCorteCualitativo))
-                    n.SegundoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.SegundoCorte);
-                if (n.TercerCorte.HasValue && string.IsNullOrEmpty(n.TercerCorteCualitativo))
-                    n.TercerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.TercerCorte);
-                if (n.CuartoCorte.HasValue && string.IsNullOrEmpty(n.CuartoCorteCualitativo))
-                    n.CuartoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.CuartoCorte);
+                if (n.NotaFinalCuantitativo.HasValue && string.IsNullOrEmpty(n.NotaFinalCualitativo))
+                    n.NotaFinalCualitativo = EscalaCualitativa.NumeroACualitativo(n.NotaFinalCuantitativo);
+                if (n.PrimerCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.PrimerCorteCualitativo))
+                    n.PrimerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.PrimerCorteCuantitativo);
+                if (n.SegundoCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.SegundoCorteCualitativo))
+                    n.SegundoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.SegundoCorteCuantitativo);
+                if (n.TercerCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.TercerCorteCualitativo))
+                    n.TercerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.TercerCorteCuantitativo);
+                if (n.CuartoCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.CuartoCorteCualitativo))
+                    n.CuartoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.CuartoCorteCuantitativo);
 
                 if (!ModelState.IsValid)
                 {

@@ -263,18 +263,21 @@ namespace WebColegio.Services
         }
         public async Task<List<TblNotas>> GetNotasAsync()
         {
-            List<TblNotas> notas = new List<TblNotas>();
+            var notas = new List<TblNotas>();
             using (var httpclient = new HttpClient())
             {
-
+                if (string.IsNullOrEmpty(url))
+                    return notas;
                 var response = await httpclient.GetAsync(url + "api/Notas");
-
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     var resultado = JsonConvert.DeserializeObject<List<TblNotas>>(content);
-
-                    notas = resultado;
+                    notas = resultado ?? new List<TblNotas>();
+                }
+                else
+                {
+                    Debug.WriteLine($"GetNotasAsync error: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
                 }
                 return notas;
             }
@@ -813,41 +816,33 @@ namespace WebColegio.Services
            
         }
 
-        public async  Task<bool> PostNotasAsync(TblNotas notas)
+        public async Task<(bool Exito, string? Detalle)> PostNotasAsync(TblNotas notas)
         {
-            bool respuesta = false;
-
-
-
             try
             {
                 using (var httpClient = new HttpClient())
                 {
-                    // Serializar el objeto alumno
-                    string jsonNotas = JsonConvert.SerializeObject(notas);
-                    var content = new StringContent(jsonNotas, Encoding.UTF8, "application/json");
+                    if (string.IsNullOrEmpty(url))
+                        return (false, "Falta configurar ApiSettings:BaseUrl en appsettings (URL de la API).");
 
-                    // Enviar POST
+                    var jsonNotas = JsonConvert.SerializeObject(notas);
+                    var content = new StringContent(jsonNotas, Encoding.UTF8, "application/json");
                     var response = await httpClient.PostAsync(url + "api/Notas/Guardar", content);
 
                     if (response.IsSuccessStatusCode)
-                    {
-                        respuesta = true;
-                    }
-                    else
-                    {
-                        // Para debug: mostrar mensaje de error
-                        var errorMsg = await response.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Error en POST: " + errorMsg);
-                    }
+                        return (true, null);
+
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    var detalle = $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}. {errorBody}".Trim();
+                    Debug.WriteLine("Error POST Notas/Guardar: " + detalle);
+                    return (false, string.IsNullOrWhiteSpace(errorBody) ? detalle : errorBody);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Excepción en PostNotasAsync: " + ex.Message);
+                Debug.WriteLine("Excepción en PostNotasAsync: " + ex);
+                return (false, ex.Message);
             }
-
-            return respuesta;
         }
 
         public async Task<bool> PostPagosAsync(TblPago pagos)
@@ -1527,11 +1522,11 @@ namespace WebColegio.Services
             existingNota.IdPeriodo = nota.IdPeriodo;
             existingNota.IdAsignatura = nota.IdAsignatura;
             existingNota.Descripcion = nota.Descripcion;
-            existingNota.PrimerCorte = nota.PrimerCorte;
-            existingNota.SegundoCorte = nota.SegundoCorte;
-            existingNota.TercerCorte = nota.TercerCorte;
-            existingNota.CuartoCorte = nota.CuartoCorte;
-            existingNota.NotaFinal = nota.NotaFinal;
+            existingNota.PrimerCorteCuantitativo = nota.PrimerCorteCuantitativo;
+            existingNota.SegundoCorteCuantitativo = nota.SegundoCorteCuantitativo;
+            existingNota.TercerCorteCuantitativo = nota.TercerCorteCuantitativo;
+            existingNota.CuartoCorteCuantitativo = nota.CuartoCorteCuantitativo;
+            existingNota.NotaFinalCuantitativo = nota.NotaFinalCuantitativo;
             existingNota.Activo = true;
             existingNota.UsuarioActualiza = 1;
             existingNota.FechaActualiza = DateTime.Now;

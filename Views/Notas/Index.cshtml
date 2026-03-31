@@ -1,129 +1,81 @@
 @model WebColegio.Models.ViewModel.ColeccionCatalogos
-@* @{
-	ViewData["Title"] = "Index";
-} *@
+@using System.Linq
 <script src="~/js/site.js"></script>
-@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
 <div class="container mt-auto" style="padding:2px;">
 <div class="card shadow-lg p-3 mb-5 bg-white rounded">
 	<div class="card-header bg-primary text-white">
 			<h5 class="mb-0"><i class="bi-pencil-square"></i> Reporte de Notas</h5>
 	</div>
 	<div class="card-body">
-		<div class="table-responsive" style="font-size:12px">
-				<div class="col-4 text-center">
+		@if (TempData["Mensaje"] != null)
+		{
+			<div class="alert alert-@(TempData["Tipo"]?.ToString() == "success" ? "success" : TempData["Tipo"]?.ToString() == "warning" ? "warning" : "danger") alert-dismissible fade show" role="alert">
+				@TempData["Mensaje"]
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+			</div>
+		}
+		<div class="table-responsive" style="font-size:11px">
+				<div class="col-lg-8 mb-3">
 					@using (Html.BeginForm("Index", "Notas", FormMethod.Get))
 					{
-						<div class="row">
-							<div class="col-4">
+						<div class="row g-2 align-items-end">
+							<div class="col-auto">
 								<label class="control-label">Desde:</label>
-								<input type="date" name="fechainicio" id="FechaInicio" class="form-control"
-									   value="@@(Request.QueryString[" fechainicio"])" />
+								<input type="date" name="fechainicio" id="FechaInicio" class="form-control form-control-sm"
+									   value="@Context.Request.Query["fechainicio"]" />
 							</div>
-							<div class="col-4">
+							<div class="col-auto">
 								<label class="control-label">Hasta:</label>
-								<input type="date" name="fechafin" id="FechaFin" class="form-control"
-									   value="@@(Request.QueryString[" fechafin"])" />
+								<input type="date" name="fechafin" id="FechaFin" class="form-control form-control-sm"
+									   value="@Context.Request.Query["fechafin"]" />
 							</div>
-							<div class="col-4">
-								<br />
-								<button type="submit" class="form-control btn btn-success">Filtrar</button>
+							<div class="col-auto">
+								<button type="submit" class="btn btn-success btn-sm">Filtrar</button>
 							</div>
 						</div>
 					}
 				</div>
-			<div class="col-12 text-end">
-
-				<a asp-action="Create" class="btn btn-primary">
+			<div class="col-12 text-end mb-2">
+				<a asp-action="Create" class="btn btn-primary btn-sm">
 					<i class="bi bi-plus-circle"></i> Agregar Notas
 				</a>
 			</div>
+			<p class="small text-muted">Formato libreta: cada corte y semestre muestra <strong>CUAL.</strong> y <strong>CUANT.</strong> En preescolar y 1.°–2.° grado la columna CUANT. queda en blanco. Promedios de semestre se calculan a partir de los dos cortes del semestre.</p>
 
-				<table id="tablaNotas" class="table table-bordered table-sm">
-				@* class="display responsive nowrap" style="width:100%"> *@
-			<thead>
-				<tr>
-					<th>Alumno</th>
-					<th>Modalidad</th>
-					<th>Nivel</th>
-					<th>Asignatura</th>
-					<th>I Corte</th>
-					<th>II Corte</th>
-					<th>III Corte</th>
-					<th>IV Corte</th>
-					<th>Nota Final</th>
-					<th>Fecha Registro</th>
-					<th>Detalle</th>
-				</tr>
-			</thead>
+				<table id="tablaNotas" class="table table-bordered table-sm align-middle">
+			@await Html.PartialAsync("_NotasLibretaThead", true)
 			<tbody>
-				@foreach (var itemNotas in Model.notas)
+				@if (Model.notas == null || !Model.notas.Any())
 				{
 					<tr>
-						
-							@foreach (var alumno in Model.alumno.Where(a => a.IdAlumno == itemNotas.IdAlumno))
-							{
-							<td>
-
-							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-info">	@alumno.Nombre  @alumno.Apellido</a>
-
-							</td>
-							}
-
-						@foreach (var Modalidad in Model.modalidades.Where(a => a.IdModalidad == itemNotas.IdModalidad))
-						{
-							<td>
-
-									@Modalidad.Modalidad
-
-							</td>
-						}
-						@foreach (var Nivel in Model.grados.Where(a => a.IdGrado == itemNotas.IdGrado))
-						{
-							<td>
-
-								@Nivel.NombreGrado
-
-							</td>
-						}
-						@foreach (var asignatura in Model.asignaturas.Where(a => a.IdAsignatura == itemNotas.IdAsignatura))
-						{
-							<td>
-
-								@asignatura.NombreAsignatura
-
-							</td>
-						}
-						<td>
-								@(string.IsNullOrEmpty(itemNotas.PrimerCorteCualitativo) ? itemNotas.PrimerCorte?.ToString("N1") : itemNotas.PrimerCorteCualitativo + (itemNotas.PrimerCorte.HasValue ? " (" + itemNotas.PrimerCorte.Value.ToString("N1") + ")" : ""))
+						<td colspan="20" class="text-center text-muted py-4">No hay notas registradas o la API no devolvió datos.</td>
+					</tr>
+				}
+				else
+				{
+				@foreach (var itemNotas in Model.notas)
+				{
+					var alumno = Model.alumno?.FirstOrDefault(a => a.IdAlumno == itemNotas.IdAlumno);
+					var modalidad = Model.modalidades?.FirstOrDefault(m => m.IdModalidad == itemNotas.IdModalidad);
+					var nivel = Model.grados?.FirstOrDefault(g => g.IdGrado == itemNotas.IdGrado);
+					var asignatura = Model.asignaturas?.FirstOrDefault(a => a.IdAsignatura == itemNotas.IdAsignatura);
+					var soloCual = NotasDisplayHelper.EsSoloCualitativo(modalidad?.Modalidad, nivel?.NombreGrado);
+					<tr>
+						<td class="text-nowrap">
+							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-info py-0">@(alumno != null ? $"{alumno.Nombre} {alumno.Apellido}" : $"#{itemNotas.IdAlumno}")</a>
 						</td>
+						<td>@(modalidad?.Modalidad ?? "—")</td>
+						<td>@(nivel?.NombreGrado ?? "—")</td>
+						<td>@(asignatura?.NombreAsignatura ?? "—")</td>
+						@await Html.PartialAsync("_NotasLibretaCeldasCalificaciones", new NotasLibretaCeldaModel { Nota = itemNotas, SoloCualitativo = soloCual })
+						<td>@itemNotas.FechaRegistro.ToString("dd/MM/yyyy")</td>
 						<td>
-							@(string.IsNullOrEmpty(itemNotas.SegundoCorteCualitativo) ? itemNotas.SegundoCorte?.ToString("N1") : itemNotas.SegundoCorteCualitativo + (itemNotas.SegundoCorte.HasValue ? " (" + itemNotas.SegundoCorte.Value.ToString("N1") + ")" : ""))
-						</td>
-						<td>
-							@(string.IsNullOrEmpty(itemNotas.TercerCorteCualitativo) ? itemNotas.TercerCorte?.ToString("N1") : itemNotas.TercerCorteCualitativo + (itemNotas.TercerCorte.HasValue ? " (" + itemNotas.TercerCorte.Value.ToString("N1") + ")" : ""))
-						</td>
-						<td>
-							@(string.IsNullOrEmpty(itemNotas.CuartoCorteCualitativo) ? itemNotas.CuartoCorte?.ToString("N1") : itemNotas.CuartoCorteCualitativo + (itemNotas.CuartoCorte.HasValue ? " (" + itemNotas.CuartoCorte.Value.ToString("N1") + ")" : ""))
-						</td>
-						<td>
-							@(string.IsNullOrEmpty(itemNotas.NotaFinalCualitativa) ? itemNotas.NotaFinal?.ToString("N2") : itemNotas.NotaFinalCualitativa + (itemNotas.NotaFinal.HasValue ? " (" + itemNotas.NotaFinal.Value.ToString("N2") + ")" : ""))
-						</td>
-						
-						<td>
-							@itemNotas.FechaRegistro.ToString("dd/MM/yyyy")
-						</td>
-						@* <td>
-							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
-						</td> *@
-						<td>
-							<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
+							<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdAlumno" class="btn btn-sm btn-warning py-0" title="Ver detalle"><i class="bi bi-journal-richtext"></i></a>
 						</td>
 					</tr>
 				}
+				}
 			</tbody>
-
 		</table>
 	</div>
 		</div>
@@ -139,21 +91,16 @@
 <script>
 	$(document).ready(function () {
 		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
-		var botones = esCajero ? [] : [
-			{
-			extend: 'excelHtml5',
-			text: 'Exportar a Excel',
-			className: 'btn btn-success'
-			}
-		];
-		$('#tablaNotas').DataTable({
-		responsive: false,
-		dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
-		buttons: botones,
-			language: {
-				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
-			}
-		});
-	});
+		var botones = esCajero ? [] : [{ extend: 'excelHtml5', text: 'Exportar a Excel', className: 'btn btn-success btn-sm' }];
+		if ($('#tablaNotas tbody tr').length && !$('#tablaNotas tbody td[colspan]').length) {
+			$('#tablaNotas').DataTable({
+				responsive: false,
+				scrollX: true,
+				dom: esCajero ? 'frtip' : 'Bfrtip',
+				buttons: botones,
+				ordering: false,
+				language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" }
+			});
+		}
 	});
 </script>

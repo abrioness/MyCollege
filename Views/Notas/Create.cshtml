@@ -17,15 +17,16 @@
             <h4 class="mb-0"><i class="bi bi-pencil"></i> Registro de Notas</h4>
         </div>
         <div class="card-body">
-        <form asp-action="Create" method="post" enctype="multipart/form-data" >
+        <form asp-action="Create" method="post" enctype="multipart/form-data" id="formNotasCreate">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
            <div class="row">
                <div class="col-lg-4">
                             <div class="form-group">
                                 <label asp-for="notas.IdAlumno">Nombre del Alumno</label>
-                                 <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar Alumno..." />
-                            <input type="hidden" id="IdAlumno" name="notas.IdAlumno" />
+                                 <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar Alumno..." autocomplete="off" />
+                            <input type="hidden" asp-for="notas.IdAlumno" id="notas_IdAlumno" />
                             </div>
+                            <p class="text-muted small" id="hintMatricula">Al elegir el alumno se cargan modalidad y nivel si su matrícula corresponde al período lectivo actual.</p>
            
                 <div class="form-group">
                     <label asp-for="notas.IdModalidad" class="control-label">Modalidad</label>
@@ -57,10 +58,14 @@
                             </select>
                             <span asp-validation-for="notas.IdTipoEvaluacion" class="text-danger"></span>
                         </div>
+                        <div class="form-group">
+                            <label asp-for="notas.IdPeriodo" class="control-label">Período de evaluación (corte)</label>
+                            <select asp-for="notas.IdPeriodo" asp-items="Model.periodoEvaluacionsSelectListItem" class="form-select" required></select>
+                            <span asp-validation-for="notas.IdPeriodo" class="text-danger"></span>
+                        </div>
                             <div class="form-group">
-                                <label for="Descripcion" class="control-label">Observación</label>
-                                <textarea name="Descripcion" class="form-control"> </textarea>
-                                @* <span asp-validation-for="Descripcion" class="text-danger"></span> *@
+                                <label asp-for="notas.Descripcion" class="control-label">Observación</label>
+                                <textarea asp-for="notas.Descripcion" class="form-control"></textarea>
                             </div>
                             </div>
                 <div class="col-lg-4">
@@ -90,28 +95,29 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label asp-for="notas.NotaFinalCualitativa" class="control-label">Nota Final (cualitativa)</label>
-                            <select asp-for="notas.NotaFinalCualitativa" asp-items="Model.NotasCualitativasSelectListItem" class="form-select" id="notaFinalCual">
+                            <label asp-for="notas.NotaFinalCualitativo" class="control-label">Nota Final (cualitativa)</label>
+                            <select asp-for="notas.NotaFinalCualitativo" asp-items="Model.NotasCualitativasSelectListItem" class="form-select" id="notaFinalCual">
                                 <option value="">Seleccione...</option>
                             </select>
                             <span class="small text-muted">Se puede completar manualmente o se sugiere según los cortes.</span>
                         </div>
 						</div>
                         <div class="col-lg-4">
-                        <p class="text-muted small mb-2"><strong>Opcional – Modo mixto:</strong> si ingresa valores numéricos (acumulado + examen), se calcula el corte y la equivalencia cualitativa (90-100 = AA, …).</p>
+                        <p class="text-muted small mb-2" id="reglaRegistroTexto"><strong>Regla:</strong> en preescolar, primero y segundo se registra solo cualitativo; de tercero a undécimo se registran cualitativo y cuantitativo.</p>
+                        <div id="bloqueCuantitativo">
                         <input type="hidden" asp-for="notas.Acumulado1" id="acumulado1" />
                         <input type="hidden" asp-for="notas.Examen1" id="examen1" />
-                        <input type="hidden" asp-for="notas.PrimerCorte" id="primerCorte" />
+                        <input type="hidden" asp-for="notas.PrimerCorteCuantitativo" id="primerCorte" />
                         <input type="hidden" asp-for="notas.Acumulado2" id="acumulado2" />
                         <input type="hidden" asp-for="notas.Examen2" id="examen2" />
-                        <input type="hidden" asp-for="notas.SegundoCorte" id="segundoCorte" />
+                        <input type="hidden" asp-for="notas.SegundoCorteCuantitativo" id="segundoCorte" />
                         <input type="hidden" asp-for="notas.Acumulado3" id="acumulado3" />
                         <input type="hidden" asp-for="notas.Examen3" id="examen3" />
-                        <input type="hidden" asp-for="notas.TercerCorte" id="tercerCorte" />
+                        <input type="hidden" asp-for="notas.TercerCorteCuantitativo" id="tercerCorte" />
                         <input type="hidden" asp-for="notas.Acumulado4" id="acumulado4" />
                         <input type="hidden" asp-for="notas.Examen4" id="examen4" />
-                        <input type="hidden" asp-for="notas.CuartoCorte" id="cuartoCorte" />
-                        <input type="hidden" asp-for="notas.NotaFinal" id="notaFinal" />
+                        <input type="hidden" asp-for="notas.CuartoCorteCuantitativo" id="cuartoCorte" />
+                        <input type="hidden" asp-for="notas.NotaFinalCuantitativo" id="notaFinal" />
                         <div class="form-group">
                             <label class="control-label">Acumulado + Examen 1</label>
                             <input type="number" min="0" max="100" step="0.5" id="acumulado1_opt" class="form-control" placeholder="Ej. 35" /> + <input type="number" min="0" max="100" step="0.5" id="examen1_opt" class="form-control d-inline-block w-25" placeholder="35" /> &rarr; <span id="primerCorteResumen"></span>
@@ -128,7 +134,8 @@
                             <label class="control-label">Acumulado + Examen 4</label>
                             <input type="number" min="0" max="100" id="acumulado4_opt" class="form-control" /> + <input type="number" min="0" max="100" id="examen4_opt" class="form-control d-inline-block w-25" /> &rarr; <span id="cuartoCorteResumen"></span>
                         </div>
-                        <p class="small">Al enviar, se guardan los cualitativos; si además ingresó números, el servidor puede completar la equivalencia (p. ej. 90-100 → AA).</p>
+                        <p class="small">Para tercero a undécimo se guardan ambos valores. Si falta uno, se completa con equivalencia de la escala.</p>
+                        </div>
 						</div>
                     
 					</div>
@@ -171,7 +178,7 @@
 
         $(function() {
             const $alumnoNombre = $('#AlumnoNombre');
-            const $idAlumno = $('#IdAlumno');
+            const $idAlumno = $('#notas_IdAlumno');
 
             $alumnoNombre.autocomplete({
                 source: function(request, response) {
@@ -196,6 +203,15 @@
                 select: function(event, ui) {
                     $idAlumno.val(ui.item.id);
                     $alumnoNombre.val(ui.item.label);
+                    $.getJSON('@Url.Action("MatriculaAlumnoPeriodoActual", "Notas")', { idAlumno: ui.item.id })
+                        .done(function (res) {
+                            if (res.ok && res.idModalidad && res.idGrado) {
+                                $('#notas_IdModalidad').val(String(res.idModalidad)).trigger('change');
+                                $('#notas_IdGrado').val(String(res.idGrado)).trigger('change');
+                            } else if (res.mensaje && typeof Swal !== 'undefined') {
+                                Swal.fire({ icon: 'info', title: 'Matrícula', text: res.mensaje, confirmButtonText: 'Aceptar' });
+                            }
+                        });
                     return false;
                 }
             });
@@ -228,6 +244,81 @@
                 if (pc1 || pc2 || pc3 || pc4) $("#notaFinalCual").val(numeroACualitativo(nf));
             }
 
+            function cualitativoANumero(c) {
+                switch ((c || "").toUpperCase()) {
+                    case "AA": return 95;
+                    case "AS": return 82.5;
+                    case "AF": return 67.5;
+                    case "AI": return 29.5;
+                    default: return null;
+                }
+            }
+
+            function obtenerNumeroGrado(nombre) {
+                if (!nombre) return null;
+                var n = nombre.toLowerCase();
+                var m = n.match(/\d+/);
+                if (m) return parseInt(m[0], 10);
+                if (n.includes("primero") || n.includes("primer")) return 1;
+                if (n.includes("segundo")) return 2;
+                if (n.includes("tercero") || n.includes("tercer")) return 3;
+                if (n.includes("cuarto")) return 4;
+                if (n.includes("quinto")) return 5;
+                if (n.includes("sexto")) return 6;
+                if (n.includes("setimo") || n.includes("septimo") || n.includes("séptimo")) return 7;
+                if (n.includes("octavo")) return 8;
+                if (n.includes("noveno")) return 9;
+                if (n.includes("decimo") || n.includes("décimo")) return 10;
+                if (n.includes("undecimo") || n.includes("undécimo")) return 11;
+                return null;
+            }
+
+            function esSoloCualitativo() {
+                var modalidad = ($("#notas_IdModalidad option:selected").text() || "").toLowerCase();
+                if (modalidad.includes("preescolar") || modalidad.includes("pre escolar")) return true;
+                var gradoTxt = $("#notas_IdGrado option:selected").text();
+                var grado = obtenerNumeroGrado(gradoTxt);
+                return grado === 1 || grado === 2;
+            }
+
+            function limpiarCuantitativos() {
+                $("#acumulado1_opt, #examen1_opt, #acumulado2_opt, #examen2_opt, #acumulado3_opt, #examen3_opt, #acumulado4_opt, #examen4_opt").val("");
+                $("#acumulado1, #examen1, #primerCorte, #acumulado2, #examen2, #segundoCorte, #acumulado3, #examen3, #tercerCorte, #acumulado4, #examen4, #cuartoCorte, #notaFinal").val("");
+                $("#primerCorteResumen, #segundoCorteResumen, #tercerCorteResumen, #cuartoCorteResumen").text("");
+            }
+
+            function sincronizarMixtoAntesDeGuardar() {
+                var pares = [
+                    { c: "#primerCorteCual", q: "#primerCorte" },
+                    { c: "#segundoCorteCual", q: "#segundoCorte" },
+                    { c: "#tercerCorteCual", q: "#tercerCorte" },
+                    { c: "#cuartoCorteCual", q: "#cuartoCorte" },
+                    { c: "#notaFinalCual", q: "#notaFinal" }
+                ];
+                pares.forEach(function (p) {
+                    var c = $(p.c).val();
+                    var qTxt = $(p.q).val();
+                    var q = qTxt === "" ? NaN : parseFloat(qTxt);
+                    if ((c === "" || c == null) && !isNaN(q)) $(p.c).val(numeroACualitativo(q));
+                    if ((qTxt === "" || qTxt == null) && c) {
+                        var eq = cualitativoANumero(c);
+                        if (eq != null) $(p.q).val(eq.toString());
+                    }
+                });
+            }
+
+            function aplicarReglaFormulario() {
+                var soloCuali = esSoloCualitativo();
+                if (soloCuali) {
+                    $("#bloqueCuantitativo").hide();
+                    limpiarCuantitativos();
+                    $("#reglaRegistroTexto").html("<strong>Regla activa:</strong> esta combinación se guarda solo en cualitativo.");
+                } else {
+                    $("#bloqueCuantitativo").show();
+                    $("#reglaRegistroTexto").html("<strong>Regla activa:</strong> esta combinación se guarda en cualitativo y cuantitativo.");
+                }
+            }
+
             $(".corte-cualitativo").on("change", function () {
                 var c1 = $("#primerCorteCual").val(), c2 = $("#segundoCorteCual").val(), c3 = $("#tercerCorteCual").val(), c4 = $("#cuartoCorteCual").val();
                 if (c1 && c2 && c3 && c4 && !$("#notaFinalCual").val()) {
@@ -241,6 +332,17 @@
             });
 
             $("#acumulado1_opt, #examen1_opt, #acumulado2_opt, #examen2_opt, #acumulado3_opt, #examen3_opt, #acumulado4_opt, #examen4_opt").on("input", actualizarCortesDesdeNumericos);
+            $("#notas_IdModalidad, #notas_IdGrado").on("change", aplicarReglaFormulario);
+            $("#formNotasCreate").on("submit", function () {
+                if (!$idAlumno.val() || $idAlumno.val() === "0") {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'warning', title: 'Alumno', text: 'Busque y elija un alumno de la lista.', confirmButtonText: 'Aceptar' });
+                    }
+                    return false;
+                }
+                if (!esSoloCualitativo()) sincronizarMixtoAntesDeGuardar();
+            });
+            aplicarReglaFormulario();
         });
     </script>
 
@@ -252,9 +354,10 @@
                 Swal.fire({
                     title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
      TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
+     TempData["Tipo"]?.ToString() == "error" ? "Error" :
      "Información")',
                     text: mensaje,
-                    icon: '@TempData["Tipo"]',
+                    icon: '@(TempData["Tipo"]?.ToString() == "success" ? "success" : TempData["Tipo"]?.ToString() == "warning" ? "warning" : TempData["Tipo"]?.ToString() == "error" ? "error" : "info")',
                     confirmButtonText: 'Aceptar'
                 });
             });

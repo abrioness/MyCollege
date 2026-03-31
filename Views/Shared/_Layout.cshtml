@@ -2,7 +2,7 @@
 @inject IHttpContextAccessor HttpContextAccessor *@
 @inject IConfiguration Configuration
 @* <nav style="background-color:royalblue;height:30%;">
-    
+
     <div class="header" style=" display: flex; justify-content: space-between; align-items: center; text-align: center; color: white;  padding: 1px 90px;">
         <img src="~/image/colegiosanfrancisco.png" alt="izquierda" class="logo-izquierda" style="width:8%;margin-left:55px">
 
@@ -162,7 +162,7 @@
                     <!-- Alumnos -->
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAlumnos"
-                           aria-expanded="false" aria-controls="collapseAlumnos" role="button">
+                        aria-expanded="false" aria-controls="collapseAlumnos" role="button">
 
                             <i class="bi bi-mortarboard-fill"></i>
                             <span>Alumnos</span>
@@ -180,7 +180,7 @@
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
-                           aria-expanded="false" aria-controls="collapseNotas" role="button">
+                        aria-expanded="false" aria-controls="collapseNotas" role="button">
                             <i class="bi bi-pencil-square"></i>
                             <span>Notas</span>
                         </a>
@@ -188,19 +188,20 @@
                             <div class="bg-white py-2 collapse-inner rounded">
 
                                 <a class="collapse-item" asp-controller="Notas" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar  Notas</a>
+                                 <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a> 
                                 @* <a class="collapse-item" asp-controller="Notas" asp-action="Edit">  Editar</a> *@
                                 @* <a class="collapse-item" asp-controller="PeriodoEvaluacion" asp-action="Create">  Período de Evaluación</a> *@
                             </div>
                         </div>
                     </li>
                 }
-              
+
                 <!-- productos -->
                 @if (User.IsInRole("Secretaria") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
-                           aria-expanded="false" aria-controls="collapseProducto" role="button">
+                        aria-expanded="false" aria-controls="collapseProducto" role="button">
                             <i class="bi bi-clipboard-check"></i>
                             <span>Inventario</span>
                         </a>
@@ -209,6 +210,7 @@
 
                                 <a class="collapse-item" asp-controller="Productos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Inventario</a>
                                 @* <a class="collapse-item" asp-controller="Login" asp-action="Login">Sesión</a> *@
+                                
 
                             </div>
                         </div>
@@ -218,7 +220,7 @@
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePagoCaja"
-                           aria-expanded="false" aria-controls="collapsePagoCaja" role="button">
+                        aria-expanded="false" aria-controls="collapsePagoCaja" role="button">
                             <i class="bi bi-cash-coin"></i>
                             <span>Caja</span>
                         </a>
@@ -229,22 +231,22 @@
                                 <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create"><i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Egresos</a>
 
                                 <a class="collapse-item" asp-controller="Pagos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Mensualidad</a>
-                                <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
-                                <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
-                                         @* <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Arqueo Diarío</a> *@
-                                <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
+                                @* <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a> *@
+                                @* <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a> *@
+                                @* <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Arqueo Diarío</a> *@
+                                @* <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a> *@
                                 <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
-                                
+
                             </div>
                         </div>
                     </li>
                 }
                 <!-- pagos -->
-                @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+                @if (User.IsInRole("Admin") || User.IsInRole("Cajero") || User.IsInRole("UserSystem"))
                 {
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
-                           aria-expanded="false" aria-controls="collapsePago">
+                        aria-expanded="false" aria-controls="collapsePago">
                             <i class="bi bi-collection"></i>
 
                             <span>Reportes</span>
@@ -255,6 +257,12 @@
                                 {
                                     <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
                                     <a class="collapse-item" asp-controller="Notas" asp-action="Index"><i class="bi bi-arrow-return-right text-black"></i> Reporte de Notas</a>
+                                }
+                                @if (User.IsInRole("Cajero"))
+                                {
+                                    <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
+                                    <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
                                 }
 
                                 <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>

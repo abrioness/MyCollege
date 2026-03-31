@@ -52,7 +52,8 @@ namespace WebColegio.Services
         #endregion
         #region Metodos Post
         Task<bool> PostAlumnosAsync(TblAlumno alumnos);
-        Task<bool> PostNotasAsync(TblNotas notas);
+        /// <summary>Guarda nota en la API. Detalle contiene mensaje de error si Exito es false.</summary>
+        Task<(bool Exito, string? Detalle)> PostNotasAsync(TblNotas notas);
         Task<bool> PostPagosAsync(TblPago pagos);
         Task<bool> PostFacturacionAsync(FacturaColegiatura factura);
         

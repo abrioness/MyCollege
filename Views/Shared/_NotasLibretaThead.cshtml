@@ -1,0 +1,52 @@
+@model bool
+@{
+    var esReporte = Model;
+}
+<thead class="table-light">
+    <tr>
+        @if (esReporte)
+        {
+            <th rowspan="3" class="align-middle text-nowrap">Alumno</th>
+            <th rowspan="3" class="align-middle">Modalidad</th>
+            <th rowspan="3" class="align-middle">Nivel</th>
+            <th rowspan="3" class="align-middle">Asignatura</th>
+        }
+        else
+        {
+            <th rowspan="3" class="align-middle">Asignatura</th>
+        }
+        <th colspan="6" class="text-center border">I SEMESTRE</th>
+        <th colspan="6" class="text-center border">II SEMESTRE</th>
+        <th colspan="2" class="text-center border">NOTA FINAL</th>
+        @if (esReporte)
+        {
+            <th rowspan="3" class="align-middle">Fecha registro</th>
+            <th rowspan="3" class="align-middle">Detalle</th>
+        }
+    </tr>
+    <tr>
+        <th colspan="2" class="text-center small border">I Corte eval.</th>
+        <th colspan="2" class="text-center small border">II Corte eval.</th>
+        <th colspan="2" class="text-center small border">I Semestre</th>
+        <th colspan="2" class="text-center small border">I Corte eval.</th>
+        <th colspan="2" class="text-center small border">II Corte eval.</th>
+        <th colspan="2" class="text-center small border">II Semestre</th>
+        <th colspan="2" class="text-center small border">Final</th>
+    </tr>
+    <tr>
+        <th class="small text-center">CUAL.</th>
+        <th class="small text-center">CUANT.</th>
+        <th class="small text-center">CUAL.</th>
+        <th class="small text-center">CUANT.</th>
+        <th class="small text-center">CUAL.</th>
+        <th class="small text-center">CUANT.</th>
+        <th class="small text-center">CUAL.</th>
+        <th class="small text-center">CUANT.</th>
+        <th class="small text-center">CUAL.</th>
+        <th class="small text-center">CUANT.</th>
+        <th class="small text-center">CUAL.</th>
+        <th class="small text-center">CUANT.</th>
+        <th class="small text-center">CUAL.</th>
+        <th class="small text-center">CUANT.</th>
+    </tr>
+</thead>

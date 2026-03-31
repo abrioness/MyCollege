@@ -1,0 +1,24 @@
+@model NotasLibretaCeldaModel
+@{
+    var n = Model.Nota;
+    var sc = Model.SoloCualitativo;
+    var mostrarCu = !sc;
+    var s1Cual = NotasDisplayHelper.PromedioCualitativoSemestre(n.PrimerCorteCualitativo, n.PrimerCorteCuantitativo, n.SegundoCorteCualitativo, n.SegundoCorteCuantitativo);
+    var s1Cuant = NotasDisplayHelper.PromedioDos(n.PrimerCorteCuantitativo, n.SegundoCorteCuantitativo);
+    var s2Cual = NotasDisplayHelper.PromedioCualitativoSemestre(n.TercerCorteCualitativo, n.TercerCorteCuantitativo, n.CuartoCorteCualitativo, n.CuartoCorteCuantitativo);
+    var s2Cuant = NotasDisplayHelper.PromedioDos(n.TercerCorteCuantitativo, n.CuartoCorteCuantitativo);
+}
+<td class="text-center">@NotasDisplayHelper.TextoCual(n.PrimerCorteCualitativo)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCuant(n.PrimerCorteCuantitativo, mostrarCu)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCual(n.SegundoCorteCualitativo)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCuant(n.SegundoCorteCuantitativo, mostrarCu)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCual(s1Cual)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCuant(s1Cuant, mostrarCu)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCual(n.TercerCorteCualitativo)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCuant(n.TercerCorteCuantitativo, mostrarCu)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCual(n.CuartoCorteCualitativo)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCuant(n.CuartoCorteCuantitativo, mostrarCu)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCual(s2Cual)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCuant(s2Cuant, mostrarCu)</td>
+<td class="text-center">@NotasDisplayHelper.TextoCual(n.NotaFinalCualitativo)</td>
+<td class="text-center">@(mostrarCu && n.NotaFinalCuantitativo.HasValue ? n.NotaFinalCuantitativo.Value.ToString("N2") : (mostrarCu ? "—" : ""))</td>

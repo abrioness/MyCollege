@@ -26,6 +26,9 @@ namespace WebColegio.Models.ViewModel
 
         public List<SelectListItem> periodoSelectListItem { get; set; } = new();
 
+        /// <summary>Año lectivo actual (CatPeriodo con Actual=true) para cabecera de detalle; evita mostrar período viejo de la ficha.</summary>
+        public string? PeriodoLectivoActualTexto { get; set; }
+
         /// <summary>Opciones para calificación cualitativa: AA, AS, AF, AI según rangos 0-100.</summary>
         public List<SelectListItem> NotasCualitativasSelectListItem { get; set; } = new();
     }

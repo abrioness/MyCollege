@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -84,46 +85,147 @@ namespace WebColegio.Controllers
                 return View(VieModelPagos);
             }
         }
+        // Tipos de movimiento alineados con registro de pagos (mensualidad / matrícula)
+        private const int TipoMovimientoMensualidad = 1;
+        private const int TipoMovimientoMatricula = 2;
+        private const int TipoMovimientoMatriculaAbono = 4;
+
         [Authorize]
         public async Task<ActionResult> EstadoCuenta()
         {
-
-            var _pagos = await _Iservices.GetPagosAsync();
-            var _alumnos = await _Iservices.GetAlumnosAsync();
-            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
-            var _tipoRecibo = await _Iservices.GetTipoReciboAsync();
-            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
-            var _meses = await _Iservices.GetMesesAsync();
-            var _notas = await _Iservices.GetNotasAsync();
-            var _periodo = await _Iservices.GetPeriodoAsync();
-            var _grados = await _Iservices.GetGradosAsync();
-            var _recinto = await _Iservices.GetRecintosAsync();
-
-
-
-            var VieModelEstadoCuenta = new ColeccionCatalogos
+            var pagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
+            var alumnos = (await _Iservices.GetAlumnosAsync())?.Where(a => a.Activo != false).ToList()
+                ?? new List<TblAlumno>();
+            var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodoRef = ObtenerPeriodoLectivoActual(periodos);
+            if (periodoRef == null)
             {
-                pagos = _pagos,
-                alumno = _alumnos,
-                tipoMovimiento = _tipoMovimiento,
-                tipoRecibo = _tipoRecibo,
-                metodoPago = _metodoPago,
-                meses = _meses,
-                periodo = _periodo,
-                grados = _grados,
-                recintos=_recinto
-
-            };
-            if (VieModelEstadoCuenta == null)
-            {
-                TempData["Message"] = "No hay estado de cuenta registradas";
-                return View("NotFound"); // Redirige a una vista de error o no encontrado
+                TempData["Message"] = "No hay período lectivo activo configurado.";
+                return View(new EstadoCuentaViewModel
+                {
+                    MensajePeriodo = "No hay período lectivo activo. Configure un período en catálogo con Activo y marque como Actual."
+                });
             }
-            else
+
+            int idPeriodoRef = periodoRef.IdPeriodo;
+            int anioPeriodo = periodoRef.Periodo;
+
+            var costosMen = await _Iservices.GetCostosMensualidadAsync() ?? new List<TblCostoMensualidad>();
+            var costosMat = await _Iservices.GetCostosMatriculaAsync() ?? new List<TblCostoMatricula>();
+            var grados = await _Iservices.GetGradosAsync() ?? new List<Grados>();
+            var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var mesesCatalog = await _Iservices.GetMesesAsync() ?? new List<TblCatMeses>();
+
+            var culturaEs = new CultureInfo("es-NI");
+            var nombresMes = Enumerable.Range(1, 12).Select(m =>
+                mesesCatalog.FirstOrDefault(x => x.IdMes == m)?.Mes?.Trim()
+                ?? culturaEs.DateTimeFormat.GetMonthName(m)).ToArray();
+
+            var filas = new List<EstadoCuentaFilaAlumno>();
+
+            foreach (var alumno in alumnos.OrderBy(a => a.Apellido).ThenBy(a => a.Nombre))
             {
-                TempData["Message"] = "Estado de Cuenta encontradas";
-                return View(VieModelEstadoCuenta);
+                if (!alumno.IdGrado.HasValue || !alumno.IdRecinto.HasValue || !alumno.IdModalidad.HasValue)
+                {
+                    filas.Add(new EstadoCuentaFilaAlumno
+                    {
+                        IdAlumno = alumno.IdAlumno,
+                        NombreCompleto = $"{alumno.Nombre} {alumno.Apellido}".Trim(),
+                        AnioPeriodo = anioPeriodo,
+                        DatosIncompletos = true,
+                        MotivoIncompleto = "Falta grado, recinto o modalidad en la ficha del alumno."
+                    });
+                    continue;
+                }
+
+                int idG = alumno.IdGrado!.Value;
+                int idR = alumno.IdRecinto!.Value;
+                int idMod = alumno.IdModalidad!.Value;
+
+                bool becaCompleta = alumno.BecaCompleta == true && alumno.IdPeriodo == idPeriodoRef;
+                bool mediaBeca = alumno.MediaBeca == true && alumno.IdPeriodo == idPeriodoRef;
+
+                var costoMen = costosMen.FirstOrDefault(c =>
+                    c.IdRecinto == idR && c.IdGrado == idG && c.IdModalidad == idMod &&
+                    c.IdPeriodo == idPeriodoRef && c.Activo);
+                decimal montoMensual = costoMen != null ? (decimal)costoMen.CostoMensualidad : 0m;
+                if (becaCompleta)
+                    montoMensual = 0m;
+                else if (mediaBeca && montoMensual > 0)
+                    montoMensual *= 0.5m;
+
+                var costoMat = costosMat.FirstOrDefault(c =>
+                    c.IdRecinto == idR && c.IdModalidad == idMod && c.IdPeriodo == idPeriodoRef && c.Activo);
+                decimal montoMat = costoMat != null ? (decimal)costoMat.CostoMatricula : 0m;
+
+                var pagosAlum = pagos.Where(p => p.IdAlumno == alumno.IdAlumno && p.IdPeriodo == idPeriodoRef && p.Activo).ToList();
+
+                decimal pagadoMat = pagosAlum
+                    .Where(p => p.IdTipoMovimiento == TipoMovimientoMatricula || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono)
+                    .Sum(p => p.Monto);
+                decimal saldoMat = Math.Max(0m, montoMat - pagadoMat);
+                bool matCancelada = montoMat <= 0m || saldoMat <= 0.01m;
+
+                var meses = new EstadoCuentaMesCelda[12];
+                decimal totalSaldoMeses = 0m;
+
+                for (int m = 1; m <= 12; m++)
+                {
+                    decimal pagadoMes = pagosAlum
+                        .Where(p => p.IdTipoMovimiento == TipoMovimientoMensualidad && p.IdMes == m)
+                        .Sum(p => p.Monto);
+                    decimal esperado = montoMensual;
+                    decimal saldo = Math.Max(0m, esperado - pagadoMes);
+                    bool cancelado = esperado <= 0m || saldo <= 0.01m;
+                    totalSaldoMeses += cancelado ? 0m : saldo;
+
+                    meses[m - 1] = new EstadoCuentaMesCelda
+                    {
+                        Mes = m,
+                        NombreMes = nombresMes[m - 1],
+                        MontoEsperado = esperado,
+                        MontoPagado = pagadoMes,
+                        Saldo = cancelado ? 0m : saldo,
+                        Cancelado = cancelado
+                    };
+                }
+
+                var ultimoPago = pagosAlum.OrderByDescending(p => p.IdPago).FirstOrDefault();
+
+                filas.Add(new EstadoCuentaFilaAlumno
+                {
+                    IdAlumno = alumno.IdAlumno,
+                    NombreCompleto = $"{alumno.Nombre} {alumno.Apellido}".Trim(),
+                    NombreGrado = grados.FirstOrDefault(g => g.IdGrado == idG)?.NombreGrado,
+                    Recinto = recintos.FirstOrDefault(r => r.IdRecinto == idR)?.Recinto,
+                    AnioPeriodo = anioPeriodo,
+                    MensualidadReferencia = montoMensual,
+                    MatriculaReferencia = montoMat,
+                    TotalPagadoMatricula = pagadoMat,
+                    SaldoMatricula = matCancelada ? 0m : saldoMat,
+                    MatriculaCancelada = matCancelada,
+                    Meses = meses,
+                    TotalSaldoMensualidades = totalSaldoMeses,
+                    GranTotalPendiente = (matCancelada ? 0m : saldoMat) + totalSaldoMeses,
+                    IdPagoParaEnlace = ultimoPago?.IdPago,
+                    SinTarifaMensualidad = costoMen == null && !becaCompleta && !mediaBeca
+                });
             }
+
+            TempData["Message"] = "Estado de cuenta por período lectivo actual y tarifas de catálogo.";
+            return View(new EstadoCuentaViewModel
+            {
+                AnioPeriodoReferencia = anioPeriodo,
+                MensajePeriodo = $"Período lectivo de referencia: {anioPeriodo} (Id {idPeriodoRef}). Mensualidad por grado/recinto/modalidad; matrícula por recinto/modalidad.",
+                Filas = filas
+            });
+        }
+
+        private static CatPeriodo? ObtenerPeriodoLectivoActual(IEnumerable<CatPeriodo>? periodos)
+        {
+            var lista = periodos?.Where(p => p.Activo).ToList() ?? new List<CatPeriodo>();
+            return lista.FirstOrDefault(p => p.Actual)
+                   ?? lista.OrderByDescending(p => p.Periodo).ThenByDescending(p => p.IdPeriodo).FirstOrDefault();
         }
         //Formato Matricula
 
