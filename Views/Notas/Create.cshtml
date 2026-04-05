@@ -44,6 +44,14 @@
                                 <span asp-validation-for="notas.IdGrado" class="text-danger"></span>
                 
             </div>
+                            <div class="form-group">
+                                <label asp-for="notas.IdColegio" class="control-label">Recinto (colegio)</label>
+                                <select asp-for="notas.IdColegio" asp-items="Model.recintosSelectListItem" class="form-select">
+                                    <option value="">Seleccione el recinto del alumno…</option>
+                                </select>
+                                <p class="text-muted small mb-0">Se rellena con el recinto de la ficha al elegir al alumno; puede corregirlo si aplica.</p>
+                                <span asp-validation-for="notas.IdColegio" class="text-danger"></span>
+                            </div>
                     <div class="form-group">
                         <label asp-for="notas.IdAsignatura" class="control-label">Asignatura</label>
                                 <select asp-for="notas.IdAsignatura" asp-items="Model.asignaturaSelectListItem" class="form-select" required>
@@ -211,6 +219,9 @@
                             } else if (res.mensaje && typeof Swal !== 'undefined') {
                                 Swal.fire({ icon: 'info', title: 'Matrícula', text: res.mensaje, confirmButtonText: 'Aceptar' });
                             }
+                            if (res.idRecinto != null && res.idRecinto !== undefined && Number(res.idRecinto) > 0) {
+                                $('#notas_IdColegio').val(String(res.idRecinto)).trigger('change');
+                            }
                         });
                     return false;
                 }
@@ -275,7 +286,7 @@
 
             function esSoloCualitativo() {
                 var modalidad = ($("#notas_IdModalidad option:selected").text() || "").toLowerCase();
-                if (modalidad.includes("preescolar") || modalidad.includes("pre escolar")) return true;
+                if (modalidad.includes("preescolar") || modalidad.includes("primaria")) return true;
                 var gradoTxt = $("#notas_IdGrado option:selected").text();
                 var grado = obtenerNumeroGrado(gradoTxt);
                 return grado === 1 || grado === 2;

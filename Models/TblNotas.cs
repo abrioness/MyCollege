@@ -36,6 +36,8 @@ namespace WebColegio.Models
 
         public string? Descripcion { get; set; }
 
+        public int?  IdColegio { get; set; }
+
         public bool Activo { get; set; }
 
         public int UsuarioRegistro { get; set; }

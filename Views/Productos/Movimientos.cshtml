@@ -5,6 +5,7 @@
     var desde = ViewBag.Desde as DateTime?;
     var hasta = ViewBag.Hasta as DateTime?;
     var idProducto = ViewBag.IdProducto as int?;
+    var tipoMovimiento = ViewBag.TipoMovimiento as int?;
     string NombreProducto(int id)
     {
         var p = productos.FirstOrDefault(x => x.IdProducto == id);
@@ -29,7 +30,7 @@
                         <label class="form-label">Hasta</label>
                         <input type="date" name="hasta" class="form-control" value="@(hasta?.ToString("yyyy-MM-dd"))" />
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Producto</label>
                         <select name="idProducto" class="form-select">
                             <option value="">Todos</option>
@@ -46,7 +47,36 @@
                             }
                         </select>
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label">Tipo de movimiento</label>
+                        <select name="tipoMovimiento" class="form-select">
+                            @if (tipoMovimiento == null)
+                            {
+                                <option value="" selected="selected">Todos</option>
+                            }
+                            else
+                            {
+                                <option value="">Todos</option>
+                            }
+                            @if (tipoMovimiento == 1)
+                            {
+                                <option value="1" selected="selected">Entrada</option>
+                            }
+                            else
+                            {
+                                <option value="1">Entrada</option>
+                            }
+                            @if (tipoMovimiento == 2)
+                            {
+                                <option value="2" selected="selected">Salida</option>
+                            }
+                            else
+                            {
+                                <option value="2">Salida</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary">Filtrar</button>
                     </div>
                 </div>
@@ -66,7 +96,7 @@
                     <tbody>
                         @if (Model != null && Model.Any())
                         {
-                            @foreach (var m in Model.OrderByDescending(x => x.FechaMovimiento))
+                            @foreach (var m in Model)
                             {
                                 <tr>
                                     <td>@m.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>

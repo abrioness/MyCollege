@@ -20,6 +20,9 @@ namespace WebColegio.Models.ViewModel
 
         public List<SelectListItem> gradosSelectListItem { get; set; } = new();
 
+        /// <summary>Recintos (colegio/sede); mapea a <c>TblNotas.IdColegio</c> = <c>Recintos.IdRecinto</c>.</summary>
+        public List<SelectListItem> recintosSelectListItem { get; set; } = new();
+
         public List<SelectListItem> periodoEvaluacionsSelectListItem { get; set; } = new();
 
         public List<SelectListItem> sexoSelectListItem { get; set; } = new();

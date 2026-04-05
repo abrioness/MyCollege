@@ -188,7 +188,7 @@
                             <div class="bg-white py-2 collapse-inner rounded">
 
                                 <a class="collapse-item" asp-controller="Notas" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar  Notas</a>
-                                 <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a> 
+                                <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a> 
                                 @* <a class="collapse-item" asp-controller="Notas" asp-action="Edit">  Editar</a> *@
                                 @* <a class="collapse-item" asp-controller="PeriodoEvaluacion" asp-action="Create">  Período de Evaluación</a> *@
                             </div>
@@ -210,7 +210,7 @@
 
                                 <a class="collapse-item" asp-controller="Productos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Inventario</a>
                                 @* <a class="collapse-item" asp-controller="Login" asp-action="Login">Sesión</a> *@
-                                
+
 
                             </div>
                         </div>
@@ -264,16 +264,17 @@
                                     <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
                                     <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
                                 }
+                                @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+                                {
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
+                                    <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
+                                    <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Egreso</a>
 
-                                <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
-                                <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
-                                <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Egreso</a>
 
-                    
 
-                                <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
-                                <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
-
+                                    <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
+                                    <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
+                                }
 
                             </div>
                         </div>
@@ -341,7 +342,9 @@
 *@ 
 
     <div class="header topbar-header">
-                        <img src="~/image/colegiosanfrancisco.png" alt="Colegio" class="logo-izquierda">
+                        <div class="topbar-logo-wrap">
+                            <img src="~/image/colegiosanfrancisco.png" alt="Colegio Parroquial San Francisco Javier" class="logo-izquierda">
+                        </div>
 
                         <div class="titulo" style="flex: 1;">
                             <span class="nombre" style="font-size: 25px;
@@ -350,7 +353,9 @@
                             <span class="lema" style="font-size: 20px;font-family: 'Arial', 'Trebuchet MS', sans-serif;">“En Todo Amar y Servir”</span>
                         </div>
 
-                        <img src="~/image/SanFrancisco.png" alt="derecha" class="logo-derecha" style="width:28%;">
+                        <div class="topbar-logo-wrap">
+                            <img src="~/image/SanFrancisco.png" alt="Emblema San Francisco" class="logo-derecha">
+                        </div>
 
                     </div>
 
@@ -378,7 +383,7 @@
                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-light small">Cerrar Sesión</span>
                                 <img class="img-profile rounded-circle"
-                                     src="~/Image/SanFrancisco.png" />
+                                     src="~/image/SanFrancisco.png" alt="" />
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -702,6 +707,7 @@
         display: flex !important;
         align-items: center !important;
         flex-wrap: nowrap !important;
+        overflow: visible !important;
     }
     .topbar-nav .navbar-nav { flex-shrink: 0 !important; }
     .topbar-header {
@@ -713,18 +719,28 @@
         padding: 0.5rem 1rem !important;
         flex: 1 !important;
         min-width: 0 !important;
+        overflow: visible !important;
     }
-    .topbar-header .logo-izquierda {
-        width: auto !important;
-        max-height: 50px !important;
-        margin-right: 0.75rem !important;
-        flex-shrink: 0 !important;
+    /* Contenedor fijo: evita que % o el flex recorten el logo al cambiar de vista */
+    .topbar-header .topbar-logo-wrap {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        max-width: min(160px, 26vw) !important;
+        max-height: 56px !important;
+        overflow: hidden !important;
     }
+    .topbar-header .logo-izquierda,
     .topbar-header .logo-derecha {
         width: auto !important;
-        max-height: 50px !important;
-        margin-left: 0.75rem !important;
-        flex-shrink: 0 !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: 52px !important;
+        object-fit: contain !important;
+        object-position: center center !important;
+        display: block !important;
+        margin: 0 !important;
     }
     .topbar-header .titulo {
         flex: 1 !important;
@@ -750,8 +766,9 @@
     }
     @@media (max-width: 576px) {
         .topbar-header { padding: 0.35rem 0.5rem !important; }
+        .topbar-header .topbar-logo-wrap { max-width: min(120px, 32vw) !important; max-height: 44px !important; }
         .topbar-header .logo-izquierda,
-        .topbar-header .logo-derecha { max-height: 36px !important; }
+        .topbar-header .logo-derecha { max-height: 40px !important; }
     }
 
     /* Pantallas pequeñas: sidebar oculto por defecto, se abre con el botón (no se expande al 100%) */

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
+using WebColegio.Helpers;
 using WebColegio.Services;
 using WebColegio.Views.Shared;
 
@@ -97,6 +98,8 @@ namespace WebColegio.Controllers
             if (alumno == null || alumno.IdAlumno <= 0)
                 return Json(new { ok = false, mensaje = "No se encontró el alumno." });
 
+            int? idRecintoAlumno = alumno.IdRecinto;
+
             var matriculaEnPeriodoActual = periodoActual == null
                 || !alumno.IdPeriodo.HasValue
                 || alumno.IdPeriodo.Value == periodoActual.IdPeriodo;
@@ -107,19 +110,21 @@ namespace WebColegio.Controllers
                 {
                     ok = false,
                     matriculaEnPeriodoActual = false,
-                    mensaje = "La ficha del alumno no está en el período lectivo actual. Seleccione modalidad y nivel manualmente o actualice la matrícula."
+                    mensaje = "La ficha del alumno no está en el período lectivo actual. Seleccione modalidad y nivel manualmente o actualice la matrícula.",
+                    idRecinto = idRecintoAlumno
                 });
             }
 
             if (!alumno.IdModalidad.HasValue || !alumno.IdGrado.HasValue)
-                return Json(new { ok = false, mensaje = "El alumno no tiene modalidad o grado registrados en su ficha." });
+                return Json(new { ok = false, mensaje = "El alumno no tiene modalidad o grado registrados en su ficha.", idRecinto = idRecintoAlumno });
 
             return Json(new
             {
                 ok = true,
                 matriculaEnPeriodoActual = true,
                 idModalidad = alumno.IdModalidad.Value,
-                idGrado = alumno.IdGrado.Value
+                idGrado = alumno.IdGrado.Value,
+                idRecinto = idRecintoAlumno
             });
         }
 
@@ -137,22 +142,16 @@ namespace WebColegio.Controllers
 
             IQueryable<TblNotas> query = _notas.AsQueryable();
 
-            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
-            if (fechainicio.HasValue)
-            {
-                // Normalizar la fecha de inicio al inicio del día (00:00:00)
-                var fechaInicioNormalizada = fechainicio.Value.Date;
-                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
-            }
-            if (fechafin.HasValue)
-            {
-                // Normalizar la fecha de fin al final del día (23:59:59)
-                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
-                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
-            }
+            var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
+            if (ini.HasValue)
+                query = query.Where(a => a.FechaRegistro.Date >= ini.Value.Date);
+            if (fin.HasValue)
+                query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
 
-            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
-            var notasFiltrados = query.ToList();
+            var notasFiltrados = query
+                .OrderByDescending(a => a.FechaRegistro)
+                .ThenByDescending(a => a.IdNota)
+                .ToList();
             var VieModelNotas = new ColeccionCatalogos
             {
                 notas = notasFiltrados,
@@ -373,6 +372,14 @@ namespace WebColegio.Controllers
                                       Text = r.NombreGrado,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
+                recintosSelectListItem = (await _Iservices.GetRecintosAsync())
+                    .Where(r => r.Activo)
+                    .OrderBy(r => r.Recinto)
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdRecinto.ToString(),
+                        Text = r.Recinto
+                    }).ToList(),
                 periodoEvaluacionsSelectListItem = periodosEval
                     .Where(p => p.Activo)
                     .OrderBy(p => p.FechaInicio)
@@ -434,6 +441,12 @@ namespace WebColegio.Controllers
                     notas.Activo = true;
                     notas.UsuarioRegistro = idUsuario;
                     notas.FechaRegistro = DateTime.Now;
+                    if (!notas.IdColegio.HasValue || notas.IdColegio <= 0)
+                    {
+                        var alumnoFicha = await _Iservices.GetAlumnoIdAsync(notas.IdAlumno);
+                        if (alumnoFicha?.IdRecinto is int idRec && idRec > 0)
+                            notas.IdColegio = idRec;
+                    }
                     var modalidad = (await _Iservices.GetModalidadesAsync())
                         .FirstOrDefault(m => m.IdModalidad == notas.IdModalidad)?.Modalidad;
                     var nombreGrado = (await _Iservices.GetGradosAsync())
@@ -531,6 +544,14 @@ namespace WebColegio.Controllers
                                       Text = r.NombreGrado,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList(),
+                recintosSelectListItem = (await _Iservices.GetRecintosAsync())
+                    .Where(r => r.Activo)
+                    .OrderBy(r => r.Recinto)
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdRecinto.ToString(),
+                        Text = r.Recinto
+                    }).ToList(),
                 asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
                                   .Select(r => new SelectListItem
                                   {
@@ -571,6 +592,12 @@ namespace WebColegio.Controllers
 
                 if (!ModelState.IsValid)
                 {
+                    if ((!n.IdColegio.HasValue || n.IdColegio <= 0) && n.IdAlumno > 0)
+                    {
+                        var alumnoEd = await _Iservices.GetAlumnoIdAsync(n.IdAlumno);
+                        if (alumnoEd?.IdRecinto is int idRecEd && idRecEd > 0)
+                            n.IdColegio = idRecEd;
+                    }
 
                     var actualizado = await _Iservices.UpdateNotas(viewModel.notas);
 
@@ -604,6 +631,14 @@ namespace WebColegio.Controllers
                                       Text = r.NombreAsignatura,
                                       //Selected = r.IdPregunta == respuestas.IdPregunta
                                   }).ToList();
+                viewModel.recintosSelectListItem = (await _Iservices.GetRecintosAsync())
+                    .Where(r => r.Activo)
+                    .OrderBy(r => r.Recinto)
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdRecinto.ToString(),
+                        Text = r.Recinto
+                    }).ToList();
 
                
                 return View(viewModel);

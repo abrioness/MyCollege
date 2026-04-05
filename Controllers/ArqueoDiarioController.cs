@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using WebColegio.Models;
+using WebColegio.Helpers;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -25,13 +26,15 @@ namespace WebColegio.Controllers
             var arqueos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
             var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
 
+            var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
+
             // Solo arqueos activos, serie A
             arqueos = arqueos.Where(a => a.Activo && a.Serie == "A").OrderByDescending(a => a.FechaRegistro).ToList();
 
-            if (fechainicio.HasValue)
-                arqueos = arqueos.Where(a => a.FechaRegistro.Date >= fechainicio.Value.Date).ToList();
-            if (fechafin.HasValue)
-                arqueos = arqueos.Where(a => a.FechaRegistro.Date <= fechafin.Value.Date).ToList();
+            if (ini.HasValue)
+                arqueos = arqueos.Where(a => a.FechaRegistro.Date >= ini.Value.Date).ToList();
+            if (fin.HasValue)
+                arqueos = arqueos.Where(a => a.FechaRegistro.Date <= fin.Value.Date).ToList();
             if (idRecinto.HasValue && idRecinto.Value > 0)
                 arqueos = arqueos.Where(a => a.IdRecinto == idRecinto.Value).ToList();
 
@@ -39,8 +42,8 @@ namespace WebColegio.Controllers
             {
                 ListaArqueos = arqueos,
                 Recintos = recintos.Where(r => r.Activo).ToList(),
-                FechaInicio = fechainicio,
-                FechaFin = fechafin,
+                FechaInicio = ini,
+                FechaFin = fin,
                 IdRecintoFilter = idRecinto
             };
             return View(model);

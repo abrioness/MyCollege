@@ -45,6 +45,13 @@
                             <span asp-validation-for="notas.IdGrado" class="text-danger"></span>
 
                         </div>
+                        <div class="form-group">
+                            <label asp-for="notas.IdColegio" class="control-label">Recinto (colegio)</label>
+                            <select asp-for="notas.IdColegio" asp-items="Model.recintosSelectListItem" class="form-select">
+                                <option value="">Seleccione el recinto…</option>
+                            </select>
+                            <span asp-validation-for="notas.IdColegio" class="text-danger"></span>
+                        </div>
                 <div class="form-group">
                     <label asp-for="notas.IdAsignatura" class="control-label">Asignatura</label>
                     <select asp-for="notas.IdAsignatura" asp-items="Model.asignaturaSelectListItem" class="form-select" required>

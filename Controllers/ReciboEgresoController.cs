@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using WebColegio.Models;
+using WebColegio.Helpers;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
 
@@ -29,22 +30,16 @@ namespace WebColegio.Controllers
 
             IQueryable<TblEgreso> query = _egresos.AsQueryable();
 
-            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
-            if (fechainicio.HasValue)
-            {
-                // Normalizar la fecha de inicio al inicio del día (00:00:00)
-                var fechaInicioNormalizada = fechainicio.Value.Date;
-                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
-            }
-            if (fechafin.HasValue)
-            {
-                // Normalizar la fecha de fin al final del día (23:59:59)
-                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
-                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
-            }
+            var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
+            if (ini.HasValue)
+                query = query.Where(a => a.FechaRegistro.Date >= ini.Value.Date);
+            if (fin.HasValue)
+                query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
 
-            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
-            var egresosFiltrados = query.ToList();
+            var egresosFiltrados = query
+                .OrderByDescending(a => a.FechaRegistro)
+                .ThenByDescending(a => a.IdEgreso)
+                .ToList();
 
             var VieModelEgresado = new ColeccionCatalogos
             {

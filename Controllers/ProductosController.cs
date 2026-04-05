@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebColegio.Models;
+using WebColegio.Helpers;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
 
@@ -32,22 +33,16 @@ namespace WebColegio.Controllers
 
             IQueryable<Productos> query = _productos.AsQueryable();
 
-            // Aplicar filtros de manera acumulativa sin ejecutar la consulta
-            if (fechainicio.HasValue)
-            {
-                // Normalizar la fecha de inicio al inicio del día (00:00:00)
-                var fechaInicioNormalizada = fechainicio.Value.Date;
-                query = query.Where(a => a.FechaRegistro >= fechaInicioNormalizada);
-            }
-            if (fechafin.HasValue)
-            {
-                // Normalizar la fecha de fin al final del día (23:59:59)
-                var fechaFinNormalizada = fechafin.Value.Date.AddDays(1).AddTicks(-1);
-                query = query.Where(a => a.FechaRegistro <= fechaFinNormalizada);
-            }
+            var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
+            if (ini.HasValue)
+                query = query.Where(a => a.FechaRegistro.Date >= ini.Value.Date);
+            if (fin.HasValue)
+                query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
 
-            // Ejecutar la consulta SOLO al final, después de aplicar todos los filtros
-            var productosFiltrados = query.ToList();
+            var productosFiltrados = query
+                .OrderByDescending(a => a.FechaRegistro)
+                .ThenByDescending(a => a.IdProducto)
+                .ToList();
 
             if (_usuarioId.IdRol == 2 || _usuarioId.IdRol == 5)
             {
@@ -56,7 +51,7 @@ namespace WebColegio.Controllers
                 var viewModel = new ColeccionCatalogos
                 {
 
-                    producto = query.Where(r => r.UsuarioRegistro == idUsuario).ToList(),
+                    producto = productosFiltrados.Where(r => r.UsuarioRegistro == idUsuario).ToList(),
                     categoriasProducto = _categoriaProducto,
                     movinventario = _movInvebtario
                 };
@@ -254,15 +249,37 @@ namespace WebColegio.Controllers
 
         /// <summary>Reporte de entradas y salidas de inventario para trazabilidad.</summary>
         [HttpGet]
-        public async Task<ActionResult> Movimientos(DateTime? desde, DateTime? hasta, int? idProducto)
+        public async Task<ActionResult> Movimientos(DateTime? desde, DateTime? hasta, int? idProducto, int? tipoMovimiento)
         {
-            var movimientos = await _Iservices.GetMovimientosInventarioAsync(idProducto, desde, hasta);
+            var (ini, fin) = ReporteFechaQuery.ResolverRangoPorClaves(Request, desde, hasta, "desde", "hasta");
+
+            int? idProd = idProducto is > 0 ? idProducto : null;
+            if (!idProd.HasValue && int.TryParse(Request.Query["idProducto"].FirstOrDefault(), out var idP) && idP > 0)
+                idProd = idP;
+
+            int? tipoMov = tipoMovimiento is 1 or 2 ? tipoMovimiento : null;
+            if (!tipoMov.HasValue && int.TryParse(Request.Query["tipoMovimiento"].FirstOrDefault(), out var tm) && tm is 1 or 2)
+                tipoMov = tm;
+
+            var movimientos = await _Iservices.GetMovimientosInventarioAsync(idProd, ini, fin);
+            var lista = (movimientos ?? new List<MovimientoInventario>()).ToList();
+
+            if (ini.HasValue)
+                lista = lista.Where(m => m.FechaMovimiento.Date >= ini.Value.Date).ToList();
+            if (fin.HasValue)
+                lista = lista.Where(m => m.FechaMovimiento.Date <= fin.Value.Date).ToList();
+            if (tipoMov.HasValue)
+                lista = lista.Where(m => m.TipoMovimiento == tipoMov.Value).ToList();
+
+            lista = lista.OrderByDescending(m => m.FechaMovimiento).ThenByDescending(m => m.IdInventario).ToList();
+
             var productos = await _Iservices.GetProductosAsync();
             ViewBag.Productos = productos ?? new List<Productos>();
-            ViewBag.Desde = desde;
-            ViewBag.Hasta = hasta;
-            ViewBag.IdProducto = idProducto;
-            return View(movimientos ?? new List<MovimientoInventario>());
+            ViewBag.Desde = ini;
+            ViewBag.Hasta = fin;
+            ViewBag.IdProducto = idProd;
+            ViewBag.TipoMovimiento = tipoMov;
+            return View(lista);
         }
 
         // GET: ProductosController/Delete/5
