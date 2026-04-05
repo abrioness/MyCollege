@@ -50,6 +50,9 @@ namespace WebColegio.Models.ViewModel
 
         /// <summary>True si el usuario es Admin y puede elegir recinto; false para Cajero (solo su recinto).</summary>
         public bool EsAdministrador { get; set; }
+
+        /// <summary>Tras guardar con éxito, abrir el diálogo de impresión al cerrar el mensaje.</summary>
+        public bool AbrirImpresion { get; set; }
     }
 
     public class IngresoDto

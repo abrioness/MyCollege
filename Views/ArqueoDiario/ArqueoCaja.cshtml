@@ -1,13 +1,16 @@
 @model WebColegio.Models.ViewModel.ArqueoDiarioViewModel
+@using System.Globalization
 
 @{
     Layout = null; // Para que se imprima sin master page
+    var cultInv = CultureInfo.InvariantCulture;
+    var requiereRecintoAdmin = Model.EsAdministrador && Model.TblRecintos != null && Model.TblRecintos.Any(r => r.Activo);
 }
 
 <html>
 <head>
     <link href="~/css/denominacionesarqueo.css" rel="stylesheet" />
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="seleccion-recinto no-print" style="margin: 1rem 0; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
@@ -54,6 +57,7 @@
         }
     </div>
     <form method="post" asp-action="Create" enctype="multipart/form-data" id="formArqueo">
+        <input type="hidden" asp-for="Fecha" />
         <div class="titulo">
             @* <h3>@Model.Colegio</h3> *@
             <div class="subtitulo">
@@ -115,7 +119,7 @@
         }
 
         <p class="totales">Total Ingresos: @Model.TotalIngresos.ToString("C")</p>
-        <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@Model.TotalIngresos"/>
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@Model.TotalIngresos.ToString(cultInv)" />
         <!-- Egresos -->
         <h4>Egresos</h4>
         <table>
@@ -143,7 +147,7 @@
         }  *@
 
         <p class="totales">Total Egresos: @Model.TotalEgresos.ToString("C")</p>
-        <input type="hidden" asp-for="@Model.arqueoDiario.TotalEgreso" value="@Model.TotalEgresos" />
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalEgreso" value="@Model.TotalEgresos.ToString(cultInv)" />
         
        
         <p class="totales">TOTAL DE EFECTIVO A ENTREGAR: @totalEfectivoEntregar.ToString("C")</p>
@@ -320,7 +324,7 @@
         <p class="totales" id="lineaDiferencia" style="font-weight: bold;">
             Diferencia (Efectivo a entregar − Detalle dinero): <u id="valorDiferencia">C$ 0.00</u> <span id="tipoDiferencia"></span>
         </p>
-            <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleEfectivo" value="@totalEfectivoEntregar" />
+            <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleEfectivo" value="@totalEfectivoEntregar.ToString(cultInv)" />
     </div>
 
         <p class="totales">
@@ -341,13 +345,12 @@
 
     <br />
     
-    <button class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
+    <button type="button" class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
 
-   
-        <button type="submit" class="btn btn-primary">
+        <button type="submit" id="btnGuardarArqueo" class="btn btn-primary no-print">
             <i class="bi bi-save"></i> Guardar Arqueo
         </button>
- 
+
     </form>
 </body>
 
@@ -372,17 +375,30 @@
         if (checked) document.getElementById("IdRecintoHidden").value = checked.value;
     });
 
-    // Validar que se haya elegido un recinto antes de guardar (solo aplica si hay selector de recinto)
+    // Evitar doble envío y validar recinto (solo Admin con lista)
+    var envioArqueoEnCurso = false;
     document.getElementById("formArqueo").addEventListener("submit", function (e) {
-        var idRecinto = document.getElementById("IdRecintoHidden").value;
-        if (!idRecinto || idRecinto === "0") {
+        if (envioArqueoEnCurso) {
             e.preventDefault();
-            if (typeof Swal !== "undefined") {
-                Swal.fire({ title: "Atención", text: "Debe seleccionar el recinto a arquear.", icon: "warning", confirmButtonText: "Aceptar" });
-            } else {
-                alert("Debe seleccionar el recinto a arquear.");
-            }
             return false;
+        }
+        if (@(requiereRecintoAdmin ? "true" : "false")) {
+            var idRecinto = document.getElementById("IdRecintoHidden").value;
+            if (!idRecinto || idRecinto === "0") {
+                e.preventDefault();
+                if (typeof Swal !== "undefined") {
+                    Swal.fire({ title: "Atención", text: "Debe seleccionar el recinto a arquear.", icon: "warning", confirmButtonText: "Aceptar" });
+                } else {
+                    alert("Debe seleccionar el recinto a arquear.");
+                }
+                return false;
+            }
+        }
+        envioArqueoEnCurso = true;
+        var btn = document.getElementById("btnGuardarArqueo");
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando…';
         }
     });
 
@@ -520,17 +536,41 @@
 </script>
 @if (TempData["Mensaje"] != null)
 {
+    var tipoMsg = TempData["Tipo"]?.ToString() ?? "info";
+    var tituloMsg = tipoMsg == "success" ? "Éxito" : tipoMsg == "warning" ? "Atención" : "Información";
+    var iconoSwal = tipoMsg == "success" ? "success" : tipoMsg == "warning" ? "warning" : "info";
+    var abrirImpresion = Model.AbrirImpresion;
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
-            Swal.fire({
-                title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
-     TempData["Tipo"]?.ToString() == "warning" ? "Atención" :
-     "Información")',
-                text: mensaje,
-                icon: '@TempData["Tipo"]',
-                confirmButtonText: 'Aceptar'
-            });
+            var titulo = @Html.Raw(Json.Serialize(tituloMsg));
+            var icono = @Html.Raw(Json.Serialize(iconoSwal));
+            var abrirImpresion = @(abrirImpresion ? "true" : "false");
+            function despuesMensaje() {
+                if (abrirImpresion) {
+                    setTimeout(function () { window.print(); }, 400);
+                }
+            }
+            if (typeof Swal !== "undefined" && typeof Swal.fire === "function") {
+                Swal.fire({
+                    title: titulo,
+                    text: mensaje,
+                    icon: icono,
+                    confirmButtonText: abrirImpresion ? "Aceptar e imprimir" : "Aceptar"
+                }).then(function () { despuesMensaje(); });
+            } else {
+                window.alert(titulo + "\n\n" + mensaje);
+                despuesMensaje();
+            }
+        });
+    </script>
+}
+else if (Model.AbrirImpresion)
+{
+    @* Mensaje consumido pero quedó solo la impresión (caso raro) *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            setTimeout(function () { window.print(); }, 400);
         });
     </script>
 }

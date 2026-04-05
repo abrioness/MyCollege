@@ -1210,39 +1210,33 @@ namespace WebColegio.Services
             return list;
         }
 
-        public async Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo)
+        public async Task<(bool Ok, string? ErrorMessage)> PostArqueoDiarioAsync(TblArqueoDiario arqueo)
         {
-            bool respuesta = false;
-                    
             try
             {
                 using (var httpClient = new HttpClient())
                 {
-                    // Serializar el objeto alumno
                     string jsonArqueo = JsonConvert.SerializeObject(arqueo);
                     var content = new StringContent(jsonArqueo, Encoding.UTF8, "application/json");
 
-                    // Enviar POST
                     var response = await httpClient.PostAsync(url + "api/TblArqueoDiarios", content);
 
                     if (response.IsSuccessStatusCode)
-                    {
-                        respuesta = true;
-                    }
-                    else
-                    {
-                        // Para debug: mostrar mensaje de error
-                        var errorMsg = await response.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Error en POST: " + errorMsg);
-                    }
+                        return (true, null);
+
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine("Error en POST TblArqueoDiarios: " + (int)response.StatusCode + " " + errorMsg);
+                    var brief = string.IsNullOrWhiteSpace(errorMsg)
+                        ? $"HTTP {(int)response.StatusCode}"
+                        : (errorMsg.Length > 500 ? errorMsg.Substring(0, 500) + "…" : errorMsg);
+                    return (false, brief);
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("Excepción en PostArqueoAsync: " + ex.Message);
+                return (false, ex.Message);
             }
-
-            return respuesta;
         }
         //Post registro de usuarios
         public async Task<bool> PostUsuarios(TblUsuarios usuario)

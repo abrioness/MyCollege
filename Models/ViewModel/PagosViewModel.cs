@@ -29,6 +29,8 @@ namespace WebColegio.Models.ViewModel
         public string? DetalleMesesRecibo { get; set; }
         public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
         public List<TblPago> listPagos {get;set;} = new();
+
+        public List<CatPeriodo> listPeriodos { get; set; } = new();
        
         public List<SelectListItem> pagosSelectListItem { get; set; } = new();
         public List<SelectListItem> alumnosSelectListItem { get; set; } = new();

@@ -328,6 +328,7 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Create()
         {
             var recibos = await _Iservices.GetPagosAsync();
+            //var periodos = await _Iservices.GetPeriodoAsync();
             var maxNumero = recibos
                .Where(r => r.Serie == "A")
                .Max(r => (int?)r.NumeroRecibo);
@@ -335,7 +336,7 @@ namespace WebColegio.Controllers
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
             var viewmodel = new PagosViewModel
             {
-
+                //listPeriodos = periodos,
                 SiguienteNumero = siguienteNumero,
                 tipoMovimientoSelectListItem = (await _Iservices.GetTipoMovimientoAsync())
                                    .Select(r => new SelectListItem
@@ -358,10 +359,10 @@ namespace WebColegio.Controllers
                                        Text = r.MetodoPago,
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
-                    meses = (await _Iservices.GetMesesAsync()),
-                
-                periodo = (await _Iservices.GetPeriodoAsync())
-                .Select(r=> new SelectListItem
+                meses = (await _Iservices.GetMesesAsync()),
+
+                periodo = ( _Iservices.GetPeriodoAsync().Result.Where(a => a.Activo == true && a.Actual==true))
+                .Select(r => new SelectListItem
                 {
 
                     Value = r.IdPeriodo.ToString(),
@@ -722,13 +723,9 @@ namespace WebColegio.Controllers
                                 return RedirectToAction("Create", "Pagos");
                             }
                             
-                            // Mes que paga con la matrícula: el mes en que se presenta (ej. marzo → paga matrícula + marzo)
-                            // Preescolar puede matricular hasta junio; traslado hasta agosto.
-                            int primerMesMatricula = 1;
-                            if (pagos.Pago.FechaEmision.HasValue)
-                                primerMesMatricula = Math.Clamp(pagos.Pago.FechaEmision.Value.Month, 1, 12);
-                            else
-                                primerMesMatricula = Math.Clamp(DateTime.Now.Month, 1, 12);
+                            // Mensualidad que acompaña a matrícula completa: siempre se registra como ENERO (IdMes = 1).
+                            // No usar el mes calendario de la fecha de matrícula (ej. matricular en marzo no implica IdMes=3).
+                            const int idMesMensualidadConMatricula = 1;
                             
                             decimal restarMensualidad = await ObtenerMensualidadDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula);
                             decimal obtenerMat = await ObtenerMatriculaDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, periodoMatricula);
@@ -804,7 +801,7 @@ namespace WebColegio.Controllers
                                     IdAlumno = pagos.Pago.IdAlumno,
                                     NumeroRecibo = pagos.Pago.NumeroRecibo,
                                     Anyo = pagos.Pago.Anyo,
-                                    IdMes = primerMesMatricula,
+                                    IdMes = idMesMensualidadConMatricula,
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
                                     IdTipoMovimiento = 1,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,
@@ -824,7 +821,7 @@ namespace WebColegio.Controllers
                                 response = await _Iservices.PostPagosAsync(pagoprimermes);
                                 if (response)
                                 {
-                                    // Redirigir al recibo del pago de matrícula (tipoMovimiento Matrícula), no al del primer mes
+                                    // Redirigir al recibo del pago de matrícula (tipoMovimiento Matrícula), no al del mes de enero
                                     int idParaRecibo = idPagoMatricula > 0 ? idPagoMatricula : (await _Iservices.GetPagosAsync()).Max(a => a.IdPago);
                                     TempData["Mensaje"] = "Pago registrado correctamente.";
                                     TempData["Tipo"] = "success";
@@ -861,13 +858,13 @@ namespace WebColegio.Controllers
                                     .Select(p => p.IdPago)
                                     .FirstOrDefault();
                                 
-                                // Crear el pago del primer mes con el valor de la mensualidad (mes en que se matricula)
+                                // Mensualidad de enero con el valor de la mensualidad del grado
                                 var pagoprimermes = new TblPago
                                 {
                                     IdAlumno = pagos.Pago.IdAlumno,
                                     NumeroRecibo = pagos.Pago.NumeroRecibo,
                                     Anyo = pagos.Pago.Anyo,
-                                    IdMes = primerMesMatricula,
+                                    IdMes = idMesMensualidadConMatricula,
                                     IdTipoRecibo = pagos.Pago.IdTipoRecibo,
                                     IdTipoMovimiento = 1,
                                     IdMetodoPago = pagos.Pago.IdMetodoPago,

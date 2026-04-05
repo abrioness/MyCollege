@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using WebColegio.Models;
@@ -74,80 +77,98 @@ namespace WebColegio.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(ArqueoDiarioViewModel arqueoDia)
         {
+            var fechaReporte = arqueoDia?.Fecha != default && arqueoDia.Fecha.Year > 1
+                ? arqueoDia.Fecha.Date
+                : DateTime.Now.Date;
+            var idRecPost = arqueoDia?.arqueoDiario?.IdRecinto;
+            int? idRecintoCtx = (idRecPost ?? 0) > 0 ? idRecPost : null;
 
-            bool response = false;
+            if (arqueoDia?.arqueoDiario == null)
+            {
+                TempData["Mensaje"] = "No se recibieron datos del arqueo. Intente de nuevo.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
+            }
+
             bool validarDuplicado = false;
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             arqueoDia.arqueoDiario.UsuarioRegistro = idUsuario;
             arqueoDia.arqueoDiario.FechaRegistro = DateTime.Now;
             arqueoDia.arqueoDiario.Activo = true;
             arqueoDia.arqueoDiario.Serie = "A";
-            //int mensualidad = 640;
-            //int total = 0;
-            var buscarIdGuardado = await _Iservices.GetArqueoDiarioAsync();
+            var buscarIdGuardado = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
             //var buscarperiodo = await _Iservices.GetPeriodoAsync();
             //var periodo = buscarperiodo.Where(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true).FirstOrDefault();
           
             validarDuplicado = buscarIdGuardado.Any(r => r.NumeroArqueo == arqueoDia.arqueoDiario.NumeroArqueo && r.Serie == "A" && r.Activo == true);
             if (validarDuplicado)
             {
-                TempData["Mensaje"] = "El número de Arqueo ya Existe.";
+                TempData["Mensaje"] = "El número de Arqueo ya existe (quizá ya se guardó). Actualice la página y no envíe dos veces.";
                 TempData["Tipo"] = "warning";
                 if (idUsuario == 1)
-                {
                     return RedirectToAction("estadocuenta", "Pagos");
-                }
                 if (idUsuario == 2)
-                {
-                    return RedirectToAction("estadocuenta","PagoCaja");
-                }
-                
+                    return RedirectToAction("estadocuenta", "PagoCaja");
+                return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
             }
+
+            // Un arqueo activo por recinto y día de registro (evita segundo guardado el mismo día con otro número)
+            var idRecGuardar = arqueoDia.arqueoDiario.IdRecinto;
+            if (idRecGuardar.HasValue && idRecGuardar.Value > 0)
+            {
+                var yaGuardadoHoyEsteRecinto = buscarIdGuardado.Any(r =>
+                    r.Activo && r.Serie == "A"
+                    && r.IdRecinto == idRecGuardar.Value
+                    && r.FechaRegistro.Date == DateTime.Today);
+                if (yaGuardadoHoyEsteRecinto)
+                {
+                    TempData["Mensaje"] = "Ya se registró un arqueo para este recinto hoy. No se puede duplicar.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
+                }
+            }
+
             try
             {
-
-                //if (numRecibo==null)
-                //{
-                //    TempData["Mensaje"] = "El numero de Recibo ya existe.";
-                //}
                 if (arqueoDia != null)
                 {
-                    //var userId = _userManager.GetUserId(User); // o UserManager.GetUserId(User)
-
                     var periodo = await _Iservices.GetPeriodoAsync();
-                   int periodoActual = periodo.Where(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true).FirstOrDefault().IdPeriodo;
+                    var periodoRow = periodo?.FirstOrDefault(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true);
+                    if (periodoRow == null)
+                    {
+                        TempData["Mensaje"] = "No hay un período activo para el año actual. Configure el período antes de guardar el arqueo.";
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
+                    }
+                    int periodoActual = periodoRow.IdPeriodo;
 
-                    //await _Iservices.InsertarPagoAsync(nuevoPago);
                     arqueoDia.arqueoDiario.UsuarioRegistro = idUsuario;
                     arqueoDia.arqueoDiario.FechaRegistro = DateTime.Now;
                     arqueoDia.arqueoDiario.Activo = true;
                     arqueoDia.arqueoDiario.IdPeriodo = periodoActual;
                     arqueoDia.arqueoDiario.Serie = "A";
 
-                    response = await _Iservices.PostArqueoDiarioAsync(arqueoDia.arqueoDiario);
-                    if (response)
+                    var (ok, errApi) = await _Iservices.PostArqueoDiarioAsync(arqueoDia.arqueoDiario);
+                    if (ok)
                     {
-
-                        //var idPag = buscarIdGuardado.Max(a => a.IdArqueo);
-                        TempData["Mensaje"] = "Se Guardo Correctamente el Arqueo del Día.";
+                        TempData["Mensaje"] = "Se guardó correctamente el arqueo. Puede imprimir el comprobante.";
                         TempData["Tipo"] = "success";
-                        return RedirectToAction("ArqueoCaja");
+                        TempData["AbrirImpresion"] = "1";
+                        return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
                     }
-                    else
-                    {
-                        TempData["Mensaje"] = "No se proceso el Arqueo.";
-                        TempData["Tipo"] = "warning";
-                        return RedirectToAction("ArqueoCaja");
-
-                    }
+                    TempData["Mensaje"] = string.IsNullOrWhiteSpace(errApi)
+                        ? "No se procesó el arqueo (la API no respondió OK). Revise conexión y datos."
+                        : "No se procesó el arqueo. Detalle: " + errApi;
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
                 }
                 return NoContent();
-
-
             }
-            catch
+            catch (Exception)
             {
-                return View();
+                TempData["Mensaje"] = "Ocurrió un error al guardar el arqueo. Verifique el período activo y los datos.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
             }
 
         }
@@ -206,8 +227,17 @@ namespace WebColegio.Controllers
             }
             else
             {
-                pagosDelDia = todosPagosDia.Where(r => r.UsuarioRegistro == idUsuario && r.IdRecinto == (recintoEfectivo ?? 0)).ToList();
-                pagosCajaDia = todosPagosCajaDia.Where(r => r.UsuarioRegistro == idUsuario && r.IdRecinto == (recintoEfectivo ?? 0)).ToList();
+                // Cajero: si el usuario tiene recinto asignado, filtrar por él; si no, todos los pagos del usuario ese día (evita IdRecinto == 0 que no coincide con ningún pago real)
+                if (recintoEfectivo.HasValue && recintoEfectivo.Value > 0)
+                {
+                    pagosDelDia = todosPagosDia.Where(r => r.UsuarioRegistro == idUsuario && r.IdRecinto == recintoEfectivo.Value).ToList();
+                    pagosCajaDia = todosPagosCajaDia.Where(r => r.UsuarioRegistro == idUsuario && r.IdRecinto == recintoEfectivo.Value).ToList();
+                }
+                else
+                {
+                    pagosDelDia = todosPagosDia.Where(r => r.UsuarioRegistro == idUsuario).ToList();
+                    pagosCajaDia = todosPagosCajaDia.Where(r => r.UsuarioRegistro == idUsuario).ToList();
+                }
             }
 
             // Asignar recinto al arqueo y nombre/dirección
@@ -270,7 +300,9 @@ namespace WebColegio.Controllers
             if (esAdmin && recintoEfectivo.HasValue && recintoEfectivo.Value > 0)
                 egresosDelDia = todosEgresosDia.Where(p => p.IdRecinto == recintoEfectivo.Value).ToList();
             else if (!esAdmin)
-                egresosDelDia = todosEgresosDia.Where(p => p.UsuarioRegistro == idUsuario && p.IdRecinto == (recintoEfectivo ?? 0)).ToList();
+                egresosDelDia = recintoEfectivo.HasValue && recintoEfectivo.Value > 0
+                    ? todosEgresosDia.Where(p => p.UsuarioRegistro == idUsuario && p.IdRecinto == recintoEfectivo.Value).ToList()
+                    : todosEgresosDia.Where(p => p.UsuarioRegistro == idUsuario).ToList();
             else
                 egresosDelDia = new List<TblEgreso>();
 
@@ -386,6 +418,8 @@ namespace WebColegio.Controllers
 
             // 9️⃣ Lista de recintos para que el usuario elija cuál arquear
             arqueo.TblRecintos = Recintos?.Where(r => r.Activo).ToList() ?? new List<Recintos>();
+
+            arqueo.AbrirImpresion = TempData["AbrirImpresion"]?.ToString() == "1";
 
             return View(arqueo);
         }

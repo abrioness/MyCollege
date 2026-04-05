@@ -64,7 +64,8 @@ namespace WebColegio.Services
         Task<List<MovimientoInventario>> GetMovimientosInventarioAsync(int? idProducto, DateTime? desde, DateTime? hasta);
         Task<bool> PostProductosAsync(Productos producto);
         Task<bool> UpdateProductoAsync(Productos producto);
-        Task<bool> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
+        /// <returns>Éxito y, si falla, texto de error devuelto por la API (o mensaje genérico).</returns>
+        Task<(bool Ok, string? ErrorMessage)> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
         Task<bool> PostUsuarios(TblUsuarios usuario);
 
         #endregion

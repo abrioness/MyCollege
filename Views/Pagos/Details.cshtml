@@ -144,7 +144,7 @@
             <div class="v-row"><b>Recibí de:</b> <span>@alumno?.Nombre @alumno?.Apellido</span></div>
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
             <div class="v-row"><b>Fecha Emisión:</b> <span> @Model.Pago.FechaEmision</span></div>
-            <div class="v-row"><b>Fecha Pago:</b> <span> @Model.Pago.FechaRegistro.ToString("dd/mm/yyyy")</span></div>
+            <div class="v-row"><b>Fecha Pago:</b> <span> @Model.Pago.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
             <div class="v-row"><b>Concepto:</b>
                 <span>@(tipoMovimiento?.Concepto ?? "—")@(Model.Pago.IdTipoMovimiento == 1 && !string.IsNullOrEmpty(Model.DetalleMesesRecibo) ? " (" + Model.DetalleMesesRecibo + ")" : ""), @(Model.Pago?.Descripcion ?? "")</span>
             </div>
