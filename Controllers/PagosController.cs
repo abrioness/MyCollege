@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Linq;
@@ -84,6 +85,23 @@ namespace WebColegio.Controllers
         private const int TipoMovimientoMensualidad = 1;
         private const int TipoMovimientoMatricula = 2;
         private const int TipoMovimientoMatriculaAbono = 4;
+
+        /// <summary>
+        /// Mes calendario (1–12) de la primera matrícula del alumno en el período (fecha de emisión o registro).
+        /// Con matrícula prematura (p. ej. en abril), no se exige pagar febrero/marzo antes de abril.
+        /// </summary>
+        private static int ObtenerMesCalendarioPrimeraMatricula(IEnumerable<TblPago> pagos, int idAlumno, int idPeriodo)
+        {
+            var p = pagos
+                .Where(x => x.IdAlumno == idAlumno && x.IdPeriodo == idPeriodo && x.Activo
+                    && (x.IdTipoMovimiento == TipoMovimientoMatricula || x.IdTipoMovimiento == TipoMovimientoMatriculaAbono))
+                .OrderBy(x => x.FechaRegistro)
+                .FirstOrDefault();
+            if (p == null)
+                return 1;
+            var m = p.FechaEmision?.Month ?? p.FechaRegistro.Month;
+            return Math.Clamp(m, 1, 12);
+        }
 
         [Authorize]
         public async Task<ActionResult> EstadoCuenta()
@@ -580,8 +598,11 @@ namespace WebColegio.Controllers
                                     p.IdMes.HasValue)
                         .Select(p => p.IdMes!.Value)
                         .ToHashSet();
-                        // Primer mes del alumno en este período: si se matricularon en marzo, no se exige pagar enero/febrero
-                        int primerMesAlumno = mesesPagadosBD.Any() ? mesesPagadosBD.Min() : 1;
+                        int primerMesPagadoMensual = mesesPagadosBD.Any() ? mesesPagadosBD.Min() : 1;
+                        // Matrícula prematura: mes calendario de la primera matrícula (p. ej. abril) — la secuencia obligatoria
+                        // empieza en ese mes, no desde enero aunque enero esté pagado con la matrícula.
+                        int mesCalendarioMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo);
+                        int inicioSecuenciaMensual = Math.Max(primerMesPagadoMensual, mesCalendarioMatricula);
                         //crear meses pagados virtualmente
                         var mesesPagadosAcumulados = new HashSet<int?>(mesesPagadosBD.Select(x => (int?)x));
 
@@ -619,19 +640,26 @@ namespace WebColegio.Controllers
                                 TempData["Tipo"] = "warning";
                                 continue;
                             }
-                            var todosLosMeses = Enumerable.Range(1, 12); // o hasta el mes actual
-                             mesesPagadosAcumulados
-                            .Distinct()
-                            .Where(x => x >= 1 && x <= 12)
-                            .ToList();
-                            // 2. Verificar meses pendientes solo desde el primer mes del alumno en el período
-                            // (ej. si se matricularon en marzo, no se exige enero/febrero)
-                            var mesesPendientes = idMes > primerMesAlumno
-                                ? Enumerable.Range(primerMesAlumno, idMes - primerMesAlumno)
-                                    .Except(mesesPagadosAcumulados.Where(x => x.HasValue).Select(x => x!.Value))
-                                    .Distinct()
-                                    .ToList()
-                                : new List<int>();
+
+                            if (idMes < mesCalendarioMatricula && !mesesPagadosBD.Contains(idMes))
+                            {
+                                TempData["Mensaje"] =
+                                    $"Con matrícula en {Mes(mesCalendarioMatricula).Result}, no corresponde pagar por separado el mes de {Mes(idMes).Result} (matrícula prematura).";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create");
+                            }
+
+                            // Meses intermedios exigidos solo entre el inicio de secuencia y el mes a pagar (no feb/mar si matrícula es abril)
+                            List<int> mesesPendientes;
+                            if (idMes <= inicioSecuenciaMensual)
+                                mesesPendientes = new List<int>();
+                            else
+                            {
+                                var entre = Enumerable.Range(inicioSecuenciaMensual, idMes - inicioSecuenciaMensual).ToList();
+                                mesesPendientes = entre
+                                    .Where(m => !mesesPagadosAcumulados.Contains(m))
+                                    .ToList();
+                            }
 
                             if (mesesPendientes.Any())
                             {
@@ -750,27 +778,52 @@ namespace WebColegio.Controllers
                             
                             decimal totalPagadoMatricula = pagosMatriculaPrevios.Sum(p => p.Monto);
                             decimal faltaPorPagar = obtenerMat - totalPagadoMatricula;
-                            
-                            // Validar que el monto ingresado no exceda lo que falta por pagar
-                            if (totalMatricula > faltaPorPagar)
+
+                            if (restarMensualidad <= 0)
                             {
-                                TempData["Mensaje"] = $"El monto ingresado (C$ {totalMatricula:N2}) excede lo que falta por pagar (C$ {faltaPorPagar:N2}). Total de matrícula: C$ {obtenerMat:N2}, ya pagado: C$ {totalPagadoMatricula:N2}.";
+                                TempData["Mensaje"] = "No hay mensualidad configurada para este recinto/grado/período; no se puede separar el pago de enero con la matrícula.";
                                 TempData["Tipo"] = "warning";
                                 return RedirectToAction("Create", "Pagos");
                             }
-                            
-                            // Si ya se pagó el total completo, no permitir más pagos
+
+                            // Si ya se pagó el total completo de matrícula, no permitir más pagos
                             if (faltaPorPagar <= 0.01m)
                             {
                                 TempData["Mensaje"] = "La matrícula ya está completamente pagada.";
                                 TempData["Tipo"] = "warning";
                                 return RedirectToAction("Create", "Pagos");
                             }
-                            
-                            // Comparar decimales con tolerancia (0.01) para evitar problemas de precisión
-                            // Verificar si el monto ingresado completa el pago de matrícula
-                            decimal diferencia = Math.Abs(totalMatricula - faltaPorPagar);
-                            bool esMontoCompleto = diferencia < 0.01m;
+
+                            // El monto ingresado es matrícula + mensualidad de enero (IdMes=1), no meses calendario (feb/mar).
+                            // parteMatricula = lo que corresponde solo a matrícula después de descontar la mensualidad de enero.
+                            decimal parteMatricula = totalMatricula - restarMensualidad;
+
+                            if (totalMatricula + 0.01m < restarMensualidad)
+                            {
+                                TempData["Mensaje"] = $"El monto (C$ {totalMatricula:N2}) debe cubrir al menos la mensualidad de enero (C$ {restarMensualidad:N2}) que se registra junto a este pago.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
+
+                            if (parteMatricula > faltaPorPagar + 0.01m)
+                            {
+                                decimal maxPermitido = faltaPorPagar + restarMensualidad;
+                                TempData["Mensaje"] = $"La parte destinada a matrícula (C$ {parteMatricula:N2}) supera lo pendiente (C$ {faltaPorPagar:N2}). " +
+                                    $"Monto ingresado: C$ {totalMatricula:N2} (matrícula pendiente máx. C$ {faltaPorPagar:N2} + mensualidad enero C$ {restarMensualidad:N2}; máximo permitido C$ {maxPermitido:N2}). " +
+                                    $"Total matrícula en catálogo: C$ {obtenerMat:N2}, ya pagado matrícula: C$ {totalPagadoMatricula:N2}.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
+
+                            if (parteMatricula < -0.01m)
+                            {
+                                TempData["Mensaje"] = "El monto no es coherente con la mensualidad de enero configurada.";
+                                TempData["Tipo"] = "warning";
+                                return RedirectToAction("Create", "Pagos");
+                            }
+
+                            // Cierra matrícula cuando la parte matrícula iguala exactamente lo que falta (típico: falta + mensualidad en un solo recibo)
+                            bool esMontoCompleto = Math.Abs(parteMatricula - faltaPorPagar) < 0.01m;
                             
                             // Si el monto completa el pago pendiente de matrícula, procesar como matrícula completa
                             if (esMontoCompleto)
@@ -981,22 +1034,28 @@ namespace WebColegio.Controllers
                 .ToList();
             var mesesPagadosBD = pagosMensualidad.Select(p => p.IdMes!.Value).ToHashSet();
 
-            // Primer mes del alumno en el período: si se matricularon en marzo, no aplica mora
-            int primerMesAlumno = mesesPagadosBD.Any() ? mesesPagadosBD.Min() : 1;
+            int mesMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, idAlumno, periodo);
 
-            // Mora solo aplica cuando la matrícula inicia en enero (primer mes del período)
-            if (primerMesAlumno > 1)
+            // Mora únicamente desde el mes calendario de la matrícula: no se cobra mora por meses anteriores (ene–mar si matrícula es abril).
+            if (mesMatricula > mes)
             {
                 return Json(new { mora = 0, mes, aplicaMora = false });
             }
 
-            var mesesPendientes = Enumerable.Range(1, mes - 1)
+            int cantidadMesesEnVentana = mes - mesMatricula;
+            if (cantidadMesesEnVentana <= 0)
+            {
+                return Json(new { mora = 0, mes, aplicaMora = false });
+            }
+
+            var mesesPendientes = Enumerable.Range(mesMatricula, cantidadMesesEnVentana)
                 .Except(mesesPagadosBD)
                 .Distinct()
                 .ToList();
-            int moraTotal = 10 * mesesPendientes.Count();
+            int moraTotal = MoraPorMes * mesesPendientes.Count;
+            bool aplica = moraTotal > 0;
 
-            return Json(new { mora = moraTotal, mes, aplicaMora = true });
+            return Json(new { mora = moraTotal, mes, aplicaMora = aplica });
         }
         //Obtener nombre del mes.
         public async Task<string> Mes(int idmes)
@@ -1069,6 +1128,33 @@ namespace WebColegio.Controllers
                                 x.Activo)
                     .Select(x => x.CostoMatricula)
                     .FirstOrDefault());
+        }
+
+        /// <summary>
+        /// Precarga recinto, modalidad, grado y ciclo lectivo actual para matrícula/mensualidad según ficha del alumno.
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<JsonResult> ObtenerDatosAlumnoMatricula(int idAlumno)
+        {
+            if (idAlumno <= 0)
+                return Json(new { ok = false });
+
+            var alumno = await _Iservices.GetAlumnoIdAsync(idAlumno);
+            if (alumno == null || alumno.IdAlumno <= 0)
+                return Json(new { ok = false, mensaje = "Alumno no encontrado" });
+
+            var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodoActual = periodos.FirstOrDefault(a => a.Activo && a.Actual);
+
+            return Json(new
+            {
+                ok = true,
+                idRecinto = alumno.IdRecinto,
+                idModalidad = alumno.IdModalidad,
+                idGrado = alumno.IdGrado,
+                idPeriodo = periodoActual?.IdPeriodo ?? alumno.IdPeriodo
+            });
         }
 
         [HttpGet]

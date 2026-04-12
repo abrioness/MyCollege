@@ -106,10 +106,9 @@
                         </div>
 
                         <div class="form-group">
-                      
-                            <label asp-for="Pago.FechaEmision" class="control-label">Fecha que se presentó a matricularse</label>
-                            <input type="date" asp-for="Pago.FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy"  class="form-control"  />
-                            <small class="text-muted d-block mt-1">La mensualidad incluida en matrícula completa se registra siempre como <strong>enero</strong>, no según esta fecha.</small>
+                            <label for="@Html.IdFor(m => m.Pago.FechaEmision)" id="lblFechaEmision" class="control-label js-lbl-fecha-emision">Fecha de pago</label>
+                            <input type="date" asp-for="Pago.FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
+                            <small id="ayudaFechaMatricula" class="text-muted d-block mt-1" style="display: none;">La mensualidad incluida en matrícula completa se registra siempre como <strong>enero</strong>, no según esta fecha.</small>
                             <span asp-validation-for="Pago.FechaEmision" class="text-danger"></span>
                         </div>
                       
@@ -221,8 +220,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/limpiarcampos.js"></script>
     <script>
-        (function() {
-            // Cachear selectores jQuery
+        $(function() {
+            // Cachear selectores jQuery (tras DOM listo; evita etiquetas vacías si el script corre antes del formulario)
             const $tipoMovimiento = $('#tipoMovimiento');
             const $mesPagado = $('#mesPagado');
             const $alumnoNombre = $('#AlumnoNombre');
@@ -247,6 +246,36 @@
             
             // Tipos de movimiento que requieren cargar matrícula
             const tiposMatricula = [TIPO_MATRICULA_COMPLETA, TIPO_MATRICULA];
+
+            function sinDiacriticos(str) {
+                return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            /** Matrícula por Id o por texto del concepto (por si en BD los Id no son 2/4). */
+            function esConceptoMatricula() {
+                const val = $tipoMovimiento.val();
+                const id = parseInt(val, 10);
+                if (!isNaN(id) && id > 0 && tiposMatricula.includes(id)) {
+                    return true;
+                }
+                const texto = sinDiacriticos($tipoMovimiento.find('option:selected').text()).toLowerCase();
+                return texto.indexOf('matric') >= 0;
+            }
+
+            function actualizarEtiquetaFechaEmision() {
+                const $lbl = $('.js-lbl-fecha-emision').first();
+                const $ayuda = $('#ayudaFechaMatricula');
+                if (!$lbl.length) {
+                    return;
+                }
+                if (esConceptoMatricula()) {
+                    $lbl.text('Fecha que se presentó a matricularse');
+                    $ayuda.show();
+                } else {
+                    $lbl.text('Fecha de pago');
+                    $ayuda.hide();
+                }
+            }
 
             // Función para obtener abonos previos
             function obtenerAbonosPrevios(idAlumno, idTipoMovimiento, periodo, callback) {
@@ -440,7 +469,7 @@
 
                 if (tipoMovimientoId === TIPO_MENSUALIDAD) {
                     $totalPagar.val((costomensualidad + totalmora).toFixed(2));
-                } else if (tiposMatricula.includes(tipoMovimientoId)) {
+                } else if (esConceptoMatricula()) {
                     $totalPagar.val(costomatricula.toFixed(2));
                 }
             }
@@ -476,7 +505,7 @@
                         console.log('Ejecutando cargarMensualidad inmediatamente');
                         cargarMensualidad();
                     }
-                } else if (tiposMatricula.includes(tipoId)) {
+                } else if (tiposMatricula.includes(tipoId) || esConceptoMatricula()) {
                     // Matrícula: recinto + modalidad + periodo (+ grado si matrícula completa para sumar enero)
                     $recinto.add($modalidad).add($periodo)
                         .on('change.tipoMovimiento', function() {
@@ -496,26 +525,28 @@
             }
 
             // Manejar cambio de tipo de movimiento (optimizado)
-            $tipoMovimiento.on('change', function() {
-                const tipoMovimientoId = parseInt($(this).val()) || 0;
+            function onTipoMovimientoChange() {
+                const tipoMovimientoId = parseInt($tipoMovimiento.val(), 10) || 0;
                 const mostrarMeses = tiposConMeses.includes(tipoMovimientoId);
 
-                // Controlar visibilidad
                 $mesPagado.toggle(mostrarMeses);
 
-                // Configurar listeners y visibilidad según tipo
                 if (tipoMovimientoId === TIPO_MENSUALIDAD) {
                     configurarListenersPorTipo(TIPO_MENSUALIDAD);
-                    cargarMora(); // Muestra mora solo si aplica (matrícula desde enero)
-                } else if (tiposMatricula.includes(tipoMovimientoId)) {
+                    cargarMora();
+                } else if (tiposMatricula.includes(tipoMovimientoId) || esConceptoMatricula()) {
                     $moraDiv.hide();
-                    configurarListenersPorTipo(tipoMovimientoId);
+                    configurarListenersPorTipo(tipoMovimientoId || TIPO_MATRICULA_COMPLETA);
                 } else {
-                    // Tipo no configurado: ocultar y limpiar listeners
                     $moraDiv.hide();
                     limpiarListeners();
                 }
-            }).trigger('change');
+
+                actualizarEtiquetaFechaEmision();
+            }
+
+            $tipoMovimiento.on('change', onTipoMovimientoChange);
+            onTipoMovimientoChange();
 
             // Autocompletado de alumnos
             $alumnoNombre.autocomplete({
@@ -544,33 +575,44 @@
                 minLength: 2,
                 select: function(event, ui) {
                     $idAlumno.val(ui.item.id);
-                    console.log('Alumno seleccionado:', ui.item.id, ui.item.label);
-                    
-                    // Si ya hay tipo de movimiento, recinto, grado/modalidad y periodo seleccionados,
-                    // recargar los valores para aplicar los abonos
-                    const tipoMovimientoId = parseInt($tipoMovimiento.val()) || 0;
-                    console.log('Tipo de movimiento actual:', tipoMovimientoId);
-                    
-                    if (tiposMatricula.includes(tipoMovimientoId)) {
-                        const recinto = $recinto.val();
-                        const modalidad = $modalidad.val();
-                        const periodo = $periodo.val();
-                        console.log('Verificando campos para matrícula:', { recinto, modalidad, periodo });
-                        if (recinto && modalidad && periodo) {
-                            console.log('Recargando matrícula con abonos...');
-                            cargarMatricula();
-                        }
-                    } else if (tipoMovimientoId === TIPO_MENSUALIDAD) {
-                        const recinto = $recinto.val();
-                        const grado = $grado.val();
-                        const periodo = $periodo.val();
-                        console.log('Verificando campos para mensualidad:', { recinto, grado, periodo });
-                        if (recinto && grado && periodo) {
-                            console.log('Recargando mensualidad con abonos...');
-                            cargarMensualidad();
-                            cargarMora(); // También recargar mora
-                        }
-                    }
+
+                    $.getJSON("/Pagos/ObtenerDatosAlumnoMatricula", { idAlumno: ui.item.id })
+                        .done(function(data) {
+                            if (data && data.ok) {
+                                if (data.idRecinto) {
+                                    $recinto.val(String(data.idRecinto));
+                                }
+                                if (data.idModalidad) {
+                                    $modalidad.val(String(data.idModalidad));
+                                }
+                                if (data.idGrado) {
+                                    $grado.val(String(data.idGrado));
+                                }
+                                if (data.idPeriodo) {
+                                    $periodo.val(String(data.idPeriodo));
+                                }
+                            }
+                        })
+                        .always(function() {
+                            const tipoMovimientoId = parseInt($tipoMovimiento.val()) || 0;
+
+                            if (esConceptoMatricula()) {
+                                const recinto = $recinto.val();
+                                const modalidad = $modalidad.val();
+                                const periodo = $periodo.val();
+                                if (recinto && modalidad && periodo) {
+                                    cargarMatricula();
+                                }
+                            } else if (tipoMovimientoId === TIPO_MENSUALIDAD) {
+                                const recinto = $recinto.val();
+                                const grado = $grado.val();
+                                const periodo = $periodo.val();
+                                if (recinto && grado && periodo) {
+                                    cargarMensualidad();
+                                    cargarMora();
+                                }
+                            }
+                        });
                 }
             });
 
@@ -612,7 +654,7 @@
                     document.body.style.removeProperty('padding-right');
                 }, 300);
             };
-        })();
+        });
     </script>
 
     
