@@ -104,24 +104,13 @@ namespace WebColegio.Controllers
                 || !alumno.IdPeriodo.HasValue
                 || alumno.IdPeriodo.Value == periodoActual.IdPeriodo;
 
-            if (!matriculaEnPeriodoActual)
-            {
-                return Json(new
-                {
-                    ok = false,
-                    matriculaEnPeriodoActual = false,
-                    mensaje = "La ficha del alumno no está en el período lectivo actual. Seleccione modalidad y nivel manualmente o actualice la matrícula.",
-                    idRecinto = idRecintoAlumno
-                });
-            }
-
             if (!alumno.IdModalidad.HasValue || !alumno.IdGrado.HasValue)
                 return Json(new { ok = false, mensaje = "El alumno no tiene modalidad o grado registrados en su ficha.", idRecinto = idRecintoAlumno });
 
             return Json(new
             {
                 ok = true,
-                matriculaEnPeriodoActual = true,
+                matriculaEnPeriodoActual,
                 idModalidad = alumno.IdModalidad.Value,
                 idGrado = alumno.IdGrado.Value,
                 idRecinto = idRecintoAlumno
