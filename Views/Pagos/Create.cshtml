@@ -221,6 +221,15 @@
     <script src="~/js/limpiarcampos.js"></script>
     <script>
         $(function() {
+            // Rutas respetan PathBase (ej. IIS en /WebColegio); evita 404 en producción con subdirectorio.
+            const urlsPagos = {
+                obtenerAbonosPrevios: '@Url.Action("ObtenerAbonosPrevios", "Pagos")',
+                obtenerMensualidad: '@Url.Action("ObtenerMensualidad", "Pagos")',
+                obtenerMatricula: '@Url.Action("ObtenerMatricula", "Pagos")',
+                obtenerMora: '@Url.Action("ObtenerMora", "Pagos")',
+                obtenerDatosAlumnoMatricula: '@Url.Action("ObtenerDatosAlumnoMatricula", "Pagos")'
+            };
+
             // Cachear selectores jQuery (tras DOM listo; evita etiquetas vacías si el script corre antes del formulario)
             const $tipoMovimiento = $('#tipoMovimiento');
             const $mesPagado = $('#mesPagado');
@@ -287,7 +296,7 @@
 
                 console.log('Obteniendo abonos previos:', { idAlumno, idTipoMovimiento, periodo });
 
-                $.getJSON("/Pagos/ObtenerAbonosPrevios", {
+                $.getJSON(urlsPagos.obtenerAbonosPrevios, {
                     idAlumno: idAlumno,
                     idTipoMovimiento: idTipoMovimiento,
                     idPeriodo: periodo
@@ -315,31 +324,37 @@
                 function aplicarMontoMatricula(costoMatricula, totalAbonos) {
                     const matNeto = Math.max(0, costoMatricula - totalAbonos);
                     if (tipoMovimientoId === TIPO_MATRICULA_COMPLETA) {
-                        if (!grado) {
-                            $monto.val(matNeto.toFixed(2));
-                            $mensajeMontoMatricula.text('Seleccione Nivel para sumar la mensualidad de enero al monto de matrícula completa.').css('display', 'block');
-                            calcularTotalPagar();
-                            return;
-                        }
-                        $.getJSON("/Pagos/ObtenerMensualidad", {
-                            idRecinto: recinto,
-                            idGrado: grado,
-                            idPeriodo: periodo
-                        }, function(dataMen) {
-                            const costoMensualidad = parseFloat(dataMen && dataMen.costo) || 0;
-                            const montoTotal = matNeto + costoMensualidad;
-                            $monto.val(montoTotal.toFixed(2));
-                            let txt = 'Incluye matrícula + mensualidad de enero (no el mes de la fecha de matrícula).';
+                        // El costo de matrícula completa ya incluye enero en el catálogo,
+                        // por eso NO se vuelve a sumar mensualidad aquí.
+                        $monto.val(matNeto.toFixed(2));
+                        if (grado) {
+                            $.getJSON(urlsPagos.obtenerMensualidad, {
+                                idRecinto: recinto,
+                                idGrado: grado,
+                                idPeriodo: periodo
+                            }, function(dataMen) {
+                                const costoMensualidad = parseFloat(dataMen && dataMen.costo) || 0;
+                                const parteMatricula = Math.max(0, matNeto - costoMensualidad);
+                                let txt = 'Total C$ ' + matNeto.toFixed(2) + ' = Matrícula C$ ' + parteMatricula.toFixed(2) + ' + Enero C$ ' + costoMensualidad.toFixed(2) + '.';
+                                if (totalAbonos > 0) {
+                                    txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. ' + txt;
+                                }
+                                $mensajeMontoMatricula.text(txt).css('display', 'block');
+                            }).fail(function() {
+                                let txt = 'Monto total de matrícula completa (incluye enero).';
+                                if (totalAbonos > 0) {
+                                    txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. ' + txt;
+                                }
+                                $mensajeMontoMatricula.text(txt).css('display', 'block');
+                            });
+                        } else {
+                            let txt = 'Monto total de matrícula completa (incluye enero).';
                             if (totalAbonos > 0) {
-                                txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos (solo de matrícula). ' + txt;
+                                txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. ' + txt;
                             }
                             $mensajeMontoMatricula.text(txt).css('display', 'block');
-                            calcularTotalPagar();
-                        }).fail(function() {
-                            $monto.val(matNeto.toFixed(2));
-                            $mensajeMontoMatricula.text('No se pudo cargar la mensualidad; monto solo matrícula.').css('display', 'block');
-                            calcularTotalPagar();
-                        });
+                        }
+                        calcularTotalPagar();
                         return;
                     }
                     $monto.val(matNeto.toFixed(2));
@@ -352,7 +367,7 @@
                 }
 
                 if (recinto && modalidad && periodo) {
-                    $.getJSON("/Pagos/ObtenerMatricula", {
+                    $.getJSON(urlsPagos.obtenerMatricula, {
                         idRecinto: recinto,
                         idModalidad: modalidad,
                         idPeriodo: periodo
@@ -387,7 +402,7 @@
                 console.log('cargarMensualidad llamado', { recinto, grado, periodo, idAlumno });
 
                 if (recinto && grado && periodo) {
-                    $.getJSON("/Pagos/ObtenerMensualidad", {
+                    $.getJSON(urlsPagos.obtenerMensualidad, {
                         idRecinto: recinto,
                         idGrado: grado,
                         idPeriodo: periodo
@@ -437,7 +452,7 @@
                 const periodo = $periodo.val();
 
                 if (idAlumno && idTipoMovimiento && periodo) {
-                    $.getJSON("/Pagos/ObtenerMora", {
+                    $.getJSON(urlsPagos.obtenerMora, {
                         idAlumno: idAlumno,
                         idTipoMovimiento: idTipoMovimiento,
                         periodo: periodo
@@ -576,7 +591,7 @@
                 select: function(event, ui) {
                     $idAlumno.val(ui.item.id);
 
-                    $.getJSON("/Pagos/ObtenerDatosAlumnoMatricula", { idAlumno: ui.item.id })
+                    $.getJSON(urlsPagos.obtenerDatosAlumnoMatricula, { idAlumno: ui.item.id })
                         .done(function(data) {
                             if (data && data.ok) {
                                 if (data.idRecinto) {

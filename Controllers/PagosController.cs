@@ -4,6 +4,7 @@ using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -85,6 +86,19 @@ namespace WebColegio.Controllers
         private const int TipoMovimientoMensualidad = 1;
         private const int TipoMovimientoMatricula = 2;
         private const int TipoMovimientoMatriculaAbono = 4;
+
+        private static string NormalizarTexto(string? texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
+            var normalizado = texto.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder();
+            foreach (var c in normalizado)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    sb.Append(c);
+            }
+            return sb.ToString().ToLowerInvariant();
+        }
 
         /// <summary>
         /// Mes calendario (1–12) de la primera matrícula del alumno en el período (fecha de emisión o registro).
@@ -512,6 +526,12 @@ namespace WebColegio.Controllers
             try
             {
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var tiposMovimientoCatalogo = await _Iservices.GetTipoMovimientoAsync();
+                var tipoMovimientoSeleccionado = tiposMovimientoCatalogo
+                    .FirstOrDefault(t => t.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento);
+                var conceptoTipoMovimiento = NormalizarTexto(tipoMovimientoSeleccionado?.Concepto);
+                bool esMatriculaCompleta = pagos.Pago.IdTipoMovimiento == TipoMovimientoMatricula
+                    || (conceptoTipoMovimiento.Contains("matricula") && conceptoTipoMovimiento.Contains("completa"));
                 
                 // Solo usar el período actual como fallback si el usuario no seleccionó ninguno
                 // Si el usuario seleccionó un período en la vista, usar ese
@@ -732,7 +752,7 @@ namespace WebColegio.Controllers
                     }
                     else
                     {
-                        if (pagos.Pago.IdTipoMovimiento == 2)
+                        if (esMatriculaCompleta)
                         {
                             int periodoMatricula = pagos.Pago.IdPeriodo;
                             
@@ -844,7 +864,7 @@ namespace WebColegio.Controllers
                                 // Obtener el ID del pago de matrícula recién guardado para mostrar su recibo (no el del primer mes)
                                 var pagosDespuesMatricula = await _Iservices.GetPagosAsync();
                                 int idPagoMatricula = pagosDespuesMatricula
-                                    .Where(p => p.IdTipoMovimiento == 2 && p.NumeroRecibo == pagos.Pago.NumeroRecibo && p.IdAlumno == pagos.Pago.IdAlumno)
+                                    .Where(p => p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento && p.NumeroRecibo == pagos.Pago.NumeroRecibo && p.IdAlumno == pagos.Pago.IdAlumno)
                                     .OrderByDescending(p => p.IdPago)
                                     .Select(p => p.IdPago)
                                     .FirstOrDefault();
@@ -906,7 +926,7 @@ namespace WebColegio.Controllers
                                 // Obtener el ID del pago de matrícula recién guardado para mostrar su recibo (no el del primer mes)
                                 var pagosDespuesAbonoMat = await _Iservices.GetPagosAsync();
                                 int idPagoMatriculaAbono = pagosDespuesAbonoMat
-                                    .Where(p => p.IdTipoMovimiento == 2 && p.NumeroRecibo == pagos.Pago.NumeroRecibo && p.IdAlumno == pagos.Pago.IdAlumno)
+                                    .Where(p => p.IdTipoMovimiento == pagos.Pago.IdTipoMovimiento && p.NumeroRecibo == pagos.Pago.NumeroRecibo && p.IdAlumno == pagos.Pago.IdAlumno)
                                     .OrderByDescending(p => p.IdPago)
                                     .Select(p => p.IdPago)
                                     .FirstOrDefault();
@@ -939,7 +959,7 @@ namespace WebColegio.Controllers
                                 {
                                     // Redirigir al recibo del pago de matrícula (tipoMovimiento Matrícula), no al del primer mes
                                     int idParaRecibo = idPagoMatriculaAbono > 0 ? idPagoMatriculaAbono : (await _Iservices.GetPagosAsync()).Max(a => a.IdPago);
-                                    TempData["Mensaje"] = "Abono de matrícula registrado correctamente.";
+                                    TempData["Mensaje"] = "El abono de matrícula y el pago de enero se registraron correctamente.";
                                     TempData["Tipo"] = "success";
                                     return RedirectToAction("Details", "Pagos", new { id = idParaRecibo, imprimir = true });
                                 }

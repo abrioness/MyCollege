@@ -284,6 +284,55 @@
                 return null;
             }
 
+            function esNivelPreescolar(nombre) {
+                if (!nombre) return false;
+                var n = nombre.toLowerCase();
+                if (!n.includes("nivel")) return false;
+                return n.includes("primer") || n.includes("1er") || n.includes("1°")
+                    || n.includes("segundo") || n.includes("2do") || n.includes("2°")
+                    || n.includes("tercer") || n.includes("3er") || n.includes("3°");
+            }
+
+            function seleccionarModalidadPorTexto(textoBuscado) {
+                if (!textoBuscado) return false;
+                var texto = textoBuscado.toLowerCase();
+                var encontrada = null;
+                $("#notas_IdModalidad option").each(function () {
+                    var valor = ($(this).val() || "").trim();
+                    var etiqueta = ($(this).text() || "").toLowerCase();
+                    if (!valor) return;
+                    if (etiqueta.includes(texto)) {
+                        encontrada = valor;
+                        return false;
+                    }
+                });
+                if (!encontrada) return false;
+                if ($("#notas_IdModalidad").val() !== encontrada) {
+                    $("#notas_IdModalidad").val(encontrada).trigger("change");
+                }
+                return true;
+            }
+
+            function autoseleccionarModalidadPorGrado() {
+                var gradoTxt = $("#notas_IdGrado option:selected").text();
+                var grado = obtenerNumeroGrado(gradoTxt);
+                if (esNivelPreescolar(gradoTxt)) {
+                    seleccionarModalidadPorTexto("preescolar");
+                    return;
+                }
+
+                if (grado == null) return;
+
+                if (grado >= 1 && grado <= 6) {
+                    seleccionarModalidadPorTexto("primaria regular") || seleccionarModalidadPorTexto("primaria");
+                    return;
+                }
+
+                if (grado >= 7 && grado <= 11) {
+                    seleccionarModalidadPorTexto("secundaria");
+                }
+            }
+
             function esSoloCualitativo() {
                 var modalidad = ($("#notas_IdModalidad option:selected").text() || "").toLowerCase();
                 if (modalidad.includes("preescolar") || modalidad.includes("primaria")) return true;
@@ -343,7 +392,11 @@
             });
 
             $("#acumulado1_opt, #examen1_opt, #acumulado2_opt, #examen2_opt, #acumulado3_opt, #examen3_opt, #acumulado4_opt, #examen4_opt").on("input", actualizarCortesDesdeNumericos);
-            $("#notas_IdModalidad, #notas_IdGrado").on("change", aplicarReglaFormulario);
+            $("#notas_IdGrado").on("change", function () {
+                autoseleccionarModalidadPorGrado();
+                aplicarReglaFormulario();
+            });
+            $("#notas_IdModalidad").on("change", aplicarReglaFormulario);
             $("#formNotasCreate").on("submit", function () {
                 if (!$idAlumno.val() || $idAlumno.val() === "0") {
                     if (typeof Swal !== 'undefined') {
@@ -353,6 +406,7 @@
                 }
                 if (!esSoloCualitativo()) sincronizarMixtoAntesDeGuardar();
             });
+            autoseleccionarModalidadPorGrado();
             aplicarReglaFormulario();
         });
     </script>

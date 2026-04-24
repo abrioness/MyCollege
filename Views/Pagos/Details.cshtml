@@ -222,10 +222,16 @@
 @if (TempData["Mensaje"] != null)
 {
     <script>
-        Swal.fire({
-            title: '@TempData["Tipo"]',
-            text: '@TempData["Mensaje"]',
-            icon: '@TempData["Tipo"]'
+        document.addEventListener('DOMContentLoaded', function () {
+            var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+            var tipo = @Html.Raw(Json.Serialize(TempData["Tipo"]?.ToString() ?? "info"));
+            var titulo = tipo === 'success' ? 'Éxito' : tipo === 'warning' ? 'Atención' : tipo === 'error' ? 'Error' : 'Información';
+            Swal.fire({
+                title: titulo,
+                text: mensaje,
+                icon: tipo,
+                confirmButtonText: 'Aceptar'
+            });
         });
     </script>
 }

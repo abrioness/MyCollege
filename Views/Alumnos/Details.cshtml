@@ -320,20 +320,28 @@
                         </div>
                     </div>
                 </div>
-                @if(modalidad.Value=="2"){
-                    
-                
+                @{
+                    var textoModalidad = (modalidad?.Text ?? string.Empty).ToLower();
+                    var textoNivel = (nivel?.Text ?? string.Empty).ToLower();
+                    var esPrimariaRegular = textoModalidad.Contains("primaria regular");
+                    var esPrimerGrado = textoNivel == "primero"
+                        || textoNivel.Contains("primer grado")
+                        || textoNivel.Contains("1er grado")
+                        || textoNivel.Contains("1° grado");
+                }
+                @if (esPrimariaRegular && esPrimerGrado)
+                {
                 <div class="col-md-8 columna-izquierda">
                     <div class="fila-interna">
                         <div class="etiqueta"><strong>Para 1er grado, el alumno recibió Educ. Preescolar?</strong></div>
                         <div class="valor">
 
-                            @Model.alumnos.Repitente
+                            @(string.IsNullOrWhiteSpace(Model.alumnos.RecibioEducacionPreescolar) ? "No especificado" : Model.alumnos.RecibioEducacionPreescolar)
 
                         </div>
                     </div>
-					</div>
-				}
+                    </div>
+                }
     </div>
         </fieldset>
         @if (Model.alumnos.IdModalidad == 1 && Model.alumnos.IdRecinto == 1)

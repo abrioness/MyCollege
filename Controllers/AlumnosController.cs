@@ -20,6 +20,28 @@ namespace WebColegio.Controllers
         {
             _Iservices = services;
         }
+
+            private async Task<bool> DebeGuardarRecibioPreescolar(TblAlumno alumno)
+            {
+                if (alumno == null) return false;
+
+                var modalidad = (await _Iservices.GetModalidadesAsync())
+                    .FirstOrDefault(m => m.IdModalidad == alumno.IdModalidad)?.Modalidad ?? string.Empty;
+
+                var grado = (await _Iservices.GetGradosAsync())
+                    .FirstOrDefault(g => g.IdGrado == alumno.IdGrado)?.NombreGrado ?? string.Empty;
+
+                var modalidadTexto = modalidad.ToLowerInvariant();
+                var gradoTexto = grado.ToLowerInvariant();
+
+                var esPrimariaRegular = modalidadTexto.Contains("primaria regular");
+                var esPrimerGrado = gradoTexto == "primero"
+                    || gradoTexto.Contains("primer grado")
+                    || gradoTexto.Contains("1er grado")
+                    || gradoTexto.Contains("1° grado");
+
+                return esPrimariaRegular && esPrimerGrado;
+            }
         // GET: AlumnosController
         [Authorize]
         public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
@@ -254,6 +276,11 @@ namespace WebColegio.Controllers
                 }
                 if (alumnos != null)
                 {
+                    if (!await DebeGuardarRecibioPreescolar(alumnos))
+                    {
+                        alumnos.RecibioEducacionPreescolar = null;
+                    }
+
                     //alumnos.Activo = true;
                     alumnos.UsuarioRegistro = idUsuario;
                     alumnos.FechaRegistro = DateTime.Now;
@@ -359,6 +386,11 @@ namespace WebColegio.Controllers
 
                 if (!ModelState.IsValid)
                  {
+                    if (!await DebeGuardarRecibioPreescolar(viewModel.alumnos))
+                    {
+                        viewModel.alumnos.RecibioEducacionPreescolar = null;
+                    }
+
                     //viewModel.alumnos.Activo = true;
                     viewModel.alumnos.UsuarioActualiza = idUsuario;
                     viewModel.alumnos.FechaActualiza = DateTime.Now;

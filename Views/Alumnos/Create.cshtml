@@ -232,7 +232,7 @@ Layout = "~/Views/Shared/_Layout.cshtml";
                         
                         <div class="form-group" id="recibioPreescolar">
                             <label asp-for="alumnos.RecibioEducacionPreescolar" class="control-label">Para el 1er Grado el alumno Recibio Educación Prescolar</label>
-                            <select asp-for="alumnos.RecibioEducacionPreescolar" class="form-select" required>
+                            <select asp-for="alumnos.RecibioEducacionPreescolar" id="alumnos_RecibioEducacionPreescolar" class="form-select">
                                 <option value="">Seleccione una Opción</option>
                                 <option value="Si">SI</option>
                                 <option value="No">NO</option>
@@ -399,24 +399,48 @@ $("#FechaNacimiento").on("change", function () {
 });
             const $recibioPreescolar = $('#recibioPreescolar');
             const $seleccionarGrado = $('#seleccionarGrado');
+            const $modalidad = $('#alumnos_IdModalidad');
+            const $campoRecibio = $('#alumnos_RecibioEducacionPreescolar');
 
-            function evaluarGrado() {
+            function esPrimerGradoValido(nombre) {
+                if (!nombre) return false;
+                const n = nombre.toLowerCase().trim();
+                return n === 'primero'
+                    || n.includes('primer grado')
+                    || n.includes('1er grado')
+                    || n.includes('1° grado');
+            }
+
+            function esPrimariaRegular(nombre) {
+                if (!nombre) return false;
+                return nombre.toLowerCase().includes('primaria regular');
+            }
+
+            function evaluarCampoRecibioPreescolar() {
 
                 const nombreGrado = $seleccionarGrado
                     .find('option:selected')
                     .text()
                     .trim();
+                const nombreModalidad = $modalidad
+                    .find('option:selected')
+                    .text()
+                    .trim();
 
-                if (nombreGrado === 'PRIMERO') {
+                const aplica = esPrimerGradoValido(nombreGrado) && esPrimariaRegular(nombreModalidad);
+                if (aplica) {
                     $recibioPreescolar.show();
+                    $campoRecibio.prop('disabled', false).prop('required', true);
                 } else {
+                    $campoRecibio.val('').prop('required', false).prop('disabled', true);
                     $recibioPreescolar.hide();
                 }
             }
 
-            $seleccionarGrado.on('change', evaluarGrado);
+            $seleccionarGrado.on('change', evaluarCampoRecibioPreescolar);
+            $modalidad.on('change', evaluarCampoRecibioPreescolar);
 
-            evaluarGrado(); // Ejecuta al cargar (modo Editar también)
+            evaluarCampoRecibioPreescolar();
 
 
 });
