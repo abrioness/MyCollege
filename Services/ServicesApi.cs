@@ -1510,26 +1510,39 @@ namespace WebColegio.Services
         #region Metodos de Put o Editar
         public async Task<bool> UpdateNotas(TblNotas nota)
         {
-           var existingNota = await GetNotasById(nota.IdNota);
-            // Actualizamos campos
+            var existingNota = await GetNotasById(nota.IdNota);
+            if (existingNota == null || existingNota.IdNota <= 0)
+                return false;
+
             existingNota.IdTipoEvaluacion = nota.IdTipoEvaluacion;
             existingNota.IdPeriodo = nota.IdPeriodo;
+            existingNota.IdAlumno = nota.IdAlumno;
             existingNota.IdAsignatura = nota.IdAsignatura;
+            existingNota.IdModalidad = nota.IdModalidad;
+            existingNota.IdGrado = nota.IdGrado;
+            existingNota.IdColegio = nota.IdColegio;
             existingNota.Descripcion = nota.Descripcion;
+            existingNota.Acumulado1 = nota.Acumulado1;
+            existingNota.Examen1 = nota.Examen1;
+            existingNota.PrimerCorteCualitativo = nota.PrimerCorteCualitativo;
             existingNota.PrimerCorteCuantitativo = nota.PrimerCorteCuantitativo;
+            existingNota.Acumulado2 = nota.Acumulado2;
+            existingNota.Examen2 = nota.Examen2;
+            existingNota.SegundoCorteCualitativo = nota.SegundoCorteCualitativo;
             existingNota.SegundoCorteCuantitativo = nota.SegundoCorteCuantitativo;
+            existingNota.Acumulado3 = nota.Acumulado3;
+            existingNota.Examen3 = nota.Examen3;
+            existingNota.TercerCorteCualitativo = nota.TercerCorteCualitativo;
             existingNota.TercerCorteCuantitativo = nota.TercerCorteCuantitativo;
+            existingNota.Acumulado4 = nota.Acumulado4;
+            existingNota.Examen4 = nota.Examen4;
+            existingNota.CuartoCorteCualitativo = nota.CuartoCorteCualitativo;
             existingNota.CuartoCorteCuantitativo = nota.CuartoCorteCuantitativo;
+            existingNota.NotaFinalCualitativo = nota.NotaFinalCualitativo;
             existingNota.NotaFinalCuantitativo = nota.NotaFinalCuantitativo;
             existingNota.Activo = true;
-            existingNota.UsuarioActualiza = 1;
+            existingNota.UsuarioActualiza = nota.UsuarioActualiza is int u && u > 0 ? u : 1;
             existingNota.FechaActualiza = DateTime.Now;
-            // agrega más propiedades según tu modelo
-
-            if (existingNota == null)
-            {
-                return false;
-            }
             
             using (var httpClient = new HttpClient())
             {

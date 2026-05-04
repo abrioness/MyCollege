@@ -310,8 +310,10 @@
                 });
             }
 
-            // Matrícula completa (2): monto sugerido = matrícula + mensualidad de enero (servidor registra IdMes=1).
-            // Confirmación (4): solo costo de matrícula.
+            // Matrícula completa (2): CostoMatricula en catálogo = total a pagar (incluye enero).
+            // Desglose: Matrícula neta = Total − mensualidad enero; no se suman dos catálogos.
+            // La mensualidad se consulta con la misma regla que Estado de cuenta (recinto + grado + período + modalidad).
+            // Confirmación (4): solo costo de matrícula del catálogo (sin desglose enero aquí).
             function cargarMatricula() {
                 const recinto = $recinto.val();
                 const modalidad = $modalidad.val();
@@ -324,37 +326,50 @@
                 function aplicarMontoMatricula(costoMatricula, totalAbonos) {
                     const matNeto = Math.max(0, costoMatricula - totalAbonos);
                     if (tipoMovimientoId === TIPO_MATRICULA_COMPLETA) {
-                        // El costo de matrícula completa ya incluye enero en el catálogo,
-                        // por eso NO se vuelve a sumar mensualidad aquí.
-                        $monto.val(matNeto.toFixed(2));
                         if (grado) {
-                            $.getJSON(urlsPagos.obtenerMensualidad, {
+                            const idG = parseInt(grado, 10);
+                            const idP = parseInt(periodo, 10);
+                            const paramsMens = {
                                 idRecinto: recinto,
-                                idGrado: grado,
-                                idPeriodo: periodo
-                            }, function(dataMen) {
+                                idGrado: idG,
+                                idPeriodo: idP
+                            };
+                            const idMod = modalidad ? parseInt(modalidad, 10) : 0;
+                            if (idMod > 0) {
+                                paramsMens.idModalidad = idMod;
+                            }
+                            $.getJSON(urlsPagos.obtenerMensualidad, paramsMens, function(dataMen) {
                                 const costoMensualidad = parseFloat(dataMen && dataMen.costo) || 0;
                                 const parteMatricula = Math.max(0, matNeto - costoMensualidad);
-                                let txt = 'Total C$ ' + matNeto.toFixed(2) + ' = Matrícula C$ ' + parteMatricula.toFixed(2) + ' + Enero C$ ' + costoMensualidad.toFixed(2) + '.';
+                                $monto.val(matNeto.toFixed(2));
+                                // Texto: el total del catálogo (paquete) es matNeto; la parte "solo matrícula" es total − enero.
+                                let txt = 'Total matrícula (catálogo) C$ ' + matNeto.toFixed(2) + ': Matrícula neta C$ ' + parteMatricula.toFixed(2) + ' (total − enero) + Mensualidad enero C$ ' + costoMensualidad.toFixed(2) + '.';
+                                if (dataMen && dataMen.sinConfiguracion && costoMensualidad === 0) {
+                                    txt = 'No hay mensualidad en catálogo para este recinto, nivel, ciclo y modalidad (p. ej. modalidad ' + (idMod || '—') + '): no se puede restar enero al total. Revise Tbl costo mensualidad. Monto a pagar C$ ' + matNeto.toFixed(2) + '.';
+                                }
                                 if (totalAbonos > 0) {
-                                    txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. ' + txt;
+                                    txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de confirmación previa. ' + txt;
                                 }
                                 $mensajeMontoMatricula.text(txt).css('display', 'block');
+                                calcularTotalPagar();
                             }).fail(function() {
-                                let txt = 'Monto total de matrícula completa (incluye enero).';
+                                $monto.val(matNeto.toFixed(2));
+                                let txt = 'No se pudo cargar la mensualidad. Monto total C$ ' + matNeto.toFixed(2) + '.';
                                 if (totalAbonos > 0) {
-                                    txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. ' + txt;
+                                    txt = 'Abonos previos C$ ' + totalAbonos.toFixed(2) + '. ' + txt;
                                 }
                                 $mensajeMontoMatricula.text(txt).css('display', 'block');
+                                calcularTotalPagar();
                             });
                         } else {
-                            let txt = 'Monto total de matrícula completa (incluye enero).';
+                            $monto.val(matNeto.toFixed(2));
+                            let txt = 'Seleccione nivel (grado) para desglosar enero; monto total C$ ' + matNeto.toFixed(2) + '.';
                             if (totalAbonos > 0) {
-                                txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. ' + txt;
+                                txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de confirmación previa. ' + txt;
                             }
                             $mensajeMontoMatricula.text(txt).css('display', 'block');
+                            calcularTotalPagar();
                         }
-                        calcularTotalPagar();
                         return;
                     }
                     $monto.val(matNeto.toFixed(2));

@@ -495,149 +495,142 @@ namespace WebColegio.Controllers
             }
         }
 
+        /// <summary>Rellena listas del <see cref="NotasViewModel"/> para la vista Editar (GET y POST con error).</summary>
+        private async Task PopulateNotasEditViewModelListsAsync(NotasViewModel vm)
+        {
+            if (vm.notas == null)
+                return;
+
+            vm.NotasCualitativasSelectListItem = EscalaCualitativa.Opciones
+                .Select(o => new SelectListItem { Value = o.Codigo, Text = $"{o.Codigo} - {o.Descripcion} ({o.Rango})" })
+                .ToList();
+            vm.alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
+                .Select(r => new SelectListItem { Value = r.IdAlumno.ToString(), Text = r.Nombre + " " + r.Apellido })
+                .ToList();
+            vm.tipoEvaluacionesSelectListItem = (await _Iservices.GetTipEvaluacionAsync())
+                .Select(r => new SelectListItem { Value = r.IdTipoEvaluacion.ToString(), Text = r.NombreTipEvaluacion })
+                .ToList();
+            var periodosEval = await _Iservices.GetPeriodoEvaluacionAsync() ?? new List<PeriodoEvaluacion>();
+            vm.periodoEvaluacionsSelectListItem = periodosEval
+                .Where(p => p.Activo)
+                .OrderBy(p => p.FechaInicio)
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdPeriodo.ToString(),
+                    Text = r.NombrePeriodo,
+                    Selected = r.IdPeriodo == vm.notas.IdPeriodo
+                })
+                .ToList();
+            vm.modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
+                .Select(r => new SelectListItem { Value = r.IdModalidad.ToString(), Text = r.Modalidad })
+                .ToList();
+            vm.gradosSelectListItem = (await _Iservices.GetGradosAsync())
+                .Select(r => new SelectListItem { Value = r.IdGrado.ToString(), Text = r.NombreGrado })
+                .ToList();
+            vm.recintosSelectListItem = (await _Iservices.GetRecintosAsync())
+                .Where(r => r.Activo)
+                .OrderBy(r => r.Recinto)
+                .Select(r => new SelectListItem { Value = r.IdRecinto.ToString(), Text = r.Recinto })
+                .ToList();
+            vm.asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
+                .Select(r => new SelectListItem { Value = r.IdAsignatura.ToString(), Text = r.NombreAsignatura })
+                .ToList();
+        }
+
         // GET: NotasController/Edit/5
         [Authorize]
         public async Task<ActionResult> Edit(int id)
         {
-            //var v_alumNota = await _Iservices.V_alumnoNotas(id);
             var notas = await _Iservices.GetNotasById(id);
-            if (id == 0)
-            {
-                return NotFound(); // si no existe
-            }
+            if (notas == null || notas.IdNota <= 0)
+                return NotFound();
 
-            var viewmodel = new NotasViewModel
-            {
-                notas = notas,
-                NotasCualitativasSelectListItem = EscalaCualitativa.Opciones
-                    .Select(o => new SelectListItem { Value = o.Codigo, Text = $"{o.Codigo} - {o.Descripcion} ({o.Rango})" })
-                    .ToList(),
-                alumnosSelectListItem = (await _Iservices.GetAlumnosAsync())
-                                  .Select(r => new SelectListItem
-                                  {
-                                      Value = r.IdAlumno.ToString(),
-                                      Text = r.Nombre+" "+r.Apellido ,
-                                      //Selected = r.IdPregunta == respuestas.IdPregunta
-                                  }).ToList(),
-                modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
-                                  .Select(r => new SelectListItem
-                                  {
-                                      Value = r.IdModalidad.ToString(),
-                                      Text = r.Modalidad,
-                                      //Selected = r.IdPregunta == respuestas.IdPregunta
-                                  }).ToList(),
-               gradosSelectListItem = (await _Iservices.GetGradosAsync())
-                                  .Select(r => new SelectListItem
-                                  {
-                                      Value = r.IdGrado.ToString(),
-                                      Text = r.NombreGrado,
-                                      //Selected = r.IdPregunta == respuestas.IdPregunta
-                                  }).ToList(),
-                recintosSelectListItem = (await _Iservices.GetRecintosAsync())
-                    .Where(r => r.Activo)
-                    .OrderBy(r => r.Recinto)
-                    .Select(r => new SelectListItem
-                    {
-                        Value = r.IdRecinto.ToString(),
-                        Text = r.Recinto
-                    }).ToList(),
-                asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
-                                  .Select(r => new SelectListItem
-                                  {
-                                      Value = r.IdAsignatura.ToString(),
-                                      Text = r.NombreAsignatura,
-                                      //Selected = r.IdPregunta == respuestas.IdPregunta
-                                  }).ToList(),
-
-            };
+            var viewmodel = new NotasViewModel { notas = notas };
+            await PopulateNotasEditViewModelListsAsync(viewmodel);
             return View(viewmodel);
         }
 
         // POST: NotasController/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(NotasViewModel viewModel)
         {
-
             try
             {
                 if (viewModel == null || viewModel.notas == null)
                 {
-                    ModelState.AddModelError("", "Los datos de las notas del alumno son inválidos.");
-                    return View(viewModel);
+                    TempData["Mensaje"] = "Los datos de las notas del alumno son inválidos.";
+                    TempData["Tipo"] = "error";
+                    return RedirectToAction(nameof(Index));
                 }
 
                 var n = viewModel.notas;
-                if (n.NotaFinalCuantitativo.HasValue && string.IsNullOrEmpty(n.NotaFinalCualitativo))
-                    n.NotaFinalCualitativo = EscalaCualitativa.NumeroACualitativo(n.NotaFinalCuantitativo);
-                if (n.PrimerCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.PrimerCorteCualitativo))
-                    n.PrimerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.PrimerCorteCuantitativo);
-                if (n.SegundoCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.SegundoCorteCualitativo))
-                    n.SegundoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.SegundoCorteCuantitativo);
-                if (n.TercerCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.TercerCorteCualitativo))
-                    n.TercerCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.TercerCorteCuantitativo);
-                if (n.CuartoCorteCuantitativo.HasValue && string.IsNullOrEmpty(n.CuartoCorteCualitativo))
-                    n.CuartoCorteCualitativo = EscalaCualitativa.NumeroACualitativo(n.CuartoCorteCuantitativo);
+
+                if ((!n.IdColegio.HasValue || n.IdColegio <= 0) && n.IdAlumno > 0)
+                {
+                    var alumnoEd = await _Iservices.GetAlumnoIdAsync(n.IdAlumno);
+                    if (alumnoEd?.IdRecinto is int idRecEd && idRecEd > 0)
+                        n.IdColegio = idRecEd;
+                }
+
+                var modalidad = (await _Iservices.GetModalidadesAsync())
+                    .FirstOrDefault(m => m.IdModalidad == n.IdModalidad)?.Modalidad;
+                var nombreGrado = (await _Iservices.GetGradosAsync())
+                    .FirstOrDefault(g => g.IdGrado == n.IdGrado)?.NombreGrado;
+                var esSoloCualitativo = EsCualitativoSolo(modalidad, nombreGrado);
+
+                if (esSoloCualitativo)
+                {
+                    n.Acumulado1 = null;
+                    n.Examen1 = null;
+                    n.PrimerCorteCuantitativo = null;
+                    n.Acumulado2 = null;
+                    n.Examen2 = null;
+                    n.SegundoCorteCuantitativo = null;
+                    n.Acumulado3 = null;
+                    n.Examen3 = null;
+                    n.TercerCorteCuantitativo = null;
+                    n.Acumulado4 = null;
+                    n.Examen4 = null;
+                    n.CuartoCorteCuantitativo = null;
+                    n.NotaFinalCuantitativo = null;
+                }
+                else
+                {
+                    (n.PrimerCorteCualitativo, n.PrimerCorteCuantitativo) = CompletarParCualiCuanti(n.PrimerCorteCualitativo, n.PrimerCorteCuantitativo);
+                    (n.SegundoCorteCualitativo, n.SegundoCorteCuantitativo) = CompletarParCualiCuanti(n.SegundoCorteCualitativo, n.SegundoCorteCuantitativo);
+                    (n.TercerCorteCualitativo, n.TercerCorteCuantitativo) = CompletarParCualiCuanti(n.TercerCorteCualitativo, n.TercerCorteCuantitativo);
+                    (n.CuartoCorteCualitativo, n.CuartoCorteCuantitativo) = CompletarParCualiCuanti(n.CuartoCorteCualitativo, n.CuartoCorteCuantitativo);
+                    (n.NotaFinalCualitativo, n.NotaFinalCuantitativo) = CompletarParCualiCuanti(n.NotaFinalCualitativo, n.NotaFinalCuantitativo);
+                }
+
+                var idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                n.UsuarioActualiza = idUsuario;
 
                 if (!ModelState.IsValid)
                 {
-                    if ((!n.IdColegio.HasValue || n.IdColegio <= 0) && n.IdAlumno > 0)
-                    {
-                        var alumnoEd = await _Iservices.GetAlumnoIdAsync(n.IdAlumno);
-                        if (alumnoEd?.IdRecinto is int idRecEd && idRecEd > 0)
-                            n.IdColegio = idRecEd;
-                    }
-
-                    var actualizado = await _Iservices.UpdateNotas(viewModel.notas);
-
-                    if (actualizado)
-                    {
-                        TempData["Mensaje"] = "Nota actualizada correctamente.";
-                        return RedirectToAction(nameof(Index));
-                    }
-
-                    ModelState.AddModelError("", "Error al actualizar la nota del alumno."); // si hay errores, devuelve a la vista con los datos
+                    await PopulateNotasEditViewModelListsAsync(viewModel);
+                    return View(viewModel);
                 }
 
-                viewModel.tipoEvaluacionesSelectListItem = (await _Iservices.GetTipEvaluacionAsync())
-                                 .Select(r => new SelectListItem
-                                 {
-                                     Value = r.IdTipoEvaluacion.ToString(),
-                                     Text = r.NombreTipEvaluacion,
-                                     //Selected = r.IdPregunta == respuestas.IdPregunta
-                                 }).ToList();
-                     viewModel.periodoEvaluacionsSelectListItem = (await _Iservices.GetPeriodoEvaluacionAsync())
-                                  .Select(r => new SelectListItem
-                                  {
-                                      Value = r.IdPeriodo.ToString(),
-                                      Text = r.NombrePeriodo,
-                                      //Selected = r.IdPregunta == respuestas.IdPregunta
-                                  }).ToList();
-                viewModel.asignaturaSelectListItem = (await _Iservices.GetAsignaturaAsync())
-                                  .Select(r => new SelectListItem
-                                  {
-                                      Value = r.IdAsignatura.ToString(),
-                                      Text = r.NombreAsignatura,
-                                      //Selected = r.IdPregunta == respuestas.IdPregunta
-                                  }).ToList();
-                viewModel.recintosSelectListItem = (await _Iservices.GetRecintosAsync())
-                    .Where(r => r.Activo)
-                    .OrderBy(r => r.Recinto)
-                    .Select(r => new SelectListItem
-                    {
-                        Value = r.IdRecinto.ToString(),
-                        Text = r.Recinto
-                    }).ToList();
+                var actualizado = await _Iservices.UpdateNotas(n);
+                if (actualizado)
+                {
+                    TempData["Mensaje"] = "Nota actualizada correctamente.";
+                    TempData["Tipo"] = "success";
+                    return RedirectToAction(nameof(Index));
+                }
 
-               
+                ModelState.AddModelError("", "Error al actualizar la nota del alumno.");
+                await PopulateNotasEditViewModelListsAsync(viewModel);
                 return View(viewModel);
-
-
-
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                TempData["Mensaje"] = "Error inesperado al actualizar: " + ex.Message;
+                TempData["Tipo"] = "error";
+                return RedirectToAction(nameof(Index));
             }
         }
 

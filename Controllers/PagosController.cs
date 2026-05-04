@@ -172,9 +172,8 @@ namespace WebColegio.Controllers
                 bool becaCompleta = alumno.BecaCompleta == true && alumno.IdPeriodo == idPeriodoRef;
                 bool mediaBeca = alumno.MediaBeca == true && alumno.IdPeriodo == idPeriodoRef;
 
-                var costoMen = costosMen.FirstOrDefault(c =>
-                    c.IdRecinto == idR && c.IdGrado == idG && c.IdModalidad == idMod &&
-                    c.IdPeriodo == idPeriodoRef && c.Activo);
+                var costoMen = ResolverFilaCostoMensualidad(
+                    costosMen, idR, idG, idPeriodoRef, idMod);
                 decimal montoMensual = costoMen != null ? (decimal)costoMen.CostoMensualidad : 0m;
                 if (becaCompleta)
                     montoMensual = 0m;
@@ -775,7 +774,8 @@ namespace WebColegio.Controllers
                             // No usar el mes calendario de la fecha de matrícula (ej. matricular en marzo no implica IdMes=3).
                             const int idMesMensualidadConMatricula = 1;
                             
-                            decimal restarMensualidad = await ObtenerMensualidadDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula);
+                            decimal restarMensualidad = await ObtenerMensualidadDecimal(
+                                pagos.Pago.IdRecinto, pagos.Pago.IdGrado, periodoMatricula, pagos.Pago.IdModalidad);
                             decimal obtenerMat = await ObtenerMatriculaDecimal(pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, periodoMatricula);
                             
                             // Validar que se obtuvieron los valores correctamente
@@ -1125,17 +1125,68 @@ namespace WebColegio.Controllers
 
             return true;
         }
-        public async Task<decimal> ObtenerMensualidadDecimal(
-    int? idRecinto, int idGrado, int idPeriodo)
+
+        /// <summary>
+        /// Busca el costo de mensualidad como en estado de cuenta, con tolerancias:
+        /// recinto + grado + ciclo + modalidad → modalidad 0 (todas) → cualquier modalidad del mismo grado;
+        /// si no hay fila por grado, una única fila activa para recinto+ciclo+modalidad (sin desglose por grado).
+        /// </summary>
+        private static TblCostoMensualidad? ResolverFilaCostoMensualidad(
+            IList<TblCostoMensualidad>? list,
+            int? idRecinto,
+            int idGrado,
+            int idPeriodo,
+            int? idModalidad)
         {
-            return await _Iservices.GetCostosMensualidadAsync()
-                .ContinueWith(t => t.Result
-                    .Where(x => x.IdRecinto == idRecinto &&
-                                x.IdGrado == idGrado &&
+            if (list == null || list.Count == 0)
+                return null;
+
+            IEnumerable<TblCostoMensualidad> Base() =>
+                list.Where(x => x.IdRecinto == idRecinto &&
                                 x.IdPeriodo == idPeriodo &&
-                                x.Activo)
-                    .Select(x => x.CostoMensualidad)
-                    .FirstOrDefault());
+                                x.Activo);
+
+            var porGrado = Base().Where(x => x.IdGrado == idGrado).ToList();
+
+            TblCostoMensualidad? EligePorModalidad(IReadOnlyList<TblCostoMensualidad> src)
+            {
+                if (src.Count == 0) return null;
+                if (idModalidad.HasValue && idModalidad.Value > 0)
+                {
+                    var exacta = src.FirstOrDefault(x => x.IdModalidad == idModalidad.Value);
+                    if (exacta != null) return exacta;
+                    var wildcard = src.FirstOrDefault(x => x.IdModalidad == 0);
+                    if (wildcard != null) return wildcard;
+                }
+                return src.FirstOrDefault();
+            }
+
+            var fila = EligePorModalidad(porGrado);
+            if (fila != null)
+                return fila;
+
+            if (!idModalidad.HasValue || idModalidad.Value <= 0)
+                return null;
+
+            var soloModalidad = Base().Where(x => x.IdModalidad == idModalidad.Value).ToList();
+            if (soloModalidad.Count == 1)
+                return soloModalidad[0];
+            var soloWildcard = Base().Where(x => x.IdModalidad == 0).ToList();
+            if (soloWildcard.Count == 1)
+                return soloWildcard[0];
+
+            return null;
+        }
+
+        /// <summary>
+        /// Misma lógica flexible que <see cref="ObtenerMensualidad"/> (desglose matrícula completa / servidor).
+        /// </summary>
+        public async Task<decimal> ObtenerMensualidadDecimal(
+            int? idRecinto, int idGrado, int idPeriodo, int? idModalidad = null)
+        {
+            var list = await _Iservices.GetCostosMensualidadAsync();
+            var fila = ResolverFilaCostoMensualidad(list, idRecinto, idGrado, idPeriodo, idModalidad);
+            return fila != null ? (decimal)fila.CostoMensualidad : 0m;
         }
         public async Task<decimal> ObtenerMatriculaDecimal(
     int? idRecinto, int? idModalidad, int idPeriodo)
@@ -1179,20 +1230,15 @@ namespace WebColegio.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult ObtenerMensualidad(int? idRecinto, int idGrado, int idPeriodo)
+        public IActionResult ObtenerMensualidad(int? idRecinto, int idGrado, int idPeriodo, int? idModalidad = null)
         {
-            var mensualidad = _Iservices.GetCostosMensualidadAsync().Result
-                .Where(x => x.IdRecinto == idRecinto &&
-                            x.IdGrado == idGrado &&
-                            //x.IdModalidad == idModalidad &&
-                            x.IdPeriodo == idPeriodo &&
-                            x.Activo == true)
-                .Select(x => new {
-                    costo = x.CostoMensualidad
-                })
-                .FirstOrDefault();
+            var list = _Iservices.GetCostosMensualidadAsync().Result;
+            var fila = ResolverFilaCostoMensualidad(list, idRecinto, idGrado, idPeriodo, idModalidad);
 
-            return Json(mensualidad);
+            if (fila == null)
+                return Json(new { costo = 0, sinConfiguracion = true });
+
+            return Json(new { costo = fila.CostoMensualidad, sinConfiguracion = false });
         }
         [HttpGet]
         [Authorize]

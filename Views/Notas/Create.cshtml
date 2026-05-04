@@ -270,17 +270,17 @@
                 var n = nombre.toLowerCase();
                 var m = n.match(/\d+/);
                 if (m) return parseInt(m[0], 10);
-                if (n.includes("primero") || n.includes("primer")) return 1;
-                if (n.includes("segundo")) return 2;
-                if (n.includes("tercero") || n.includes("tercer")) return 3;
-                if (n.includes("cuarto")) return 4;
-                if (n.includes("quinto")) return 5;
-                if (n.includes("sexto")) return 6;
-                if (n.includes("setimo") || n.includes("septimo") || n.includes("séptimo")) return 7;
-                if (n.includes("octavo")) return 8;
-                if (n.includes("noveno")) return 9;
-                if (n.includes("decimo") || n.includes("décimo")) return 10;
-                if (n.includes("undecimo") || n.includes("undécimo")) return 11;
+                if (n.includes("primero") || n.includes("primer")) return 4;
+                if (n.includes("segundo")) return 5;
+                if (n.includes("tercero") || n.includes("tercer")) return 6;
+                if (n.includes("cuarto")) return 7;
+                if (n.includes("quinto")) return 8;
+                if (n.includes("sexto")) return 9;
+                if (n.includes("setimo") || n.includes("septimo") || n.includes("séptimo")) return 10;
+                if (n.includes("octavo")) return 11;
+                if (n.includes("noveno")) return 12;
+                if (n.includes("decimo") || n.includes("décimo")) return 13;
+                if (n.includes("undecimo") || n.includes("undécimo")) return 14;
                 return null;
             }
 
@@ -288,9 +288,9 @@
                 if (!nombre) return false;
                 var n = nombre.toLowerCase();
                 if (!n.includes("nivel")) return false;
-                return n.includes("primer") || n.includes("1er") || n.includes("1°")
-                    || n.includes("segundo") || n.includes("2do") || n.includes("2°")
-                    || n.includes("tercer") || n.includes("3er") || n.includes("3°");
+                return n.includes("primer") || n.includes("primer nivel") || n.includes("1°")
+                    || n.includes("segundo") || n.includes("segundo nivel") || n.includes("2°")
+                    || n.includes("tercer") || n.includes("tercer nivel") || n.includes("3°");
             }
 
             function seleccionarModalidadPorTexto(textoBuscado) {
@@ -323,22 +323,22 @@
 
                 if (grado == null) return;
 
-                if (grado >= 1 && grado <= 6) {
+                if (grado >= 4 && grado <= 9) {
                     seleccionarModalidadPorTexto("primaria regular") || seleccionarModalidadPorTexto("primaria");
                     return;
                 }
 
-                if (grado >= 7 && grado <= 11) {
+                if (grado >= 10 && grado <= 14) {
                     seleccionarModalidadPorTexto("secundaria");
                 }
             }
 
             function esSoloCualitativo() {
-                var modalidad = ($("#notas_IdModalidad option:selected").text() || "").toLowerCase();
-                if (modalidad.includes("preescolar") || modalidad.includes("primaria")) return true;
+                var modalidad = ($("#notas_IdModalidad option:selected").text()).toLowerCase();
+                if (modalidad.includes("preescolar")) return true;
                 var gradoTxt = $("#notas_IdGrado option:selected").text();
                 var grado = obtenerNumeroGrado(gradoTxt);
-                return grado === 1 || grado === 2;
+                return grado === 1 || grado === 2 || grado===3 || grado===4 || grado===5;
             }
 
             function limpiarCuantitativos() {
