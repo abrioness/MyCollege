@@ -259,52 +259,76 @@ namespace WebColegio.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(TblAlumno alumnos)
         {
-            bool response = false;
-            bool existe = false;
             try
             {
-                var buscarIdAlumnos=await _Iservices.GetAlumnosAsync();
-                alumnos.IdPeriodo = await _Iservices.GetPeriodoAsync().ContinueWith(p => p.Result.FirstOrDefault(a => a.Activo && a.Actual)?.IdPeriodo) ?? 0;
-                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-                existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoMINED);
-                if (existe)
+                if (alumnos == null)
                 {
-                    TempData["Mensaje"] = "Ya existe un alumno con el mismo Código";
+                    TempData["Mensaje"] = "No se recibieron datos del formulario.";
                     TempData["Tipo"] = "warning";
                     return RedirectToAction("Create");
                 }
-                if (alumnos != null)
-                {
-                    if (!await DebeGuardarRecibioPreescolar(alumnos))
-                    {
-                        alumnos.RecibioEducacionPreescolar = null;
-                    }
 
-                    //alumnos.Activo = true;
-                    alumnos.UsuarioRegistro = idUsuario;
-                    alumnos.FechaRegistro = DateTime.Now;
-                    response = await _Iservices.PostAlumnosAsync(alumnos);
-                    if(response)
-                    {
-                        var idAlumno = buscarIdAlumnos.Max(a => a.IdAlumno);
-                        TempData["Mensaje"] = "Se registro correctamente al Estudiante";
-                        TempData["Tipo"] = "success";
-                        return RedirectToAction("Details", "Alumnos", new { id = idAlumno + 1 });
-                    }
-                    
-                    else
-                    {
-                        TempData["Mensaje"] = "No se proceso el registro.";
-                        TempData["Tipo"] = "warning";
-                        return RedirectToAction("Create");
-                    }
+                var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+                alumnos.IdPeriodo = periodos.FirstOrDefault(a => a.Activo && a.Actual)?.IdPeriodo ?? 0;
+
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoMINED ?? string.Empty);
+                if (existe)
+                {
+                    TempData["Mensaje"] = "Ya existe un alumno con el mismo código MINED.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
                 }
-                return NoContent();
+
+                if (!await DebeGuardarRecibioPreescolar(alumnos))
+                    alumnos.RecibioEducacionPreescolar = null;
+
+                alumnos.UsuarioRegistro = idUsuario;
+                alumnos.FechaRegistro = DateTime.Now;
+
+                var (exito, detalleError, idDesdeApi) = await _Iservices.PostAlumnosAsync(alumnos);
+
+                if (!exito)
+                {
+                    TempData["Mensaje"] = string.IsNullOrWhiteSpace(detalleError)
+                        ? "No se pudo guardar el registro. Verifique la conexión con la API o los datos enviados."
+                        : detalleError;
+                    TempData["Tipo"] = "error";
+                    return RedirectToAction("Create");
+                }
+
+                var idNuevo = idDesdeApi;
+                if (!idNuevo.HasValue || idNuevo.Value <= 0)
+                {
+                    var lista = await _Iservices.GetAlumnosAsync() ?? new List<TblAlumno>();
+                    var codigo = alumnos.CodigoAlumno?.Trim();
+                    var mined = alumnos.CodigoMINED?.Trim();
+                    var encontrado = lista
+                        .OrderByDescending(a => a.IdAlumno)
+                        .FirstOrDefault(a =>
+                            (!string.IsNullOrEmpty(codigo) &&
+                             string.Equals(a.CodigoAlumno?.Trim(), codigo, StringComparison.OrdinalIgnoreCase)) ||
+                            (!string.IsNullOrEmpty(mined) &&
+                             string.Equals(a.CodigoMINED?.Trim(), mined, StringComparison.OrdinalIgnoreCase)));
+                    idNuevo = encontrado?.IdAlumno;
+                }
+
+                TempData["Mensaje"] = "Se registró correctamente al estudiante.";
+                TempData["Tipo"] = "success";
+
+                if (idNuevo.HasValue && idNuevo.Value > 0)
+                    return RedirectToAction("Details", "Alumnos", new { id = idNuevo.Value });
+
+                TempData["Mensaje"] = "El registro se guardó, pero no se pudo localizar el id del alumno para mostrar el detalle. Revise el listado de alumnos.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                TempData["Mensaje"] = $"Error al registrar: {ex.Message}";
+                TempData["Tipo"] = "error";
+                return RedirectToAction("Create");
             }
         }
 
@@ -312,15 +336,17 @@ namespace WebColegio.Controllers
 
         public async Task<ActionResult> Edit(int id)
         {
+            if (id <= 0)
+                return NotFound();
+
             var alumnos = await _Iservices.GetAlumnoIdAsync(id);
-             if (id == 0)
-            {
-                return NotFound(); // si no existe
-            }
+            if (alumnos == null || alumnos.IdAlumno <= 0)
+                return NotFound();
 
             var viewmodel = new AlumnosViewModel
             {
                 alumnos = alumnos,
+                ListGrados = await _Iservices.GetGradosAsync(),
                 sexosSelectListItem = (await _Iservices.GetSexosAsync())
                               .Select(r => new SelectListItem
                               {
@@ -363,6 +389,12 @@ namespace WebColegio.Controllers
                                   Value = r.IdRecinto.ToString(),
                                   Text = r.Recinto,
                                   //Selected = r.IdPregunta == respuestas.IdPregunta
+                              }).ToList(),
+                discapacidadSelectListItem = (await _Iservices.GetDiscapacidadAsync())
+                              .Select(r => new SelectListItem
+                              {
+                                  Value = r.Id_Discapacidad.ToString(),
+                                  Text = r.Discapacidad,
                               }).ToList()
             }; 
 
@@ -384,28 +416,27 @@ namespace WebColegio.Controllers
                     return View(viewModel);
                 }
 
-                if (!ModelState.IsValid)
-                 {
+                if (ModelState.IsValid)
+                {
                     if (!await DebeGuardarRecibioPreescolar(viewModel.alumnos))
                     {
                         viewModel.alumnos.RecibioEducacionPreescolar = null;
                     }
 
-                    //viewModel.alumnos.Activo = true;
                     viewModel.alumnos.UsuarioActualiza = idUsuario;
                     viewModel.alumnos.FechaActualiza = DateTime.Now;
                     var actualizado = await _Iservices.UpdateAlumnos(viewModel.alumnos);
 
-                if (actualizado)
-                {
-                    TempData["Mensaje"] = "Datos del estudiante se actualizadar&oacuten correctamente.";
-                    return RedirectToAction(nameof(Index));
+                    if (actualizado)
+                    {
+                        TempData["Mensaje"] = "Datos del estudiante se actualizaron correctamente.";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    ModelState.AddModelError("", "Error al actualizar los datos del alumno.");
                 }
 
-                ModelState.AddModelError("", "Error al actualizar los datos del alumno.");
-            }
-
-           
+            viewModel.ListGrados = await _Iservices.GetGradosAsync();
             viewModel.sexosSelectListItem = (await _Iservices.GetSexosAsync())
                               .Select(r => new SelectListItem
                               {
@@ -448,6 +479,12 @@ namespace WebColegio.Controllers
                                   Value = r.IdRecinto.ToString(),
                                   Text = r.Recinto,
                                   //Selected = r.IdPregunta == respuestas.IdPregunta
+                              }).ToList();
+                viewModel.discapacidadSelectListItem = (await _Iservices.GetDiscapacidadAsync())
+                              .Select(r => new SelectListItem
+                              {
+                                  Value = r.Id_Discapacidad.ToString(),
+                                  Text = r.Discapacidad,
                               }).ToList();
                 return View(viewModel);
             }

@@ -51,7 +51,8 @@ namespace WebColegio.Services
 
         #endregion
         #region Metodos Post
-        Task<bool> PostAlumnosAsync(TblAlumno alumnos);
+        /// <summary>Guarda alumno en la API. Incluye mensaje de error si falla e IdAlumno si la API lo devuelve en el cuerpo.</summary>
+        Task<(bool Exito, string? DetalleError, int? IdAlumnoCreado)> PostAlumnosAsync(TblAlumno alumnos);
         /// <summary>Guarda nota en la API. Detalle contiene mensaje de error si Exito es false.</summary>
         Task<(bool Exito, string? Detalle)> PostNotasAsync(TblNotas notas);
         Task<bool> PostPagosAsync(TblPago pagos);
@@ -64,6 +65,8 @@ namespace WebColegio.Services
         Task<List<MovimientoInventario>> GetMovimientosInventarioAsync(int? idProducto, DateTime? desde, DateTime? hasta);
         Task<bool> PostProductosAsync(Productos producto);
         Task<bool> UpdateProductoAsync(Productos producto);
+        /// <summary>Mismo comportamiento que <see cref="UpdateProductoAsync"/> (nombre plural por convención de negocio).</summary>
+        Task<bool> UpdateProductosAsync(Productos producto);
         /// <returns>Éxito y, si falla, texto de error devuelto por la API (o mensaje genérico).</returns>
         Task<(bool Ok, string? ErrorMessage)> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
         Task<bool> PostUsuarios(TblUsuarios usuario);

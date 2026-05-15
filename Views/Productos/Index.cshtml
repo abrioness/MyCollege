@@ -53,9 +53,13 @@
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>
 					<tr>
+								@if (User.IsInRole("Admin") || User.IsInRole("Cajero"))
+						{
+							@* <th>Acciones</th> *@
 						
 						<th>Código</th>
-						@* <th>Nombre Producto</th> *@
+						}
+						<th>Nombre Producto</th> 
 						<th>Descripción</th>
 						<th>Existencia Inicial</th>
 						<th>Tipo de Movimiento</th>
@@ -70,12 +74,22 @@
 					@foreach (var itemProducto in Model.producto)
 					{
 						<tr>
+									@if (User.IsInRole("Admin") || User.IsInRole("Cajero"))
+							 {
+										@*<td>
+									<a asp-action="Edit" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-outline-warning" title="Editar">
+										<i class="bi bi-pencil"></i>
+									</a>
+								</td> *@
+							
 							<td>
-
+							<a asp-action="Edit" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-info title="Editar">
 								@itemProducto.CodigoBarra
+							</a>
 							</td>
-							@* 
-							<td>
+							}
+							
+									@*<td>
 
 									<a asp-action="Index" asp-controller="Productos" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-info">	@itemProducto.NombreProducto</a>
 
@@ -85,6 +99,10 @@
 
 								@itemProducto.NombreProducto
 							</td>
+									<td>
+
+										@itemProducto.Descripcion
+									</td>
 							<td>
 
 								@itemProducto.ExistenciaInicial

@@ -2,6 +2,8 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -179,10 +181,7 @@ namespace WebColegio.Controllers
 
             }
 
-            var notasAlumnoTutor = await _Iservices.GetNotasPorUsuario(cedulatutor);
             var v_alumNota = await _Iservices.V_alumnoNotas(cedulatutor);
-            var _modalidad = await _Iservices.GetModalidadesAsync();
-            var _nivel = await _Iservices.GetGradosAsync();
             if (v_alumNota == null)
             {
                 TempData["Mensaje"] = "No existen datos del alumno";
@@ -190,6 +189,30 @@ namespace WebColegio.Controllers
                 return NoContent();
 
             }
+
+            var esTutor = User.IsInRole("4") || User.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "4");
+            if (esTutor)
+            {
+                var miCedula = User.FindFirstValue("Cedula");
+                if (!string.IsNullOrWhiteSpace(miCedula) && !string.Equals(miCedula.Trim(), cedulatutor.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData["Mensaje"] = "No puede consultar notas de otro tutor.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Login", "Login");
+                }
+
+                var pagosValidacion = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
+                var periodosValidacion = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+                var idPeriodoVal = periodosValidacion.FirstOrDefault(p => p.Activo && p.Actual)?.IdPeriodo;
+                if (!MensualidadTutorHelper.TieneMensualidadMesActual(pagosValidacion, v_alumNota.IdAlumno, idPeriodoVal))
+                {
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    TempData["Mensaje"] = "Para consultar las notas debe estar al día con la mensualidad del mes en curso.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Login", "Login");
+                }
+            }
+
             List<TblNotas> listnota = await _Iservices.GetNotasAlumnoById(v_alumNota.IdAlumno);
             var periodosCatDet = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
             var periodoLectivoActual = ObtenerPeriodoLectivoActual(periodosCatDet);
@@ -235,11 +258,6 @@ namespace WebColegio.Controllers
                                   }).ToList(),
                 
             };
-
-            if (notasAlumnoTutor == null)
-            {
-                return NotFound();
-            }
 
             return View(viewModel);
         }

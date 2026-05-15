@@ -781,39 +781,76 @@ namespace WebColegio.Services
 
         #endregion
         #region Metodos Post
-        public async Task<bool> PostAlumnosAsync(TblAlumno alumnos)
+        public async Task<(bool Exito, string? DetalleError, int? IdAlumnoCreado)> PostAlumnosAsync(TblAlumno alumnos)
         {
-            bool respuesta = false;
-            //alumnos.CodigoAlumno = await GenerarCodigoAlumno();
+            if (alumnos == null)
+                return (false, "No se recibieron datos del alumno.", null);
 
+            if (string.IsNullOrWhiteSpace(url))
+                return (false, "Falta configurar la URL de la API (ApiSettings:BaseUrl).", null);
 
-            
-            // Asegurar datos mínimos requeridos
-               
-                //alumnos.CodigoUnico = ;
-                
-                
-               
-
+            try
+            {
                 using (var httpClient = new HttpClient())
                 {
-                    // Serializar el objeto alumno
                     string jsonAlumnos = JsonConvert.SerializeObject(alumnos);
                     var content = new StringContent(jsonAlumnos, Encoding.UTF8, "application/json");
-
-                    // Enviar POST
                     var response = await httpClient.PostAsync(url + "api/Alumnos/Guardar", content);
+                    var body = await response.Content.ReadAsStringAsync();
 
-                    if (response.IsSuccessStatusCode)
+                    if (!response.IsSuccessStatusCode)
                     {
-                         respuesta = true;
+                        var detalle = $"La API respondió {(int)response.StatusCode} {response.ReasonPhrase}. {body}".Trim();
+                        Debug.WriteLine("Error POST Alumnos/Guardar: " + detalle);
+                        return (false, string.IsNullOrWhiteSpace(body) ? detalle : body.Trim(), null);
                     }
-                    return respuesta;
-                }
 
-            
-            
-           
+                    int? idCreado = TryParseIdAlumnoFromApiBody(body);
+                    return (true, null, idCreado);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostAlumnosAsync: " + ex);
+                return (false, ex.Message, null);
+            }
+        }
+
+        private static int? TryParseIdAlumnoFromApiBody(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body))
+                return null;
+            try
+            {
+                var alumno = JsonConvert.DeserializeObject<TblAlumno>(body);
+                if (alumno != null && alumno.IdAlumno > 0)
+                    return alumno.IdAlumno;
+            }
+            catch
+            {
+                /* ignorar */
+            }
+            try
+            {
+                var dyn = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(body);
+                var token = dyn?["idAlumno"] ?? dyn?["IdAlumno"];
+                if (token != null && int.TryParse(token.ToString(), out var id) && id > 0)
+                    return id;
+            }
+            catch
+            {
+                /* ignorar */
+            }
+            try
+            {
+                if (int.TryParse(body.Trim(), out var soloId) && soloId > 0)
+                    return soloId;
+            }
+            catch
+            {
+                /* ignorar */
+            }
+            return null;
         }
 
         public async Task<(bool Exito, string? Detalle)> PostNotasAsync(TblNotas notas)
@@ -1137,16 +1174,47 @@ namespace WebColegio.Services
             return respuesta;
         }
 
+        /// <summary>Actualiza un producto vía API PUT, fusionando con el registro actual y conservando usuario/fecha de registro.</summary>
         public async Task<bool> UpdateProductoAsync(Productos producto)
         {
+            if (producto == null || producto.IdProducto <= 0)
+                return false;
+
+            var existente = await GetProductoByIdAsync(producto.IdProducto);
+            if (existente == null || existente.IdProducto <= 0)
+                return false;
+
+            var usuarioRegistro = existente.UsuarioRegistro;
+            var fechaRegistro = existente.FechaRegistro;
+
+            existente.NombreProducto = producto.NombreProducto;
+            existente.CodigoBarra = producto.CodigoBarra;
+            existente.Descripcion = producto.Descripcion;
+            existente.ExistenciaInicial = producto.ExistenciaInicial;
+            existente.IdMovInventario = producto.IdMovInventario;
+            existente.IdCateProducto = producto.IdCateProducto;
+            existente.IdProveedor = producto.IdProveedor;
+            existente.IdRecinto = producto.IdRecinto;
+            existente.CostoUnitario = producto.CostoUnitario;
+            existente.StockActual = producto.StockActual;
+            existente.StockMinimo = producto.StockMinimo;
+            existente.Activo = producto.Activo;
+            existente.ImporteInventario = producto.StockActual * producto.CostoUnitario;
+
+            existente.UsuarioActualiza = producto.UsuarioActualiza;
+            existente.FechaActualiza = producto.FechaActualiza;
+
+            existente.UsuarioRegistro = usuarioRegistro;
+            existente.FechaRegistro = fechaRegistro;
+
             bool respuesta = false;
             try
             {
                 using (var httpClient = new HttpClient())
                 {
-                    var json = JsonConvert.SerializeObject(producto);
+                    var json = JsonConvert.SerializeObject(existente);
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
-                    var response = await httpClient.PutAsync(url + $"api/TblProductos/{producto.IdProducto}", content);
+                    var response = await httpClient.PutAsync(url + $"api/TblProductos/{existente.IdProducto}", content);
                     if (response.IsSuccessStatusCode)
                         respuesta = true;
                     else
@@ -1162,6 +1230,9 @@ namespace WebColegio.Services
             }
             return respuesta;
         }
+
+        /// <summary>Alias descriptivo; delega en <see cref="UpdateProductoAsync"/>.</summary>
+        public Task<bool> UpdateProductosAsync(Productos producto) => UpdateProductoAsync(producto);
 
         public async Task<bool> PostMovimientoInventarioAsync(MovimientoInventario movimiento)
         {
@@ -1560,35 +1631,73 @@ namespace WebColegio.Services
         //Update para el registro de alumnos
         public async Task<bool> UpdateAlumnos(TblAlumno alumno)
         {
+            if (alumno == null || alumno.IdAlumno <= 0)
+                return false;
+
             var existingAlumno = await GetAlumnoIdAsync(alumno.IdAlumno);
-            // Actualizamos campos
+            if (existingAlumno == null || existingAlumno.IdAlumno <= 0)
+                return false;
+
+            var usuarioRegistro = existingAlumno.UsuarioRegistro;
+            var fechaRegistro = existingAlumno.FechaRegistro;
+
+            // Datos personales e identificación
             existingAlumno.Nombre = alumno.Nombre;
             existingAlumno.Apellido = alumno.Apellido;
+            existingAlumno.PartidaNacimiento = alumno.PartidaNacimiento;
             existingAlumno.FechaNacimiento = alumno.FechaNacimiento;
             existingAlumno.Edad = alumno.Edad;
             existingAlumno.CodigoAlumno = alumno.CodigoAlumno;
             existingAlumno.CodigoMINED = alumno.CodigoMINED;
+            existingAlumno.CodigoUnico = alumno.CodigoUnico;
             existingAlumno.Cedula = alumno.Cedula;
+            existingAlumno.GrupoEtnico = alumno.GrupoEtnico;
+            existingAlumno.BecaCompleta = alumno.BecaCompleta;
+            existingAlumno.MediaBeca = alumno.MediaBeca;
+
+            // Académico / institucional
             existingAlumno.IdGrado = alumno.IdGrado;
             existingAlumno.IdTurno = alumno.IdTurno;
             existingAlumno.IdModalidad = alumno.IdModalidad;
             existingAlumno.IdRecinto = alumno.IdRecinto;
             existingAlumno.IdSexo = alumno.IdSexo;
             existingAlumno.IdGrupo = alumno.IdGrupo;
+            if (alumno.IdPeriodo.HasValue && alumno.IdPeriodo.Value > 0)
+                existingAlumno.IdPeriodo = alumno.IdPeriodo;
+
+            // Ubicación y contacto
             existingAlumno.Direccion = alumno.Direccion;
+            existingAlumno.Barrio = alumno.Barrio;
             existingAlumno.Telefono = alumno.Telefono;
-            existingAlumno.NombreMadre = alumno.NombreMadre;
-            existingAlumno.NombrePadre = alumno.NombrePadre;
-            existingAlumno.NombreTutor = alumno.NombreTutor;
             existingAlumno.Correo = alumno.Correo;
-            
+            existingAlumno.Departamento = alumno.Departamento;
+            existingAlumno.Municipio = alumno.Municipio;
 
-           
+            // Padres / tutor
+            existingAlumno.NombreMadre = alumno.NombreMadre;
+            existingAlumno.CedulaMadre = alumno.CedulaMadre;
+            existingAlumno.TelefonoMadre = alumno.TelefonoMadre;
+            existingAlumno.NombrePadre = alumno.NombrePadre;
+            existingAlumno.CedulaPadre = alumno.CedulaPadre;
+            existingAlumno.TelefonoPadre = alumno.TelefonoPadre;
+            existingAlumno.NombreTutor = alumno.NombreTutor;
+            existingAlumno.CedulaTutor = alumno.CedulaTutor;
+            existingAlumno.ContactoTutor = alumno.ContactoTutor;
 
-            if (existingAlumno == null)
-            {
-                return false;
-            }
+            existingAlumno.Observaciones = alumno.Observaciones;
+            existingAlumno.Peso = alumno.Peso;
+            existingAlumno.Talla = alumno.Talla;
+            existingAlumno.TipoEstudiante = alumno.TipoEstudiante;
+            existingAlumno.Repitente = alumno.Repitente;
+            existingAlumno.RecibioEducacionPreescolar = alumno.RecibioEducacionPreescolar;
+            existingAlumno.IdDiscapacidad = alumno.IdDiscapacidad;
+            existingAlumno.Activo = alumno.Activo;
+
+            existingAlumno.UsuarioActualiza = alumno.UsuarioActualiza;
+            existingAlumno.FechaActualiza = alumno.FechaActualiza;
+
+            existingAlumno.UsuarioRegistro = usuarioRegistro;
+            existingAlumno.FechaRegistro = fechaRegistro;
 
             using (var httpClient = new HttpClient())
             {

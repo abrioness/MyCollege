@@ -299,7 +299,7 @@
                     </li>
 
                 }
-                @if (User.IsInRole("UserSystem"))
+                @if (User.IsInRole("UserSystem") || User.IsInRole("Admin"))
                 {
                     <!-- Usuario -->
                     <li class="nav-item active">

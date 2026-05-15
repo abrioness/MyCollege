@@ -227,24 +227,106 @@ namespace WebColegio.Controllers
         }
         
         // GET: ProductosController/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<ActionResult> Edit(int id)
         {
-            return View();
+            if (id <= 0)
+                return NotFound();
+
+            var p = await _Iservices.GetProductoByIdAsync(id);
+            if (p == null || p.IdProducto <= 0)
+                return NotFound();
+
+            var viewmodel = new productoViewModel
+            {
+                tblproducto = p,
+                listCategoriaProducto = (await _Iservices.GetCategoriaProductoAsync())
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdCateProducto.ToString(),
+                        Text = r.NombreCategoria,
+                    }).ToList(),
+                listMovimientoInventario = (await _Iservices.GetMovInventarioAsync())
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdMovInventario.ToString(),
+                        Text = r.MovimientoInventario,
+                    }).ToList()
+            };
+            return View(viewmodel);
         }
 
         // POST: ProductosController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(productoViewModel producto)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                if (producto?.tblproducto == null || producto.tblproducto.IdProducto <= 0)
+                {
+                    ModelState.AddModelError("", "Datos de producto no válidos.");
+                    return producto != null
+                        ? await RepoblarListasProductoEdit(producto)
+                        : RedirectToAction(nameof(Index));
+                }
+
+                if (!string.IsNullOrWhiteSpace(producto.tblproducto.CodigoBarra))
+                {
+                    var duplicado = await _Iservices.GetProductoByCodigoYCategoriaAsync(
+                        producto.tblproducto.CodigoBarra.Trim(),
+                        producto.tblproducto.IdCateProducto);
+                    if (duplicado != null && duplicado.IdProducto != producto.tblproducto.IdProducto)
+                    {
+                        ModelState.AddModelError("", "Ya existe otro producto con el mismo código y categoría.");
+                        return await RepoblarListasProductoEdit(producto);
+                    }
+                }
+
+                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                producto.tblproducto.ImporteInventario = producto.tblproducto.StockActual * producto.tblproducto.CostoUnitario;
+                producto.tblproducto.UsuarioActualiza = idUsuario;
+                producto.tblproducto.FechaActualiza = DateTime.Now;
+
+                if (ModelState.IsValid)
+                {
+                    var ok = await _Iservices.UpdateProductosAsync(producto.tblproducto);
+                    if (ok)
+                    {
+                        TempData["Mensaje"] = "Producto actualizado correctamente.";
+                        TempData["Tipo"] = "success";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    ModelState.AddModelError("", "No se pudo actualizar el producto en el servidor.");
+                }
+
+                return await RepoblarListasProductoEdit(producto);
             }
-            catch
+            catch (Exception)
             {
-                return View();
+                TempData["Mensaje"] = "Error al procesar la edición.";
+                TempData["Tipo"] = "error";
+                return producto != null
+                    ? await RepoblarListasProductoEdit(producto)
+                    : RedirectToAction(nameof(Index));
             }
+        }
+
+        private async Task<ViewResult> RepoblarListasProductoEdit(productoViewModel vm)
+        {
+            vm.listCategoriaProducto = (await _Iservices.GetCategoriaProductoAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdCateProducto.ToString(),
+                    Text = r.NombreCategoria,
+                }).ToList();
+            vm.listMovimientoInventario = (await _Iservices.GetMovInventarioAsync())
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdMovInventario.ToString(),
+                    Text = r.MovimientoInventario,
+                }).ToList();
+            return View("Edit", vm);
         }
 
         /// <summary>Reporte de entradas y salidas de inventario para trazabilidad.</summary>

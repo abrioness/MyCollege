@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebColegio.Services;
 using WebColegio.Models;
 using Microsoft.AspNetCore.Authorization;
+using WebColegio.Helpers;
 
 namespace WebColegio.Controllers
 {
@@ -77,6 +78,8 @@ namespace WebColegio.Controllers
                 new Claim(ClaimTypes.Role, usuario.IdRol.ToString()),  // 👈 Aquí se asigna el rol desde BD   
                  new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString())
             };
+            if (!string.IsNullOrWhiteSpace(usuario.Cedula))
+                claims.Add(new Claim("Cedula", usuario.Cedula.Trim()));
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
             await HttpContext.SignInAsync(
@@ -104,24 +107,39 @@ namespace WebColegio.Controllers
                 return RedirectToAction("Index", "Notas");
             }
 
-            if (usuario.IdRol==4)
+            if (usuario.IdRol == 4)
             {
-                //var validarTipoUsuario = await _IService.GetValidarTipoUsuario();
-               var notasPorUsuario= await _IService.GetNotasPorUsuario(NombreUsuario);
-               List<TblPago> pagosMensualidad = await _IService.GetPagosAsync();
-                //int valirMensualidad=await _IService.ValidarMesesPendientes(pagosMensualidad, DateTime.Now.Month);
-               
-                if (notasPorUsuario.Count>0)
+                var cedulaTutor = usuario.Cedula?.Trim();
+                if (string.IsNullOrEmpty(cedulaTutor))
                 {
-                    return RedirectToAction("DetailsNotas", "Notas" ,new { cedulatutor=usuario.Cedula});
-                }
-                else
-                {
-                    TempData["Mensaje"] = "Usuario del Tutor no Existe!";
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    TempData["Mensaje"] = "El usuario tutor no tiene cédula registrada. Solicite al administrador que actualice su perfil.";
                     TempData["Tipo"] = "warning";
-
                     return View("Login");
                 }
+
+                var alumnoVinculado = await _IService.V_alumnoNotas(cedulaTutor);
+                if (alumnoVinculado == null || alumnoVinculado.IdAlumno <= 0)
+                {
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    TempData["Mensaje"] = "No hay alumno vinculado a la cédula de este tutor. Verifique los datos en administración.";
+                    TempData["Tipo"] = "warning";
+                    return View("Login");
+                }
+
+                var pagos = await _IService.GetPagosAsync() ?? new List<TblPago>();
+                var periodos = await _IService.GetPeriodoAsync() ?? new List<CatPeriodo>();
+                var idPeriodoActual = periodos.FirstOrDefault(p => p.Activo && p.Actual)?.IdPeriodo;
+
+                if (!MensualidadTutorHelper.TieneMensualidadMesActual(pagos, alumnoVinculado.IdAlumno, idPeriodoActual))
+                {
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    TempData["Mensaje"] = "Para consultar las notas del alumno debe estar al día con la mensualidad del mes en curso.";
+                    TempData["Tipo"] = "warning";
+                    return View("Login");
+                }
+
+                return RedirectToAction("DetailsNotas", "Notas", new { cedulatutor = cedulaTutor });
             }
             if (usuario.IdRol == 5)
             {
