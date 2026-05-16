@@ -137,11 +137,21 @@ namespace WebColegio.Controllers
         // GET: UsuariosController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
-            var usuarioId = await _Iservices.GetUsuarioIdAsync(id);
-            if (id == 0)
+            if (id <= 0)
+                return NotFound();
+
+            TblUsuarios usuarioId;
+            try
             {
-                return NotFound(); // si no existe
+                usuarioId = await _Iservices.GetUsuarioIdAsync(id);
             }
+            catch
+            {
+                return NotFound();
+            }
+
+            if (usuarioId == null || usuarioId.IdUsuario <= 0)
+                return NotFound();
 
             var viewmodel = new UsuarioViewModel
             {
@@ -151,9 +161,13 @@ namespace WebColegio.Controllers
                               {
                                   Value = r.IdRol.ToString(),
                                   Text = r.NombreRol,
-                                  //Selected = r.IdPregunta == respuestas.IdPregunta
                               }).ToList(),
-                
+                RecintosSelectList = (await _Iservices.GetRecintosAsync())
+                              .Select(r => new SelectListItem
+                              {
+                                  Value = r.IdRecinto.ToString(),
+                                  Text = r.Recinto,
+                              }).ToList(),
             };
 
             return View(viewmodel);
@@ -164,51 +178,64 @@ namespace WebColegio.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(UsuarioViewModel usuario)
         {
+            async Task CargarListasEditAsync()
+            {
+                usuario.RolSelectList = (await _Iservices.GetRolAsync())
+                    .Select(r => new SelectListItem { Value = r.IdRol.ToString(), Text = r.NombreRol }).ToList();
+                usuario.RecintosSelectList = (await _Iservices.GetRecintosAsync())
+                    .Select(r => new SelectListItem { Value = r.IdRecinto.ToString(), Text = r.Recinto }).ToList();
+            }
+
             try
             {
-                bool response=false;
-                int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                string NuevaPassword = usuario.Password;
-                if (usuario == null)
+                if (usuario?.usuarios == null || usuario.usuarios.IdUsuario <= 0)
                 {
-                    TempData["Mensaje"] = "El usuario no existe!";
+                    TempData["Mensaje"] = "Datos de usuario no válidos.";
                     TempData["Tipo"] = "warning";
-                    return RedirectToAction("Create");
-                }
-                if (NuevaPassword == null)
-                {
-                    TempData["Mensaje"] = "Debe Ingresar una Password Valida!";
-                    TempData["Tipo"] = "warning";
-                    return RedirectToAction("Create");
+                    return RedirectToAction(nameof(Index));
                 }
 
-                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(NuevaPassword);
-                byte[] passwordBytes = Encoding.UTF8.GetBytes(hashedPassword);
-                usuario.usuarios.Password = passwordBytes;
+                await CargarListasEditAsync();
 
+                if (!string.IsNullOrWhiteSpace(usuario.Password))
+                {
+                    string hashedPassword = BCrypt.Net.BCrypt.HashPassword(usuario.Password.Trim());
+                    usuario.usuarios.Password = Encoding.UTF8.GetBytes(hashedPassword);
+                }
+                else
+                {
+                    usuario.usuarios.Password = null!;
+                }
 
-                usuario.usuarios.UsuarioActualiza = idUsuario;
+                int idUsuarioActual = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                usuario.usuarios.UsuarioActualiza = idUsuarioActual;
                 usuario.usuarios.FechaActualiza = DateTime.Now;
-                
-                response = await _Iservices.UpdateUsuario(usuario.usuarios);
+
+                bool response = await _Iservices.UpdateUsuario(usuario.usuarios);
                 if (response)
                 {
                     TempData["Mensaje"] = "Usuario actualizado correctamente.";
                     TempData["Tipo"] = "success";
+                    return RedirectToAction(nameof(Index));
                 }
-                else
-                {
-                    TempData["Mensaje"] = "No se logro actualizar el usuario.";
-                    TempData["Tipo"] = "warning";
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                // En caso de error, redirigir a Create para que se cargue el modelo correctamente
-                TempData["Mensaje"] = "Ocurrió un error al procesar los datos. Por favor, intente nuevamente.";
+
+                TempData["Mensaje"] = "No se logró actualizar el usuario. Revise los datos o intente nuevamente.";
                 TempData["Tipo"] = "warning";
-                return RedirectToAction("Create");
+                return View(usuario);
+            }
+            catch (Exception)
+            {
+                if (usuario != null)
+                {
+                    await CargarListasEditAsync();
+                    TempData["Mensaje"] = "Ocurrió un error al procesar los datos. Por favor, intente nuevamente.";
+                    TempData["Tipo"] = "warning";
+                    return View(usuario);
+                }
+
+                TempData["Mensaje"] = "Ocurrió un error al procesar los datos.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index));
             }
         }
 

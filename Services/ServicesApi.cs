@@ -1175,14 +1175,17 @@ namespace WebColegio.Services
         }
 
         /// <summary>Actualiza un producto vía API PUT, fusionando con el registro actual y conservando usuario/fecha de registro.</summary>
-        public async Task<bool> UpdateProductoAsync(Productos producto)
+        public async Task<(bool Exito, string? DetalleError)> UpdateProductoAsync(Productos producto)
         {
             if (producto == null || producto.IdProducto <= 0)
-                return false;
+                return (false, "Producto no válido.");
+
+            if (string.IsNullOrWhiteSpace(url))
+                return (false, "Falta configurar la URL de la API (ApiSettings:BaseUrl).");
 
             var existente = await GetProductoByIdAsync(producto.IdProducto);
             if (existente == null || existente.IdProducto <= 0)
-                return false;
+                return (false, "No se encontró el producto en la API.");
 
             var usuarioRegistro = existente.UsuarioRegistro;
             var fechaRegistro = existente.FechaRegistro;
@@ -1207,7 +1210,6 @@ namespace WebColegio.Services
             existente.UsuarioRegistro = usuarioRegistro;
             existente.FechaRegistro = fechaRegistro;
 
-            bool respuesta = false;
             try
             {
                 using (var httpClient = new HttpClient())
@@ -1216,23 +1218,23 @@ namespace WebColegio.Services
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
                     var response = await httpClient.PutAsync(url + $"api/TblProductos/{existente.IdProducto}", content);
                     if (response.IsSuccessStatusCode)
-                        respuesta = true;
-                    else
-                    {
-                        var errorMsg = await response.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Error en PUT Producto: " + errorMsg);
-                    }
+                        return (true, null);
+
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine("Error en PUT Producto: " + errorMsg);
+                    var detalle = $"La API respondió {(int)response.StatusCode} {response.ReasonPhrase}. {errorMsg}".Trim();
+                    return (false, string.IsNullOrWhiteSpace(errorMsg) ? detalle : errorMsg.Trim());
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("Excepción en UpdateProductoAsync: " + ex.Message);
+                return (false, ex.Message);
             }
-            return respuesta;
         }
 
         /// <summary>Alias descriptivo; delega en <see cref="UpdateProductoAsync"/>.</summary>
-        public Task<bool> UpdateProductosAsync(Productos producto) => UpdateProductoAsync(producto);
+        public Task<(bool Exito, string? DetalleError)> UpdateProductosAsync(Productos producto) => UpdateProductoAsync(producto);
 
         public async Task<bool> PostMovimientoInventarioAsync(MovimientoInventario movimiento)
         {
@@ -1714,29 +1716,44 @@ namespace WebColegio.Services
         }
         public async Task<bool> UpdateUsuario(TblUsuarios usuario)
         {
-            var usuariosUpdate = await GetUsuarioIdAsync(usuario.IdUsuario);
-            // Actualizamos campos
-            usuariosUpdate.IdRol = usuario.IdRol;
-            usuariosUpdate.NombreCompleto = usuario.NombreCompleto;
-            usuariosUpdate.NombreUsuario = usuario.NombreUsuario;
-            usuariosUpdate.Password =usuario.Password;
-            usuariosUpdate.Cedula = usuario.Cedula;
-            usuariosUpdate.Correo = usuario.Correo;
-            usuariosUpdate.UsuarioActualiza = usuario.UsuarioActualiza;
-            usuariosUpdate.FechaActualiza = usuario.FechaActualiza;
+            if (usuario == null || usuario.IdUsuario <= 0)
+                return false;
 
-            if (usuariosUpdate == null)
+            TblUsuarios usuariosUpdate;
+            try
             {
+                usuariosUpdate = await GetUsuarioIdAsync(usuario.IdUsuario);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("UpdateUsuario: error al obtener usuario " + ex.Message);
                 return false;
             }
 
+            if (usuariosUpdate == null || usuariosUpdate.IdUsuario <= 0)
+                return false;
+
+            usuariosUpdate.IdRol = usuario.IdRol;
+            usuariosUpdate.NombreCompleto = usuario.NombreCompleto ?? usuariosUpdate.NombreCompleto;
+            usuariosUpdate.NombreUsuario = usuario.NombreUsuario ?? usuariosUpdate.NombreUsuario;
+            usuariosUpdate.Cedula = usuario.Cedula;
+            usuariosUpdate.Correo = usuario.Correo;
+            usuariosUpdate.IdRecinto = usuario.IdRecinto;
+            usuariosUpdate.Activo = usuario.Activo;
+            usuariosUpdate.Bloqueo = usuario.Bloqueo;
+
+            // Solo cambiar contraseña si el POST envió hash nuevo (bytes no vacíos)
+            if (usuario.Password != null && usuario.Password.Length > 0)
+                usuariosUpdate.Password = usuario.Password;
+
+            usuariosUpdate.UsuarioActualiza = usuario.UsuarioActualiza;
+            usuariosUpdate.FechaActualiza = usuario.FechaActualiza ?? DateTime.Now;
+
             using (var httpClient = new HttpClient())
             {
-                // Convertimos el objeto a JSON
                 var json = JsonConvert.SerializeObject(usuariosUpdate);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // Realizamos la solicitud PUT
                 var response = await httpClient.PutAsync(url + $"api/Usuarios/Actualizar?id={usuariosUpdate.IdUsuario}", content);
 
                 return response.IsSuccessStatusCode;

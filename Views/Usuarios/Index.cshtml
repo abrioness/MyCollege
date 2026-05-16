@@ -25,10 +25,11 @@
                 @Model.IdUsuario)
             </th> *@
                         <th>
-                            Nombre Completo
+                            Nombre de Usuario
                         </th>
                         <th>
-                            Nombre de Usuario
+                            
+                            Nombre Completo
                         </th>
                         <th>
                             Colegio
@@ -61,7 +62,7 @@
                        
         <tr>
             <td>
-                 <a asp-action="Edit" asp-controller="Usuarios" asp-route-id="@item.IdUsuario" class="btn btn-sm btn-info">@item.NombreCompleto</a>
+                 <a asp-action="Edit" asp-controller="Usuarios" asp-route-id="@item.IdUsuario" class="btn btn-sm btn-info">@item.NombreUsuario</a>
             </td>
 
             <td>
@@ -114,3 +115,21 @@
         </div>
     </div>
 </div>
+
+<script src="~/seewtalert/sweetalert.all.min.js"></script>
+<link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+@if (TempData["Mensaje"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+            var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+            Swal.fire({
+                title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+                text: mensaje,
+                icon: tipo,
+                confirmButtonText: "Aceptar"
+            });
+        });
+    </script>
+}

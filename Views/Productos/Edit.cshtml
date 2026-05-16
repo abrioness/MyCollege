@@ -7,10 +7,10 @@
         </div>
         <div class="card-body">
             <form asp-action="Edit" method="post" enctype="multipart/form-data">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div asp-validation-summary="All" class="text-danger"></div>
                 <input type="hidden" asp-for="tblproducto.IdProducto" />
                 <input type="hidden" asp-for="tblproducto.UsuarioRegistro" />
-                <input type="hidden" asp-for="tblproducto.FechaRegistro" />
+                @* FechaRegistro se mantiene en el servidor al fusionar con GET; oculto en POST suele invalidar ModelState *@
                 <div class="row">
                     <div class="col-lg-4">
                         <div class="form-group mb-3">
@@ -31,16 +31,21 @@
                         <div class="form-group mb-3">
                             <label asp-for="tblproducto.IdCateProducto" class="control-label">Categoría</label>
                             <select asp-for="tblproducto.IdCateProducto" asp-items="Model.listCategoriaProducto" class="form-select" required>
-                                <option disabled selected>Seleccione una opción</option>
                             </select>
                             <span asp-validation-for="tblproducto.IdCateProducto" class="text-danger"></span>
                         </div>
                         <div class="form-group mb-3">
                             <label asp-for="tblproducto.IdMovInventario" class="control-label">Tipo de movimiento</label>
                             <select asp-for="tblproducto.IdMovInventario" asp-items="Model.listMovimientoInventario" class="form-select" required>
-                                <option disabled selected>Seleccione una opción</option>
                             </select>
                             <span asp-validation-for="tblproducto.IdMovInventario" class="text-danger"></span>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="tblproducto.IdRecinto" class="control-label">Colegio / Recinto</label>
+                            <select asp-for="tblproducto.IdRecinto" asp-items="Model.listRecintos" class="form-select">
+                                <option value="">— Seleccione colegio / recinto —</option>
+                            </select>
+                            <span class="text-muted small">Ubicación del inventario (opcional).</span>
                         </div>
                     </div>
                     <div class="col-lg-4">
@@ -73,10 +78,6 @@
                         <div class="form-group mb-3">
                             <label asp-for="tblproducto.IdProveedor" class="control-label">Id proveedor (opcional)</label>
                             <input type="number" asp-for="tblproducto.IdProveedor" class="form-control" />
-                        </div>
-                        <div class="form-group mb-3">
-                            <label asp-for="tblproducto.IdRecinto" class="control-label">Id recinto (opcional)</label>
-                            <input type="number" asp-for="tblproducto.IdRecinto" class="form-control" />
                         </div>
                         <div class="form-group mb-3">
                             <label asp-for="tblproducto.Activo" class="control-label">Estado</label>

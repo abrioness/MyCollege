@@ -23,5 +23,56 @@ body {
 
 #tablaPagos {
     width: auto !important;
-    min-width: 1200px; /* o más */
+    min-width: 1200px; /* o mas anchura si hace falta */
+}
+
+/*
+  Logos del topbar: reglas en site.css (<head>) antes del primer pintado.
+  Si solo estan en un style al final del body, la insignia puede verse muy grande un instante.
+*/
+.topbar-nav .topbar-header .topbar-logo-wrap {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  max-width: min(160px, 26vw) !important;
+  max-height: 56px !important;
+  overflow: hidden !important;
+}
+
+.topbar-nav .topbar-header .logo-izquierda,
+.topbar-nav .topbar-header .logo-derecha {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 52px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  display: block !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 576px) {
+  .topbar-nav .topbar-header {
+    padding: 0.35rem 0.5rem !important;
+  }
+
+  .topbar-nav .topbar-header .topbar-logo-wrap {
+    max-width: min(120px, 32vw) !important;
+    max-height: 44px !important;
+  }
+
+  .topbar-nav .topbar-header .logo-izquierda,
+  .topbar-nav .topbar-header .logo-derecha {
+    max-height: 40px !important;
+  }
+}
+
+/* Avatar en dropdown (misma imagen que emblema): refuerzo por si cambia la cascada */
+.navbar.topbar .nav-item .nav-link .img-profile {
+  width: 2rem !important;
+  height: 2rem !important;
+  max-width: 2rem !important;
+  max-height: 2rem !important;
+  object-fit: cover !important;
 }

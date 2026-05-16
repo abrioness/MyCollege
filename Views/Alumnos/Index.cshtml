@@ -173,4 +173,21 @@
 	});
 });
 </script>
+<script src="~/seewtalert/sweetalert.all.min.js"></script>
+<link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+@if (TempData["Mensaje"] != null)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+			var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+			Swal.fire({
+				title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+				text: mensaje,
+				icon: tipo,
+				confirmButtonText: "Aceptar"
+			});
+		});
+	</script>
+}
 

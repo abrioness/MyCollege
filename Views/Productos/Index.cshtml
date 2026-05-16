@@ -61,6 +61,7 @@
 						}
 						<th>Nombre Producto</th> 
 						<th>Descripción</th>
+								<th>Colegio</th>
 						<th>Existencia Inicial</th>
 						<th>Tipo de Movimiento</th>
 						<th>Stock Actual</th>
@@ -83,7 +84,7 @@
 								</td> *@
 							
 							<td>
-							<a asp-action="Edit" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-info title="Editar">
+							<a asp-action="Edit" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-info" title="Editar">
 								@itemProducto.CodigoBarra
 							</a>
 							</td>
@@ -102,6 +103,16 @@
 									<td>
 
 										@itemProducto.Descripcion
+									</td>
+									@{
+										var colegio = Model.recintos.
+										FirstOrDefault(a => a.IdRecinto == itemProducto.IdRecinto);
+									}
+									<td>
+										@(string.IsNullOrEmpty(colegio?.Recinto)
+																				? "Sin Datos"
+																				: colegio.Recinto)
+
 									</td>
 							<td>
 
@@ -183,3 +194,20 @@
 		});
 	});
 </script>
+<script src="~/seewtalert/sweetalert.all.min.js"></script>
+<link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
+@if (TempData["Mensaje"] != null)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+			var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+			Swal.fire({
+				title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+				text: mensaje,
+				icon: tipo,
+				confirmButtonText: "Aceptar"
+			});
+		});
+	</script>
+}

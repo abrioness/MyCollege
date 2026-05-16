@@ -9,6 +9,8 @@ namespace WebColegio.Models.ViewModel
         public List<Productos> listaproducto { get; set; } = new();
         public List<SelectListItem> listCategoriaProducto { get; set; } = new();
         public List<SelectListItem> listMovimientoInventario { get; set; } = new();
+        /// <summary>Catálogo de colegios / recintos para inventario.</summary>
+        public List<SelectListItem> listRecintos { get; set; } = new();
         public List<SelectListItem> ListaProveedores { get; set; } = new();
         public List<SelectListItem> ListaUsuarios { get; set; } = new();
         

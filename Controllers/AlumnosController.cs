@@ -416,12 +416,16 @@ namespace WebColegio.Controllers
                     return View(viewModel);
                 }
 
-                if (ModelState.IsValid)
+                // No exigir ModelState.IsValid: el formulario tiene muchos opcionales y selects;
+                // un fallo de enlace silencioso impedía cualquier actualización.
+                if (viewModel.alumnos.IdAlumno <= 0)
+                {
+                    ModelState.AddModelError("", "Identificador de alumno no válido.");
+                }
+                else
                 {
                     if (!await DebeGuardarRecibioPreescolar(viewModel.alumnos))
-                    {
                         viewModel.alumnos.RecibioEducacionPreescolar = null;
-                    }
 
                     viewModel.alumnos.UsuarioActualiza = idUsuario;
                     viewModel.alumnos.FechaActualiza = DateTime.Now;
@@ -429,11 +433,12 @@ namespace WebColegio.Controllers
 
                     if (actualizado)
                     {
-                        TempData["Mensaje"] = "Datos del estudiante se actualizaron correctamente.";
+                        TempData["Mensaje"] = "Los datos del estudiante se actualizaron correctamente.";
+                        TempData["Tipo"] = "success";
                         return RedirectToAction(nameof(Index));
                     }
 
-                    ModelState.AddModelError("", "Error al actualizar los datos del alumno.");
+                    ModelState.AddModelError("", "Error al actualizar los datos del alumno en el servidor. Compruebe la API o los datos enviados.");
                 }
 
             viewModel.ListGrados = await _Iservices.GetGradosAsync();

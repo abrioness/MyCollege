@@ -11,7 +11,7 @@
         </div>
         <div class="card-body">
             <form asp-action="Edit" method="post" enctype="multipart/form-data">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div asp-validation-summary="All" class="text-danger"></div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -22,46 +22,57 @@
                         <div class="form-group">
                             <label asp-for="usuarios.IdRol" class="control-label"> Rol </label>
                             <select asp-for="usuarios.IdRol" asp-items="Model.RolSelectList" class="form-select" required>
-                                <option disabled selected>Seleccione el Rol</option>
+                                <option value="">Seleccione el Rol</option>
                             </select>
-                            @* <span asp-validation-for="usuarios.IdRol" class="text-danger"></span> *@
+                            <span asp-validation-for="usuarios.IdRol" class="text-danger"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="usuarios.NombreCompleto" class="control-label">Nombre Completo</label>
                             <input asp-for="usuarios.NombreCompleto" class="form-control" />
-                            @* <span asp-validation-for="usuarios.NombreCompleto" class="text-danger"></span> *@
+                            <span asp-validation-for="usuarios.NombreCompleto" class="text-danger"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="usuarios.NombreUsuario" class="control-label">Nombre de Usuario</label>
                             <input asp-for="usuarios.NombreUsuario" class="form-control" />
-                            @* <span asp-validation-for="usuarios.NombreUsuario" class="text-danger"></span> *@
+                            <span asp-validation-for="usuarios.NombreUsuario" class="text-danger"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="usuarios.Cedula" class="control-label">Cedula</label>
                             <input asp-for="usuarios.Cedula" class="form-control" />
-                            @* <span asp-validation-for="usuarios.Cedula" class="text-danger"></span> *@
+                            <span asp-validation-for="usuarios.Cedula" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="usuarios.IdRecinto" class="control-label">Colegio</label>
+                            <select asp-for="usuarios.IdRecinto" asp-items="Model.RecintosSelectList" class="form-select">
+                                <option value="">Sin colegio / no aplica</option>
+                            </select>
+                            <span asp-validation-for="usuarios.IdRecinto" class="text-danger"></span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label asp-for="Password" class="control-label">Contraseña</label>
-                            <input type="password" asp-for="Password" class="form-control" />
-                            @* <span asp-validation-for="Password" class="text-danger"></span> *@
+                            <label asp-for="Password" class="control-label">Nueva contraseña</label>
+                            <input type="password" asp-for="Password" class="form-control" autocomplete="new-password" placeholder="Dejar en blanco para no cambiar" />
+                            <small class="text-muted">Solo complete este campo si desea cambiar la contraseña.</small>
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
                         <div class="form-group">
-                            <label asp-for="usuarios.Correo" class="control-label"></label>
-                            <input asp-for="usuarios.Correo" class="form-control" />
-                            @* <span asp-validation-for="usuarios.Correo" class="text-danger"></span> *@
+                            <label asp-for="usuarios.Correo" class="control-label">Correo</label>
+                            <input type="email" asp-for="usuarios.Correo" class="form-control" />
+                            <span asp-validation-for="usuarios.Correo" class="text-danger"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="usuarios.Activo" class="control-label"> Estado del Usuario </label>
-                            <select asp-for="usuarios.Activo"  class="form-select" required>
-                                <option value="">Seleccione una Opción</option>
+                            <label asp-for="usuarios.Activo" class="control-label">Estado del usuario</label>
+                            <select asp-for="usuarios.Activo" class="form-select">
                                 <option value="true">Activo</option>
                                 <option value="false">Inactivo</option>
                             </select>
-                            @* <span asp-validation-for="usuarios.Activo" class="text-danger"></span> *@
+                            <span asp-validation-for="usuarios.Activo" class="text-danger"></span>
+                        </div>
+                        <div class="form-group form-check mt-2">
+                            <input asp-for="usuarios.Bloqueo" class="form-check-input" />
+                            <label asp-for="usuarios.Bloqueo" class="form-check-label">Usuario bloqueado</label>
                         </div>
                     </div>
                 </div>

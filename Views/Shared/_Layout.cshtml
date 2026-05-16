@@ -343,7 +343,7 @@
 
     <div class="header topbar-header">
                         <div class="topbar-logo-wrap">
-                            <img src="~/image/colegiosanfrancisco.png" alt="Colegio Parroquial San Francisco Javier" class="logo-izquierda">
+                            <img src="~/image/colegiosanfrancisco.png" alt="Colegio Parroquial San Francisco Javier" class="logo-izquierda" width="160" height="52" decoding="async">
                         </div>
 
                         <div class="titulo" style="flex: 1;">
@@ -354,7 +354,7 @@
                         </div>
 
                         <div class="topbar-logo-wrap">
-                            <img src="~/image/SanFrancisco.png" alt="Emblema San Francisco" class="logo-derecha">
+                            <img src="~/image/SanFrancisco.png" alt="Emblema San Francisco" class="logo-derecha" width="160" height="52" decoding="async">
                         </div>
 
                     </div>
@@ -721,27 +721,6 @@
         min-width: 0 !important;
         overflow: visible !important;
     }
-    /* Contenedor fijo: evita que % o el flex recorten el logo al cambiar de vista */
-    .topbar-header .topbar-logo-wrap {
-        flex: 0 0 auto !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        max-width: min(160px, 26vw) !important;
-        max-height: 56px !important;
-        overflow: hidden !important;
-    }
-    .topbar-header .logo-izquierda,
-    .topbar-header .logo-derecha {
-        width: auto !important;
-        height: auto !important;
-        max-width: 100% !important;
-        max-height: 52px !important;
-        object-fit: contain !important;
-        object-position: center center !important;
-        display: block !important;
-        margin: 0 !important;
-    }
     .topbar-header .titulo {
         flex: 1 !important;
         min-width: 0 !important;
@@ -764,13 +743,6 @@
     .topbar-header .lema {
         font-size: clamp(0.75rem, 1.6vw, 1.1rem) !important;
     }
-    @@media (max-width: 576px) {
-        .topbar-header { padding: 0.35rem 0.5rem !important; }
-        .topbar-header .topbar-logo-wrap { max-width: min(120px, 32vw) !important; max-height: 44px !important; }
-        .topbar-header .logo-izquierda,
-        .topbar-header .logo-derecha { max-height: 40px !important; }
-    }
-
     /* Pantallas pequeñas: sidebar oculto por defecto, se abre con el botón (no se expande al 100%) */
     @@media (max-width: 767.98px) {
         #accordionSidebar.sidebar,

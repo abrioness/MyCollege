@@ -28,6 +28,7 @@ namespace WebColegio.Controllers
             var _productos = await _Iservices.GetProductosAsync();
             var _movInvebtario = await _Iservices.GetMovInventarioAsync();
             var _categoriaProducto = await _Iservices.GetCategoriaProductoAsync();
+            var _recintos = await _Iservices.GetRecintosAsync();
             var _usuarioId = await _Iservices.GetUsuarioIdAsync(idUsuario);
 
 
@@ -53,7 +54,8 @@ namespace WebColegio.Controllers
 
                     producto = productosFiltrados.Where(r => r.UsuarioRegistro == idUsuario).ToList(),
                     categoriasProducto = _categoriaProducto,
-                    movinventario = _movInvebtario
+                    movinventario = _movInvebtario,
+                    recintos = _recintos ?? new List<Recintos>(),
                 };
                 return View(viewModel);
             }
@@ -64,7 +66,8 @@ namespace WebColegio.Controllers
 
                     producto = productosFiltrados,
                     categoriasProducto = _categoriaProducto,
-                    movinventario = _movInvebtario
+                    movinventario = _movInvebtario,
+                    recintos = _recintos ?? new List<Recintos>(),
                 };
                 return View(viewModel);
             }
@@ -113,7 +116,14 @@ namespace WebColegio.Controllers
                                        Value = r.IdMovInventario.ToString(),
                                        Text = r.MovimientoInventario,
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList()
+                                   }).ToList(),
+                listRecintos = (await _Iservices.GetRecintosAsync() ?? new List<Recintos>())
+                    .OrderBy(r => r.Recinto)
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdRecinto.ToString(),
+                        Text = r.Recinto,
+                    }).ToList()
             };
             return View(viewmodel);
         }
@@ -158,10 +168,11 @@ namespace WebColegio.Controllers
                     }
                     existente.StockActual += cantidadEntrante;
                     existente.ImporteInventario = existente.StockActual * existente.CostoUnitario;
+                    existente.IdRecinto = producto.tblproducto.IdRecinto;
                     existente.UsuarioActualiza = idUsuario;
                     existente.FechaActualiza = DateTime.Now;
-                    response = await _Iservices.UpdateProductoAsync(existente);
-                    if (response)
+                    var (actualizadoStock, _) = await _Iservices.UpdateProductoAsync(existente);
+                    if (actualizadoStock)
                     {
                         // Registrar movimiento de entrada para reportes
                         await _Iservices.PostMovimientoInventarioAsync(new MovimientoInventario
@@ -250,6 +261,13 @@ namespace WebColegio.Controllers
                     {
                         Value = r.IdMovInventario.ToString(),
                         Text = r.MovimientoInventario,
+                    }).ToList(),
+                listRecintos = (await _Iservices.GetRecintosAsync() ?? new List<Recintos>())
+                    .OrderBy(r => r.Recinto)
+                    .Select(r => new SelectListItem
+                    {
+                        Value = r.IdRecinto.ToString(),
+                        Text = r.Recinto,
                     }).ToList()
             };
             return View(viewmodel);
@@ -287,18 +305,15 @@ namespace WebColegio.Controllers
                 producto.tblproducto.UsuarioActualiza = idUsuario;
                 producto.tblproducto.FechaActualiza = DateTime.Now;
 
-                if (ModelState.IsValid)
+                var (ok, apiError) = await _Iservices.UpdateProductosAsync(producto.tblproducto);
+                if (ok)
                 {
-                    var ok = await _Iservices.UpdateProductosAsync(producto.tblproducto);
-                    if (ok)
-                    {
-                        TempData["Mensaje"] = "Producto actualizado correctamente.";
-                        TempData["Tipo"] = "success";
-                        return RedirectToAction(nameof(Index));
-                    }
-
-                    ModelState.AddModelError("", "No se pudo actualizar el producto en el servidor.");
+                    TempData["Mensaje"] = "Producto actualizado correctamente (incluido colegio / recinto).";
+                    TempData["Tipo"] = "success";
+                    return RedirectToAction(nameof(Index));
                 }
+
+                ModelState.AddModelError("", apiError ?? "No se pudo actualizar el producto en el servidor.");
 
                 return await RepoblarListasProductoEdit(producto);
             }
@@ -325,6 +340,13 @@ namespace WebColegio.Controllers
                 {
                     Value = r.IdMovInventario.ToString(),
                     Text = r.MovimientoInventario,
+                }).ToList();
+            vm.listRecintos = (await _Iservices.GetRecintosAsync() ?? new List<Recintos>())
+                .OrderBy(r => r.Recinto)
+                .Select(r => new SelectListItem
+                {
+                    Value = r.IdRecinto.ToString(),
+                    Text = r.Recinto,
                 }).ToList();
             return View("Edit", vm);
         }

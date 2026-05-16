@@ -64,9 +64,9 @@ namespace WebColegio.Services
         Task<bool> PostMovimientoInventarioAsync(MovimientoInventario movimiento);
         Task<List<MovimientoInventario>> GetMovimientosInventarioAsync(int? idProducto, DateTime? desde, DateTime? hasta);
         Task<bool> PostProductosAsync(Productos producto);
-        Task<bool> UpdateProductoAsync(Productos producto);
+        Task<(bool Exito, string? DetalleError)> UpdateProductoAsync(Productos producto);
         /// <summary>Mismo comportamiento que <see cref="UpdateProductoAsync"/> (nombre plural por convención de negocio).</summary>
-        Task<bool> UpdateProductosAsync(Productos producto);
+        Task<(bool Exito, string? DetalleError)> UpdateProductosAsync(Productos producto);
         /// <returns>Éxito y, si falla, texto de error devuelto por la API (o mensaje genérico).</returns>
         Task<(bool Ok, string? ErrorMessage)> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
         Task<bool> PostUsuarios(TblUsuarios usuario);
