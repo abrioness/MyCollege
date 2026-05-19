@@ -13,14 +13,14 @@
 		</div>
 
 		<div class="card-body">
-			@if (!string.IsNullOrEmpty(Model.MensajePeriodo))
+			@* @if (!string.IsNullOrEmpty(Model.MensajePeriodo))
 			{
 				<p class="text-muted small mb-2">@Model.MensajePeriodo</p>
 			}
 			@if (Model.Filas == null || !Model.Filas.Any())
 			{
 				<div class="alert alert-warning">No hay alumnos activos para listar.</div>
-			}
+			} *@
 
 			<div class="table-responsive" style="font-size:12px">
 				<div class="col-12 text-end mb-2">
@@ -114,7 +114,7 @@
 									}
 									else
 									{
-										<span class="estado-pago-texto text-danger fw-semibold">Insolvente</span>
+										<span class="estado-pago-texto text-danger fw-semibold">Endeudado</span>
 									}
 								</td>
 								<td class="text-end">
