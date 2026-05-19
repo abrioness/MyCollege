@@ -1,4 +1,5 @@
 @model WebColegio.Models.ViewModel.pagoCajasViewModel
+@using Newtonsoft.Json
 
 @*@{
     ViewData["Title"] = "Create";
@@ -36,8 +37,9 @@
                             @* <input type="hidden" id="IdAlumno" name="Pago.IdAlumno" /> *@
                         </div>
                         <div class="form-group">
-                            <label asp-for="PagosCaja.Monto" class="control-label">La Cantidad de:</label>
-                            <input asp-for="PagosCaja.Monto" id="monto" class="form-control" />
+                            <label asp-for="PagosCaja.Monto" class="control-label">La Cantidad de (C$):</label>
+                            <input asp-for="PagosCaja.Monto" id="monto" class="form-control" step="0.01" min="0" />
+                            <small class="text-muted" id="montoAyuda">Se calcula automáticamente al agregar productos. Puede editarlo si el recibo no incluye inventario.</small>
                             <span asp-validation-for="PagosCaja.Monto" class="text-danger"></span>
                         </div>
                             <div class="form-group">
@@ -124,8 +126,24 @@
                             </button>
                             <div id="contenedorDetalle" class="mt-2" style="display: none;">
                                 <table class="table table-sm table-bordered" id="tablaDetalleItems">
-                                    <thead><tr><th>Categoría</th><th>Producto</th><th>Cantidad</th><th></th></tr></thead>
+                                    <thead>
+                                        <tr>
+                                            <th>Categoría</th>
+                                            <th>Producto</th>
+                                            <th class="text-end">Precio unit.</th>
+                                            <th class="text-center">Cant.</th>
+                                            <th class="text-end">Subtotal</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
                                     <tbody></tbody>
+                                    <tfoot>
+                                        <tr class="table-light">
+                                            <td colspan="4" class="text-end fw-semibold">Total productos:</td>
+                                            <td class="text-end fw-bold" id="celdaTotalDetalle">C$ 0.00</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         </div>
@@ -156,10 +174,15 @@
                                             <option value="">Seleccione producto</option>
                                         </select>
                                         <span class="text-muted small" id="modalStockInfo"></span>
+                                        <span class="text-muted small d-block" id="modalPrecioInfo"></span>
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label">Cantidad</label>
                                         <input type="number" id="modalCantidad" class="form-control" min="1" value="1" />
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">Subtotal línea</label>
+                                        <input type="text" id="modalSubtotalLinea" class="form-control" readonly />
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -280,17 +303,46 @@
                })();
 
         // --- Productos / inventario en recibo ---
-        var productosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Productos ?? new List<WebColegio.Models.Productos>()));
-        var categoriasData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CategoriasProducto ?? new List<WebColegio.Models.CategoriaProducto>()));
+        var productosData = @Html.Raw(JsonConvert.SerializeObject(Model.Productos ?? new List<WebColegio.Models.Productos>()));
+        var categoriasData = @Html.Raw(JsonConvert.SerializeObject(Model.CategoriasProducto ?? new List<WebColegio.Models.CategoriaProducto>()));
         var detalleItems = [];
 
         function getCategoriaNombre(id) {
-            var c = categoriasData.find(function(x) { return (x.idCateProducto || x.IdCateProducto) === id; });
-            return c ? (c.nombreCategoria || c.NombreCategoria) : '';
+            var c = categoriasData.find(function(x) { return (x.IdCateProducto || x.idCateProducto) === id; });
+            return c ? (c.NombreCategoria || c.nombreCategoria) : '';
         }
 
         function getProd(obj, key) {
-            return obj[key] !== undefined ? obj[key] : obj[key.charAt(0).toLowerCase() + key.slice(1)];
+            if (!obj) return undefined;
+            if (obj[key] !== undefined) return obj[key];
+            var k = key.charAt(0).toLowerCase() + key.slice(1);
+            return obj[k];
+        }
+
+        function formatoMoneda(n) {
+            return 'C$ ' + (Number(n) || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function actualizarSubtotalModal() {
+            var idProd = parseInt($('#modalProducto').val(), 10);
+            var cant = parseInt($('#modalCantidad').val(), 10) || 0;
+            if (!idProd || cant < 1) {
+                $('#modalSubtotalLinea').val('');
+                return;
+            }
+            var prod = productosData.find(function(p) { return getProd(p, 'IdProducto') === idProd; });
+            if (!prod) return;
+            var precio = parseFloat(getProd(prod, 'CostoUnitario')) || 0;
+            $('#modalSubtotalLinea').val(formatoMoneda(precio * cant));
+        }
+
+        function calcularTotalMonto() {
+            var total = detalleItems.reduce(function(sum, item) {
+                return sum + (item.precioUnitario * item.cantidad);
+            }, 0);
+            $('#monto').val(total > 0 ? total.toFixed(2) : '');
+            $('#celdaTotalDetalle').text(formatoMoneda(total));
+            return total;
         }
 
         $('#modalCategoria').on('change', function() {
@@ -298,20 +350,27 @@
             var $sel = $('#modalProducto');
             $sel.empty().append('<option value="">Seleccione producto</option>');
             $('#modalStockInfo').text('');
+            $('#modalPrecioInfo').text('');
+            $('#modalSubtotalLinea').val('');
             if (!idCat) return;
-            var list = productosData.filter(function(p) { return (p.IdCateProducto || p.idCateProducto) === idCat; });
-            list.forEach(function(p) {
-                var id = getProd(p, 'IdProducto');
-                var nombre = getProd(p, 'NombreProducto');
-                var stock = getProd(p, 'StockActual');
-                $sel.append('<option value="' + id + '" data-stock="' + stock + '">' + nombre + ' (Stock: ' + stock + ')</option>');
-            });
+            productosData.filter(function(p) { return getProd(p, 'IdCateProducto') === idCat; })
+                .forEach(function(p) {
+                    var id = getProd(p, 'IdProducto');
+                    var nombre = getProd(p, 'NombreProducto');
+                    var stock = getProd(p, 'StockActual');
+                    var precio = parseFloat(getProd(p, 'CostoUnitario')) || 0;
+                    $sel.append('<option value="' + id + '" data-stock="' + stock + '" data-precio="' + precio + '">' +
+                        nombre + ' — ' + formatoMoneda(precio) + ' (Stock: ' + stock + ')</option>');
+                });
         });
 
-        $('#modalProducto').on('change', function() {
-            var opt = $(this).find('option:selected');
+        $('#modalProducto, #modalCantidad').on('change input', function() {
+            var opt = $('#modalProducto').find('option:selected');
             var stock = opt.data('stock');
-            $('#modalStockInfo').text(stock !== undefined ? 'Stock actual: ' + stock : '');
+            var precio = parseFloat(opt.data('precio')) || 0;
+            $('#modalStockInfo').text(stock !== undefined && stock !== '' ? 'Stock actual: ' + stock : '');
+            $('#modalPrecioInfo').text(precio > 0 ? 'Precio unitario: ' + formatoMoneda(precio) : '');
+            actualizarSubtotalModal();
         });
 
         function refrescarTablaYHidden() {
@@ -320,14 +379,22 @@
             var $hidden = $('#detalleItemsHidden');
             $hidden.empty();
             detalleItems.forEach(function(item, i) {
+                var sub = item.precioUnitario * item.cantidad;
                 $tbody.append(
-                    '<tr><td>' + item.nombreCategoria + '</td><td>' + item.nombreProducto + '</td><td>' + item.cantidad + '</td>' +
-                    '<td><button type="button" class="btn btn-outline-danger btn-sm quitar-item" data-idx="' + i + '"><i class="bi bi-trash"></i></button></td></tr>'
+                    '<tr>' +
+                    '<td>' + item.nombreCategoria + '</td>' +
+                    '<td>' + item.nombreProducto + '</td>' +
+                    '<td class="text-end">' + formatoMoneda(item.precioUnitario) + '</td>' +
+                    '<td class="text-center">' + item.cantidad + '</td>' +
+                    '<td class="text-end">' + formatoMoneda(sub) + '</td>' +
+                    '<td><button type="button" class="btn btn-outline-danger btn-sm quitar-item" data-idx="' + i + '"><i class="bi bi-trash"></i></button></td>' +
+                    '</tr>'
                 );
                 $hidden.append('<input type="hidden" name="DetalleItems[' + i + '].IdProducto" value="' + item.idProducto + '" />');
                 $hidden.append('<input type="hidden" name="DetalleItems[' + i + '].Cantidad" value="' + item.cantidad + '" />');
             });
             $('#contenedorDetalle').toggle(detalleItems.length > 0);
+            calcularTotalMonto();
         }
 
         $('#btnAgregarProducto').on('click', function() {
@@ -337,28 +404,53 @@
                 Swal.fire({ title: 'Atención', text: 'Seleccione un producto.', icon: 'warning' });
                 return;
             }
-            var prod = productosData.find(function(p) { return (p.IdProducto || p.idProducto) === idProd; });
+            var prod = productosData.find(function(p) { return getProd(p, 'IdProducto') === idProd; });
             if (!prod) return;
-            var stockActual = getProd(prod, 'StockActual');
-            if (cant > stockActual) {
-                Swal.fire({ title: 'Atención', text: 'La cantidad no puede superar el stock actual (' + stockActual + ').', icon: 'warning' });
+            var stockActual = parseInt(getProd(prod, 'StockActual'), 10) || 0;
+            var precioUnitario = parseFloat(getProd(prod, 'CostoUnitario')) || 0;
+
+            var existente = detalleItems.find(function(x) { return x.idProducto === idProd; });
+            var cantTotal = (existente ? existente.cantidad : 0) + cant;
+            if (cantTotal > stockActual) {
+                Swal.fire({ title: 'Atención', text: 'La cantidad total (' + cantTotal + ') supera el stock (' + stockActual + ').', icon: 'warning' });
                 return;
             }
-            detalleItems.push({
-                idProducto: getProd(prod, 'IdProducto'),
-                cantidad: cant,
-                nombreProducto: getProd(prod, 'NombreProducto'),
-                nombreCategoria: getCategoriaNombre(getProd(prod, 'IdCateProducto'))
-            });
+
+            if (existente) {
+                existente.cantidad = cantTotal;
+            } else {
+                detalleItems.push({
+                    idProducto: idProd,
+                    cantidad: cant,
+                    precioUnitario: precioUnitario,
+                    nombreProducto: getProd(prod, 'NombreProducto'),
+                    nombreCategoria: getCategoriaNombre(getProd(prod, 'IdCateProducto'))
+                });
+            }
+
             refrescarTablaYHidden();
             $('#modalCantidad').val(1);
-            $('#modalProductos').modal('hide');
+            $('#modalSubtotalLinea').val('');
+            var modalEl = document.getElementById('modalProductos');
+            if (modalEl && window.bootstrap) {
+                bootstrap.Modal.getInstance(modalEl)?.hide();
+            }
         });
 
         $(document).on('click', '.quitar-item', function() {
-            var idx = parseInt($(this).data('idx'), 10);
-            detalleItems.splice(idx, 1);
+            detalleItems.splice(parseInt($(this).data('idx'), 10), 1);
             refrescarTablaYHidden();
+        });
+
+        $('form').on('submit', function(e) {
+            if (detalleItems.length > 0) {
+                calcularTotalMonto();
+                var monto = parseFloat($('#monto').val()) || 0;
+                if (monto <= 0) {
+                    e.preventDefault();
+                    Swal.fire({ title: 'Atención', text: 'El total a pagar debe ser mayor que cero.', icon: 'warning' });
+                }
+            }
         });
 </script>
 

@@ -176,78 +176,141 @@ namespace WebColegio.Controllers
         // POST: PagoCajaController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(TblPagoCaja pagoscaja, List<DetallePagoCajaItem>? DetalleItems)
+        public async Task<ActionResult> Create(
+            [Bind(Prefix = "PagosCaja")] TblPagoCaja pagoscaja,
+            [FromForm] List<DetallePagoCajaItem>? DetalleItems)
         {
-            bool response = false;
-            bool validarDuplicado = false;
-            var buscarIdGuardado = await _Iservices.GetPagoCajaAsync();
-            var buscarperiodo = await _Iservices.GetPeriodoAsync();
-            var periodo = buscarperiodo.Where(r=>r.Periodo==DateTime.Now.Year && r.Activo==true && r.Actual==true).FirstOrDefault();
-            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo  && r.Serie == "A" && r.Activo == true);
-            if (validarDuplicado)
+            var buscarIdGuardado = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
+            var buscarperiodo = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodo = buscarperiodo
+                .FirstOrDefault(r => r.Periodo == DateTime.Now.Year && r.Activo && r.Actual)
+                ?? buscarperiodo.FirstOrDefault(r => r.Activo);
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            if (buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo && r.Serie == "A" && r.Activo))
             {
                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
                 TempData["Tipo"] = "warning";
                 return RedirectToAction("Create");
             }
-            try
+
+            var itemsValidos = (DetalleItems ?? new List<DetallePagoCajaItem>())
+                .Where(x => x.IdProducto > 0 && x.Cantidad > 0)
+                .GroupBy(x => x.IdProducto)
+                .Select(g => new DetallePagoCajaItem { IdProducto = g.Key, Cantidad = g.Sum(x => x.Cantidad) })
+                .ToList();
+
+            if (itemsValidos.Count > 0)
             {
-                if (pagoscaja != null)
+                decimal totalCalculado = 0m;
+                foreach (var item in itemsValidos)
                 {
-                    pagoscaja.UsuarioRegistro = idUsuario;
-                    pagoscaja.Activo = true;
-                    pagoscaja.FechaRegistro = DateTime.Now;
-                    pagoscaja.IdPeriodo = periodo.IdPeriodo;
-
-                    response = await _Iservices.PostPagosCajaAsync(pagoscaja);
-                    if (response)
+                    var producto = await _Iservices.GetProductoByIdAsync(item.IdProducto);
+                    if (producto == null)
                     {
-                        var idPag = buscarIdGuardado.Max(a=>a.IdPagoCaja);
-                        int idNuevoRecibo = idPag + 1;
-
-                        // Afectar inventario: descontar StockActual y registrar salida por cada ítem
-                        if (DetalleItems != null && DetalleItems.Count > 0)
-                        {
-                            foreach (var item in DetalleItems.Where(x => x.IdProducto > 0 && x.Cantidad > 0))
-                            {
-                                var producto = await _Iservices.GetProductoByIdAsync(item.IdProducto);
-                                if (producto != null && producto.StockActual >= item.Cantidad)
-                                {
-                                    producto.StockActual -= item.Cantidad;
-                                    await _Iservices.UpdateProductoAsync(producto);
-                                    // Registrar movimiento de salida para reportes
-                                    await _Iservices.PostMovimientoInventarioAsync(new MovimientoInventario
-                                    {
-                                        IdProducto = item.IdProducto,
-                                        TipoMovimiento = TipoMovimientoInventario.Salida,
-                                        Cantidad = item.Cantidad,
-                                        FechaMovimiento = DateTime.Now,
-                                        ReferenciaDocumento = $"RECIBO-{idNuevoRecibo}",
-                                        Descripcion = "Venta recibo caja",
-                                        Activo = true,
-                                        UsuarioRegistro = idUsuario,
-                                        FechaRegistro = DateTime.Now
-                                    });
-                                }
-                            }
-                        }
-                        TempData["Mensaje"] = "Se Proceso Correctamente el Pago.";
-                        TempData["Tipo"] = "success";
-                        return RedirectToAction("Details","PagoCaja", new { id = idNuevoRecibo });
-                    }
-                    else
-                    {
-                        TempData["Mensaje"] = "No se proceso el Pago.";
+                        TempData["Mensaje"] = $"No se encontró el producto con Id {item.IdProducto}.";
                         TempData["Tipo"] = "warning";
                         return RedirectToAction("Create");
                     }
+                    if (producto.StockActual < item.Cantidad)
+                    {
+                        TempData["Mensaje"] = $"Stock insuficiente para «{producto.NombreProducto}». Disponible: {producto.StockActual}.";
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction("Create");
+                    }
+                    totalCalculado += producto.CostoUnitario * item.Cantidad;
                 }
-                return NoContent();
+                pagoscaja.Monto = totalCalculado;
             }
-            catch
+
+            if (pagoscaja.Monto <= 0)
             {
-                return View();
+                TempData["Mensaje"] = "Indique el monto a pagar o agregue productos al recibo.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Create");
+            }
+
+            try
+            {
+                pagoscaja.UsuarioRegistro = idUsuario;
+                pagoscaja.Activo = true;
+                pagoscaja.FechaRegistro = DateTime.Now;
+                if (periodo != null)
+                    pagoscaja.IdPeriodo = periodo.IdPeriodo;
+
+                bool response = await _Iservices.PostPagosCajaAsync(pagoscaja);
+                if (!response)
+                {
+                    TempData["Mensaje"] = "No se procesó el pago en la API.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
+                }
+
+                var listaActualizada = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
+                var reciboGuardado = listaActualizada
+                    .Where(r => r.NumeroRecibo == pagoscaja.NumeroRecibo && r.Serie == pagoscaja.Serie && r.Activo)
+                    .OrderByDescending(r => r.IdPagoCaja)
+                    .FirstOrDefault();
+
+                int idNuevoRecibo = reciboGuardado?.IdPagoCaja ?? 0;
+                if (idNuevoRecibo <= 0)
+                    idNuevoRecibo = listaActualizada.Max(a => (int?)a.IdPagoCaja) ?? 0;
+
+                if (itemsValidos.Count > 0 && idNuevoRecibo > 0)
+                {
+                    var erroresInventario = new List<string>();
+                    foreach (var item in itemsValidos)
+                    {
+                        var producto = await _Iservices.GetProductoByIdAsync(item.IdProducto);
+                        if (producto == null || producto.StockActual < item.Cantidad)
+                        {
+                            erroresInventario.Add(producto?.NombreProducto ?? $"Id {item.IdProducto}");
+                            continue;
+                        }
+
+                        producto.StockActual -= item.Cantidad;
+                        producto.ImporteInventario = producto.StockActual * producto.CostoUnitario;
+                        producto.UsuarioActualiza = idUsuario;
+                        producto.FechaActualiza = DateTime.Now;
+
+                        var (ok, detalle) = await _Iservices.UpdateProductoAsync(producto);
+                        if (!ok)
+                        {
+                            erroresInventario.Add($"{producto.NombreProducto}: {detalle ?? "no se pudo actualizar stock"}");
+                            continue;
+                        }
+
+                        await _Iservices.PostMovimientoInventarioAsync(new MovimientoInventario
+                        {
+                            IdProducto = item.IdProducto,
+                            TipoMovimiento = TipoMovimientoInventario.Salida,
+                            Cantidad = item.Cantidad,
+                            FechaMovimiento = DateTime.Now,
+                            ReferenciaDocumento = $"RECIBO-{idNuevoRecibo}",
+                            Descripcion = "Venta recibo caja varios",
+                            Activo = true,
+                            UsuarioRegistro = idUsuario,
+                            FechaRegistro = DateTime.Now
+                        });
+                    }
+
+                    if (erroresInventario.Count > 0)
+                    {
+                        TempData["Mensaje"] = "Pago registrado, pero hubo problemas al descontar inventario: " + string.Join("; ", erroresInventario);
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
+                    }
+                }
+
+                TempData["Mensaje"] = "Se procesó correctamente el pago.";
+                TempData["Tipo"] = "success";
+                return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
+            }
+            catch (Exception ex)
+            {
+                TempData["Mensaje"] = "Error al procesar: " + ex.Message;
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Create");
             }
         }
         //public async Task<ActionResult> EstadoCuenta()

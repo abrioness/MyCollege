@@ -6,6 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- Perfil http por defecto en Debug hasta confiar el certificado de desarrollo -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <LaunchProfileName>http</LaunchProfileName>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Models\Models\**" />
     <Compile Remove="Pages\**" />

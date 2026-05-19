@@ -5,6 +5,9 @@ namespace WebColegio.Models.ViewModel
     {
         public int AnioPeriodoReferencia { get; set; }
         public string? MensajePeriodo { get; set; }
+        /// <summary>Mes calendario que debe estar pagado (mes anterior al actual).</summary>
+        public int MesMensualidadRequerido { get; set; }
+        public string? NombreMesMensualidadRequerido { get; set; }
         public List<EstadoCuentaFilaAlumno> Filas { get; set; } = new();
     }
 
@@ -29,6 +32,15 @@ namespace WebColegio.Models.ViewModel
         /// <summary>Fila sin grado/recinto/modalidad; no se calculan tarifas.</summary>
         public bool DatosIncompletos { get; set; }
         public string? MotivoIncompleto { get; set; }
+        /// <summary>Solvente / Insolvente según mensualidad del mes anterior al actual.</summary>
+        public string? EstadoPagoMensualidad { get; set; }
+        public int MesMensualidadRequerido { get; set; }
+        public string? NombreMesMensualidadRequerido { get; set; }
+        /// <summary>Meses con saldo pendiente (anteriores al mes actual).</summary>
+        public string? MesesPendientesSolvencia { get; set; }
+        /// <summary>Último mes del año lectivo con mensualidad pagada (para mostrar en pantalla).</summary>
+        public int? UltimoMesPagado { get; set; }
+        public string? NombreUltimoMesPagado { get; set; }
     }
 
     public class EstadoCuentaMesCelda

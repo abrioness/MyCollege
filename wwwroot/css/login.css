@@ -8,39 +8,101 @@ body {
     min-height: 100vh;
     margin: 0;
     font-family: 'Inter UI', sans-serif;
-    background-image: url('../image/fondoinicio.jpg');
-    background-repeat: no-repeat;
-    background-size: cover;
-    /*background-position: center;*/
-    
+    background: #1a237e;
 }
 
-/* CONTENEDOR PRINCIPAL */
-.login-wrapper {
-    min-height: 100vh;
+/* Pantalla de inicio: carrusel + formulario */
+.login-page {
     display: flex;
-    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.login-carousel-panel {
+    position: relative;
+    flex: 1 1 58%;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.login-carousel-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.12) 55%, rgba(0, 0, 0, 0.45) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+#carouselInicio {
+    position: relative;
+    z-index: 0;
+}
+
+.login-carousel-img {
+    object-fit: cover;
+    min-height: 100vh;
+}
+
+.login-carousel-caption {
+    z-index: 2;
+    bottom: 2.5rem;
+    left: 0;
+    right: 0;
+    padding: 1.25rem 2rem 2rem;
+    text-align: left;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+}
+
+.login-carousel-title {
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.login-carousel-subtitle {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    opacity: 0.95;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    z-index: 3;
+}
+
+.carousel-indicators {
+    z-index: 3;
+    margin-bottom: 1rem;
+}
+
+.login-form-panel {
+    flex: 0 0 42%;
+    max-width: 520px;
+    min-width: 320px;
+    display: flex;
     align-items: center;
-    
+    justify-content: center;
+    padding: 1.5rem;
+    background: linear-gradient(160deg, #3949ab 0%, #5c76e0 45%, #7986cb 100%);
 }
 
-/* LOGIN */
-.login_container {
-    width: 90%;
+.login-wrapper {
+    width: 100%;
     max-width: 420px;
-    opacity:0.9;
 }
 
-/* CAJA */
+.login_container {
+    width: 100%;
+}
+
 .right {
-    background: #5c76e0;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(6px);
     padding: 2rem;
-    border-radius: 30px;
-    box-shadow: 0 0 40px rgba(0,0,0,.25);
-   place-content:center;
+    border-radius: 24px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* LOGO */
 .logo {
     width: 90px;
     margin: 0 auto 10px;
@@ -48,7 +110,6 @@ body {
     border-radius: 20px;
 }
 
-/* TITULO */
 .login {
     text-align: center;
     font-size: 26px;
@@ -57,7 +118,6 @@ body {
     color: white;
 }
 
-/* FORMULARIO */
 .form {
     display: flex;
     flex-direction: column;
@@ -70,28 +130,64 @@ label {
     font-size: 14px;
 }
 
-input {
+input:not([type="submit"]) {
     padding: 10px;
     font-size: 16px;
     border: none;
     outline: none;
-    border-radius: 5px;
+    border-radius: 8px;
 }
 
-/* BOTON */
 #submit {
     margin-top: 25px;
     cursor: pointer;
     background: #ffffff;
     font-weight: bold;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    color: #3949ab;
 }
 
-    #submit:hover {
-        background: gray;
-        
+#submit:hover {
+    background: #e8eaf6;
+}
+
+/* Móvil: carrusel arriba, login abajo */
+@media (max-width: 991.98px) {
+    .login-page {
+        flex-direction: column;
     }
 
-/* RESPONSIVE EXTRA */
+    .login-carousel-panel {
+        flex: none;
+        min-height: 42vh;
+        max-height: 48vh;
+    }
+
+    .login-carousel-img {
+        min-height: 42vh;
+        max-height: 48vh;
+    }
+
+    .login-carousel-caption {
+        bottom: 0.75rem;
+        padding: 0.75rem 1rem 1.25rem;
+    }
+
+    .login-carousel-title {
+        font-size: 1.1rem;
+    }
+
+    .login-form-panel {
+        flex: 1 1 auto;
+        max-width: none;
+        min-width: 0;
+        width: 100%;
+    }
+}
+
 @media (max-width: 480px) {
     .right {
         padding: 1.5rem;

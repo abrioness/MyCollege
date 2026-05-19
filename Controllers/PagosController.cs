@@ -148,6 +148,9 @@ namespace WebColegio.Controllers
                 mesesCatalog.FirstOrDefault(x => x.IdMes == m)?.Mes?.Trim()
                 ?? culturaEs.DateTimeFormat.GetMonthName(m)).ToArray();
 
+            int mesMensualidadRequerido = EstadoCuentaSolvenciaHelper.ObtenerMesMensualidadRequerido();
+            string nombreMesRequerido = nombresMes[mesMensualidadRequerido - 1];
+
             var filas = new List<EstadoCuentaFilaAlumno>();
 
             foreach (var alumno in alumnos.OrderBy(a => a.Apellido).ThenBy(a => a.Nombre))
@@ -217,6 +220,15 @@ namespace WebColegio.Controllers
                 }
 
                 var ultimoPago = pagosAlum.OrderByDescending(p => p.IdPago).FirstOrDefault();
+                string estadoPagoMensualidad = EstadoCuentaSolvenciaHelper.EvaluarEstadoPagoMensualidad(meses);
+                var mesesPendientesSolvencia = EstadoCuentaSolvenciaHelper.ObtenerMesesPendientes(meses);
+                string? textoMesesPendientes = mesesPendientesSolvencia.Count > 0
+                    ? string.Join(", ", mesesPendientesSolvencia)
+                    : null;
+                int? ultimoMesPagado = EstadoCuentaSolvenciaHelper.ObtenerMesHastaPagadoParaMostrar(meses);
+                string? nombreUltimoMesPagado = ultimoMesPagado.HasValue
+                    ? nombresMes[ultimoMesPagado.Value - 1]
+                    : null;
 
                 filas.Add(new EstadoCuentaFilaAlumno
                 {
@@ -234,7 +246,13 @@ namespace WebColegio.Controllers
                     TotalSaldoMensualidades = totalSaldoMeses,
                     GranTotalPendiente = (matCancelada ? 0m : saldoMat) + totalSaldoMeses,
                     IdPagoParaEnlace = ultimoPago?.IdPago,
-                    SinTarifaMensualidad = costoMen == null && !becaCompleta && !mediaBeca
+                    SinTarifaMensualidad = costoMen == null && !becaCompleta && !mediaBeca,
+                    EstadoPagoMensualidad = estadoPagoMensualidad,
+                    MesMensualidadRequerido = mesMensualidadRequerido,
+                    NombreMesMensualidadRequerido = nombreMesRequerido,
+                    MesesPendientesSolvencia = textoMesesPendientes,
+                    UltimoMesPagado = ultimoMesPagado,
+                    NombreUltimoMesPagado = nombreUltimoMesPagado
                 });
             }
 
@@ -242,7 +260,9 @@ namespace WebColegio.Controllers
             return View(new EstadoCuentaViewModel
             {
                 AnioPeriodoReferencia = anioPeriodo,
-                MensajePeriodo = $"Período lectivo de referencia: {anioPeriodo} (Id {idPeriodoRef}). Mensualidad por grado/recinto/modalidad; matrícula por recinto/modalidad.",
+                MesMensualidadRequerido = mesMensualidadRequerido,
+                NombreMesMensualidadRequerido = nombreMesRequerido,
+                MensajePeriodo = $"Período lectivo de referencia: {anioPeriodo} (Id {idPeriodoRef}). Insolvente si debe algún mes anterior al mes actual; la columna Estado pago indica hasta qué mes tiene pagada la mensualidad (incluye pagos adelantados del año).",
                 Filas = filas
             });
         }

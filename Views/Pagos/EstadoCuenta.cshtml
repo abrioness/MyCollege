@@ -41,6 +41,7 @@
 							<th>Grado</th>
 							<th>Año lectivo</th>
 							<th>Colegio</th>
+							<th class="text-center" title="Muestra hasta qué mes del año lectivo tiene pagada la mensualidad. Insolvente si debe meses anteriores al mes calendario actual.">Estado pago</th>
 							<th class="text-end">Tarifa mensual</th>
 							<th class="text-center">Matrícula</th>
 							@for (int m = 1; m <= colsMes; m++)
@@ -57,9 +58,19 @@
 							if (fila.DatosIncompletos)
 							{
 								<tr class="table-warning">
-									<td colspan="@(6 + colsMes + 2)">
-										<strong>@fila.NombreCompleto</strong> — @fila.MotivoIncompleto
-									</td>
+									<td><strong>@fila.NombreCompleto</strong> — @fila.MotivoIncompleto</td>
+									<td>—</td>
+									<td>—</td>
+									<td>—</td>
+									<td class="text-center">—</td>
+									<td>—</td>
+									<td>—</td>
+									@for (int m = 0; m < colsMes; m++)
+									{
+										<td>—</td>
+									}
+									<td>—</td>
+									<td>—</td>
 								</tr>
 							}
 							else
@@ -78,6 +89,34 @@
 								<td>@(fila.NombreGrado ?? "—")</td>
 								<td>@fila.AnioPeriodo</td>
 								<td>@(fila.Recinto ?? "—")</td>
+								@{
+									string? tooltipEstado = null;
+									if (fila.EstadoPagoMensualidad == "Solvente" && !string.IsNullOrEmpty(fila.NombreUltimoMesPagado))
+										tooltipEstado = $"Pagado hasta {fila.NombreUltimoMesPagado}";
+									else if (fila.EstadoPagoMensualidad == "Insolvente")
+									{
+										if (!string.IsNullOrEmpty(fila.NombreUltimoMesPagado))
+											tooltipEstado = $"Pagado hasta {fila.NombreUltimoMesPagado}";
+										if (!string.IsNullOrEmpty(fila.MesesPendientesSolvencia))
+											tooltipEstado = string.IsNullOrEmpty(tooltipEstado)
+												? $"Debe: {fila.MesesPendientesSolvencia}"
+												: $"{tooltipEstado} · Debe: {fila.MesesPendientesSolvencia}";
+									}
+								}
+								<td class="text-center col-estado-pago" title="@tooltipEstado">
+									@if (string.IsNullOrEmpty(fila.EstadoPagoMensualidad) || fila.EstadoPagoMensualidad == "N/D")
+									{
+										<span class="text-muted">—</span>
+									}
+									else if (fila.EstadoPagoMensualidad == "Solvente")
+									{
+										<span class="estado-pago-texto text-success fw-semibold">Solvente</span>
+									}
+									else
+									{
+										<span class="estado-pago-texto text-danger fw-semibold">Insolvente</span>
+									}
+								</td>
 								<td class="text-end">
 									@if (fila.SinTarifaMensualidad)
 									{
@@ -140,15 +179,42 @@
 			if ($.fn.DataTable.isDataTable('#estadocuenta')) {
 				$('#estadocuenta').DataTable().destroy();
 			}
+			function textoCeldaExport(data) {
+				return $('<div>').html(data).text().replace(/\s+/g, ' ').trim();
+			}
+
 			$('#estadocuenta').DataTable({
 				responsive: false,
 				scrollX: true,
 				pageLength: 25,
 				dom: 'Bfrtip',
 				buttons: [
-					{ extend: 'excelHtml5', text: 'Exportar a Excel', className: 'btn btn-success btn-sm' }
+					{
+						extend: 'excelHtml5',
+						text: 'Exportar a Excel',
+						className: 'btn btn-success btn-sm',
+						title: 'Estado de cuenta',
+						exportOptions: {
+							columns: ':visible',
+							modifier: { search: 'applied', order: 'applied' },
+							format: {
+								body: function (data) { return textoCeldaExport(data); }
+							}
+						}
+					}
 				],
-				language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' }
+				language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+				columnDefs: [
+					{
+						targets: 4,
+						render: function (data, type) {
+							if (type === 'filter' || type === 'sort' || type === 'export') {
+								return textoCeldaExport(data);
+							}
+							return data;
+						}
+					}
+				]
 			});
 		});
 	</script>
