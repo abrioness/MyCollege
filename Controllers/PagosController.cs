@@ -301,9 +301,13 @@ namespace WebColegio.Controllers
                 {
                     Value = r.IdRecinto.ToString(),
                     Text = r.Recinto,
-                    //Selected = r.IdPregunta == respuestas.IdPregunta
                 }).ToList(),
-
+                usuariosSelectListItem = (await _Iservices.GetUsuariosAsync())
+                .Select(u => new SelectListItem
+                {
+                    Value = u.IdUsuario.ToString(),
+                    Text = u.NombreCompleto ?? u.NombreUsuario,
+                }).ToList(),
             };
 
             if (listpagos == null)
@@ -619,15 +623,58 @@ namespace WebColegio.Controllers
                             TempData["Tipo"] = "warning";
                             return RedirectToAction("Create");
                         }
-                        if (MediaBeca(pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo).Result && pagos.Pago.Monto > 320 && pagos.Pago.IdTipoMovimiento==1)
+                        decimal tarifaMensual = await ObtenerMensualidadDecimal(
+                            pagos.Pago.IdRecinto,
+                            pagos.Pago.IdGrado,
+                            pagos.Pago.IdPeriodo,
+                            pagos.Pago.IdModalidad);
+
+                        if (tarifaMensual <= 0)
+                        {
+                            TempData["Mensaje"] = "No hay mensualidad configurada para este recinto, nivel, ciclo y modalidad.";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
+
+                        bool tieneMediaBeca = await MediaBeca(pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo);
+                        if (tieneMediaBeca)
+                            tarifaMensual *= 0.5m;
+
+                        decimal montoPorMes = tarifaMensual;
+                        int cantidadMesesPago = ids.Count;
+                        decimal totalMensualidadesEsperado = montoPorMes * cantidadMesesPago;
+
+                        decimal totalAbonosMensualidad = 0;
+                        var tiposMovimientoAbono = await _Iservices.GetTipoMovimientoAsync();
+                        var tipoAbonoMensualidad = tiposMovimientoAbono
+                            .FirstOrDefault(tm => (tm.Concepto.ToLower().Contains("abono mensualidad") &&
+                                                 tm.Concepto.ToLower().Contains("mensualidad")) ||
+                                                tm.Concepto.ToLower().Contains("abono mensualidad"));
+                        if (tipoAbonoMensualidad != null)
+                        {
+                            totalAbonosMensualidad = listpagos
+                                .Where(p => p.IdAlumno == pagos.Pago.IdAlumno &&
+                                            p.IdPeriodo == pagos.Pago.IdPeriodo &&
+                                            p.IdTipoMovimiento == tipoAbonoMensualidad.IdTipoMovimiento &&
+                                            p.Activo == true)
+                                .Sum(p => p.Monto);
+                        }
+
+                        decimal totalEsperadoConAbonos = Math.Max(0, totalMensualidadesEsperado - totalAbonosMensualidad);
+
+                        if (tieneMediaBeca && pagos.Pago.Monto > totalEsperadoConAbonos + 0.01m)
                         {
                             TempData["Mensaje"] = "El Estudiante Cuenta con Media Beca.";
                             TempData["Tipo"] = "warning";
                             return RedirectToAction("Create");
                         }
-                        
-                        //total = ids * mensualidad;
-                        //if((ids* mensualidad)=pagos.Pago.Monto)
+
+                        if (Math.Abs(pagos.Pago.Monto - totalEsperadoConAbonos) > 0.05m)
+                        {
+                            TempData["Mensaje"] = $"El monto ingresado (C$ {pagos.Pago.Monto:N2}) no coincide con {cantidadMesesPago} mes(es) × C$ {montoPorMes:N2} = C$ {totalMensualidadesEsperado:N2}.";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
 
                         //crear meses pagados previos (mensualidad tipo 1)
                         var mesesPagadosBD = listpagos
@@ -734,7 +781,7 @@ namespace WebColegio.Controllers
                                     IdRecinto=pagos.Pago.IdRecinto,
                                     FechaEmision=pagos.Pago.FechaEmision,
                                     Mora = pagos.Pago.Mora,
-                                    Monto = pagos.Pago.Monto,
+                                    Monto = montoPorMes,
                                     Descripcion=pagos.Pago.Descripcion,
                                     UsuarioRegistro=pagos.Pago.UsuarioRegistro,
                                     Activo=pagos.Pago.Activo,

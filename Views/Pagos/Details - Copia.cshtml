@@ -252,7 +252,8 @@
            
             </div>
         @{
-            var fecha = Model.Pago.FechaRegistro =DateTime.Now;
+            var fechaRegistro = Model.Pago.FechaRegistro;
+            var fecha = Model.Pago.FechaEmision ?? fechaRegistro;
         }
         <!-- Fecha -->
         <div class="fecha">

@@ -396,8 +396,8 @@ namespace WebColegio.Controllers
                                   Monto = p.Monto
                               }).ToList();
 
-            // 5️⃣ Totales
-            arqueo.TotalIngresos = arqueo.Ingresos.Sum(x => x.Monto);
+            // 5️⃣ Totales (pagos + recibos de caja varios)
+            arqueo.TotalIngresos = arqueo.Ingresos.Sum(x => x.Monto) + arqueo.IngresoCajaDto.Sum(x => x.Montos);
             arqueo.TotalEgresos = arqueo.Egresos.Sum(x => x.Monto);
             
             arqueo.TotalEfectivo = arqueo.TotalIngresos - arqueo.TotalEgresos;

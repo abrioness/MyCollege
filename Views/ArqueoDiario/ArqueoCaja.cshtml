@@ -114,12 +114,12 @@
         @{
             decimal totalIngresos = Model.TotalIngresos;
             decimal totalEgresos = Model.TotalEgresos;
-
             decimal totalEfectivoEntregar = totalIngresos - totalEgresos;
         }
 
-        <p class="totales">Total Ingresos: @Model.TotalIngresos.ToString("C")</p>
-        <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@Model.TotalIngresos.ToString(cultInv)" />
+        <p class="totales">Total Ingresos: <span id="textoTotalIngresos">@totalIngresos.ToString("C")</span></p>
+        <input type="hidden" id="totalIngresosValor" value="@totalIngresos.ToString(cultInv)" />
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@totalIngresos.ToString(cultInv)" />
         <!-- Egresos -->
         <h4>Egresos</h4>
         <table>
@@ -146,12 +146,12 @@
             var TotalEfectovoEntregar = (Model.IngresoCajaDto ?? 0) +(Model.TotalIngresos ?? 0)-Model.Egresos
         }  *@
 
-        <p class="totales">Total Egresos: @Model.TotalEgresos.ToString("C")</p>
-        <input type="hidden" asp-for="@Model.arqueoDiario.TotalEgreso" value="@Model.TotalEgresos.ToString(cultInv)" />
-        
-       
-        <p class="totales">TOTAL DE EFECTIVO A ENTREGAR: @totalEfectivoEntregar.ToString("C")</p>
-        <input type="hidden" id="totalEfectivoEntregarValor" value="@totalEfectivoEntregar.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+        <p class="totales">Total Egresos: <span id="textoTotalEgresos">@totalEgresos.ToString("C")</span></p>
+        <input type="hidden" id="totalEgresosValor" value="@totalEgresos.ToString(cultInv)" />
+        <input type="hidden" asp-for="@Model.arqueoDiario.TotalEgreso" value="@totalEgresos.ToString(cultInv)" />
+
+        <p class="totales">TOTAL DE EFECTIVO A ENTREGAR: <span id="textoTotalEfectivoEntregar">@totalEfectivoEntregar.ToString("C")</span></p>
+        <input type="hidden" id="totalEfectivoEntregarValor" value="@totalEfectivoEntregar.ToString(cultInv)" />
         
    
     <table class="col-6" id="tableContent">
@@ -319,7 +319,7 @@
             EFECTIVO VIA TRANSFERENCIA: <u>C$ 0.00</u>
         </p>
         <p class="totalDetalleEfectivo">
-                TOTAL DETALLE DE EFECTIVO (a entregar): <u>@totalEfectivoEntregar.ToString("C")</u>
+                TOTAL DETALLE DE EFECTIVO (a entregar): <u id="textoTotalDetalleEfectivo">@totalEfectivoEntregar.ToString("C")</u>
         </p>
         <p class="totales" id="lineaDiferencia" style="font-weight: bold;">
             Diferencia (Efectivo a entregar − Detalle dinero): <u id="valorDiferencia">C$ 0.00</u> <span id="tipoDiferencia"></span>
@@ -402,18 +402,61 @@
         }
     });
 
-    // Obtener total efectivo a entregar (del servidor)
-    function getTotalEfectivoEntregar() {
-        var el = document.getElementById("totalEfectivoEntregarValor");
-        return el ? parseFloat(el.value) || 0 : 0;
+    function parseMonto(input) {
+        if (!input) return 0;
+        var texto = (typeof input === "string" ? input : input.value) || "";
+        var n = parseFloat(String(texto).replace(/[^0-9.-]+/g, ""));
+        return isNaN(n) ? 0 : n;
     }
 
-    // Obtener total detalle dinero (córdobas + equivalente dólares)
+    function formatoCordoba(valor) {
+        return "C$ " + valor.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Total ingresos − egresos (efectivo a entregar según libros)
+    function getTotalEfectivoEntregar() {
+        var ingresos = parseMonto(document.getElementById("totalIngresosValor"));
+        var egresos = parseMonto(document.getElementById("totalEgresosValor"));
+        return Math.round((ingresos - egresos) * 100) / 100;
+    }
+
+    function actualizarTotalesLibro() {
+        var efectivo = getTotalEfectivoEntregar();
+        var elHidden = document.getElementById("totalEfectivoEntregarValor");
+        if (elHidden) elHidden.value = efectivo.toFixed(2);
+        var elHiddenDetalle = document.querySelector('input[name="arqueoDiario.TotalDetalleEfectivo"]');
+        if (elHiddenDetalle) elHiddenDetalle.value = efectivo.toFixed(2);
+        var texto = formatoCordoba(efectivo);
+        var elTop = document.getElementById("textoTotalEfectivoEntregar");
+        var elDetalle = document.getElementById("textoTotalDetalleEfectivo");
+        if (elTop) elTop.textContent = texto;
+        if (elDetalle) elDetalle.textContent = texto;
+        return efectivo;
+    }
+
+    function getTotalDolaresUsd() {
+        return parseMonto(document.getElementById("totalGeneralDolares"));
+    }
+
+    function getTasaCambio() {
+        var el = document.querySelector(".cantidadcambio");
+        return el ? parseMonto(el) : 0;
+    }
+
+    function actualizarEquivalenteDolares() {
+        var totalDolares = getTotalDolaresUsd();
+        var tasa = getTasaCambio();
+        var equivalente = Math.round(totalDolares * tasa * 100) / 100;
+        var elEq = document.getElementById("EquivalenteCordoba");
+        if (elEq) elEq.value = formatoCordoba(equivalente);
+        return equivalente;
+    }
+
+    // Conteo físico: córdobas + dólares convertidos a córdobas
     function getTotalDetalleDinero() {
-        var totalC = parseFloat(document.getElementById("totalGeneralCordobas").value.replace(/[^0-9.-]+/g, "")) || 0;
-        var totalD = parseFloat(document.getElementById("totalGeneralDolares").value.replace(/[^0-9.-]+/g, "")) || 0;
-        var tasa = parseFloat(document.querySelector(".cantidadcambio").value) || 0;
-        return totalC + (totalD * tasa);
+        var totalC = parseMonto(document.getElementById("totalGeneralCordobas"));
+        var equivalente = actualizarEquivalenteDolares();
+        return Math.round((totalC + equivalente) * 100) / 100;
     }
 
     // Convertir número a letras en español (usa librería si existe, si no formato con centavos)
@@ -443,68 +486,54 @@
     function updateTotalDetalleYDiferencia() {
         totalGeneralCordobas();
         totalGeneralDolares();
-        var totalCordobas = parseFloat(document.getElementById("totalGeneralCordobas").value.replace(/[^0-9.-]+/g, "")) || 0;
-        var totalDolares = parseFloat(document.getElementById("totalGeneralDolares").value.replace(/[^0-9.-]+/g, "")) || 0;
-        var tasa = parseFloat(document.querySelector(".cantidadcambio").value) || 0;
-        var totaDetalleDinero = totalCordobas + (totalDolares * tasa);
+
+        var totalEfectivo = actualizarTotalesLibro();
+        var totaDetalleDinero = getTotalDetalleDinero();
 
         var elDetalle = document.getElementById("valorTotalDetalleDinero");
-        if (elDetalle) elDetalle.textContent = "C$ " + totaDetalleDinero.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+        if (elDetalle) elDetalle.textContent = formatoCordoba(totaDetalleDinero);
 
-        var totalEfectivo = getTotalEfectivoEntregar();
-        var diferencia = totalEfectivo - totaDetalleDinero;
+        var diferencia = Math.round((totalEfectivo - totaDetalleDinero) * 100) / 100;
         var elDiff = document.getElementById("valorDiferencia");
         var elTipo = document.getElementById("tipoDiferencia");
-        if (elDiff) elDiff.textContent = "C$ " + Math.abs(diferencia).toLocaleString("es-NI", { minimumFractionDigits: 2 });
+        if (elDiff) elDiff.textContent = formatoCordoba(Math.abs(diferencia));
         if (elTipo) {
             if (Math.abs(diferencia) < 0.01) elTipo.textContent = "(Cuadrado)";
-            else if (diferencia > 0) elTipo.textContent = "(Faltante)";
-            else elTipo.textContent = "(Sobrante)";
+            else if (diferencia > 0) elTipo.textContent = "(Faltante en caja)";
+            else elTipo.textContent = "(Sobrante en caja)";
         }
 
-        var valorParaLetras = totaDetalleDinero;
-        if (valorParaLetras < 0.01) valorParaLetras = totalEfectivo;
+        var valorParaLetras = totaDetalleDinero > 0.01 ? totaDetalleDinero : totalEfectivo;
         var elLetras = document.getElementById("totalEnLetrasTexto");
         if (elLetras) elLetras.textContent = numeroALetrasJS(valorParaLetras);
     }
 
     function totalGeneralCordobas() {
-        let total = 0;
-
-        document.querySelectorAll(".totalc").forEach(input => {
-            // Extrae solo números (quita C$, comas, etc.)
-            let valor = parseFloat(input.value.replace(/[^0-9.-]+/g, "")) || 0;
-            total += valor;
+        var total = 0;
+        document.querySelectorAll("tbody .totalc").forEach(function (input) {
+            total += parseMonto(input);
         });
-
-        // Mostrar el total general formateado
-        document.getElementById("totalGeneralCordobas").value =
-            "C$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+        var el = document.getElementById("totalGeneralCordobas");
+        if (el) el.value = formatoCordoba(total);
+        return total;
     }
 
     function totalGeneralDolares() {
-        let total = 0;
-
-        document.querySelectorAll(".totald").forEach(input => {
-            // Extrae solo números (quita C$, comas, etc.)
-            let valor = parseFloat(input.value.replace(/[^0-9.-]+/g, "")) || 0;
-            total += valor;
+        var total = 0;
+        document.querySelectorAll("tbody .totald").forEach(function (input) {
+            total += parseMonto(input);
         });
-
-        // Mostrar el total general formateado
-        document.getElementById("totalGeneralDolares").value =
-            "$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2 });
+        var el = document.getElementById("totalGeneralDolares");
+        if (el) el.value = "$ " + total.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return total;
     }
 
-    // Cambio de dólares a córdobas: equivalente y actualizar totales/diferencia/letras
-    document.querySelector(".cantidadcambio").addEventListener("input", function () {
-        var totalDolares = parseFloat(document.getElementById("totalGeneralDolares").value.replace(/[^0-9.-]+/g, "")) || 0;
-        var tasa = parseFloat(this.value) || 0;
-        var equivalente = totalDolares * tasa;
-        var elEq = document.getElementById("EquivalenteCordoba");
-        if (elEq) elEq.value = "C$ " + equivalente.toLocaleString("es-NI", { minimumFractionDigits: 2 });
-        updateTotalDetalleYDiferencia();
-    });
+    var elTasaCambio = document.querySelector(".cantidadcambio");
+    if (elTasaCambio) {
+        elTasaCambio.addEventListener("input", function () {
+            updateTotalDetalleYDiferencia();
+        });
+    }
 
 
 
@@ -529,8 +558,8 @@
         });
     });
 
-    // Al cargar, mostrar diferencia y total en letras con el total efectivo a entregar
     document.addEventListener("DOMContentLoaded", function () {
+        actualizarTotalesLibro();
         updateTotalDetalleYDiferencia();
     });
 </script>

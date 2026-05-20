@@ -127,7 +127,7 @@
         </div>
 
         <div class="v-section">
-            <div class="v-row center bold">RECIBO DE CAJA</div>
+            <div class="v-row center bold">@(Model.Pago.IdTipoMovimiento == 2 || Model.Pago.IdTipoMovimiento == 4 ? "RECIBO DE MATRÍCULA" : "RECIBO DE CAJA")</div>
             <div class="v-row">Serie: <span>@Model.Pago.Serie</span></div>
             <div class="v-row">N°: <span>@Model.Pago.NumeroRecibo</span></div>
         </div>
@@ -137,14 +137,21 @@
             var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.Pago.IdGrado);
             var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.Pago.IdTipoMovimiento);
             var metodopago = Model.metodoPago?.FirstOrDefault(a => a.IdMetodoPago == Model.Pago.IdMetodoPago);
-            var fecha = Model.Pago.FechaRegistro = DateTime.Now;
+            var esMatricula = Model.Pago.IdTipoMovimiento == 2 || Model.Pago.IdTipoMovimiento == 4;
+            var fechaRegistro = Model.Pago.FechaRegistro;
+            var fechaEmision = Model.Pago.FechaEmision;
+            var fechaPieRecibo = fechaEmision ?? fechaRegistro;
+            string FormatearFecha(DateTime? d) => d.HasValue && d.Value != default ? d.Value.ToString("dd/MM/yyyy") : "—";
+            string FormatearFechaDt(DateTime d) => d != default ? d.ToString("dd/MM/yyyy") : "—";
+            var usuarioCajero = Model.usuariosSelectListItem?
+                .FirstOrDefault(u => u.Value == Model.Pago.UsuarioRegistro.ToString())?.Text;
         }
 
         <div class="v-section">
             <div class="v-row"><b>Recibí de:</b> <span>@alumno?.Nombre @alumno?.Apellido</span></div>
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
-            <div class="v-row"><b>Fecha Emisión:</b> <span> @Model.Pago.FechaEmision</span></div>
-            <div class="v-row"><b>Fecha Pago:</b> <span> @Model.Pago.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
+            <div class="v-row"><b>@(esMatricula ? "Fecha matrícula:" : "Fecha emisión:")</b> <span>@FormatearFecha(fechaEmision)</span></div>
+            <div class="v-row"><b>Fecha registro:</b> <span>@FormatearFechaDt(fechaRegistro)</span></div>
             <div class="v-row"><b>Concepto:</b>
                 <span>@(tipoMovimiento?.Concepto ?? "—")@(Model.Pago.IdTipoMovimiento == 1 && !string.IsNullOrEmpty(Model.DetalleMesesRecibo) ? " (" + Model.DetalleMesesRecibo + ")" : ""), @(Model.Pago?.Descripcion ?? "")</span>
             </div>
@@ -186,18 +193,16 @@
         </div>
 
         <div class="v-section center">
-            Managua: @fecha.Day de
-            @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(fecha.Month)
-            del 20@(fecha.ToString("yy"))
+            Managua: @fechaPieRecibo.Day de
+            @System.Globalization.CultureInfo.GetCultureInfo("es-NI").DateTimeFormat.GetMonthName(fechaPieRecibo.Month)
+            del @fechaPieRecibo.Year
         </div>
 
         <!-- Firma -->
         <div class="firma">
             <div class="line"></div>
             <div class="txt">Firma y Sello del Cajero</div>
-            <div class="txt">
-                @Model.listPagos.FirstOrDefault(a => a.UsuarioRegistro == Model.Pago.UsuarioRegistro)
-            </div>
+            <div class="txt">@(usuarioCajero ?? "Cajero")</div>
         </div>
 
     </div>
