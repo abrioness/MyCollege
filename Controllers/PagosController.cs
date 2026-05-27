@@ -117,6 +117,14 @@ namespace WebColegio.Controllers
             return Math.Clamp(m, 1, 12);
         }
 
+        /// <summary>
+        /// Matrícula habitual de inicio de ciclo (oct–dic para el año lectivo siguiente).
+        /// En ese caso las mensualidades siguen ene→feb→… aunque la matrícula se haya registrado en octubre.
+        /// La regla de “matrícula prematura” solo aplica si la matrícula es entre febrero y septiembre.
+        /// </summary>
+        private static bool EsMatriculaInicioCicloLectivo(int mesCalendarioMatricula)
+            => mesCalendarioMatricula >= 10;
+
         [Authorize]
         public async Task<ActionResult> EstadoCuenta()
         {
@@ -688,7 +696,10 @@ namespace WebColegio.Controllers
                         // Matrícula prematura: mes calendario de la primera matrícula (p. ej. abril) — la secuencia obligatoria
                         // empieza en ese mes, no desde enero aunque enero esté pagado con la matrícula.
                         int mesCalendarioMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo);
-                        int inicioSecuenciaMensual = Math.Max(primerMesPagadoMensual, mesCalendarioMatricula);
+                        bool matriculaInicioCiclo = EsMatriculaInicioCicloLectivo(mesCalendarioMatricula);
+                        int inicioSecuenciaMensual = matriculaInicioCiclo
+                            ? primerMesPagadoMensual
+                            : Math.Max(primerMesPagadoMensual, mesCalendarioMatricula);
                         //crear meses pagados virtualmente
                         var mesesPagadosAcumulados = new HashSet<int?>(mesesPagadosBD.Select(x => (int?)x));
 
@@ -727,7 +738,9 @@ namespace WebColegio.Controllers
                                 continue;
                             }
 
-                            if (idMes < mesCalendarioMatricula && !mesesPagadosBD.Contains(idMes))
+                            if (!matriculaInicioCiclo
+                                && idMes < mesCalendarioMatricula
+                                && !mesesPagadosBD.Contains(idMes))
                             {
                                 TempData["Mensaje"] =
                                     $"Con matrícula en {Mes(mesCalendarioMatricula).Result}, no corresponde pagar por separado el mes de {Mes(idMes).Result} (matrícula prematura).";
@@ -1122,20 +1135,23 @@ namespace WebColegio.Controllers
             var mesesPagadosBD = pagosMensualidad.Select(p => p.IdMes!.Value).ToHashSet();
 
             int mesMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, idAlumno, periodo);
+            bool matriculaInicioCiclo = EsMatriculaInicioCicloLectivo(mesMatricula);
 
             // Mora únicamente desde el mes calendario de la matrícula: no se cobra mora por meses anteriores (ene–mar si matrícula es abril).
-            if (mesMatricula > mes)
+            // Matrícula oct–dic: la ventana de mora sigue el mes calendario actual, no octubre.
+            if (!matriculaInicioCiclo && mesMatricula > mes)
             {
                 return Json(new { mora = 0, mes, aplicaMora = false });
             }
 
-            int cantidadMesesEnVentana = mes - mesMatricula;
+            int mesInicioMora = matriculaInicioCiclo ? 1 : mesMatricula;
+            int cantidadMesesEnVentana = mes - mesInicioMora;
             if (cantidadMesesEnVentana <= 0)
             {
                 return Json(new { mora = 0, mes, aplicaMora = false });
             }
 
-            var mesesPendientes = Enumerable.Range(mesMatricula, cantidadMesesEnVentana)
+            var mesesPendientes = Enumerable.Range(mesInicioMora, cantidadMesesEnVentana)
                 .Except(mesesPagadosBD)
                 .Distinct()
                 .ToList();
