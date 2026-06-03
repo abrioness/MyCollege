@@ -27,6 +27,10 @@ namespace WebColegio.Models.ViewModel
         public string? CantidadEnLetrasTotalRecibo { get; set; }
         /// <summary>Detalle de meses en el recibo (ej. "Enero, Febrero, Marzo" o "3 mensualidades").</summary>
         public string? DetalleMesesRecibo { get; set; }
+        /// <summary>Desglose para recibos de mensualidad.</summary>
+        public decimal? MontoMensualidadRecibo { get; set; }
+        public decimal? MoraRecibo { get; set; }
+        public decimal? TotalPagarRecibo { get; set; }
         public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
         public List<TblPago> listPagos {get;set;} = new();
 

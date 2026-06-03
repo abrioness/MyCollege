@@ -176,6 +176,18 @@
                     <span>C$ @Model.Pago.Monto.ToString("N2")</span>
                 }
             </div>
+            @if (Model.Pago.IdTipoMovimiento == 1)
+            {
+                var montoMensualidad = Model.MontoMensualidadRecibo ?? Model.Pago.Monto;
+                var moraRecibo = Model.MoraRecibo ?? 0m;
+                var totalPagar = Model.TotalPagarRecibo ?? (montoMensualidad + moraRecibo);
+                <div class="v-row"><b>Monto mensualidad:</b> <span>C$ @montoMensualidad.ToString("N2")</span></div>
+                @if (moraRecibo > 0)
+                {
+                    <div class="v-row"><b>Monto mora:</b> <span>C$ @moraRecibo.ToString("N2")</span></div>
+                }
+                <div class="v-row"><b>Total a pagar:</b> <span>C$ @totalPagar.ToString("N2")</span></div>
+            }
             <div class="v-row"><b>En letras:</b><br />
                 @if (Model.Pago.IdTipoMovimiento == 2 && !string.IsNullOrEmpty(Model.CantidadEnLetrasTotalRecibo))
                 {

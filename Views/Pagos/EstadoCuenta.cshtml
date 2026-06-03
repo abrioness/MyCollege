@@ -43,7 +43,7 @@
 							<th>Colegio</th>
 							<th class="text-center" title="Muestra hasta qué mes del año lectivo tiene pagada la mensualidad. Insolvente si debe meses anteriores al mes calendario actual.">Estado pago</th>
 							<th class="text-end">Tarifa mensual</th>
-							<th class="text-center">Matrícula</th>
+							<th class="text-end" title="Tarifa de matrícula del catálogo (recinto, modalidad y período lectivo actual)">Matrícula</th>
 							@for (int m = 1; m <= colsMes; m++)
 							{
 								<th class="text-end" style="min-width:72px" title="@cultMes.DateTimeFormat.GetMonthName(m)">@cultMes.DateTimeFormat.GetAbbreviatedMonthName(m)</th>
@@ -127,18 +127,23 @@
 										<text>C$ @fila.MensualidadReferencia.ToString("N2")</text>
 									}
 								</td>
-								<td class="text-center @(fila.MatriculaCancelada ? "table-success" : "")">
+								<td class="text-end @(fila.MatriculaCancelada ? "table-success" : "")">
 									@if (fila.MatriculaReferencia <= 0)
 									{
-										<span class="text-muted">—</span>
-									}
-									else if (fila.MatriculaCancelada)
-									{
-										<strong class="text-success">C$ 0,00</strong><br /><small class="text-success">Pagada</small>
+										<span class="badge bg-secondary">Sin tarifa en catálogo</span>
 									}
 									else
 									{
-										<span>C$ @fila.SaldoMatricula.ToString("N2")</span>
+										<text>C$ @fila.MatriculaReferencia.ToString("N2")</text>
+										@if (fila.MatriculaCancelada)
+										{
+											<br /><small class="text-success">Pagada</small>
+										}
+										else if (fila.SaldoMatricula > 0.01m)
+										{
+											var tituloMat = $"Tarifa C$ {fila.MatriculaReferencia:N2} · Pagado C$ {fila.TotalPagadoMatricula:N2}";
+											<br /><small class="text-danger fw-semibold" title="@tituloMat">Pendiente C$ @fila.SaldoMatricula.ToString("N2")</small>
+										}
 									}
 								</td>
 								@foreach (var cel in fila.Meses ?? Array.Empty<WebColegio.Models.ViewModel.EstadoCuentaMesCelda>())

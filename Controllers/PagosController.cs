@@ -191,8 +191,7 @@ namespace WebColegio.Controllers
                 else if (mediaBeca && montoMensual > 0)
                     montoMensual *= 0.5m;
 
-                var costoMat = costosMat.FirstOrDefault(c =>
-                    c.IdRecinto == idR && c.IdModalidad == idMod && c.IdPeriodo == idPeriodoRef && c.Activo);
+                var costoMat = ResolverFilaCostoMatricula(costosMat, idR, idPeriodoRef, idMod);
                 decimal montoMat = costoMat != null ? (decimal)costoMat.CostoMatricula : 0m;
 
                 var pagosAlum = pagos.Where(p => p.IdAlumno == alumno.IdAlumno && p.IdPeriodo == idPeriodoRef && p.Activo).ToList();
@@ -200,8 +199,12 @@ namespace WebColegio.Controllers
                 decimal pagadoMat = pagosAlum
                     .Where(p => p.IdTipoMovimiento == TipoMovimientoMatricula || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono)
                     .Sum(p => p.Monto);
-                decimal saldoMat = Math.Max(0m, montoMat - pagadoMat);
-                bool matCancelada = montoMat <= 0m || saldoMat <= 0.01m;
+                decimal pagadoEneroConMatricula = pagosAlum
+                    .Where(p => p.IdTipoMovimiento == TipoMovimientoMensualidad && p.IdMes == 1)
+                    .Sum(p => p.Monto);
+                var estadoMat = CalcularEstadoMatriculaEstadoCuenta(montoMat, montoMensual, pagadoMat, pagadoEneroConMatricula);
+                bool matCancelada = estadoMat.Cancelada;
+                decimal saldoMat = estadoMat.SaldoPendiente;
 
                 var meses = new EstadoCuentaMesCelda[12];
                 decimal totalSaldoMeses = 0m;
@@ -356,11 +359,27 @@ namespace WebColegio.Controllers
                             && p.IdTipoMovimiento == idTipoMensualidad
                             && p.Activo)
                         .ToList();
-                    decimal totalRecibo = pagosMismoRecibo.Sum(p => p.Monto);
-                    if (totalRecibo > 0)
+                    decimal montoMensualidadRecibo = pagosMismoRecibo.Sum(p => p.Monto);
+                    decimal moraRecibo = pagosMismoRecibo
+                        .Select(p => p.Mora ?? 0)
+                        .Where(m => m > 0)
+                        .DefaultIfEmpty(0)
+                        .Max();
+                    decimal totalPagarRecibo = pagosMismoRecibo
+                        .Where(p => p.TotalPagar.HasValue && p.TotalPagar.Value > 0)
+                        .Select(p => p.TotalPagar!.Value)
+                        .DefaultIfEmpty(0m)
+                        .Max();
+                    if (totalPagarRecibo <= 0)
+                        totalPagarRecibo = montoMensualidadRecibo + moraRecibo;
+
+                    if (montoMensualidadRecibo > 0 || moraRecibo > 0 || totalPagarRecibo > 0)
                     {
-                        viewModel.MontoTotalRecibo = totalRecibo;
-                        viewModel.CantidadEnLetrasTotalRecibo = NumeroALetras(totalRecibo);
+                        viewModel.MontoMensualidadRecibo = montoMensualidadRecibo;
+                        viewModel.MoraRecibo = moraRecibo;
+                        viewModel.TotalPagarRecibo = totalPagarRecibo;
+                        viewModel.MontoTotalRecibo = totalPagarRecibo;
+                        viewModel.CantidadEnLetrasTotalRecibo = NumeroALetras(totalPagarRecibo);
                         var mesesCatalog = await _Iservices.GetMesesAsync();
                         var idsMeses = pagosMismoRecibo.Where(p => p.IdMes.HasValue).Select(p => p.IdMes!.Value).OrderBy(m => m).Distinct().ToList();
                         if (idsMeses.Any())
@@ -1262,6 +1281,65 @@ namespace WebColegio.Controllers
         }
 
         /// <summary>
+        /// Tarifa de matrícula por recinto, período y modalidad; si no hay fila exacta, usa modalidad 0 (todas).
+        /// </summary>
+        private static TblCostoMatricula? ResolverFilaCostoMatricula(
+            IList<TblCostoMatricula>? list,
+            int? idRecinto,
+            int idPeriodo,
+            int? idModalidad)
+        {
+            if (list == null || list.Count == 0)
+                return null;
+
+            var candidatas = list
+                .Where(x => x.IdRecinto == idRecinto && x.IdPeriodo == idPeriodo && x.Activo)
+                .ToList();
+            if (candidatas.Count == 0)
+                return null;
+
+            if (idModalidad.HasValue && idModalidad.Value > 0)
+            {
+                var exacta = candidatas.FirstOrDefault(x => x.IdModalidad == idModalidad.Value);
+                if (exacta != null)
+                    return exacta;
+                var wildcard = candidatas.FirstOrDefault(x => x.IdModalidad == 0);
+                if (wildcard != null)
+                    return wildcard;
+            }
+
+            return candidatas.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Matrícula en catálogo = paquete (neta + enero). Los pagos tipo 2/4 guardan la parte neta; enero va en mensualidad mes 1.
+        /// </summary>
+        private static (bool Cancelada, decimal SaldoPendiente) CalcularEstadoMatriculaEstadoCuenta(
+            decimal montoCatalogo,
+            decimal montoMensualidadEnero,
+            decimal pagadoMatricula,
+            decimal pagadoMensualidadEnero)
+        {
+            if (montoCatalogo <= 0m)
+                return (true, 0m);
+
+            decimal matriculaNetaEsperada = montoMensualidadEnero > 0m
+                ? Math.Max(0m, montoCatalogo - montoMensualidadEnero)
+                : montoCatalogo;
+
+            bool cancelada =
+                pagadoMatricula >= montoCatalogo - 0.01m
+                || pagadoMatricula >= matriculaNetaEsperada - 0.01m
+                || pagadoMatricula + pagadoMensualidadEnero >= montoCatalogo - 0.01m;
+
+            if (cancelada)
+                return (true, 0m);
+
+            decimal saldo = Math.Max(0m, matriculaNetaEsperada - pagadoMatricula);
+            return (false, saldo);
+        }
+
+        /// <summary>
         /// Misma lógica flexible que <see cref="ObtenerMensualidad"/> (desglose matrícula completa / servidor).
         /// </summary>
         public async Task<decimal> ObtenerMensualidadDecimal(
@@ -1272,16 +1350,11 @@ namespace WebColegio.Controllers
             return fila != null ? (decimal)fila.CostoMensualidad : 0m;
         }
         public async Task<decimal> ObtenerMatriculaDecimal(
-    int? idRecinto, int? idModalidad, int idPeriodo)
+            int? idRecinto, int? idModalidad, int idPeriodo)
         {
-            return await _Iservices.GetCostosMatriculaAsync()
-                .ContinueWith(t => t.Result
-                    .Where(x => x.IdRecinto == idRecinto &&
-                                 x.IdModalidad == idModalidad &&
-                                x.IdPeriodo == idPeriodo &&
-                                x.Activo)
-                    .Select(x => x.CostoMatricula)
-                    .FirstOrDefault());
+            var list = await _Iservices.GetCostosMatriculaAsync();
+            var fila = ResolverFilaCostoMatricula(list, idRecinto, idPeriodo, idModalidad);
+            return fila != null ? (decimal)fila.CostoMatricula : 0m;
         }
 
         /// <summary>
@@ -1327,18 +1400,12 @@ namespace WebColegio.Controllers
         [Authorize]
         public IActionResult ObtenerMatricula(int? idRecinto, int? idModalidad, int idPeriodo)
         {
-            var matricula= _Iservices.GetCostosMatriculaAsync().Result
-                .Where(x => x.IdRecinto == idRecinto &&
-                            x.IdModalidad == idModalidad &&
-                            //x.IdModalidad == idModalidad &&
-                            x.IdPeriodo == idPeriodo &&
-                            x.Activo == true)
-                .Select(x => new {
-                    costo = x.CostoMatricula
-                })
-                .FirstOrDefault();
+            var list = _Iservices.GetCostosMatriculaAsync().Result;
+            var fila = ResolverFilaCostoMatricula(list, idRecinto, idPeriodo, idModalidad);
+            if (fila == null)
+                return Json(new { costo = 0, sinConfiguracion = true });
 
-            return Json(matricula);
+            return Json(new { costo = fila.CostoMatricula, sinConfiguracion = false });
         }
 
         [HttpGet]
