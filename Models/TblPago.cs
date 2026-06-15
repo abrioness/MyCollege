@@ -20,6 +20,9 @@
         public int IdPeriodo { get; set; }
         public int IdGrado { get; set; }
         public int? IdModalidad { get; set; }
+
+        public bool? Continuidad { get; set; }
+
         public bool Activo { get; set; }
         public int UsuarioRegistro { get; set; }
         public DateTime FechaRegistro { get; set; }

@@ -46,9 +46,11 @@ namespace WebColegio.Models.ViewModel
         public const string AS = "AS";
         public const string AF = "AF";
         public const string AI = "AI";
+        public const string AP = "AP";
 
         public static readonly List<(string Codigo, string Descripcion, string Rango)> Opciones = new()
         {
+            (AP,"Aprendizaje en Proceso","AP"),
             (AA, "Aprendizaje alcanzado", "100-90"),
             (AS, "Aprendizaje satisfactorio", "89-76"),
             (AF, "Aprendizaje fundamental", "75-60"),
@@ -63,6 +65,7 @@ namespace WebColegio.Models.ViewModel
             if (v >= 90) return AA;
             if (v >= 76) return AS;
             if (v >= 60) return AF;
+            
             return AI;
         }
 

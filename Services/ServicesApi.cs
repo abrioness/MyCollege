@@ -18,16 +18,16 @@ namespace WebColegio.Services
 
         //private static string url= "http://ApiColegio.somee.com/ApiColegio/";
         private readonly string url;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public ServicesApi(IConfiguration config)
+        public ServicesApi(IConfiguration config, IHttpClientFactory httpClientFactory)
         {
-            // Obtener la URL base de la configuración
             var baseUrl = config["ApiSettings:BaseUrl"];
-
-            // Si está vacía o null, usar URL relativa (mismo dominio)
-            // Si tiene valor, usar esa URL base
             url = string.IsNullOrWhiteSpace(baseUrl) ? "" : baseUrl.TrimEnd('/') + "/";
+            _httpClientFactory = httpClientFactory;
         }
+
+        private HttpClient CreateApiClient() => _httpClientFactory.CreateClient("ColegioApi");
         //Metodo para Listar usuarios
         #region Metodos Get
 
@@ -37,7 +37,7 @@ namespace WebColegio.Services
             //var handler = new HttpClientHandler();
             //handler.ServerCertificateCustomValidationCallback =
             //    (request, cert, chain, errors) => true;
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                
                 var response = await httpclient.GetAsync(url + "api/Alumnos");
@@ -61,7 +61,7 @@ namespace WebColegio.Services
             //var handler = new HttpClientHandler();
             //handler.ServerCertificateCustomValidationCallback =
             //    (request, cert, chain, errors) => true;
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/Usuarios");
@@ -81,7 +81,7 @@ namespace WebColegio.Services
         public async Task<List<Sexos>> GetSexosAsync()
         {
             List<Sexos> Sexoslist = new List<Sexos>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatSexo");
@@ -101,7 +101,7 @@ namespace WebColegio.Services
         public async Task<List<Recintos>> GetRecintosAsync()
         {
             List<Recintos> Recintoslist = new List<Recintos>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatRecintos");
@@ -121,7 +121,7 @@ namespace WebColegio.Services
         public async Task<List<Modalidades>> GetModalidadesAsync()
         {
             List<Modalidades> Modalidadeslist = new List<Modalidades>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatModalidad");
@@ -141,7 +141,7 @@ namespace WebColegio.Services
         public async Task<List<Grupos>> GetGruposAsync()
         {
             List<Grupos> Gruposlist = new List<Grupos>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatGrupos");
@@ -162,7 +162,7 @@ namespace WebColegio.Services
         public async Task<List<Turnos>> GetTurnosAsync()
         {
             List<Turnos> Turnoslist = new List<Turnos>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatTurnos");
@@ -182,7 +182,7 @@ namespace WebColegio.Services
         public async Task<List<Grados>> GetGradosAsync()
         {
             List<Grados> Gradoslist = new List<Grados>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/Grados");
@@ -202,7 +202,7 @@ namespace WebColegio.Services
         public async Task<List<TipoEvaluacion>> GetTipEvaluacionAsync()
         {
             List<TipoEvaluacion> tipoEvaluacion = new List<TipoEvaluacion>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatTipoEvaluacion");
@@ -223,7 +223,7 @@ namespace WebColegio.Services
         public async   Task<List<PeriodoEvaluacion>> GetPeriodoEvaluacionAsync()
         {
             List<PeriodoEvaluacion> periodoEvaluacion = new List<PeriodoEvaluacion>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatPeridoEvaluacion");
@@ -244,7 +244,7 @@ namespace WebColegio.Services
         public async Task<List<Asignaturas>> GetAsignaturaAsync()
         {
             List<Asignaturas> asignatura = new List<Asignaturas>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/CatAsignaturas");
@@ -264,7 +264,7 @@ namespace WebColegio.Services
         public async Task<List<TblNotas>> GetNotasAsync()
         {
             var notas = new List<TblNotas>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 if (string.IsNullOrEmpty(url))
                     return notas;
@@ -287,7 +287,7 @@ namespace WebColegio.Services
         public async Task<List<FacturaColegiatura>> GetFacturacionAsync()
         {
             List<FacturaColegiatura> facturas = new List<FacturaColegiatura>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/FacturaColegiatura");
@@ -307,7 +307,7 @@ namespace WebColegio.Services
         public async Task<List<TblEstadoPago>> GetEstadoPagoAsync()
         {
             List<TblEstadoPago> estadoPago = new List<TblEstadoPago>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/EstadoPagos");
 
@@ -325,7 +325,7 @@ namespace WebColegio.Services
         public async Task<List<TipoColegiatura>> GetTipoColegiatuuraAsync()
         {
             List<TipoColegiatura> tipoColegiatura = new List<TipoColegiatura>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/CatTipoColegiaturas");
 
@@ -343,7 +343,7 @@ namespace WebColegio.Services
         public async Task<List<TblPago>> GetPagosAsync()
         {
             List<TblPago> pagos = new List<TblPago>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response =await httpclient.GetAsync(url + "api/Pagos");
                 if (response.IsSuccessStatusCode)
@@ -358,7 +358,7 @@ namespace WebColegio.Services
         public async Task<List<TblPagoCaja>> GetPagoCajaAsync()
         {
             List<TblPagoCaja> pagosCaja = new List<TblPagoCaja>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TblPagoCajas");
                 if (response.IsSuccessStatusCode)
@@ -373,7 +373,7 @@ namespace WebColegio.Services
         public async Task<List<TblEgreso>> GetEgresoAsync()
         {
             List<TblEgreso> egreso = new List<TblEgreso>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TblEgresos");
                 if (response.IsSuccessStatusCode)
@@ -389,7 +389,7 @@ namespace WebColegio.Services
         public async Task<List<TblArqueoDiario>> GetArqueoDiarioAsync()
         {
             List<TblArqueoDiario> arqueoDiario = new List<TblArqueoDiario>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TblArqueoDiarios");
                 if (response.IsSuccessStatusCode)
@@ -405,7 +405,7 @@ namespace WebColegio.Services
         public async Task<List<TblReciboCaja>> GetRecibosCajaAsync()
         {
             List<TblReciboCaja> reciboCajas = new List<TblReciboCaja>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/RecibosCajas");
                 if (response.IsSuccessStatusCode)
@@ -421,7 +421,7 @@ namespace WebColegio.Services
         public async Task<List<Productos>> GetProductosAsync()
         {
             List<Productos> productos = new List<Productos>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TblProductos");
                 if (response.IsSuccessStatusCode)
@@ -437,7 +437,7 @@ namespace WebColegio.Services
 
         public async Task<Productos?> GetProductoByIdAsync(int id)
         {
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + $"api/TblProductos/{id}");
                 if (response.IsSuccessStatusCode)
@@ -460,7 +460,7 @@ namespace WebColegio.Services
         public async Task<List<CatDiscapacidad>> GetDiscapacidadAsync()
         {
             List<CatDiscapacidad> discapacidad = new List<CatDiscapacidad>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/CatDiscapacidad");
                 if (response.IsSuccessStatusCode)
@@ -476,7 +476,7 @@ namespace WebColegio.Services
         public async Task<List<CatMovInventario>> GetMovInventarioAsync()
         {
             List<CatMovInventario> movInventario = new List<CatMovInventario>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/CatMovimientoInventario");
                 if (response.IsSuccessStatusCode)
@@ -492,7 +492,7 @@ namespace WebColegio.Services
     public async Task<List<MovimientoInventario>> GetMovimientoInventarioAsync()
         {
             List<MovimientoInventario> movimientoInventario = new List<MovimientoInventario>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/MovimientoInventario");
                 if (response.IsSuccessStatusCode)
@@ -508,7 +508,7 @@ namespace WebColegio.Services
         public async Task<List<CategoriaProducto>> GetCategoriaProductoAsync()
         {
             List<CategoriaProducto> categoriaProducto = new List<CategoriaProducto>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/CategoriaProducto");
                 if (response.IsSuccessStatusCode)
@@ -525,7 +525,7 @@ namespace WebColegio.Services
         public async Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync()
         {
             List<CatTipoMovimiento> tipoMovimientos = new List<CatTipoMovimiento>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TipoMovimientos");
                 if (response.IsSuccessStatusCode)
@@ -541,7 +541,7 @@ namespace WebColegio.Services
         public async Task<List<CatTipoRecibo>> GetTipoReciboAsync()
         {
             List<CatTipoRecibo> tipoRecibo = new List<CatTipoRecibo>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TipoRecibos");
                 if (response.IsSuccessStatusCode)
@@ -557,7 +557,7 @@ namespace WebColegio.Services
         public async Task<List<CatMetodoPago>> GetMetodoPagoAsync()
         {
             List<CatMetodoPago> metodoPago = new List<CatMetodoPago>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TblMetodoPago");
                 if (response.IsSuccessStatusCode)
@@ -573,7 +573,7 @@ namespace WebColegio.Services
         public async Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync()
         {
             List<TblCostoMensualidad> costoMensualidad = new List<TblCostoMensualidad>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/TblCostoMensualidad");
                 if (response.IsSuccessStatusCode)
@@ -592,7 +592,7 @@ namespace WebColegio.Services
             List<TblCostoMatricula> costoMatricula = new List<TblCostoMatricula>();
             try
             {
-                using (var httpclient = new HttpClient())
+                using (var httpclient = CreateApiClient())
                 {
                     var response = await httpclient.GetAsync(url + "api/TblCostoMatriculas");
                     if (response.IsSuccessStatusCode)
@@ -643,7 +643,7 @@ namespace WebColegio.Services
         public async Task<List<TblCatMeses>> GetMesesAsync()
         {
             List<TblCatMeses> meses = new List<TblCatMeses>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/CatMeses");
                 if (response.IsSuccessStatusCode)
@@ -660,7 +660,7 @@ namespace WebColegio.Services
         public async Task<List<CatPeriodo>> GetPeriodoAsync()
         {
             List<CatPeriodo> periodo = new List<CatPeriodo>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
                 var response = await httpclient.GetAsync(url + "api/CatPeriodo");
                 if (response.IsSuccessStatusCode)
@@ -676,7 +676,7 @@ namespace WebColegio.Services
         //public  async Task<List<TblInventario>> GetInventarioAsync()
         //{
         //    List<TblInventario> inventario = new List<TblInventario>();
-        //    using (var httpclient = new HttpClient())
+        //    using (var httpclient = CreateApiClient())
         //    {
         //        var response = await httpclient.GetAsync(url + "api/Inventario");
         //        if (response.IsSuccessStatusCode)
@@ -693,7 +693,7 @@ namespace WebColegio.Services
         public async Task<TblRol> GetRol(int idrol)
         {
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 var rol = new TblRol();
 
@@ -712,7 +712,7 @@ namespace WebColegio.Services
         public async Task<TblAlumno> V_alumnoNotas(string cedulaTutor)
         {
             var ValumnoNotas = new TblAlumno();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/Alumnos/alumnoNota?cedulaTutor="+cedulaTutor);
@@ -731,7 +731,7 @@ namespace WebColegio.Services
         public async Task<TblUsuarios> GetLogin(string usuario)
         {
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 var login = new TblUsuarios();
                 var response = await httpClient.GetAsync(url + $"api/Usuarios/obtenerUsuario?login={usuario}");
@@ -749,7 +749,7 @@ namespace WebColegio.Services
         public async Task<List<TblRol>> GetRolAsync()
         {
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 var rol = new List<TblRol>();
                 var response = await httpClient.GetAsync(url + $"api/TblRol/ObtenerRol");
@@ -768,7 +768,7 @@ namespace WebColegio.Services
         public async Task<bool> validarUsuarios(string login, string cedula)//, int idtematica)
         {
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}&cedula={cedula}");
                 if (response.IsSuccessStatusCode)
@@ -791,7 +791,7 @@ namespace WebColegio.Services
 
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     string jsonAlumnos = JsonConvert.SerializeObject(alumnos);
                     var content = new StringContent(jsonAlumnos, Encoding.UTF8, "application/json");
@@ -857,7 +857,7 @@ namespace WebColegio.Services
         {
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     if (string.IsNullOrEmpty(url))
                         return (false, "Falta configurar ApiSettings:BaseUrl en appsettings (URL de la API).");
@@ -893,7 +893,7 @@ namespace WebColegio.Services
 
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     // Serializar el objeto alumno
                     string jsonPagos = JsonConvert.SerializeObject(pagos);
@@ -934,7 +934,7 @@ namespace WebColegio.Services
 
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     // Serializar el objeto alumno
                     string jsonPagosCaja = JsonConvert.SerializeObject(pagosCaja);
@@ -976,7 +976,7 @@ namespace WebColegio.Services
 
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     // Serializar el objeto alumno
                     string jsonEgreso = JsonConvert.SerializeObject(egresos);
@@ -1018,7 +1018,7 @@ namespace WebColegio.Services
 
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     // Serializar el objeto alumno
                     string jsonNotas = JsonConvert.SerializeObject(factura);
@@ -1067,7 +1067,7 @@ namespace WebColegio.Services
             recibo.FechaRegistro = recibo.FechaRegistro;
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     // Serializar el objeto alumno
                     string jsonNotas = JsonConvert.SerializeObject(recibo);
@@ -1107,7 +1107,7 @@ namespace WebColegio.Services
 
         //    try
         //    {
-        //        using (var httpClient = new HttpClient())
+        //        using (var httpClient = CreateApiClient())
         //        {
         //            // Serializar el objeto alumno
         //            string jsonInventario = JsonConvert.SerializeObject(inventario);
@@ -1145,7 +1145,7 @@ namespace WebColegio.Services
 
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     // Serializar el objeto alumno
                     string jsonProduct = JsonConvert.SerializeObject(product);
@@ -1212,7 +1212,7 @@ namespace WebColegio.Services
 
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     var json = JsonConvert.SerializeObject(existente);
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -1240,7 +1240,7 @@ namespace WebColegio.Services
         {
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     var json = JsonConvert.SerializeObject(movimiento);
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -1265,7 +1265,7 @@ namespace WebColegio.Services
                 if (desde.HasValue) query.Add($"desde={desde.Value:yyyy-MM-dd}");
                 if (hasta.HasValue) query.Add($"hasta={hasta.Value:yyyy-MM-dd}");
                 var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
-                using (var httpclient = new HttpClient())
+                using (var httpclient = CreateApiClient())
                 {
                     var response = await httpclient.GetAsync(url + "api/Inventario" + qs);
                     if (response.IsSuccessStatusCode)
@@ -1287,7 +1287,7 @@ namespace WebColegio.Services
         {
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     string jsonArqueo = JsonConvert.SerializeObject(arqueo);
                     var content = new StringContent(jsonArqueo, Encoding.UTF8, "application/json");
@@ -1318,7 +1318,7 @@ namespace WebColegio.Services
             {
                 return false;
             }
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 var content = JsonContent.Create(usuario);
                 var guardarUsuario = await httpClient.PostAsync(url + "api/Usuarios/Guardar", content);
@@ -1336,7 +1336,7 @@ namespace WebColegio.Services
         public async Task<TblAlumno> GetAlumnoIdAsync(int id)
         {
             var alumno = new TblAlumno();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/Alumnos/"+id);
@@ -1356,7 +1356,7 @@ namespace WebColegio.Services
         public async Task<TblNotas> GetNotasById(int id)
         {
             var notas = new TblNotas();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/Notas/" + id);
@@ -1376,7 +1376,7 @@ namespace WebColegio.Services
         public async Task<List<TblNotas>> GetNotasPorUsuario(string tutor)
         {
             List<TblNotas> notasTutor = new List<TblNotas>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/Notas/GetNotaTutor?cedula={tutor}"); //&idalumno={idalumno}");
@@ -1398,7 +1398,7 @@ namespace WebColegio.Services
         public async Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno)
         {
             List<TblNotas> notas = new List<TblNotas>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/Notas/GetNotasAlumno/" + idAlumno);
@@ -1421,7 +1421,7 @@ namespace WebColegio.Services
         {
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url+$"api/arqueo/"+id);
@@ -1443,7 +1443,7 @@ namespace WebColegio.Services
         {
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url+$"api/Pagos/"+id);
@@ -1466,7 +1466,7 @@ namespace WebColegio.Services
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
            
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/TblPagoCajas/" + id);
@@ -1489,7 +1489,7 @@ namespace WebColegio.Services
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
 
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/TblEgresos/" + id);
@@ -1512,7 +1512,7 @@ namespace WebColegio.Services
             
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/RecibosCajas/"+id);
@@ -1535,7 +1535,7 @@ namespace WebColegio.Services
 
             // Suponiendo que tu API tiene un endpoint como:
             // GET https://tuservidor/api/arqueo/{id}
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/Usuarios/" + idUser);
@@ -1561,7 +1561,7 @@ namespace WebColegio.Services
         public async Task<List<TblAlumno>> searchAlumnosAsync()
         {
             List<TblAlumno> resultado = new List<TblAlumno>();
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + "api/Alumnos/buscar");
@@ -1617,7 +1617,7 @@ namespace WebColegio.Services
             existingNota.UsuarioActualiza = nota.UsuarioActualiza is int u && u > 0 ? u : 1;
             existingNota.FechaActualiza = DateTime.Now;
             
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 // Convertimos el objeto a JSON
                 var json = JsonConvert.SerializeObject(existingNota);
@@ -1701,7 +1701,7 @@ namespace WebColegio.Services
             existingAlumno.UsuarioRegistro = usuarioRegistro;
             existingAlumno.FechaRegistro = fechaRegistro;
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 // Convertimos el objeto a JSON
                 var json = JsonConvert.SerializeObject(existingAlumno);
@@ -1749,7 +1749,7 @@ namespace WebColegio.Services
             usuariosUpdate.UsuarioActualiza = usuario.UsuarioActualiza;
             usuariosUpdate.FechaActualiza = usuario.FechaActualiza ?? DateTime.Now;
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 var json = JsonConvert.SerializeObject(usuariosUpdate);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -1802,7 +1802,7 @@ namespace WebColegio.Services
                 // existingPago.FechaRegistro se mantiene
                 // existingPago.Serie se mantiene
 
-                using (var httpClient = new HttpClient())
+                using (var httpClient = CreateApiClient())
                 {
                     // Convertimos el objeto a JSON
                     var json = JsonConvert.SerializeObject(existingPago);
@@ -1839,7 +1839,7 @@ namespace WebColegio.Services
         {
             var existe = false;
 
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/Alumnos/existeAlumno?codigo={codigo}");
@@ -1864,7 +1864,7 @@ namespace WebColegio.Services
 
 
 
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/Notas/ValidarDupNotas?idAsignatura={idAsignatura}&idPeridodEval={idPeriodoEva}&idAlumno={idAlumno}");
@@ -1886,7 +1886,7 @@ namespace WebColegio.Services
         public async Task<bool> ValidarFacturas(int idTipoColegiatura, int idEstadoPago, int idAlumno,string mesFacturado,string anyoFacturado)
         {
             var existe = false;
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/FacturaColegiatura/ValidarDupFacturas?idTipoColegiatura={idTipoColegiatura}&idEstadoPago={idEstadoPago}&idAlumno={idAlumno}&mesFacturado={mesFacturado}&anyoFacturado={anyoFacturado}");
@@ -1909,7 +1909,7 @@ namespace WebColegio.Services
         public async Task<bool> validarUsuarios(string login)//, int idtematica)
         {
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = CreateApiClient())
             {
                 var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
                 if (response.IsSuccessStatusCode)
@@ -1923,7 +1923,7 @@ namespace WebColegio.Services
         {
             var existe = false;
 
-            using (var httpclient = new HttpClient())
+            using (var httpclient = CreateApiClient())
             {
 
                 var response = await httpclient.GetAsync(url + $"api/TblProductos/existeProducto?codigo={codigo}&categoriaProd={categoria}");

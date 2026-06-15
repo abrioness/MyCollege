@@ -15,10 +15,17 @@ namespace WebColegio.Controllers
     {
         // GET: LoginController
         private readonly IServicesApi _IService;
+        private readonly IJwtTokenService _jwtTokenService;
+        private readonly IApiTokenAccessor _apiTokenAccessor;
 
-        public LoginController(IServicesApi iservices)
+        public LoginController(
+            IServicesApi iservices,
+            IJwtTokenService jwtTokenService,
+            IApiTokenAccessor apiTokenAccessor)
         {
             _IService = iservices;
+            _jwtTokenService = jwtTokenService;
+            _apiTokenAccessor = apiTokenAccessor;
         }
         // GET: LoginController
         //private bool ValidateUser(string cedula, string password)
@@ -89,7 +96,20 @@ namespace WebColegio.Controllers
                 {
                     IsPersistent = true // mantiene la sesión
                 });
-           
+
+            try
+            {
+                var apiToken = _jwtTokenService.CreateToken(usuario, roles.NombreRol);
+                _apiTokenAccessor.SetToken(apiToken);
+            }
+            catch (InvalidOperationException ex)
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                TempData["Mensaje"] = ex.Message;
+                TempData["Tipo"] = "warning";
+                return View("Login");
+            }
+
             // Guardar datos en sesión
             HttpContext.Session.SetString("UsuarioCedula", NombreUsuario);
             HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario);
@@ -253,7 +273,8 @@ namespace WebColegio.Controllers
                 Response.Cookies.Delete(cookie);
             }
 
-            // 3. Limpiar la sesión
+            // 3. Limpiar la sesión y el JWT de la API
+            _apiTokenAccessor.ClearToken();
             HttpContext.Session.Clear();
 
             // 4. Redirigir a la página de login

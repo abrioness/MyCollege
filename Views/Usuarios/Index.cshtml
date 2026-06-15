@@ -18,7 +18,7 @@
                     <a id="btnNuevo" class="btn btn-primary float-end" href="@Url.Action("Create", "Contenidos")"> <i class="bi bi-plus-circle"></i>Nuevo </a>
                 </div> *@
         <div class="card-body">
-            <table class="table table-bordered table-striped display " style="width:100%">
+            <table id="tablaUsuarios" class="table table-bordered table-striped display " style="width:100%">
                 <thead>
                     <tr>
                         @* <th>
@@ -115,6 +115,33 @@
         </div>
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script>
+        $(document).ready(function () {
+        var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
+        var botones = esCajero ? [] : [
+            {
+            extend: 'excelHtml5',
+            text: 'Exportar a Excel',
+            className: 'btn btn-success'
+            }
+        ];
+        $('#tablaUsuarios').DataTable({
+        responsive: false,
+        dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
+        buttons: botones,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+            }
+        });
+    });
+</script>
 
 <script src="~/seewtalert/sweetalert.all.min.js"></script>
 <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />

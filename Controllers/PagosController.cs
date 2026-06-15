@@ -816,6 +816,7 @@ namespace WebColegio.Controllers
                                     Monto = montoPorMes,
                                     Descripcion=pagos.Pago.Descripcion,
                                     UsuarioRegistro=pagos.Pago.UsuarioRegistro,
+                                    Continuidad=pagos.Pago.Continuidad,
                                     Activo=pagos.Pago.Activo,
                                     FechaRegistro=pagos.Pago.FechaRegistro,
                                     Serie=pagos.Pago.Serie
@@ -981,6 +982,7 @@ namespace WebColegio.Controllers
                                     IdPeriodo = periodoMatricula,
                                     IdRecinto = pagos.Pago.IdRecinto,
                                     FechaEmision = pagos.Pago.FechaEmision,
+                                    Continuidad= pagos.Pago.Continuidad,
                                     Mora = 0,
                                     Monto = restarMensualidad,
                                     Descripcion = pagos.Pago.Descripcion,
@@ -1044,6 +1046,7 @@ namespace WebColegio.Controllers
                                     IdPeriodo = periodoMatricula,
                                     IdRecinto = pagos.Pago.IdRecinto,
                                     FechaEmision = pagos.Pago.FechaEmision,
+                                    Continuidad=pagos.Pago.Continuidad,
                                     Mora = 0,
                                     Monto = restarMensualidad,
                                     Descripcion = pagos.Pago.Descripcion,
