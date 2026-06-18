@@ -119,6 +119,16 @@
                             <span id="mensajemontomatricual" class="text-info fw-bold" style="display: none;"></span>
                         </div>
 
+                        <div class="form-check mt-2" id="continuidadMatriculaPanel" style="display: none;">
+                            <input asp-for="Pago.Continuidad" class="form-check-input" id="chkContinuidad" />
+                            <label asp-for="Pago.Continuidad" class="form-check-label">
+                                Es continuidad (reingreso a mitad de año)
+                            </label>
+                            <small class="text-muted d-block">
+                                Incluye matrícula + mensualidad de enero (igual que matrícula normal). La diferencia es que podrá pagar en mensualidad los meses anteriores al mes de matrícula.
+                            </small>
+                        </div>
+
                         <div class="form-group" id="moraDiv">
                             <label asp-for="Pago.Mora" class="control-label">Mora</label>
                             <input asp-for="Pago.Mora" id="totalMora" class="form-control" />
@@ -146,12 +156,6 @@
                         <div class="form-group">
                             <label asp-for="Pago.Descripcion" class="control-label">Observaciones</label>
                             <textarea name="Pago.Descripcion" class="form-control"></textarea>
-                        </div>
-                        <div class="form-check">
-                            <input asp-for="Pago.Continuidad" class="form-check-input" />
-                            <label asp-for="Pago.Continuidad" class="form-check-label">
-                                Es continuidad
-                            </label>
                         </div>
                     </div>
                 </div>
@@ -252,6 +256,8 @@
             const $moraDiv=$('#moraDiv');
             const $modalidad = $('#modalidad');
             const $anyo = $('#anyo');
+            const $continuidadPanel = $('#continuidadMatriculaPanel');
+            const $chkContinuidad = $('#chkContinuidad');
 
             // Constantes para tipos de movimiento
             const TIPO_MENSUALIDAD = 1;
@@ -276,6 +282,18 @@
                 }
                 const texto = sinDiacriticos($tipoMovimiento.find('option:selected').text()).toLowerCase();
                 return texto.indexOf('matric') >= 0;
+            }
+
+            function esContinuidadMarcada() {
+                return $chkContinuidad.is(':checked');
+            }
+
+            function actualizarPanelContinuidad() {
+                const esMat = esConceptoMatricula();
+                $continuidadPanel.toggle(esMat);
+                if (!esMat) {
+                    $chkContinuidad.prop('checked', false);
+                }
             }
 
             function actualizarEtiquetaFechaEmision() {
@@ -347,10 +365,13 @@
                             }
                             $.getJSON(urlsPagos.obtenerMensualidad, paramsMens, function(dataMen) {
                                 const costoMensualidad = parseFloat(dataMen && dataMen.costo) || 0;
+                                window._ultimaMensualidadMatricula = costoMensualidad;
                                 const parteMatricula = Math.max(0, matNeto - costoMensualidad);
                                 $monto.val(matNeto.toFixed(2));
-                                // Texto: el total del catálogo (paquete) es matNeto; la parte "solo matrícula" es total − enero.
                                 let txt = 'Total matrícula (catálogo) C$ ' + matNeto.toFixed(2) + ': Matrícula neta C$ ' + parteMatricula.toFixed(2) + ' (total − enero) + Mensualidad enero C$ ' + costoMensualidad.toFixed(2) + '.';
+                                if (esContinuidadMarcada()) {
+                                    txt += ' Continuidad: podrá pagar meses anteriores al mes de matrícula en mensualidad.';
+                                }
                                 if (dataMen && dataMen.sinConfiguracion && costoMensualidad === 0) {
                                     txt = 'No hay mensualidad en catálogo para este recinto, nivel, ciclo y modalidad (p. ej. modalidad ' + (idMod || '—') + '): no se puede restar enero al total. Revise Tbl costo mensualidad. Monto a pagar C$ ' + matNeto.toFixed(2) + '.';
                                 }
@@ -615,7 +636,14 @@
                 }
 
                 actualizarEtiquetaFechaEmision();
+                actualizarPanelContinuidad();
             }
+
+            $chkContinuidad.on('change', function() {
+                if (esConceptoMatricula()) {
+                    cargarMatricula();
+                }
+            });
 
             $tipoMovimiento.on('change', onTipoMovimientoChange);
             onTipoMovimientoChange();

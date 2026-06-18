@@ -7,6 +7,9 @@ namespace WebColegio.Services
 {
     public interface IServicesApi
     {
+        /// <summary>Último error HTTP al llamar la API (p. ej. 401 sin JWT válido).</summary>
+        string? LastApiError { get; }
+
         #region Metodos Get
         Task<List<TblAlumno>> GetAlumnosAsync();
         Task<List<Recintos>> GetRecintosAsync();
@@ -55,7 +58,7 @@ namespace WebColegio.Services
         Task<(bool Exito, string? DetalleError, int? IdAlumnoCreado)> PostAlumnosAsync(TblAlumno alumnos);
         /// <summary>Guarda nota en la API. Detalle contiene mensaje de error si Exito es false.</summary>
         Task<(bool Exito, string? Detalle)> PostNotasAsync(TblNotas notas);
-        Task<bool> PostPagosAsync(TblPago pagos);
+        Task<(bool Exito, int IdPagoCreado, string? DetalleError)> PostPagosAsync(TblPago pagos);
         Task<bool> PostFacturacionAsync(FacturaColegiatura factura);
         
         Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja);
@@ -87,7 +90,7 @@ namespace WebColegio.Services
         Task<TblPago> GetPagoById(int id);
         Task<TblPagoCaja> GetPagoCajaById(int id);
         Task<List<TblNotas>> GetNotasPorUsuario(string usuario);
-        Task<TblUsuarios> GetLogin(string usuario);
+        Task<TblUsuarios?> GetLogin(string usuario);
         Task<TblRol> GetRol(int idrol);
         Task<TblEgreso> GetEgresoCajaById(int id);
         Task<TblUsuarios> GetUsuarioIdAsync(int idUser);
@@ -99,7 +102,7 @@ namespace WebColegio.Services
         Task<bool>ValidarNotas(int idAsignatura,int idPeriodoEva,int idAlumno);
         Task<bool> ValidarFacturas(int idTipoColegiatura, int idEstadoPago, int idAlumno, string mesFacturado, string anyoFacturado);
         Task<bool> ValidarProductos(string codigo, int categoria);
-        Task<bool> ValidarAlumnoDuplicado(string codigo);
+        Task<bool> ValidarAlumnoDuplicado(string codigoMINED, string? codigoAlumno = null, int? excluirIdAlumno = null);
         Task<bool> validarUsuarios(string cedula);
         //Task<int> ValidarMesesPendientes(List<TblPago> pagos, int idmes);
         #endregion

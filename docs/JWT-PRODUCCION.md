@@ -20,9 +20,9 @@ No dejar `SecretKey` en archivos publicados. En IIS / hosting:
 
 ```
 Jwt__SecretKey=<clave-secreta-minimo-32-caracteres-aleatorios>
-Jwt__Issuer=WebColegio
-Jwt__Audience=ColSanFranciscoApi
-ApiSettings__BaseUrl=https://tu-dominio/ColSanFrancisco_Api/
+Jwt__Issuer=ColegioWeb
+Jwt__Audience=ColegioApi
+ApiSettings__BaseUrl=https://colegioparroquialsanfranciscojavier.com/ColSanFranciscoTest_Api/
 ASPNETCORE_ENVIRONMENT=Production
 ```
 
@@ -57,8 +57,8 @@ Copiar los archivos de referencia en `docs/ApiJwtReferencia/` al proyecto API o 
 
 ```json
 "Jwt": {
-  "Issuer": "WebColegio",
-  "Audience": "ColSanFranciscoApi",
+  "Issuer": "ColegioWeb",
+  "Audience": "ColegioApi",
   "SecretKey": "",
   "ExpirationMinutes": 480
 }

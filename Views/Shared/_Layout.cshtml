@@ -475,7 +475,6 @@
             baseUrl: '@(Configuration["ApiSettings:BaseUrl"] ?? "")'
         };
     </script>
-    @await RenderSectionAsync("Scripts", required: false)
 
 
 
@@ -499,6 +498,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
 
     <!-- Script para manejar el comportamiento de los collapse -->
     <script>

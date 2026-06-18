@@ -1,0 +1,102 @@
+// Reemplazar JwtTokenService.cs en Api_Colegio/Services/
+// Añade el claim de nombre de rol para [Authorize(Roles = "Admin")] etc.
+
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Api_Colegio.Configuration;
+using Api_Colegio.Models;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Api_Colegio.Services;
+
+public interface IJwtTokenService
+{
+    string CreateToken(TblUsuario usuario, string? nombreRolDesdeBd = null);
+}
+
+public class JwtTokenService : IJwtTokenService
+{
+    private readonly JwtSettings _settings;
+
+    public JwtTokenService(IOptions<JwtSettings> settings)
+    {
+        _settings = settings.Value;
+    }
+
+    public string CreateToken(TblUsuario usuario, string? nombreRolDesdeBd = null)
+    {
+        var rolNombre = ResolverNombreRol(nombreRolDesdeBd, usuario.IdRol);
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
+            new(ClaimTypes.Name, usuario.NombreUsuario ?? string.Empty),
+            new(ClaimTypes.Role, usuario.IdRol.ToString()),
+            new(ClaimTypes.Role, rolNombre),
+            new("nombre_rol", rolNombre),
+            new("nombre_completo", usuario.NombreCompleto ?? string.Empty),
+        };
+
+        if (usuario.IdRecinto.HasValue)
+            claims.Add(new Claim("id_recinto", usuario.IdRecinto.Value.ToString()));
+
+        if (!string.IsNullOrWhiteSpace(usuario.Cedula))
+            claims.Add(new Claim("cedula", usuario.Cedula.Trim()));
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _settings.Issuer,
+            audience: _settings.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>Misma lógica que WebColegio.Helpers.AuthRoleHelper (mantener sincronizado).</summary>
+    private static string ResolverNombreRol(string? nombreRolApi, int idRol)
+    {
+        var normalizado = NormalizarNombreRol(nombreRolApi);
+        if (!string.IsNullOrWhiteSpace(normalizado))
+            return normalizado;
+
+        return idRol switch
+        {
+            1 => "Admin",
+            2 => "Cajero",
+            3 => "Docente",
+            4 => "Tutor",
+            5 => "Secretaria",
+            6 => "Admin",
+            _ => $"Rol_{idRol}"
+        };
+    }
+
+    private static string? NormalizarNombreRol(string? nombreRol)
+    {
+        if (string.IsNullOrWhiteSpace(nombreRol))
+            return null;
+
+        return nombreRol.Trim().ToLowerInvariant() switch
+        {
+            "admin" or "administrador" or "administrator" => "Admin",
+            "cajero" or "cajera" => "Cajero",
+            "docente" or "profesor" or "profesora" => "Docente",
+            "secretaria" or "secretaría" or "secretario" => "Secretaria",
+            "director" or "directora" => "Director",
+            "usersystem" or "user system" or "sistema" => "UserSystem",
+            "tutor" or "tutora" => "Tutor",
+            "inventario" => "Secretaria",
+            _ => nombreRol.Trim()
+        };
+    }
+}
+
+// En AuthController al hacer login, pase el nombre del rol desde BD:
+// var rol = await _context.TblRol.FindAsync(usuario.IdRol);
+// var token = _jwtTokenService.CreateToken(usuario, rol?.NombreRol);

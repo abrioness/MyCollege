@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plantilla: copiar dentro de <aspNetCore> en web.config de la Web publicada -->
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\WebColegio.dll" stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+          <!-- Debe ser EXACTAMENTE la misma que en la API -->
+          <environmentVariable name="JWT_SECRET_KEY" value="REEMPLAZAR_CLAVE_SECRETA" />
+          <!-- URL pública de la API (con barra final) -->
+          <environmentVariable name="ApiSettings__BaseUrl" value="https://colegioparroquialsanfranciscojavier.com/ColSanFranciscoTest_Api/" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>

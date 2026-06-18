@@ -1,174 +1,367 @@
 ﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+
 @* @{
+
 	ViewData["Title"] = "Index";
+
 } *@
-<script src="~/js/site.js"></script>
-@* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
+
 <div class="container mt-auto" style="padding:2px;">
+
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
+
 		<div class="card-header bg-primary text-white">
 
-			<h5 class="mb-0"><i class="bi bi-cash-coin"></i>  Reporte de Caja Mensualidades</h5>
+
+
+			<h5 class="mb-0"><i class="bi bi-cash-coin"></i>  Reporte de Caja (matrículas y mensualidades)</h5>
+
+
 
 		</div>
 
+
+
 		<div class="card-body">
+
+			@if (TempData["Mensaje"] != null)
+
+			{
+
+				var tipoAlerta = TempData["Tipo"]?.ToString() ?? "info";
+
+				<div class="alert alert-@tipoAlerta">@TempData["Mensaje"]</div>
+
+			}
+
 			<div class="table-responsive" style="font-size:12px">
+
 				<div class="col-4 text-center">
+
 					@using (Html.BeginForm("Index", "Pagos", FormMethod.Get))
+
 					{
+
 						<div class="row">
+
 							<div class="col-4">
+
 								<label class="control-label">Desde:</label>
+
 								<input type="date" name="fechainicio" id="FechaInicio" class="form-control"
-									   value="@@(Request.QueryString["fechainicio"])" />
+
+									   value="@Context.Request.Query["fechainicio"]" />
+
 							</div>
+
 							<div class="col-4">
+
 								<label class="control-label">Hasta:</label>
+
 								<input type="date" name="fechafin" id="FechaFin" class="form-control"
-									   value="@@(Request.QueryString["fechafin"])" />
+
+									   value="@Context.Request.Query["fechafin"]" />
+
 							</div>
+
 							<div class="col-4">
+
 								<br />
+
 								<button type="submit" class="form-control btn btn-success">Filtrar</button>
+
 							</div>
+
 						</div>
+
 					}
+
 				</div>
+
+
 
 				<div class="col-12 text-end">
 
+
+
 					<a asp-action="Create" class="btn btn-primary">
+
 						<i class="bi bi-plus-circle"></i> Agregar Pago
+
 					</a>
+
 				</div>
+
 				<br />
-				<br />
+
+				@if (ViewBag.FiltroFechaActivo == true && ViewBag.TotalPagosMostrados != ViewBag.TotalPagosApi)
+
+				{
+
+					<div class="alert alert-info py-2">
+
+						Filtro de fechas activo: se muestran @ViewBag.TotalPagosMostrados de @ViewBag.TotalPagosApi pagos.
+
+						<a asp-action="Index" asp-controller="Pagos" class="alert-link">Quitar filtro</a>
+
+					</div>
+
+				}
+
 				<table id="tablaPagos" class="table table-bordered table-sm">
+
 					@* class="display responsive nowrap" style="width:100%"> *@
+
 					<thead>
+
 						<tr>
+
 							<th>Número Recibo</th>
+
 							<th>Alumno</th>
+
 							<th>Concepto</th>
+
 							<th>Monto</th>
+
 							<th>Mora</th>
+
 							<th>Mes Pagado</th>						
+
 							<th>Tipo Recibo</th>
+
 							<th>Colegio</th>
+
 							<th>Fecha Emisión</th>
 
+
+
 						</tr>
+
 					</thead>
+
 					<tbody>
+
 						@foreach (var itemPago in Model.pagos)
+
 						{
+
 							<tr>
+
 								<td><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
 
+
+
 								@{
+
 									var alumno = Model.alumno.FirstOrDefault(a => a.IdAlumno == itemPago.IdAlumno);
+
 								}	
+
 								<td>
 
-									@alumno.Nombre  @alumno.Apellido
+									@(alumno != null ? $"{alumno.Nombre} {alumno.Apellido}".Trim() : $"Alumno #{itemPago.IdAlumno}")
 
 								</td>
 
 
+
+
+
 								@{
+
 									var tipoMovimiento = Model.tipoMovimiento.FirstOrDefault(a => a.IdTipoMovimiento == itemPago.IdTipoMovimiento);
+
 								}
+
 								<td>
+
+
 
 									@tipoMovimiento?.Concepto
 
+
+
 								</td>
 
+
+
 								<td>
+
+
 
 									C$ @itemPago.Monto
+
 								</td>
+
 								<td>
 
-									C$	@((itemPago.Mora== null) ? "0" : itemPago.Mora)
-								</td>
-								@if (itemPago.IdMes == null)
-								{
-									<td>  </td>
-								}
-								else
-								{
-									
-								var mesPagar = Model.meses.FirstOrDefault(a => a.IdMes == itemPago.IdMes);
 
-									
+
+									C$	@((itemPago.Mora== null) ? "0" : itemPago.Mora)
+
+								</td>
+
+								@if (itemPago.IdMes == null)
+
+								{
+
 									<td>
-										@mesPagar?.Mes
+
+										@if (itemPago.IdTipoMovimiento == 2 || itemPago.IdTipoMovimiento == 4)
+
+										{
+
+											<span>Matrícula (+ enero)@(itemPago.Continuidad ? ", continuidad" : "")</span>
+
+										}
+
 									</td>
 
 								}
 
+								else
+
+								{
+
+									
+
+								var mesPagar = Model.meses.FirstOrDefault(a => a.IdMes == itemPago.IdMes);
+
+
+
+									
+
+									<td>
+
+										@mesPagar?.Mes
+
+									</td>
+
+
+
+								}
+
+
+
+
 
 								@{
+
 									var tipoRecibo = Model.tipoRecibo.FirstOrDefault(a => a.IdTipoRecibo == itemPago.IdTipoRecibo);
+
 								}
+
 								<td>
+
+
 
 									@tipoRecibo?.TipoRecibo
 
+
+
 								</td>
 
+
+
 								@{
+
 									var recinto = Model.recintos.FirstOrDefault(a => a.IdRecinto == itemPago.IdRecinto);
+
 								}
+
 								<td>
+
+
 
 									@recinto?.Recinto
 
+
+
 								</td>
+
 							
 
+
+
 							 <td>
+
 								@itemPago.FechaRegistro.ToString("dd/MM/yyyy")
+
 						</td> 
+
 							@*<td>
+
 								<a asp-action="Details" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-warning"><i class="bi bi-journal-richtext"></i></a>
+
 							</td>*@
+
 						</tr>
+
 					}
+
 				</tbody>
 
+
+
 			</table>
+
 		</div>
+
 		</div>
+
 	</div>
+
 </div>
-@* <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script> *@
+
+@section Scripts {
+
 <script>
-		$(document).ready(function () {
+
+	$(document).ready(function () {
+
+		if (!$.fn.DataTable) return;
+
 		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
+
 		var botones = esCajero ? [] : [
+
 			{
-			extend: 'excelHtml5',
-			text: 'Exportar a Excel',
-			className: 'btn btn-success'
+
+				extend: 'excelHtml5',
+
+				text: 'Exportar a Excel',
+
+				className: 'btn btn-success'
+
 			}
+
 		];
-		$('#tablaPagos').DataTable({
-		responsive: false,
-		dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
-		buttons: botones,
-			language: {
-				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
-			}
-		});
+
+		if ($('#tablaPagos tbody tr').length) {
+
+			$('#tablaPagos').DataTable({
+
+				responsive: false,
+
+				dom: esCajero ? 'frtip' : 'Bfrtip',
+
+				buttons: botones,
+
+				language: {
+
+					url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+
+				}
+
+			});
+
+		}
+
 	});
+
 </script>
+
+}
+
+

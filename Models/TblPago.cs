@@ -1,4 +1,7 @@
-﻿namespace WebColegio.Models
+﻿using Newtonsoft.Json;
+using WebColegio.Helpers;
+
+namespace WebColegio.Models
 {
     public class TblPago
     {
@@ -6,7 +9,7 @@
         public int IdAlumno { get; set; }       
         public decimal Monto { get; set; }
         public int? NumeroRecibo { get; set; }
-        public string Serie { get; set; } = null!;
+        public string? Serie { get; set; }
         public int? Anyo { get; set; }       
         public int? IdMes { get; set; }
         public DateTime? FechaEmision { get; set; }
@@ -21,8 +24,11 @@
         public int IdGrado { get; set; }
         public int? IdModalidad { get; set; }
 
-        public bool? Continuidad { get; set; }
+        /// <summary>Matrícula de continuidad: el alumno puede pagar mensualidades de meses anteriores al de matrícula.</summary>
+        [JsonConverter(typeof(NullToFalseBoolConverter))]
+        public bool Continuidad { get; set; }
 
+        [JsonConverter(typeof(NullToFalseBoolConverter))]
         public bool Activo { get; set; }
         public int UsuarioRegistro { get; set; }
         public DateTime FechaRegistro { get; set; }

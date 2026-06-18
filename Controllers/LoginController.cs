@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using System.Text;
@@ -17,15 +17,18 @@ namespace WebColegio.Controllers
         private readonly IServicesApi _IService;
         private readonly IJwtTokenService _jwtTokenService;
         private readonly IApiTokenAccessor _apiTokenAccessor;
+        private readonly IConfiguration _configuration;
 
         public LoginController(
             IServicesApi iservices,
             IJwtTokenService jwtTokenService,
-            IApiTokenAccessor apiTokenAccessor)
+            IApiTokenAccessor apiTokenAccessor,
+            IConfiguration configuration)
         {
             _IService = iservices;
             _jwtTokenService = jwtTokenService;
             _apiTokenAccessor = apiTokenAccessor;
+            _configuration = configuration;
         }
         // GET: LoginController
         //private bool ValidateUser(string cedula, string password)
@@ -44,6 +47,32 @@ namespace WebColegio.Controllers
         {
             return View();
         }
+
+        /// <summary>Diagnóstico: abra /Login/EstadoApi en el navegador para ver si la Web alcanza la API.</summary>
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> EstadoApi()
+        {
+            var baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "(no configurada)";
+            var entorno = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "(no definido)";
+            string resultado;
+            try
+            {
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                var testUrl = baseUrl.TrimEnd('/') + "/api/Usuarios/obtenerUsuario?login=__diagnostico__";
+                var response = await client.GetAsync(testUrl);
+                var body = await response.Content.ReadAsStringAsync();
+                resultado = $"HTTP {(int)response.StatusCode} — {body.Substring(0, Math.Min(400, body.Length))}";
+            }
+            catch (Exception ex)
+            {
+                resultado = $"Error: {ex.Message}";
+            }
+
+            return Content(
+                $"Entorno: {entorno}\nApiSettings:BaseUrl: {baseUrl}\nPrueba API: {resultado}",
+                "text/plain; charset=utf-8");
+        }
         
         [HttpPost]
         [AllowAnonymous]  // Debe ser AllowAnonymous porque el usuario aún no está autenticado
@@ -53,16 +82,29 @@ namespace WebColegio.Controllers
             var usuario = await _IService.GetLogin(NombreUsuario);
             if (usuario == null)
             {
-                TempData["Mensaje"] = "Usuario o Contraseña Incorrecta!";
+                var detalleApi = _IService.LastApiError ?? string.Empty;
+                if (detalleApi.Contains("404", StringComparison.OrdinalIgnoreCase))
+                    TempData["Mensaje"] = "La URL de la API no es correcta (404). Debe ser https://colegioparroquialsanfranciscojavier.com/ColSanFranciscoTest_Api/";
+                else if (detalleApi.Contains("500", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("503", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("base_datos", StringComparison.OrdinalIgnoreCase))
+                    TempData["Mensaje"] = "La API no puede leer la base de datos. En IIS, edite el web.config de ColSanFranciscoTest_Api y configure ConnectionStrings__Conexion con la cadena SQL correcta.";
+                else if (detalleApi.Contains("401", StringComparison.OrdinalIgnoreCase))
+                    TempData["Mensaje"] = "La API rechazó la solicitud (401). Verifique JWT_SECRET_KEY igual en Web y API.";
+                else if (detalleApi.Contains("ConnectionError", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+                    TempData["Mensaje"] = "La Web no alcanza la API. Republicar WebColegio o en web.config poner ApiSettings__BaseUrl=https://colegioparroquialsanfranciscojavier.com/ColSanFranciscoTest_Api/";
+                else if (detalleApi.Contains("DeserializeError", StringComparison.OrdinalIgnoreCase))
+                    TempData["Mensaje"] = "La API respondió pero el formato del usuario no es válido. Contacte al administrador.";
+                else
+                    TempData["Mensaje"] = $"No se pudo validar el usuario con la API. {detalleApi}";
                 TempData["Tipo"] = "warning";
                 return View("Login");
             }
             var idrol = usuario.IdRol;
             var roles = await _IService.GetRol(idrol);
+            var nombreRol = AuthRoleHelper.ResolverNombreRol(roles?.NombreRol, idrol);
             
-            if(usuario.NombreUsuario==null || usuario.Password==null)
+            if (string.IsNullOrWhiteSpace(usuario.NombreUsuario) || usuario.Password == null || usuario.Password.Length == 0)
             {
-                TempData["Mensaje"] = "El usuario ó la Contraseña no Existen!";
+                TempData["Mensaje"] = "El usuario no tiene credenciales válidas en el sistema. Contacte al administrador.";
                 TempData["Tipo"] = "warning";
                 return View("Login");
             }
@@ -80,13 +122,33 @@ namespace WebColegio.Controllers
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, usuario.NombreUsuario),
-                 new Claim(ClaimTypes.Role, roles.NombreRol),
-                new Claim(ClaimTypes.Role, "Usuario"), // Todos son usuarios base                
-                new Claim(ClaimTypes.Role, usuario.IdRol.ToString()),  // 👈 Aquí se asigna el rol desde BD   
-                 new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString())
+                new Claim(ClaimTypes.Role, nombreRol),
+                new Claim(ClaimTypes.Role, "Usuario"),
+                new Claim(ClaimTypes.Role, usuario.IdRol.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
+                new Claim("nombre_completo", usuario.NombreCompleto ?? string.Empty),
+                new Claim("nombre_rol", nombreRol)
             };
+            if (usuario.IdRecinto.HasValue)
+                claims.Add(new Claim("id_recinto", usuario.IdRecinto.Value.ToString()));
             if (!string.IsNullOrWhiteSpace(usuario.Cedula))
+            {
                 claims.Add(new Claim("Cedula", usuario.Cedula.Trim()));
+                claims.Add(new Claim("cedula", usuario.Cedula.Trim()));
+            }
+
+            try
+            {
+                var apiToken = _jwtTokenService.CreateToken(usuario, nombreRol);
+                _apiTokenAccessor.SetToken(apiToken);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Mensaje"] = ex.Message;
+                TempData["Tipo"] = "warning";
+                return View("Login");
+            }
+
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
             await HttpContext.SignInAsync(
@@ -94,21 +156,10 @@ namespace WebColegio.Controllers
                 new ClaimsPrincipal(claimsIdentity),
                 new AuthenticationProperties
                 {
-                    IsPersistent = true // mantiene la sesión
+                    IsPersistent = true
                 });
 
-            try
-            {
-                var apiToken = _jwtTokenService.CreateToken(usuario, roles.NombreRol);
-                _apiTokenAccessor.SetToken(apiToken);
-            }
-            catch (InvalidOperationException ex)
-            {
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                TempData["Mensaje"] = ex.Message;
-                TempData["Tipo"] = "warning";
-                return View("Login");
-            }
+            await HttpContext.Session.CommitAsync();
 
             // Guardar datos en sesión
             HttpContext.Session.SetString("UsuarioCedula", NombreUsuario);

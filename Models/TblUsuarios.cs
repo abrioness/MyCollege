@@ -1,12 +1,16 @@
-﻿namespace WebColegio.Models
+﻿using Newtonsoft.Json;
+using WebColegio.Helpers;
+
+namespace WebColegio.Models
 {
     public class TblUsuarios
     {
         public int IdUsuario { get; set; }
 
-        public string NombreUsuario { get; set; } = null!;
+        public string? NombreUsuario { get; set; }
 
-        public byte[] Password { get; set; } = null!;
+        [JsonConverter(typeof(Base64ByteArrayConverter))]
+        public byte[]? Password { get; set; }
 
         public string? Correo { get; set; }
 

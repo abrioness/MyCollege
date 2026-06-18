@@ -273,10 +273,20 @@ namespace WebColegio.Controllers
 
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                var existe = await _Iservices.ValidarAlumnoDuplicado(alumnos.CodigoMINED ?? string.Empty);
+                var mined = alumnos.CodigoMINED?.Trim();
+                if (string.IsNullOrWhiteSpace(mined))
+                {
+                    TempData["Mensaje"] = "El código MINED es obligatorio.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Create");
+                }
+
+                var existe = await _Iservices.ValidarAlumnoDuplicado(
+                    mined,
+                    alumnos.CodigoAlumno?.Trim());
                 if (existe)
                 {
-                    TempData["Mensaje"] = "Ya existe un alumno con el mismo código MINED.";
+                    TempData["Mensaje"] = "Ya existe un alumno con el mismo código MINED o código de estudiante.";
                     TempData["Tipo"] = "warning";
                     return RedirectToAction("Create");
                 }
@@ -303,7 +313,6 @@ namespace WebColegio.Controllers
                 {
                     var lista = await _Iservices.GetAlumnosAsync() ?? new List<TblAlumno>();
                     var codigo = alumnos.CodigoAlumno?.Trim();
-                    var mined = alumnos.CodigoMINED?.Trim();
                     var encontrado = lista
                         .OrderByDescending(a => a.IdAlumno)
                         .FirstOrDefault(a =>
@@ -424,6 +433,20 @@ namespace WebColegio.Controllers
                 }
                 else
                 {
+                    var duplicado = false;
+                    var mined = viewModel.alumnos.CodigoMINED?.Trim();
+                    if (!string.IsNullOrWhiteSpace(mined))
+                    {
+                        duplicado = await _Iservices.ValidarAlumnoDuplicado(
+                            mined,
+                            viewModel.alumnos.CodigoAlumno?.Trim(),
+                            excluirIdAlumno: viewModel.alumnos.IdAlumno);
+                        if (duplicado)
+                            ModelState.AddModelError("", "Ya existe otro alumno con el mismo código MINED o código de estudiante.");
+                    }
+
+                    if (!duplicado)
+                    {
                     if (!await DebeGuardarRecibioPreescolar(viewModel.alumnos))
                         viewModel.alumnos.RecibioEducacionPreescolar = null;
 
@@ -439,6 +462,7 @@ namespace WebColegio.Controllers
                     }
 
                     ModelState.AddModelError("", "Error al actualizar los datos del alumno en el servidor. Compruebe la API o los datos enviados.");
+                    }
                 }
 
             viewModel.ListGrados = await _Iservices.GetGradosAsync();

@@ -5,8 +5,8 @@ namespace WebColegio.Configuration
     {
         public const string SectionName = "Jwt";
 
-        public string Issuer { get; set; } = "WebColegio";
-        public string Audience { get; set; } = "ColSanFranciscoApi";
+        public string Issuer { get; set; } = "ColegioWeb";
+        public string Audience { get; set; } = "ColegioApi";
         /// <summary>Clave secreta ≥ 32 caracteres. En producción usar variable de entorno Jwt__SecretKey.</summary>
         public string SecretKey { get; set; } = string.Empty;
         public int ExpirationMinutes { get; set; } = 480;

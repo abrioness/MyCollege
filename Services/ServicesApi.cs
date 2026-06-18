@@ -14,11 +14,10 @@ namespace WebColegio.Services
 {
     public class ServicesApi:IServicesApi
     {
-        // private static string url = "https://localhost:7008/";
-
-        //private static string url= "http://ApiColegio.somee.com/ApiColegio/";
         private readonly string url;
         private readonly IHttpClientFactory _httpClientFactory;
+
+        public string? LastApiError { get; private set; }
 
         public ServicesApi(IConfiguration config, IHttpClientFactory httpClientFactory)
         {
@@ -28,6 +27,15 @@ namespace WebColegio.Services
         }
 
         private HttpClient CreateApiClient() => _httpClientFactory.CreateClient("ColegioApi");
+
+        private void RegistrarErrorApi(string operacion, HttpResponseMessage response, string? cuerpo = null)
+        {
+            cuerpo ??= response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            LastApiError = $"{operacion}: HTTP {(int)response.StatusCode} {response.ReasonPhrase}. {cuerpo}".Trim();
+            Debug.WriteLine(LastApiError);
+        }
+
+        private void LimpiarErrorApi() => LastApiError = null;
         //Metodo para Listar usuarios
         #region Metodos Get
 
@@ -342,17 +350,39 @@ namespace WebColegio.Services
 
         public async Task<List<TblPago>> GetPagosAsync()
         {
-            List<TblPago> pagos = new List<TblPago>();
+            LimpiarErrorApi();
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                LastApiError = "ApiSettings:BaseUrl no está configurada en appsettings.";
+                return new List<TblPago>();
+            }
+
             using (var httpclient = CreateApiClient())
             {
-                var response =await httpclient.GetAsync(url + "api/Pagos");
+                var response = await httpclient.GetAsync(url + "api/Pagos");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonConvert.DeserializeObject<List<TblPago>>(content);
-                    pagos = resultado;
+                    try
+                    {
+                        var resultado = JsonConvert.DeserializeObject<List<TblPago>>(content);
+                        return resultado ?? new List<TblPago>();
+                    }
+                    catch (JsonException ex)
+                    {
+                        LastApiError = "DeserializeError";
+                        Debug.WriteLine($"Error al deserializar pagos: {ex.Message}");
+                        return new List<TblPago>();
+                    }
                 }
-                return  pagos;
+
+                var errorBody = await response.Content.ReadAsStringAsync();
+                RegistrarErrorApi("GET api/Pagos", response, errorBody);
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    LastApiError = "Unauthorized";
+                else if ((int)response.StatusCode >= 500)
+                    LastApiError = "ServerError";
+                return new List<TblPago>();
             }
         }
         public async Task<List<TblPagoCaja>> GetPagoCajaAsync()
@@ -728,23 +758,66 @@ namespace WebColegio.Services
             }
         }
         //Get de Login
-        public async Task<TblUsuarios> GetLogin(string usuario)
+        public async Task<TblUsuarios?> GetLogin(string usuario)
         {
+            LimpiarErrorApi();
+            if (string.IsNullOrWhiteSpace(usuario))
+                return null;
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                LastApiError = "ApiSettings:BaseUrl no configurada.";
+                return null;
+            }
 
             using (var httpClient = CreateApiClient())
             {
-                var login = new TblUsuarios();
-                var response = await httpClient.GetAsync(url + $"api/Usuarios/obtenerUsuario?login={usuario}");
-                if (response.IsSuccessStatusCode)
+                try
                 {
+                    var loginEncoded = Uri.EscapeDataString(usuario.Trim());
+                    var requestUrl = url + $"api/Usuarios/obtenerUsuario?login={loginEncoded}";
+                    var response = await httpClient.GetAsync(requestUrl);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var errorBody = await response.Content.ReadAsStringAsync();
+                        RegistrarErrorApi("GET api/Usuarios/obtenerUsuario", response, errorBody);
+                        return null;
+                    }
+
                     var data = await response.Content.ReadAsStringAsync();
-                    var respuesta = JsonConvert.DeserializeObject<TblUsuarios>(data);
-                    login = respuesta;
+                    if (string.IsNullOrWhiteSpace(data) || data.Trim() == "null")
+                    {
+                        LastApiError = "GET api/Usuarios/obtenerUsuario: respuesta vacía.";
+                        return null;
+                    }
+
+                    try
+                    {
+                        var respuesta = JsonConvert.DeserializeObject<TblUsuarios>(data);
+                        if (respuesta == null || respuesta.IdUsuario <= 0)
+                        {
+                            LastApiError = "GET api/Usuarios/obtenerUsuario: usuario no encontrado en JSON.";
+                            return null;
+                        }
+                        return respuesta;
+                    }
+                    catch (JsonException ex)
+                    {
+                        LastApiError = $"DeserializeError: {ex.Message}";
+                        return null;
+                    }
                 }
-                return login;
+                catch (HttpRequestException ex)
+                {
+                    LastApiError = $"ConnectionError: {ex.Message} (URL: {url})";
+                    return null;
+                }
+                catch (TaskCanceledException ex)
+                {
+                    LastApiError = $"Timeout: {ex.Message} (URL: {url})";
+                    return null;
+                }
             }
-
-
         }
         public async Task<List<TblRol>> GetRolAsync()
         {
@@ -882,44 +955,41 @@ namespace WebColegio.Services
             }
         }
 
-        public async Task<bool> PostPagosAsync(TblPago pagos)
+        public async Task<(bool Exito, int IdPagoCreado, string? DetalleError)> PostPagosAsync(TblPago pagos)
         {
-            bool respuesta = false;
-
-            // Asegurar datos mínimos requeridos
-            //pagos.Activo = true;
-            //pagos.UsuarioRegistro = 1;
-            //pagos.FechaRegistro = DateTime.Now;
-
             try
             {
                 using (var httpClient = CreateApiClient())
                 {
-                    // Serializar el objeto alumno
                     string jsonPagos = JsonConvert.SerializeObject(pagos);
                     var content = new StringContent(jsonPagos, Encoding.UTF8, "application/json");
-
-                    // Enviar POST
                     var response = await httpClient.PostAsync(url + "api/Pagos", content);
+                    var body = await response.Content.ReadAsStringAsync();
 
                     if (response.IsSuccessStatusCode)
                     {
-                        respuesta = true;
+                        int idCreado = 0;
+                        try
+                        {
+                            var creado = JsonConvert.DeserializeObject<TblPago>(body);
+                            idCreado = creado?.IdPago ?? 0;
+                        }
+                        catch
+                        {
+                            // El pago se guardó; el cuerpo puede no deserializarse por diferencias de modelo.
+                        }
+                        return (true, idCreado, null);
                     }
-                    else
-                    {
-                        // Para debug: mostrar mensaje de error
-                        var errorMsg = await response.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Error en POST: " + errorMsg);
-                    }
+
+                    Debug.WriteLine("Error en POST Pagos: " + body);
+                    return (false, 0, string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("Excepción en PostPagosAsync: " + ex.Message);
+                return (false, 0, ex.Message);
             }
-
-            return respuesta;
         }
         //Pago de Caja
         public async Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja)
@@ -1835,27 +1905,112 @@ namespace WebColegio.Services
 
         #region Metodos de Validaciones
 
-        public async Task<bool> ValidarAlumnoDuplicado(string codigo)
+        public async Task<bool> ValidarAlumnoDuplicado(
+            string codigoMINED,
+            string? codigoAlumno = null,
+            int? excluirIdAlumno = null)
         {
-            var existe = false;
+            var mined = codigoMINED?.Trim();
+            var codigoEst = codigoAlumno?.Trim();
 
-            using (var httpclient = CreateApiClient())
+            if (string.IsNullOrWhiteSpace(mined) && string.IsNullOrWhiteSpace(codigoEst))
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(mined))
             {
-
-                var response = await httpclient.GetAsync(url + $"api/Alumnos/existeAlumno?codigo={codigo}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonConvert.DeserializeObject<bool>(content);
-
-
-                    return existe = resultado;
-
-                }
-                return existe;
+                var desdeApi = await ConsultarDuplicadoAlumnoEnApiAsync(mined);
+                if (desdeApi == true)
+                    return true;
             }
 
+            return await ExisteAlumnoDuplicadoEnCatalogoLocalAsync(mined, codigoEst, excluirIdAlumno);
+        }
+
+        private async Task<bool?> ConsultarDuplicadoAlumnoEnApiAsync(string codigoMINED)
+        {
+            try
+            {
+                var encoded = Uri.EscapeDataString(codigoMINED);
+                using var httpclient = CreateApiClient();
+
+                // Algunas APIs usan codigo para MINED; otras codigoMINED.
+                var urls = new[]
+                {
+                    url + $"api/Alumnos/existeAlumno?codigoMINED={encoded}",
+                    url + $"api/Alumnos/existeAlumno?codigo={encoded}"
+                };
+
+                foreach (var endpoint in urls)
+                {
+                    var response = await httpclient.GetAsync(endpoint);
+                    if (!response.IsSuccessStatusCode)
+                        continue;
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    var parsed = ParseBoolRespuestaApi(content);
+                    if (parsed.HasValue)
+                        return parsed.Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ValidarAlumnoDuplicado API: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private static bool? ParseBoolRespuestaApi(string? content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return false;
+
+            var trimmed = content.Trim();
+            if (bool.TryParse(trimmed, out var directo))
+                return directo;
+
+            try
+            {
+                if (trimmed.StartsWith('{'))
+                {
+                    var obj = Newtonsoft.Json.Linq.JObject.Parse(trimmed);
+                    foreach (var key in new[] { "existe", "exists", "result", "value", "duplicado" })
+                    {
+                        var token = obj[key];
+                        if (token != null && token.Type == Newtonsoft.Json.Linq.JTokenType.Boolean)
+                            return (bool)token;
+                    }
+                }
+
+                return JsonConvert.DeserializeObject<bool>(trimmed);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<bool> ExisteAlumnoDuplicadoEnCatalogoLocalAsync(
+            string? codigoMINED,
+            string? codigoAlumno,
+            int? excluirIdAlumno)
+        {
+            var lista = await GetAlumnosAsync() ?? new List<TblAlumno>();
+
+            bool Coincide(TblAlumno a, string? valor, Func<TblAlumno, string?> selector)
+            {
+                if (string.IsNullOrWhiteSpace(valor))
+                    return false;
+                var actual = selector(a)?.Trim();
+                return !string.IsNullOrWhiteSpace(actual) &&
+                       string.Equals(actual, valor, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return lista.Any(a =>
+                a.Activo != false &&
+                (!excluirIdAlumno.HasValue || a.IdAlumno != excluirIdAlumno.Value) &&
+                (Coincide(a, codigoMINED, x => x.CodigoMINED) ||
+                 Coincide(a, codigoAlumno, x => x.CodigoAlumno)));
         }
         //Metodo de busqueda de duplicidad de nota por asignatura y periodo de evaluacion
         public async Task<bool> ValidarNotas(int idAsignatura, int idPeriodoEva, int idAlumno)

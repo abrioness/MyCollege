@@ -16,8 +16,20 @@ namespace WebColegio
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.Configure<JwtSettings>(
-                builder.Configuration.GetSection(JwtSettings.SectionName));
+            builder.Services.Configure<JwtSettings>(options =>
+            {
+                builder.Configuration.GetSection(JwtSettings.SectionName).Bind(options);
+                var fromEnv = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+                if (!string.IsNullOrWhiteSpace(fromEnv))
+                    options.SecretKey = fromEnv;
+            });
+            builder.Services.Configure<ApiSettings>(options =>
+            {
+                builder.Configuration.GetSection(ApiSettings.SectionName).Bind(options);
+                var fromEnv = Environment.GetEnvironmentVariable("ApiSettings__BaseUrl");
+                if (!string.IsNullOrWhiteSpace(fromEnv))
+                    options.BaseUrl = fromEnv;
+            });
 
             builder.Services.AddControllers();
             builder.Services.AddScoped<IServicesApi, ServicesApi>();
@@ -25,7 +37,22 @@ namespace WebColegio
             builder.Services.AddScoped<IApiTokenAccessor, ApiTokenAccessor>();
             builder.Services.AddTransient<ApiBearerTokenHandler>();
 
+            var allowInvalidApiCertificate = builder.Configuration
+                .GetSection(ApiSettings.SectionName)
+                .GetValue<bool>(nameof(ApiSettings.AllowInvalidCertificate))
+                || builder.Environment.IsDevelopment();
+
             builder.Services.AddHttpClient("ColegioApi")
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                {
+                    var handler = new HttpClientHandler();
+                    if (allowInvalidApiCertificate)
+                    {
+                        handler.ServerCertificateCustomValidationCallback =
+                            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                    }
+                    return handler;
+                })
                 .AddHttpMessageHandler<ApiBearerTokenHandler>();
 
             builder.Services.AddControllersWithViews(options =>
@@ -43,9 +70,11 @@ namespace WebColegio
             });
 
             var jwtSection = builder.Configuration.GetSection(JwtSettings.SectionName);
-            var jwtSecret = jwtSection["SecretKey"] ?? string.Empty;
-            var jwtIssuer = jwtSection["Issuer"] ?? "WebColegio";
-            var jwtAudience = jwtSection["Audience"] ?? "ColSanFranciscoApi";
+            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+                ?? jwtSection["SecretKey"]
+                ?? string.Empty;
+            var jwtIssuer = jwtSection["Issuer"] ?? "ColegioWeb";
+            var jwtAudience = jwtSection["Audience"] ?? "ColegioApi";
 
             var authBuilder = builder.Services.AddAuthentication(options =>
             {

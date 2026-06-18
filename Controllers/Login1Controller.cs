@@ -54,6 +54,12 @@ namespace WebColegio.Controllers
                 return RedirectToAction("Index","Login");
             }
 
+            if (usuario.Password == null || usuario.Password.Length == 0)
+            {
+                TempData["Mensaje"] = "Usuario sin contraseña válida en el sistema.";
+                return RedirectToAction("Index", "Login");
+            }
+
             // Convertir contraseña guardada en byte[] a string (hash)
             string storedHash = Encoding.UTF8.GetString(usuario.Password);
             // Verificar contraseña

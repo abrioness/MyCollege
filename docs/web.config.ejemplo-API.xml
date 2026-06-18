@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plantilla: copiar dentro de <aspNetCore> en web.config de la API publicada -->
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\Api_Colegio.dll" stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+          <!-- Misma clave que en la Web (mínimo 32 caracteres) -->
+          <environmentVariable name="JWT_SECRET_KEY" value="REEMPLAZAR_CLAVE_SECRETA" />
+          <!-- Cadena de conexión SQL Server de producción -->
+          <environmentVariable name="ConnectionStrings__Conexion" value="Data Source=SERVIDOR;Initial Catalog=MyCollege;User ID=USUARIO;Password=CLAVE;Encrypt=True;TrustServerCertificate=True;" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>
