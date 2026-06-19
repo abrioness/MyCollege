@@ -359,30 +359,43 @@ namespace WebColegio.Services
 
             using (var httpclient = CreateApiClient())
             {
-                var response = await httpclient.GetAsync(url + "api/Pagos");
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    try
+                    var response = await httpclient.GetAsync(url + "api/Pagos");
+                    if (response.IsSuccessStatusCode)
                     {
-                        var resultado = JsonConvert.DeserializeObject<List<TblPago>>(content);
-                        return resultado ?? new List<TblPago>();
+                        var content = await response.Content.ReadAsStringAsync();
+                        try
+                        {
+                            var resultado = JsonConvert.DeserializeObject<List<TblPago>>(content);
+                            return resultado ?? new List<TblPago>();
+                        }
+                        catch (JsonException ex)
+                        {
+                            LastApiError = "DeserializeError";
+                            Debug.WriteLine($"Error al deserializar pagos: {ex.Message}");
+                            return new List<TblPago>();
+                        }
                     }
-                    catch (JsonException ex)
-                    {
-                        LastApiError = "DeserializeError";
-                        Debug.WriteLine($"Error al deserializar pagos: {ex.Message}");
-                        return new List<TblPago>();
-                    }
-                }
 
-                var errorBody = await response.Content.ReadAsStringAsync();
-                RegistrarErrorApi("GET api/Pagos", response, errorBody);
-                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                    LastApiError = "Unauthorized";
-                else if ((int)response.StatusCode >= 500)
-                    LastApiError = "ServerError";
-                return new List<TblPago>();
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    RegistrarErrorApi("GET api/Pagos", response, errorBody);
+                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                        LastApiError = "Unauthorized";
+                    else if ((int)response.StatusCode >= 500)
+                        LastApiError = "ServerError";
+                    return new List<TblPago>();
+                }
+                catch (HttpRequestException ex)
+                {
+                    LastApiError = $"ConnectionError: {ex.Message}";
+                    return new List<TblPago>();
+                }
+                catch (TaskCanceledException ex)
+                {
+                    LastApiError = $"Timeout: {ex.Message}";
+                    return new List<TblPago>();
+                }
             }
         }
         public async Task<List<TblPagoCaja>> GetPagoCajaAsync()
