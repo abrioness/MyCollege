@@ -382,8 +382,6 @@ namespace WebColegio.Services
                     RegistrarErrorApi("GET api/Pagos", response, errorBody);
                     if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                         LastApiError = "Unauthorized";
-                    else if ((int)response.StatusCode >= 500)
-                        LastApiError = "ServerError";
                     return new List<TblPago>();
                 }
                 catch (HttpRequestException ex)

@@ -40,6 +40,7 @@
 
   <ItemGroup>
     <Content Update="web.config" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="logs\.gitkeep" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

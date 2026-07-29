@@ -41,11 +41,11 @@ namespace WebColegio.Controllers
                 var err = _Iservices.LastApiError;
                 TempData["Mensaje"] = err.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase)
                     ? "La API rechazó la sesión (JWT). Cierre sesión e ingrese de nuevo. En el servidor, Jwt:SecretKey debe ser idéntica en Web y API."
-                    : err.Contains("ServerError", StringComparison.OrdinalIgnoreCase) || err.Contains("500", StringComparison.OrdinalIgnoreCase)
-                    ? "La API falló al leer los pagos. Revise que la API esté en ejecución y la base de datos configurada."
+                    : err.Contains("ServerError", StringComparison.OrdinalIgnoreCase) || err.Contains(" 500 ", StringComparison.OrdinalIgnoreCase) || err.Contains("HTTP 500", StringComparison.OrdinalIgnoreCase)
+                    ? $"La API falló al leer los pagos. {err} Revise en Swagger GET /api/Pagos y los logs de la API (logs\\stdout)."
                     : err.Contains("DeserializeError", StringComparison.OrdinalIgnoreCase)
                     ? "La API respondió pero los datos de pagos no se pudieron leer. Contacte al administrador."
-                    : "No se pudieron cargar los pagos en este momento. Verifique que la API esté en ejecución, cierre sesión e ingrese de nuevo.";
+                    : $"No se pudieron cargar los pagos. {err}";
                 TempData["Tipo"] = "warning";
             }
             var _alumnos = await _Iservices.GetAlumnosAsync();

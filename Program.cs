@@ -26,26 +26,44 @@ namespace WebColegio
             builder.Services.Configure<ApiSettings>(options =>
             {
                 builder.Configuration.GetSection(ApiSettings.SectionName).Bind(options);
-                var fromEnv = Environment.GetEnvironmentVariable("ApiSettings__BaseUrl");
-                if (!string.IsNullOrWhiteSpace(fromEnv))
-                    options.BaseUrl = fromEnv;
+                var baseUrlEnv = Environment.GetEnvironmentVariable("ApiSettings__BaseUrl");
+                if (!string.IsNullOrWhiteSpace(baseUrlEnv))
+                    options.BaseUrl = baseUrlEnv;
+                var hostEnv = Environment.GetEnvironmentVariable("ApiSettings__Host");
+                if (!string.IsNullOrWhiteSpace(hostEnv))
+                    options.Host = hostEnv;
             });
 
             builder.Services.AddControllers();
             builder.Services.AddScoped<IServicesApi, ServicesApi>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
             builder.Services.AddScoped<IApiTokenAccessor, ApiTokenAccessor>();
+            builder.Services.AddTransient<ApiHostHeaderHandler>();
             builder.Services.AddTransient<ApiBearerTokenHandler>();
 
             var allowInvalidApiCertificate = builder.Configuration
                 .GetSection(ApiSettings.SectionName)
-                .GetValue<bool>(nameof(ApiSettings.AllowInvalidCertificate))
-                || builder.Environment.IsDevelopment();
+                .GetValue<bool>(nameof(ApiSettings.AllowInvalidCertificate));
 
             builder.Services.AddHttpClient("ColegioApi")
+                .ConfigureHttpClient((sp, client) =>
+                {
+                    var configuration = sp.GetRequiredService<IConfiguration>();
+                    var baseUrl = configuration["ApiSettings:BaseUrl"]
+                        ?? Environment.GetEnvironmentVariable("ApiSettings__BaseUrl");
+                    if (!string.IsNullOrWhiteSpace(baseUrl))
+                    {
+                        client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+                    }
+
+                    client.Timeout = TimeSpan.FromSeconds(60);
+                })
                 .ConfigurePrimaryHttpMessageHandler(() =>
                 {
-                    var handler = new HttpClientHandler();
+                    var handler = new HttpClientHandler
+                    {
+                        UseProxy = false
+                    };
                     if (allowInvalidApiCertificate)
                     {
                         handler.ServerCertificateCustomValidationCallback =
@@ -53,6 +71,7 @@ namespace WebColegio
                     }
                     return handler;
                 })
+                .AddHttpMessageHandler<ApiHostHeaderHandler>()
                 .AddHttpMessageHandler<ApiBearerTokenHandler>();
 
             builder.Services.AddControllersWithViews(options =>

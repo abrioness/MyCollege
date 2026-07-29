@@ -18,17 +18,20 @@ namespace WebColegio.Controllers
         private readonly IJwtTokenService _jwtTokenService;
         private readonly IApiTokenAccessor _apiTokenAccessor;
         private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public LoginController(
             IServicesApi iservices,
             IJwtTokenService jwtTokenService,
             IApiTokenAccessor apiTokenAccessor,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHttpClientFactory httpClientFactory)
         {
             _IService = iservices;
             _jwtTokenService = jwtTokenService;
             _apiTokenAccessor = apiTokenAccessor;
             _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
         // GET: LoginController
         //private bool ValidateUser(string cedula, string password)
@@ -54,13 +57,15 @@ namespace WebColegio.Controllers
         public async Task<IActionResult> EstadoApi()
         {
             var baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "(no configurada)";
+            var host = _configuration["ApiSettings:Host"] ?? "(no configurado)";
+            var allowInvalid = _configuration["ApiSettings:AllowInvalidCertificate"] ?? "false";
             var entorno = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "(no definido)";
             string resultado;
             try
             {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-                var testUrl = baseUrl.TrimEnd('/') + "/api/Usuarios/obtenerUsuario?login=__diagnostico__";
-                var response = await client.GetAsync(testUrl);
+                using var client = _httpClientFactory.CreateClient("ColegioApi");
+                client.Timeout = TimeSpan.FromSeconds(15);
+                var response = await client.GetAsync("api/Health");
                 var body = await response.Content.ReadAsStringAsync();
                 resultado = $"HTTP {(int)response.StatusCode} — {body.Substring(0, Math.Min(400, body.Length))}";
             }
@@ -70,7 +75,12 @@ namespace WebColegio.Controllers
             }
 
             return Content(
-                $"Entorno: {entorno}\nApiSettings:BaseUrl: {baseUrl}\nPrueba API: {resultado}",
+                $"Entorno: {entorno}\n" +
+                $"ApiSettings:BaseUrl: {baseUrl}\n" +
+                $"ApiSettings:Host: {host}\n" +
+                $"ApiSettings:AllowInvalidCertificate: {allowInvalid}\n" +
+                $"Prueba GET api/Health: {resultado}\n\n" +
+                "Nota: JwtTokenService NO afecta esta prueba. El login usa api/Usuarios/obtenerUsuario (sin JWT).",
                 "text/plain; charset=utf-8");
         }
         
@@ -84,13 +94,15 @@ namespace WebColegio.Controllers
             {
                 var detalleApi = _IService.LastApiError ?? string.Empty;
                 if (detalleApi.Contains("404", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = "La URL de la API no es correcta (404). Debe ser https://colegioparroquialsanfranciscojavier.com/ColSanFranciscoTest_Api/";
+                    TempData["Mensaje"] = $"La URL de la API no es correcta (404). {detalleApi} En el mismo servidor IIS use ApiSettings__BaseUrl=http://127.0.0.1/ColSanFranciscoTest_Api/ y ApiSettings__Host=colegioparroquialsanfranciscojavier.com";
                 else if (detalleApi.Contains("500", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("503", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("base_datos", StringComparison.OrdinalIgnoreCase))
                     TempData["Mensaje"] = "La API no puede leer la base de datos. En IIS, edite el web.config de ColSanFranciscoTest_Api y configure ConnectionStrings__Conexion con la cadena SQL correcta.";
                 else if (detalleApi.Contains("401", StringComparison.OrdinalIgnoreCase))
                     TempData["Mensaje"] = "La API rechazó la solicitud (401). Verifique JWT_SECRET_KEY igual en Web y API.";
-                else if (detalleApi.Contains("ConnectionError", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("localhost", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = "La Web no alcanza la API. Republicar WebColegio o en web.config poner ApiSettings__BaseUrl=https://colegioparroquialsanfranciscojavier.com/ColSanFranciscoTest_Api/";
+                else if (detalleApi.Contains("ConnectionError", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("No such host", StringComparison.OrdinalIgnoreCase))
+                    TempData["Mensaje"] = $"La Web no alcanza la API. {detalleApi} En el mismo servidor use ApiSettings__BaseUrl=http://localhost/ColSanFranciscoTest_Api/ y ApiSettings__Host=colegioparroquialsanfranciscojavier.com (no use la URL pública HTTPS desde el servidor).";
+                else if (detalleApi.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+                    TempData["Mensaje"] = $"La Web no alcanza la API. {detalleApi} Verifique que la API esté iniciada en IIS y que ApiSettings__Host coincida con el sitio.";
                 else if (detalleApi.Contains("DeserializeError", StringComparison.OrdinalIgnoreCase))
                     TempData["Mensaje"] = "La API respondió pero el formato del usuario no es válido. Contacte al administrador.";
                 else
