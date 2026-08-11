@@ -382,7 +382,17 @@ namespace WebColegio.Controllers
                         Montos = gc.Sum(x => x.pc.Monto)
                     }
                 ).ToList();
+            // 2. Extraemos las moras del día que sean mayores a 0 y las convertimos en IngresoDto
+            var morasDelDia = pagosDelDia.Where(p => p.Mora > 0).Select(p => new IngresoDto
+            {
+                Concepto = "Mora / Recargo por atraso",
+                Cantidad = 1,
+                Recibo = p.NumeroRecibo.ToString(),
+                Monto = p.Mora ?? 0
+            }).ToList();
 
+            // 3. Añadimos las moras directamente a la lista de ingresos del ViewModel
+            arqueo.Ingresos.AddRange(morasDelDia);
 
 
 

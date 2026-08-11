@@ -68,6 +68,7 @@ namespace WebColegio.Models.ViewModel
     public class IngresoCajaDto
     {
         public string? Conceptos { get; set; }
+        
         //public int? primerReciboDia { get; set; }
         //public int? ultimoReciboDia { get; set; }
         public string? Recinto { get; set; }
