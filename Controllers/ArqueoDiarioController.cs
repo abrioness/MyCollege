@@ -382,16 +382,37 @@ namespace WebColegio.Controllers
                         Montos = gc.Sum(x => x.pc.Monto)
                     }
                 ).ToList();
-            // 2. Extraemos las moras del día que sean mayores a 0 y las convertimos en IngresoDto
-            var morasDelDia = pagosDelDia.Where(p => p.Mora > 0).Select(p => new IngresoDto
-            {
-                Concepto = "Mora / Recargo por atraso",
-                Cantidad = 1,
-                Recibo = p.NumeroRecibo.ToString(),
-                Monto = p.Mora ?? 0
-            }).ToList();
+            // Mora registrada en BD: una línea por recibo (evita duplicar al pagar varios meses en el mismo recibo).
+            // Se toma el valor del mes cancelado (IdMes más alto), no se recalcula mora en el arqueo.
+            var morasDelDia = pagosDelDia
+                .Where(p => (p.Mora ?? 0) > 0)
+                .GroupBy(p => new
+                {
+                    p.NumeroRecibo,
+                    Serie = p.Serie ?? "A",
+                    p.IdAlumno,
+                    p.IdPeriodo
+                })
+                .Select(g =>
+                {
+                    var pagoMesCancelado = g
+                        .Where(x => x.IdMes.HasValue)
+                        .OrderByDescending(x => x.IdMes!.Value)
+                        .FirstOrDefault();
 
-            // 3. Añadimos las moras directamente a la lista de ingresos del ViewModel
+                    var moraRegistrada = pagoMesCancelado?.Mora ?? g.Max(x => x.Mora ?? 0);
+
+                    return new IngresoDto
+                    {
+                        Concepto = "Mora / Recargo por atraso",
+                        Cantidad = 1,
+                        Recibo = g.Key.NumeroRecibo?.ToString() ?? "N/A",
+                        Monto = moraRegistrada
+                    };
+                })
+                .Where(x => x.Monto > 0)
+                .ToList();
+
             arqueo.Ingresos.AddRange(morasDelDia);
 
 

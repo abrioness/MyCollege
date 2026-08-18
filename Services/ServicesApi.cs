@@ -1912,6 +1912,76 @@ namespace WebColegio.Services
 
             return respuesta;
         }
+
+        public async Task<bool> UpdateEgreso(TblEgreso egreso)
+        {
+            try
+            {
+                var existing = await GetEgresoCajaById(egreso.IdEgreso);
+                if (existing == null)
+                {
+                    Debug.WriteLine("Egreso no encontrado para actualizar: " + egreso.IdEgreso);
+                    return false;
+                }
+
+                existing.Activo = egreso.Activo;
+                existing.UsuarioActualizo = egreso.UsuarioActualizo;
+                existing.FechaActualizo = egreso.FechaActualizo;
+
+                using var httpClient = CreateApiClient();
+                var json = JsonConvert.SerializeObject(existing);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await httpClient.PutAsync(url + $"api/TblEgresos/{existing.IdEgreso}", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine("Error en PUT Egreso: " + errorMsg);
+                }
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en UpdateEgreso: " + ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdatePagoCaja(TblPagoCaja pagoCaja)
+        {
+            try
+            {
+                var existing = await GetPagoCajaById(pagoCaja.IdPagoCaja);
+                if (existing == null)
+                {
+                    Debug.WriteLine("Pago caja no encontrado para actualizar: " + pagoCaja.IdPagoCaja);
+                    return false;
+                }
+
+                existing.Activo = pagoCaja.Activo;
+                existing.UsuarioActualizo = pagoCaja.UsuarioActualizo;
+                existing.FechaActualizo = pagoCaja.FechaActualizo;
+
+                using var httpClient = CreateApiClient();
+                var json = JsonConvert.SerializeObject(existing);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await httpClient.PutAsync(url + $"api/TblPagoCajas/{existing.IdPagoCaja}", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine("Error en PUT PagoCaja: " + errorMsg);
+                }
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en UpdatePagoCaja: " + ex.Message);
+                return false;
+            }
+        }
         #endregion
 
         #region Metodos de Validaciones

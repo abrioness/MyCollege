@@ -1846,6 +1846,71 @@ namespace WebColegio.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,UserSystem")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> AnularRecibo(int id, DateTime? fechainicio, DateTime? fechafin)
+        {
+            var pago = await _Iservices.GetPagoById(id);
+            if (pago == null)
+            {
+                TempData["Mensaje"] = "Recibo no encontrado.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            if (!pago.Activo)
+            {
+                TempData["Mensaje"] = $"El recibo {pago.NumeroRecibo} ya está anulado.";
+                TempData["Tipo"] = "info";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            var todosPagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
+            var filasRecibo = todosPagos
+                .Where(p => p.NumeroRecibo == pago.NumeroRecibo
+                    && p.Serie == pago.Serie
+                    && p.IdAlumno == pago.IdAlumno
+                    && p.IdPeriodo == pago.IdPeriodo
+                    && p.Activo)
+                .ToList();
+
+            if (!filasRecibo.Any())
+            {
+                TempData["Mensaje"] = "No hay registros activos para anular.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var ahora = DateTime.Now;
+            var errores = 0;
+
+            foreach (var fila in filasRecibo)
+            {
+                fila.Activo = false;
+                fila.UsuarioActualizo = idUsuario;
+                fila.FechaActualizo = ahora;
+                if (!await _Iservices.UpdatePago(fila))
+                    errores++;
+            }
+
+            if (errores == 0)
+            {
+                TempData["Mensaje"] = filasRecibo.Count > 1
+                    ? $"Recibo {pago.NumeroRecibo} anulado correctamente ({filasRecibo.Count} registros)."
+                    : $"Recibo {pago.NumeroRecibo} anulado correctamente.";
+                TempData["Tipo"] = "success";
+            }
+            else
+            {
+                TempData["Mensaje"] = $"No se pudo anular completamente el recibo {pago.NumeroRecibo}. Revise la conexión con la API.";
+                TempData["Tipo"] = "warning";
+            }
+
+            return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+        }
+
         // GET: PagosController/Delete/5
         public ActionResult Delete(int id)
         {

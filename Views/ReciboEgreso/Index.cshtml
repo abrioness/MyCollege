@@ -2,6 +2,9 @@
 @* @{
 	ViewData["Title"] = "Index";
 } *@
+@{
+	var puedeAnularRecibo = User.IsInRole("Admin") || User.IsInRole("UserSystem");
+}
 <script src="~/js/site.js"></script>
 @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
@@ -12,6 +15,11 @@
 		</div>
 
 		<div class="card-body">
+			@if (TempData["Mensaje"] != null)
+			{
+				var tipoAlerta = TempData["Tipo"]?.ToString() ?? "info";
+				<div class="alert alert-@tipoAlerta">@TempData["Mensaje"]</div>
+			}
 			<div class="table-responsive" style="font-size:12px">
 				<div class="col-4 text-center">
 					@using (Html.BeginForm("Index", "ReciboEgreso", FormMethod.Get))
@@ -20,12 +28,12 @@
 							<div class="col-4">
 								<label class="control-label">Desde:</label>
 								<input type="date" name="fechainicio" id="FechaInicio" class="form-control"
-									   value="@@(Request.QueryString[" fechainicio"])" />
+									   value="@Context.Request.Query["fechainicio"]" />
 							</div>
 							<div class="col-4">
 								<label class="control-label">Hasta:</label>
 								<input type="date" name="fechafin" id="FechaFin" class="form-control"
-									   value="@@(Request.QueryString[" fechafin"])" />
+									   value="@Context.Request.Query["fechafin"]" />
 							</div>
 							<div class="col-4">
 								<br />
@@ -53,13 +61,18 @@
 						<th>Año</th>
 						<th>Colegio</th>
 						<th>Fecha Registro</th>
+						<th>Estado</th>
+						@if (puedeAnularRecibo)
+						{
+							<th>Acciones</th>
+						}
 
 					</tr>
 				</thead>
 				<tbody>
 					@foreach (var itemEgreso in Model.egresos)
 					{
-						<tr>
+						<tr class="@(itemEgreso.Activo ? "" : "table-secondary")">
 
 
 							<td>
@@ -119,6 +132,38 @@
 
 								@itemEgreso.FechaRegistro.ToString("dd/MM/yyyy")
 							</td>
+							<td>
+								@if (itemEgreso.Activo)
+								{
+									<span class="badge bg-success">Activo</span>
+								}
+								else
+								{
+									<span class="badge bg-secondary">Anulado</span>
+								}
+							</td>
+							@if (puedeAnularRecibo)
+							{
+								<td>
+									@if (itemEgreso.Activo)
+									{
+										<form asp-action="AnularRecibo" asp-controller="ReciboEgreso" method="post" class="d-inline"
+											  onsubmit="return confirm('¿Anular el recibo de egreso @itemEgreso.NumeroRecibo?');">
+											@Html.AntiForgeryToken()
+											<input type="hidden" name="id" value="@itemEgreso.IdEgreso" />
+											<input type="hidden" name="fechainicio" value="@Context.Request.Query["fechainicio"]" />
+											<input type="hidden" name="fechafin" value="@Context.Request.Query["fechafin"]" />
+											<button type="submit" class="btn btn-sm btn-outline-danger" title="Anular recibo">
+												<i class="bi bi-x-circle"></i> Anular
+											</button>
+										</form>
+									}
+									else
+									{
+										<span class="text-muted small">—</span>
+									}
+								</td>
+							}
 
 							@* <td>
 							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>

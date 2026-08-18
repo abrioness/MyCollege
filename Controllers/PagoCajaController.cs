@@ -384,6 +384,49 @@ namespace WebColegio.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,UserSystem")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> AnularRecibo(int id, DateTime? fechainicio, DateTime? fechafin)
+        {
+            TblPagoCaja recibo;
+            try
+            {
+                recibo = await _Iservices.GetPagoCajaById(id);
+            }
+            catch
+            {
+                TempData["Mensaje"] = "Recibo de caja no encontrado.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            if (!recibo.Activo)
+            {
+                TempData["Mensaje"] = $"El recibo {recibo.NumeroRecibo} ya está anulado.";
+                TempData["Tipo"] = "info";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            recibo.Activo = false;
+            recibo.UsuarioActualizo = idUsuario;
+            recibo.FechaActualizo = DateTime.Now;
+
+            if (await _Iservices.UpdatePagoCaja(recibo))
+            {
+                TempData["Mensaje"] = $"Recibo de caja {recibo.NumeroRecibo} anulado correctamente.";
+                TempData["Tipo"] = "success";
+            }
+            else
+            {
+                TempData["Mensaje"] = $"No se pudo anular el recibo {recibo.NumeroRecibo}. Revise la conexión con la API.";
+                TempData["Tipo"] = "warning";
+            }
+
+            return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+        }
+
         // GET: PagoCajaController/Edit/5
         public ActionResult Edit(int id)
         {

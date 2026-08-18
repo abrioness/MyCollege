@@ -6,6 +6,10 @@
 
 } *@
 
+@{
+	var puedeAnularRecibo = User.IsInRole("Admin") || User.IsInRole("UserSystem");
+}
+
 <div class="container mt-auto" style="padding:2px;">
 
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
@@ -133,8 +137,11 @@
 							<th>Colegio</th>
 
 							<th>Fecha Emisión</th>
-
-
+							<th>Estado</th>
+							@if (puedeAnularRecibo)
+							{
+								<th>Acciones</th>
+							}
 
 						</tr>
 
@@ -146,7 +153,7 @@
 
 						{
 
-							<tr>
+							<tr class="@(itemPago.Activo ? "" : "table-secondary")">
 
 								<td><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
 
@@ -288,7 +295,39 @@
 
 								@itemPago.FechaRegistro.ToString("dd/MM/yyyy")
 
-						</td> 
+						</td>
+							<td>
+								@if (itemPago.Activo)
+								{
+									<span class="badge bg-success">Activo</span>
+								}
+								else
+								{
+									<span class="badge bg-secondary">Anulado</span>
+								}
+							</td>
+							@if (puedeAnularRecibo)
+							{
+								<td>
+									@if (itemPago.Activo)
+									{
+										<form asp-action="AnularRecibo" asp-controller="Pagos" method="post" class="d-inline"
+											  onsubmit="return confirm('¿Anular el recibo @itemPago.NumeroRecibo? Esta acción anulará todas las líneas del mismo recibo.');">
+											@Html.AntiForgeryToken()
+											<input type="hidden" name="id" value="@itemPago.IdPago" />
+											<input type="hidden" name="fechainicio" value="@Context.Request.Query["fechainicio"]" />
+											<input type="hidden" name="fechafin" value="@Context.Request.Query["fechafin"]" />
+											<button type="submit" class="btn btn-sm btn-outline-danger" title="Anular recibo">
+												<i class="bi bi-x-circle"></i> Anular
+											</button>
+										</form>
+									}
+									else
+									{
+										<span class="text-muted small">—</span>
+									}
+								</td>
+							}
 
 							@*<td>
 

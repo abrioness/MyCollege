@@ -203,6 +203,49 @@ namespace WebColegio.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,UserSystem")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> AnularRecibo(int id, DateTime? fechainicio, DateTime? fechafin)
+        {
+            TblEgreso egreso;
+            try
+            {
+                egreso = await _Iservices.GetEgresoCajaById(id);
+            }
+            catch
+            {
+                TempData["Mensaje"] = "Recibo de egreso no encontrado.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            if (!egreso.Activo)
+            {
+                TempData["Mensaje"] = $"El recibo {egreso.NumeroRecibo} ya está anulado.";
+                TempData["Tipo"] = "info";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            egreso.Activo = false;
+            egreso.UsuarioActualizo = idUsuario;
+            egreso.FechaActualizo = DateTime.Now;
+
+            if (await _Iservices.UpdateEgreso(egreso))
+            {
+                TempData["Mensaje"] = $"Recibo de egreso {egreso.NumeroRecibo} anulado correctamente.";
+                TempData["Tipo"] = "success";
+            }
+            else
+            {
+                TempData["Mensaje"] = $"No se pudo anular el recibo {egreso.NumeroRecibo}. Revise la conexión con la API.";
+                TempData["Tipo"] = "warning";
+            }
+
+            return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+        }
+
         // GET: ReciboEgresoController/Edit/5
         public ActionResult Edit(int id)
         {
