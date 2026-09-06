@@ -567,8 +567,10 @@ namespace WebColegio.Services
         {
             foreach (var ruta in new[]
             {
-                "api/TblCatProveedores",
                 "api/CatProveedores",
+                "api/CatProveedor",
+                "api/TblCatProveedores",
+                "api/TblCatProveedore",
                 "api/Proveedores",
                 "api/CatProveedore"
             })
@@ -580,7 +582,9 @@ namespace WebColegio.Services
                     if (!response.IsSuccessStatusCode)
                         continue;
                     var content = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<CatProveedor>>(content) ?? new List<CatProveedor>();
+                    var lista = DeserializarListaProveedores(content);
+                    if (lista.Count > 0)
+                        return lista;
                 }
                 catch (Exception ex)
                 {
@@ -588,6 +592,45 @@ namespace WebColegio.Services
                 }
             }
             return new List<CatProveedor>();
+        }
+
+        private static List<CatProveedor> DeserializarListaProveedores(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return new List<CatProveedor>();
+
+            var token = Newtonsoft.Json.Linq.JToken.Parse(content);
+            if (token is Newtonsoft.Json.Linq.JObject obj && obj["$values"] != null)
+                token = obj["$values"];
+            if (token is not Newtonsoft.Json.Linq.JArray array)
+                return token.ToObject<List<CatProveedor>>() ?? new List<CatProveedor>();
+
+            var lista = new List<CatProveedor>();
+            foreach (var item in array.OfType<Newtonsoft.Json.Linq.JObject>())
+            {
+                var id = item.Value<int?>("idProveedor")
+                    ?? item.Value<int?>("IdProveedor")
+                    ?? 0;
+                var nombre = item.Value<string>("nombreProveedor")
+                    ?? item.Value<string>("NombreProveedor")
+                    ?? item.Value<string>("proveedor")
+                    ?? item.Value<string>("Proveedor")
+                    ?? string.Empty;
+                if (id <= 0 && string.IsNullOrWhiteSpace(nombre))
+                    continue;
+
+                lista.Add(new CatProveedor
+                {
+                    IdProveedor = id,
+                    NombreProveedor = nombre,
+                    ContactoPrincipal = item.Value<string>("contactoPrincipal") ?? item.Value<string>("ContactoPrincipal"),
+                    Telefono = item.Value<string>("telefono") ?? item.Value<string>("Telefono"),
+                    Direccion = item.Value<string>("direccion") ?? item.Value<string>("Direccion"),
+                    Activo = item.Value<bool?>("activo") ?? item.Value<bool?>("Activo") ?? true
+                });
+            }
+
+            return lista;
         }
 
         public async Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync()

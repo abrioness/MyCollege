@@ -91,7 +91,14 @@
                             <select asp-for="tblproducto.IdProveedor" asp-items="Model.ListaProveedores" class="form-select">
                                 <option value="">— Seleccione proveedor —</option>
                             </select>
-                            <span class="text-muted small">Catálogo de proveedores relacionado al producto.</span>
+                            @if (Model.ListaProveedores == null || Model.ListaProveedores.Count == 0)
+                            {
+                                <span class="text-warning small">No se cargó el catálogo. Reinicie la API y recargue esta página.</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Catálogo de proveedores relacionado al producto.</span>
+                            }
                         </div>
                             </div>
                 <div class="col-lg-4">
