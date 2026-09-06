@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -29,6 +30,7 @@ namespace WebColegio.Controllers
             var _movInvebtario = await _Iservices.GetMovInventarioAsync();
             var _categoriaProducto = await _Iservices.GetCategoriaProductoAsync();
             var _recintos = await _Iservices.GetRecintosAsync();
+            var _proveedores = await _Iservices.GetProveedoresAsync() ?? new List<CatProveedor>();
             var _usuarioId = await _Iservices.GetUsuarioIdAsync(idUsuario);
 
 
@@ -41,37 +43,24 @@ namespace WebColegio.Controllers
                 query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
 
             var productosFiltrados = query
-                .OrderByDescending(a => a.FechaRegistro)
-                .ThenByDescending(a => a.IdProducto)
+                .OrderByDescending(a => a.IdProducto)
+                .ThenByDescending(a => a.FechaRegistro)
                 .ToList();
 
-            if (_usuarioId.IdRol == 2 || _usuarioId.IdRol == 5)
+            int idRol = _usuarioId?.IdRol ?? 0;
+            bool puedeConsultar = User.IsInRole("Admin") || User.IsInRole("Cajero") || User.IsInRole("UserSystem")
+                || User.IsInRole("Secretaria") || idRol is 1 or 2 or 5 or 6;
+            if (!puedeConsultar)
+                return RedirectToAction("SinPermiso", "Login");
+
+            return View(new ColeccionCatalogos
             {
-
-
-                var viewModel = new ColeccionCatalogos
-                {
-
-                    producto = productosFiltrados.Where(r => r.UsuarioRegistro == idUsuario).ToList(),
-                    categoriasProducto = _categoriaProducto,
-                    movinventario = _movInvebtario,
-                    recintos = _recintos ?? new List<Recintos>(),
-                };
-                return View(viewModel);
-            }
-            if(_usuarioId.IdRol==1)
-            {
-                var viewModel = new ColeccionCatalogos
-                {
-
-                    producto = productosFiltrados,
-                    categoriasProducto = _categoriaProducto,
-                    movinventario = _movInvebtario,
-                    recintos = _recintos ?? new List<Recintos>(),
-                };
-                return View(viewModel);
-            }
-            return RedirectToAction("SinPermiso", "Login");
+                producto = productosFiltrados,
+                categoriasProducto = _categoriaProducto,
+                movinventario = _movInvebtario,
+                recintos = _recintos ?? new List<Recintos>(),
+                proveedores = _proveedores,
+            });
         }
 
         // GET: ProductosController/Details/5
@@ -81,6 +70,7 @@ namespace WebColegio.Controllers
         }
 
         // GET: ProductosController/Create
+        [Authorize(Roles = "Admin,UserSystem")]
         public async Task<ActionResult> Create()
         {
             var productos = await _Iservices.GetProductosAsync();
@@ -101,34 +91,46 @@ namespace WebColegio.Controllers
             var siguienteCodigo = (maxNumero.HasValue ? maxNumero.Value + 1 : 1).ToString("D5");
             var viewmodel = new productoViewModel
             {
-                SiguienteCodigo=siguienteCodigo,
-
-                listCategoriaProducto = (await _Iservices.GetCategoriaProductoAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdCateProducto.ToString(),
-                                       Text = r.NombreCategoria,
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
-                listMovimientoInventario = (await _Iservices.GetMovInventarioAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdMovInventario.ToString(),
-                                       Text = r.MovimientoInventario,
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
-                listRecintos = (await _Iservices.GetRecintosAsync() ?? new List<Recintos>())
-                    .OrderBy(r => r.Recinto)
-                    .Select(r => new SelectListItem
-                    {
-                        Value = r.IdRecinto.ToString(),
-                        Text = r.Recinto,
-                    }).ToList()
+                SiguienteCodigo = siguienteCodigo,
+                tblproducto = new Productos { StockMinimo = InventarioAlertaHelper.StockMinimoPorDefecto }
             };
+            await CargarListasProducto(viewmodel);
             return View(viewmodel);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Buscar(string q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+                return Json(new List<object>());
+
+            var term = q.Trim();
+            var productos = (await _Iservices.GetProductosAsync() ?? new List<Productos>())
+                .Where(p => p.Activo && (
+                    (!string.IsNullOrWhiteSpace(p.CodigoBarra) && p.CodigoBarra.Contains(term, StringComparison.OrdinalIgnoreCase))
+                    || (!string.IsNullOrWhiteSpace(p.NombreProducto) && p.NombreProducto.Contains(term, StringComparison.OrdinalIgnoreCase))))
+                .Take(20)
+                .Select(p => new
+                {
+                    id = p.IdProducto,
+                    codigo = p.CodigoBarra,
+                    nombre = p.NombreProducto,
+                    idCategoria = p.IdCateProducto,
+                    idRecinto = p.IdRecinto,
+                    idMovimiento = p.IdMovInventario,
+                    costo = p.CostoUnitario,
+                    stock = p.StockActual,
+                    stockMinimo = InventarioAlertaHelper.StockMinimoEfectivo(p.StockMinimo),
+                    idProveedor = p.IdProveedor,
+                    label = $"{p.CodigoBarra} — {p.NombreProducto} (stock {p.StockActual})"
+                })
+                .ToList();
+
+            return Json(productos);
+        }
+
         // POST: ProductosController/Create
+        [Authorize(Roles = "Admin,UserSystem")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(productoViewModel producto)
@@ -145,6 +147,7 @@ namespace WebColegio.Controllers
                 producto.tblproducto.Activo = true;
                 producto.tblproducto.UsuarioRegistro = idUsuario;
                 producto.tblproducto.FechaRegistro = DateTime.Now;
+                producto.tblproducto.StockMinimo = InventarioAlertaHelper.NormalizarStockMinimo(producto.tblproducto.StockMinimo);
 
                 if (existeProducto)
                 {
@@ -169,6 +172,10 @@ namespace WebColegio.Controllers
                     existente.StockActual += cantidadEntrante;
                     existente.ImporteInventario = existente.StockActual * existente.CostoUnitario;
                     existente.IdRecinto = producto.tblproducto.IdRecinto;
+                    existente.StockMinimo = InventarioAlertaHelper.NormalizarStockMinimo(
+                        producto.tblproducto.StockMinimo > 0 ? producto.tblproducto.StockMinimo : existente.StockMinimo);
+                    if (producto.tblproducto.IdProveedor.HasValue && producto.tblproducto.IdProveedor.Value > 0)
+                        existente.IdProveedor = producto.tblproducto.IdProveedor;
                     existente.UsuarioActualiza = idUsuario;
                     existente.FechaActualiza = DateTime.Now;
                     var (actualizadoStock, _) = await _Iservices.UpdateProductoAsync(existente);
@@ -187,8 +194,10 @@ namespace WebColegio.Controllers
                             UsuarioRegistro = idUsuario,
                             FechaRegistro = DateTime.Now
                         });
-                        TempData["Mensaje"] = $"Se actualizó el producto. Se sumaron {cantidadEntrante} unidades. Stock actual: {existente.StockActual}.";
-                        TempData["Tipo"] = "success";
+                        TempData["Mensaje"] = InventarioAlertaHelper.EstaBajoMinimo(existente)
+                            ? $"Se sumaron {cantidadEntrante} unidades. Stock actual: {existente.StockActual}. Sigue bajo el mínimo ({InventarioAlertaHelper.StockMinimoEfectivo(existente.StockMinimo)}). Reponer inventario."
+                            : $"Se actualizó el producto. Se sumaron {cantidadEntrante} unidades. Stock actual: {existente.StockActual}.";
+                        TempData["Tipo"] = InventarioAlertaHelper.EstaBajoMinimo(existente) ? "warning" : "success";
                         return RedirectToAction("Create", "Productos");
                     }
                 }
@@ -219,8 +228,10 @@ namespace WebColegio.Controllers
                                 FechaRegistro = DateTime.Now
                             });
                         }
-                        TempData["Mensaje"] = "Se guardó correctamente el producto.";
-                        TempData["Tipo"] = "success";
+                        TempData["Mensaje"] = InventarioAlertaHelper.EstaBajoMinimo(producto.tblproducto)
+                            ? $"Producto guardado. El stock ({producto.tblproducto.StockActual}) está en o bajo el mínimo ({producto.tblproducto.StockMinimo}). Reponer inventario."
+                            : "Se guardó correctamente el producto.";
+                        TempData["Tipo"] = InventarioAlertaHelper.EstaBajoMinimo(producto.tblproducto) ? "warning" : "success";
                         return RedirectToAction("Create", "Productos");
                     }
                 }
@@ -238,6 +249,7 @@ namespace WebColegio.Controllers
         }
         
         // GET: ProductosController/Edit/5
+        [Authorize(Roles = "Admin,UserSystem")]
         public async Task<ActionResult> Edit(int id)
         {
             if (id <= 0)
@@ -247,33 +259,15 @@ namespace WebColegio.Controllers
             if (p == null || p.IdProducto <= 0)
                 return NotFound();
 
-            var viewmodel = new productoViewModel
-            {
-                tblproducto = p,
-                listCategoriaProducto = (await _Iservices.GetCategoriaProductoAsync())
-                    .Select(r => new SelectListItem
-                    {
-                        Value = r.IdCateProducto.ToString(),
-                        Text = r.NombreCategoria,
-                    }).ToList(),
-                listMovimientoInventario = (await _Iservices.GetMovInventarioAsync())
-                    .Select(r => new SelectListItem
-                    {
-                        Value = r.IdMovInventario.ToString(),
-                        Text = r.MovimientoInventario,
-                    }).ToList(),
-                listRecintos = (await _Iservices.GetRecintosAsync() ?? new List<Recintos>())
-                    .OrderBy(r => r.Recinto)
-                    .Select(r => new SelectListItem
-                    {
-                        Value = r.IdRecinto.ToString(),
-                        Text = r.Recinto,
-                    }).ToList()
-            };
+            if (p.StockMinimo <= 0)
+                p.StockMinimo = InventarioAlertaHelper.StockMinimoPorDefecto;
+            var viewmodel = new productoViewModel { tblproducto = p };
+            await CargarListasProducto(viewmodel);
             return View(viewmodel);
         }
 
         // POST: ProductosController/Edit/5
+        [Authorize(Roles = "Admin,UserSystem")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(productoViewModel producto)
@@ -301,6 +295,7 @@ namespace WebColegio.Controllers
                 }
 
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                producto.tblproducto.StockMinimo = InventarioAlertaHelper.NormalizarStockMinimo(producto.tblproducto.StockMinimo);
                 producto.tblproducto.ImporteInventario = producto.tblproducto.StockActual * producto.tblproducto.CostoUnitario;
                 producto.tblproducto.UsuarioActualiza = idUsuario;
                 producto.tblproducto.FechaActualiza = DateTime.Now;
@@ -308,8 +303,10 @@ namespace WebColegio.Controllers
                 var (ok, apiError) = await _Iservices.UpdateProductosAsync(producto.tblproducto);
                 if (ok)
                 {
-                    TempData["Mensaje"] = "Producto actualizado correctamente (incluido colegio / recinto).";
-                    TempData["Tipo"] = "success";
+                    TempData["Mensaje"] = InventarioAlertaHelper.EstaBajoMinimo(producto.tblproducto)
+                        ? $"Producto actualizado. El stock ({producto.tblproducto.StockActual}) está en o bajo el mínimo ({producto.tblproducto.StockMinimo}). Reponer inventario."
+                        : "Producto actualizado correctamente (incluido colegio / recinto).";
+                    TempData["Tipo"] = InventarioAlertaHelper.EstaBajoMinimo(producto.tblproducto) ? "warning" : "success";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -327,7 +324,7 @@ namespace WebColegio.Controllers
             }
         }
 
-        private async Task<ViewResult> RepoblarListasProductoEdit(productoViewModel vm)
+        private async Task CargarListasProducto(productoViewModel vm)
         {
             vm.listCategoriaProducto = (await _Iservices.GetCategoriaProductoAsync())
                 .Select(r => new SelectListItem
@@ -348,6 +345,22 @@ namespace WebColegio.Controllers
                     Value = r.IdRecinto.ToString(),
                     Text = r.Recinto,
                 }).ToList();
+            var proveedores = await _Iservices.GetProveedoresAsync() ?? new List<CatProveedor>();
+            var proveedoresVisibles = proveedores.Where(p => p.Activo).ToList();
+            if (proveedoresVisibles.Count == 0)
+                proveedoresVisibles = proveedores;
+            vm.ListaProveedores = proveedoresVisibles
+                .OrderBy(p => p.NombreProveedor)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.IdProveedor.ToString(),
+                    Text = p.NombreProveedor,
+                }).ToList();
+        }
+
+        private async Task<ViewResult> RepoblarListasProductoEdit(productoViewModel vm)
+        {
+            await CargarListasProducto(vm);
             return View("Edit", vm);
         }
 

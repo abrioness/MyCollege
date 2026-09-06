@@ -59,7 +59,7 @@
                 </div>
                 <div class="header-titulo">
                     <h6>@recinto?.Text</h6>
-                    @{ int periodoActual = DateTime.Now.Year; }
+                    @{ int periodoActual = Model.AnioHojaMatricula ?? DateTime.Now.Year; }
                     <h5>HOJA DE MATRÍCULA DE @modalidad?.Text @periodoActual</h5>
                 </div>
                 <div class="header-logo header-logo-der"></div>
@@ -67,7 +67,7 @@
 
             <hr class="hr-encabezado" />
             @{
-                var today = DateTime.Now;
+                var today = Model.FechaHojaMatricula ?? DateTime.Today;
             }
 
         </div>
@@ -486,9 +486,9 @@
 
 
     <div class="no-print center" style="margin-left:185px;">
-    <button class="print-button " onclick="window.print()">🖨️ Imprimir</button>
-    <a asp-action="Create" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Volver
+    <button class="print-button " onclick="window.print()">Imprimir</button>
+    <a asp-controller="Matriculas" asp-action="Index" class="btn btn-secondary">
+        Volver a matrículas
     </a>
 
 </div>

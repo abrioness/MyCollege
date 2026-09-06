@@ -22,8 +22,9 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> gradosSelectListItem { get; set; } = new();
         public List<SelectListItem> modalidadesSelectListItem { get; set; } = new();
         public List<SelectListItem> discapacidadSelectListItem { get; set; } = new();
-
-
-
+        /// <summary>Fecha de la hoja (matrícula del ciclo), no la fecha de impresión.</summary>
+        public DateTime? FechaHojaMatricula { get; set; }
+        /// <summary>Año lectivo de la hoja (ciclo), no el año de calendario actual.</summary>
+        public int? AnioHojaMatricula { get; set; }
     }
 }

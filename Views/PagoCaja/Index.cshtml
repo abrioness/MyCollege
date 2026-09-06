@@ -1,7 +1,11 @@
 ﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@using WebColegio.Helpers
 @* @{
 	ViewData["Title"] = "Index";
 } *@
+@{
+	var puedeAnularRecibo = User.IsInRole("Admin") || User.IsInRole("UserSystem");
+}
 <script src="~/js/site.js"></script>
 @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
@@ -72,16 +76,22 @@
 							<th>Descripción</th>
 							<th>Colegio</th>
 							<th>Fecha Emisión</th>
+							<th>Cajero</th>
+							<th>Estado</th>
+							@if (puedeAnularRecibo)
+							{
+								<th>Acciones</th>
+							}
 
 						</tr>
 					</thead>
 					<tbody>
 						@foreach (var itemPagoCaja in Model.pagoCajas)
 						{
-							<tr>
+							<tr class="@(itemPagoCaja.Activo ? "" : "table-secondary")">
 
 
-								<td>
+								<td data-order="@itemPagoCaja.IdPagoCaja">
 
 									<a asp-action="Details" asp-controller="PagoCaja" asp-route-id="@itemPagoCaja.IdPagoCaja" class="btn btn-sm btn-info">@itemPagoCaja.NumeroRecibo</a>
 
@@ -104,16 +114,12 @@
 																										: itemPagoCaja.Nombre)
 								</td>
 
-								@foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemPagoCaja.Concepto))
-								{
-									<td>
-
-
-										@(string.IsNullOrWhiteSpace(tipoMovimiento.Concepto)
-																											? " "
-																											: tipoMovimiento.Concepto)
-									</td>
+								@{
+									var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == itemPagoCaja.Concepto);
 								}
+								<td>
+									@(string.IsNullOrWhiteSpace(tipoMovimiento?.Concepto) ? " " : tipoMovimiento.Concepto)
+								</td>
 								<td>
 									C$	@(string.IsNullOrWhiteSpace(itemPagoCaja.Monto.ToString())
 																							? " "
@@ -147,7 +153,10 @@
 							
 							<td>
 
-									@(string.IsNullOrWhiteSpace(itemPagoCaja.Descripcion) ? "Ninguna" : itemPagoCaja.Descripcion)
+									@{
+										var descVisible = EstadoCuentaCalculoHelper.QuitarMarcasInternasDescripcion(itemPagoCaja.Descripcion);
+									}
+									@(string.IsNullOrWhiteSpace(descVisible) ? "Ninguna" : descVisible)
 																
 							</td>
 								@{
@@ -166,6 +175,47 @@
 																: itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy"))
                                 
 							</td>
+							<td>
+								@{
+									var cajero = Model.usuarios?.FirstOrDefault(u => u.IdUsuario == itemPagoCaja.UsuarioRegistro);
+									var nombreCajero = !string.IsNullOrWhiteSpace(cajero?.NombreCompleto)
+										? cajero.NombreCompleto
+										: (cajero?.NombreUsuario ?? "—");
+								}
+								@nombreCajero
+							</td>
+							<td>
+								@if (itemPagoCaja.Activo)
+								{
+									<span class="badge bg-success">Activo</span>
+								}
+								else
+								{
+									<span class="badge bg-secondary">Anulado</span>
+								}
+							</td>
+							@if (puedeAnularRecibo)
+							{
+								<td>
+									@if (itemPagoCaja.Activo)
+									{
+										<form asp-action="AnularRecibo" asp-controller="PagoCaja" method="post" class="d-inline js-anular-recibo"
+											  data-mensaje="¿Anular el recibo @itemPagoCaja.NumeroRecibo?">
+											@Html.AntiForgeryToken()
+											<input type="hidden" name="id" value="@itemPagoCaja.IdPagoCaja" />
+											<input type="hidden" name="fechainicio" value="@Context.Request.Query["fechainicio"]" />
+											<input type="hidden" name="fechafin" value="@Context.Request.Query["fechafin"]" />
+											<button type="submit" class="btn btn-sm btn-outline-danger" title="Anular recibo">
+												<i class="bi bi-x-circle"></i> Anular
+											</button>
+										</form>
+									}
+									else
+									{
+										<span class="text-muted small">—</span>
+									}
+								</td>
+							}
 
 							@* <td>
 							<a asp-action="Edit" asp-controller="Notas" asp-route-id="@itemNotas.IdNota" class="btn btn-sm btn-success"><i class="bi bi-pencil-square"></i></a>
@@ -189,7 +239,27 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+	$(document).on("submit", "form.js-anular-recibo", function (e) {
+		e.preventDefault();
+		var form = this;
+		var mensaje = form.getAttribute("data-mensaje") || "¿Anular el recibo?";
+		if (typeof Swal === "undefined") {
+			if (window.confirm(mensaje)) form.submit();
+			return;
+		}
+		Swal.fire({
+			title: "Atención",
+			text: mensaje,
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonText: "Aceptar",
+			cancelButtonText: "Cancelar"
+		}).then(function (result) {
+			if (result.isConfirmed) form.submit();
+		});
+	});
 	$(document).ready(function () {
 		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
 		var botones = esCajero ? [] : [
@@ -200,12 +270,31 @@
 			}
 		];
 		$('#tablaPagosvarios').DataTable({
-		responsive: false,
-		dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
-		buttons: botones,
+			responsive: false,
+			pageLength: 10,
+			lengthMenu: [[5, 10, 20], [5, 10, 20]],
+			paging: true,
+			order: [[0, 'desc']],
+			dom: esCajero ? 'lfrtip' : 'Blfrtip',
+			buttons: botones,
 			language: {
 				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 			}
 		});
 	});
 </script>
+@if (TempData["Mensaje"] != null)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+			var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+			Swal.fire({
+				title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+				text: mensaje,
+				icon: tipo,
+				confirmButtonText: "Aceptar"
+			});
+		});
+	</script>
+}

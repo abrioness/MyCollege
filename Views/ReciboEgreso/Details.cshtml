@@ -11,89 +11,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recibo de Caja - @Model.Egresos.NumeroRecibo</title>
-    <style>
-        /* CONTENEDOR estilo voucher */
-        .voucher {
-            width: 260px; /* tamaño típico de voucher/ticket */
-            padding: 10px;
-            margin: auto;
-            font-family: "Courier New", monospace;
-            font-size: 13px;
-            border: 1px solid #000;
-        }
-
-        /* Encabezado */
-        .v-header {
-            text-align: center;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 8px;
-        }
-
-            .v-header .title {
-                font-weight: bold;
-                font-size: 14px;
-            }
-
-            .v-header .sub {
-                font-size: 12px;
-            }
-
-        /* Secciones */
-        .v-section {
-            border-bottom: 1px dashed #000;
-            margin-top: 6px;
-            padding-bottom: 6px;
-        }
-
-        /* Filas */
-        .v-row {
-            padding: 2px 0;
-        }
-
-        .center {
-            text-align: center;
-        }
-
-        .bold {
-            font-weight: bold;
-        }
-
-        /* Firma */
-        .firma {
-            margin-top: 15px;
-            text-align: center;
-        }
-
-            .firma .line {
-                border-top: 1px solid #000;
-                width: 80%;
-                margin: auto;
-                margin-bottom: 4px;
-            }
-
-            .firma .txt {
-                font-size: 12px;
-            }
-
-        /* Botón imprimir */
-        .print-button {
-            margin-top: 15px;
-            padding: 6px 12px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        @@media print {
-            .no-print {
-                display: none;
-            }
-            /* Ajustar todo al ancho del voucher */
-            .voucher {
-                border: none;
-                width: 220px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/voucher-tmu220.css" />
 </head>
 <body>
     @{
@@ -101,7 +19,7 @@
         .FirstOrDefault(s => s.Value == Model.Egresos.IdRecinto.ToString());
 
     }
-    <div class="">
+    <div class="voucher">
 
         <!-- Encabezado -->
         <div class="v-header">
@@ -129,13 +47,11 @@
 
         @{
             var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.Egresos.Concepto);
-            var fecha = Model.Egresos.FechaRegistro = DateTime.Now;
-            // var fechaemision=Model.PagosCaja.fe
+            var fecha = Model.Egresos.FechaRegistro;
         }
         <div class="v-section">
-            <div class="v-row"><b>Páguese A:</b> <span>@Model.Egresos.Nombre</span></div>            
-            @* <div class="v-row"><b>Fec Emisión:</b> <span>C$ @Model.PagosCaja.FechaEmision</span></div> *@
-            <div class="v-row"><b>Fecha Pago:</b> <span>C$ @Model.Egresos.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
+            <div class="v-row"><b>Páguese A:</b> <span>@Model.Egresos.Nombre</span></div>
+            <div class="v-row"><b>Fecha Pago:</b> <span>@Model.Egresos.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
             <div class="v-row"><b>En Concepto de:</b> <span>@tipoMovimiento?.Concepto, @Model.Egresos.Descripcion</span></div>
            
             <div class="v-row"><b>La cantidad de:</b> <span>C$ @Model.Egresos.Monto.ToString("N2")</span></div>
@@ -177,10 +93,15 @@
 @if (TempData["Mensaje"] != null)
 {
     <script>
-        Swal.fire({
-            title: '@TempData["Tipo"]',
-            text: '@TempData["Mensaje"]',
-            icon: '@TempData["Tipo"]'
+        document.addEventListener("DOMContentLoaded", function () {
+            var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+            var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+            Swal.fire({
+                title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+                text: mensaje,
+                icon: tipo,
+                confirmButtonText: "Aceptar"
+            });
         });
     </script>
 }

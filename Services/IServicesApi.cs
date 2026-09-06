@@ -38,6 +38,7 @@ namespace WebColegio.Services
         /// <summary>Obtiene el producto por código y categoría (para ingreso a producto existente).</summary>
         Task<Productos?> GetProductoByCodigoYCategoriaAsync(string codigo, int idCategoria);
         Task<List<CategoriaProducto>> GetCategoriaProductoAsync();
+        Task<List<CatProveedor>> GetProveedoresAsync();
         //Task<List<TblInventario>> GetInventarioAsync();
         Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync();
         Task<List<CatTipoRecibo>> GetTipoReciboAsync();
@@ -51,6 +52,17 @@ namespace WebColegio.Services
         Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync();
         Task<List<TblCostoMatricula>> GetCostosMatriculaAsync();
         Task<List<TblRol>> GetRolAsync();
+        Task<(bool Exito, string? DetalleError)> PostCostoMatriculaAsync(TblCostoMatricula costo);
+        Task<(bool Exito, string? DetalleError)> UpdateCostoMatriculaAsync(TblCostoMatricula costo);
+        Task<(bool Exito, string? DetalleError)> PostCostoMensualidadAsync(TblCostoMensualidad costo);
+        Task<(bool Exito, string? DetalleError)> UpdateCostoMensualidadAsync(TblCostoMensualidad costo);
+        Task<(bool Exito, string? DetalleError, CatPeriodo? Creado)> PostPeriodoAsync(CatPeriodo periodo);
+        Task<(bool Exito, string? DetalleError)> UpdatePeriodoAsync(CatPeriodo periodo);
+        Task<List<TblMatricula>> GetMatriculasAsync(int? idPeriodo = null, int? idAlumno = null);
+        Task<TblMatricula?> GetMatriculaByIdAsync(int id);
+        Task<TblMatricula?> GetMatriculaAlumnoPeriodoAsync(int idAlumno, int idPeriodo);
+        Task<(bool Exito, string? DetalleError)> PostMatriculaAsync(TblMatricula matricula);
+        Task<(bool Exito, string? DetalleError)> UpdateMatriculaAsync(TblMatricula matricula);
 
         #endregion
         #region Metodos Post
@@ -89,7 +101,7 @@ namespace WebColegio.Services
         Task<TblReciboCaja> GetReciboCajaById(int id);
         Task<List<TblNotas>> GetNotasAlumnoById(int idAlumno);
         Task<ArqueoDiarioViewModel> GetArqueoById(int id);
-        Task<TblPago> GetPagoById(int id);
+        Task<TblPago?> GetPagoById(int id);
         Task<TblPagoCaja> GetPagoCajaById(int id);
         Task<List<TblNotas>> GetNotasPorUsuario(string usuario);
         Task<TblUsuarios?> GetLogin(string usuario);

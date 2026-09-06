@@ -27,6 +27,7 @@ namespace WebColegio.Controllers
             var _periodo = await _Iservices.GetPeriodoAsync();
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             var _recinto = await _Iservices.GetRecintosAsync();
+            var _usuarios = await _Iservices.GetUsuariosAsync() ?? new List<TblUsuarios>();
 
             IQueryable<TblEgreso> query = _egresos.AsQueryable();
 
@@ -46,8 +47,8 @@ namespace WebColegio.Controllers
                 egresos = egresosFiltrados,               
                 tipoMovimiento = _tipoMovimiento,
                 periodo = _periodo,
-                recintos=_recinto
-                
+                recintos = _recinto,
+                usuarios = _usuarios
             };
             if (VieModelEgresado == null)
             {

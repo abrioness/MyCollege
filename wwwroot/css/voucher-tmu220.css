@@ -1,0 +1,111 @@
+/* Epson TM-U220IIA — rollo 76 mm, área imprimible 63.5 mm (40 columnas) */
+@page {
+    size: 76mm 200mm;
+    margin: 0;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+}
+
+.voucher {
+    width: 63.5mm;
+    max-width: 63.5mm;
+    box-sizing: border-box;
+    padding: 1.5mm 2mm;
+    margin: 8px auto;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    border: 1px solid #000;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+}
+
+.v-header {
+    text-align: center;
+    border-bottom: 1px dashed #000;
+    padding-bottom: 2mm;
+}
+
+.v-header .title {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.v-header .sub {
+    font-size: 12px;
+}
+
+.v-section {
+    border-bottom: 1px dashed #000;
+    margin-top: 1.5mm;
+    padding-bottom: 1.5mm;
+}
+
+.v-row {
+    padding: 0.4mm 0;
+}
+
+.center {
+    text-align: center;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.firma {
+    margin-top: 4mm;
+    text-align: center;
+}
+
+.firma .line {
+    border-top: 1px solid #000;
+    width: 80%;
+    margin: 0 auto 1mm auto;
+}
+
+.firma .txt {
+    font-size: 12px;
+}
+
+.fecha {
+    margin-top: 2mm;
+    text-align: center;
+}
+
+.print-button {
+    margin-top: 12px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    html, body {
+        width: 76mm;
+        margin: 0;
+        padding: 0;
+    }
+
+    .voucher {
+        border: none;
+        width: 63.5mm;
+        max-width: 63.5mm;
+        margin: 0 0 0 4mm;
+        padding: 1mm 1.5mm;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 13px;
+        -webkit-font-smoothing: none;
+        font-smooth: never;
+    }
+}

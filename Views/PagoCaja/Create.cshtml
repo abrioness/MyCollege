@@ -34,14 +34,9 @@
                             <label asp-for="PagosCaja.Nombre">Recibi De:</label>
                             <input type="text" asp-for="PagosCaja.Nombre" id="AlumnoNombre" class="form-control" placeholder="Buscar Alumno..." />
                             <span asp-validation-for="PagosCaja.Nombre" class="text-danger"></span>
-                            @* <input type="hidden" id="IdAlumno" name="Pago.IdAlumno" /> *@
+                            <input type="hidden" id="IdAlumno" name="idAlumno" value="" />
                         </div>
-                        <div class="form-group">
-                            <label asp-for="PagosCaja.Monto" class="control-label">La Cantidad de (C$):</label>
-                            <input asp-for="PagosCaja.Monto" id="monto" class="form-control" step="0.01" min="0" />
-                            <small class="text-muted" id="montoAyuda">Se calcula automáticamente al agregar productos. Puede editarlo si el recibo no incluye inventario.</small>
-                            <span asp-validation-for="PagosCaja.Monto" class="text-danger"></span>
-                        </div>
+                        
                             <div class="form-group">
                                 <label asp-for="PagosCaja.IdGrado" class="control-label">Nivel</label>
                                 <select asp-for="PagosCaja.IdGrado" asp-items="Model.gradosSelectListItem" class="form-select" required>
@@ -98,10 +93,18 @@
                     </div>
                         <div class="form-group">
                             <label asp-for="PagosCaja.Concepto" class="control-label">En Concepto:</label>
-                            <select asp-for="PagosCaja.Concepto" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
+                            <select asp-for="PagosCaja.Concepto" id="conceptoCaja" asp-items="Model.tipoMovimientoSelectListItem" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                             </select>
                             <span asp-validation-for="PagosCaja.Concepto" class="text-danger"></span>
+                        </div>
+                        <div class="form-group" id="grupoSemestreRifa" style="display:none;">
+                            <label class="control-label">Semestre de rifa</label>
+                            <select name="semestreRifa" id="semestreRifa" class="form-select">
+                                <option value="1">Primer semestre (enero–junio)</option>
+                                <option value="2">Segundo semestre (julio–diciembre)</option>
+                            </select>
+                            <small class="text-muted">Si ambas están pendientes, este pago cancela siempre el primer semestre. El siguiente recibo cancela el segundo.</small>
                         </div>
                         <div class="form-group">
                             <label asp-for="PagosCaja.IdRecinto" class="control-label">Centro de Estudio</label>
@@ -111,11 +114,7 @@
                             <span asp-validation-for="PagosCaja.IdRecinto" class="text-danger"></span>
                         </div>
                         
-                        <div class="form-group">
-                            <label asp-for="PagosCaja.Descripcion" class="control-label">Observaciones</label>
-                            <textarea asp-for="PagosCaja.Descripcion" class="form-control"></textarea>
-
-                        </div>
+                        
 
                         <!-- Productos del recibo: afectar inventario -->
                         <div class="form-group mt-3">
@@ -124,6 +123,12 @@
                             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalProductos">
                                 <i class="bi bi-plus-circle"></i> Agregar producto
                             </button>
+                            <div class="form-group">
+                                <label asp-for="PagosCaja.Monto" class="control-label">La Cantidad de (C$):</label>
+                                <input asp-for="PagosCaja.Monto" id="monto" class="form-control" step="0.01" min="0" />
+                                <small class="text-muted" id="montoAyuda">Se calcula automáticamente al agregar productos. Puede editarlo si el recibo no incluye inventario.</small>
+                                <span asp-validation-for="PagosCaja.Monto" class="text-danger"></span>
+                            </div>
                             <div id="contenedorDetalle" class="mt-2" style="display: none;">
                                 <table class="table table-sm table-bordered" id="tablaDetalleItems">
                                     <thead>
@@ -146,6 +151,11 @@
                                     </tfoot>
                                 </table>
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="PagosCaja.Descripcion" class="control-label">Observaciones</label>
+                            <textarea asp-for="PagosCaja.Descripcion" class="form-control"></textarea>
+
                         </div>
                           
                 </div>
@@ -192,6 +202,7 @@
                             </div>
                         </div>
                     </div>
+                   
                     <!-- Modal meses (comentado) -->
 					@*  <div class="modal fade" id="modalMeses" tabindex="-1" aria-labelledby="modalMesesLabel" aria-hidden="true">
                         <div class="modal-dialog">
@@ -274,12 +285,8 @@
 
         $alumnoNombre.autocomplete({
                    source: function(request, response) {
-                       // Construir URL: si hay baseUrl configurada, usarla; si no, usar URL relativa
-                       const apiBaseUrl = window.apiConfig?.baseUrl || '';
-                       const apiUrl = apiBaseUrl ? `${apiBaseUrl}api/Alumnos/buscar` : 'api/Alumnos/buscar';
-
                        $.ajax({
-                           url: apiUrl,
+                           url: '@Url.Action("Buscar", "Alumnos")',
                            data: { q: request.term },
                            success: function(data) {
                                response($.map(data, function(item) {
@@ -296,10 +303,32 @@
                        });
                    },
                    minLength: 2,
-                   // select: function(event, ui) {
-                   //     $idAlumno.val(ui.item.id);
-                   // }
+                   select: function(event, ui) {
+                       $('#IdAlumno').val(ui.item.id);
+                       $.getJSON('@Url.Action("ObtenerDatosAlumnoMatricula", "Pagos")', { idAlumno: ui.item.id })
+                           .done(function(data) {
+                               if (!data || !data.ok) return;
+                               if (data.idGrado) $('#PagosCaja_IdGrado').val(String(data.idGrado));
+                               if (data.idTurno) $('#PagosCaja_IdTurno').val(String(data.idTurno));
+                               if (data.idRecinto) $('#PagosCaja_IdRecinto').val(String(data.idRecinto));
+                               if (data.idPeriodo) $('#PagosCaja_IdPeriodo').val(String(data.idPeriodo));
+                           });
+                   }
                });
+
+                 function esConceptoRifa() {
+                     var txt = ($('#conceptoCaja option:selected').text() || '').toLowerCase();
+                     return txt.indexOf('rifa') >= 0;
+                 }
+                 function toggleSemestreRifa() {
+                     var mostrar = esConceptoRifa();
+                     $('#grupoSemestreRifa').toggle(mostrar);
+                     if (mostrar && !$('#semestreRifa').val()) {
+                         $('#semestreRifa').val(new Date().getMonth() <= 5 ? '1' : '2');
+                     }
+                 }
+                 $('#conceptoCaja').on('change', toggleSemestreRifa);
+                 toggleSemestreRifa();
                })();
 
         // --- Productos / inventario en recibo ---

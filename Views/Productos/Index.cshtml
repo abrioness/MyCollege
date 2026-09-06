@@ -1,4 +1,5 @@
 @model WebColegio.Models.ViewModel.ColeccionCatalogos
+@using WebColegio.Helpers
 @* @{
 	ViewData["Title"] = "Index";
 } *@
@@ -11,6 +12,24 @@
 			<h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Reporte de Inventario</h5>
 		</div>
 		<div class="card-body">
+			@{
+				var productosBajoMinimo = (Model.producto ?? new List<WebColegio.Models.Productos>())
+					.Where(p => p.Activo && InventarioAlertaHelper.EstaBajoMinimo(p))
+					.ToList();
+			}
+			@if (productosBajoMinimo.Count > 0)
+			{
+				<div class="alert alert-warning">
+					<strong>Inventario bajo.</strong>
+					Hay @productosBajoMinimo.Count producto(s) en o bajo el stock mínimo. Reponer existencias.
+					<ul class="mb-0 mt-2">
+						@foreach (var p in productosBajoMinimo.Take(8))
+						{
+							<li>@InventarioAlertaHelper.TextoAlerta(p)</li>
+						}
+					</ul>
+				</div>
+			}
 			<div class="table-responsive" style="font-size:12px">
 				<div class="col-4 text-center">
 					@using (Html.BeginForm("Index", "Productos", FormMethod.Get))
@@ -53,18 +72,15 @@
 				@* class="display responsive nowrap" style="width:100%"> *@
 				<thead>
 					<tr>
-								@if (User.IsInRole("Admin") || User.IsInRole("Cajero"))
-						{
-							@* <th>Acciones</th> *@
-						
 						<th>Código</th>
-						}
 						<th>Nombre Producto</th> 
 						<th>Descripción</th>
 								<th>Colegio</th>
 						<th>Existencia Inicial</th>
 						<th>Tipo de Movimiento</th>
 						<th>Stock Actual</th>
+						<th>Stock mínimo</th>
+						<th>Proveedor</th>
 						<th>Costo Unitario</th>	
 						<th>Categoría</th>
 						<th>Importe de Inventario</th>
@@ -74,21 +90,22 @@
 				<tbody>
 					@foreach (var itemProducto in Model.producto)
 					{
-						<tr>
-									@if (User.IsInRole("Admin") || User.IsInRole("Cajero"))
-							 {
-										@*<td>
-									<a asp-action="Edit" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-outline-warning" title="Editar">
-										<i class="bi bi-pencil"></i>
-									</a>
-								</td> *@
-							
+						var bajoMinimo = InventarioAlertaHelper.EstaBajoMinimo(itemProducto);
+						var minimo = InventarioAlertaHelper.StockMinimoEfectivo(itemProducto.StockMinimo);
+						var proveedor = Model.proveedores?.FirstOrDefault(p => p.IdProveedor == itemProducto.IdProveedor);
+						<tr class="@(bajoMinimo ? "table-warning" : "")">
 							<td>
-							<a asp-action="Edit" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-info" title="Editar">
-								@itemProducto.CodigoBarra
-							</a>
+								@if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+								{
+									<a asp-action="Edit" asp-route-id="@itemProducto.IdProducto" class="btn btn-sm btn-info" title="Editar">
+										@itemProducto.CodigoBarra
+									</a>
+								}
+								else
+								{
+									@itemProducto.CodigoBarra
+								}
 							</td>
-							}
 							
 									@*<td>
 
@@ -129,11 +146,14 @@
 							</td>
 							
 							<td>
-
-								
-									@itemProducto.StockActual
+								@itemProducto.StockActual
+								@if (bajoMinimo)
+								{
+									<span class="badge bg-warning text-dark ms-1">Bajo mínimo</span>
+								}
 							</td>
-							
+							<td>@minimo</td>
+							<td>@(string.IsNullOrWhiteSpace(proveedor?.NombreProveedor) ? "—" : proveedor.NombreProveedor)</td>
 							<td>
 									C$ @itemProducto.CostoUnitario
 								
@@ -150,7 +170,7 @@
 							
 							<td>
 
-								C$ @((@itemProducto.StockActual + itemProducto.ExistenciaInicial) * @itemProducto.CostoUnitario)
+								C$ @((itemProducto.StockActual * itemProducto.CostoUnitario).ToString("N2"))
 
 							</td>
 							<td>
@@ -184,9 +204,14 @@
 			className: 'btn btn-success'
 			}
 		];
+		var colFecha = $('#tablaProducto thead th').length - 1;
 		$('#tablaProducto').DataTable({
 		responsive: false,
-		dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
+		order: [[colFecha, 'desc']],
+		pageLength: 10,
+		lengthMenu: [[5, 10, 20], [5, 10, 20]],
+		paging: true,
+		dom: esCajero ? 'lfrtip' : 'Blfrtip',
 		buttons: botones,
 			language: {
 				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
@@ -206,6 +231,20 @@
 				title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
 				text: mensaje,
 				icon: tipo,
+				confirmButtonText: "Aceptar"
+			});
+		});
+	</script>
+}
+else if (productosBajoMinimo.Count > 0)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			if (typeof Swal === "undefined") return;
+			Swal.fire({
+				title: "Atención",
+				text: "Hay @productosBajoMinimo.Count producto(s) en o bajo el stock mínimo. Actualice el inventario.",
+				icon: "warning",
 				confirmButtonText: "Aceptar"
 			});
 		});

@@ -1,55 +1,40 @@
-﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
- @{
+﻿@model WebColegio.Models.ViewModel.EstadoCuentaViewModel
+@{
 	ViewData["Title"] = "Estado De Cuenta Cajera";
-} 
-
+}
 
 <div class="container-fluid p-1" style="margin:2px;">
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i>  Estado Cuenta del Estudiante</h5>
+			<h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Estado Cuenta del Estudiante</h5>
 		</div>
-
 		<div class="card-body">
 			<div class="table-responsive" style="font-size: 12px;">
-			@* <div class="col-12 text-end">
-
-				<a asp-action="Create" class="btn btn-primary">
-					<i class="bi bi-plus-circle"></i> Agregar Pago
-				</a>
-			</div><br /> *@
 				<br />
 				<div class="col-12 text-end">
-					<div class="btn-goup">
+					<div class="btn-group">
 						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar Pagos</button>
-
-
 						<ul class="dropdown-menu">
 							<li>
-								<a class="dropdown-item" asp-action="Create" asp-controller="Pagos">
-									Agregar Pago de Mensualidad
-								</a>
+								<a class="dropdown-item" asp-action="Create" asp-controller="Pagos">Agregar Pago de Mensualidad</a>
 							</li>
 							<li>
-								<a class="dropdown-item" asp-action="Create" asp-controller="PagoCaja">
-									Agregar Pagos Varios
-								</a>
+								<a class="dropdown-item" asp-action="Create" asp-controller="PagoCaja">Agregar Pagos Varios</a>
 							</li>
-							
-							@* <li><hr class="dropdown-divider"></li>
-						<li><a class="dropdown-item" href="#">Otra opción</a></li> *@
 						</ul>
 					</div>
-
 				</div>
 				<br />
-					<table id="estadocuenta" class="table table-bordered table-sm">
-					@* class="display responsive nowrap" style="width:100%"> *@
+				<table id="estadocuenta" class="table table-bordered table-sm">
 					<thead>
 						<tr>
 							<th>Alumno</th>
 							<th>Grado</th>
+							<th>Año lectivo</th>
 							<th>Matrícula</th>
+							<th>Rifa 1</th>
+							<th>Rifa 2</th>
+							<th>Promoción</th>
 							<th>Enero</th>
 							<th>Febrero</th>
 							<th>Marzo</th>
@@ -62,92 +47,113 @@
 							<th>Octubre</th>
 							<th>Noviembre</th>
 							<th>Diciembre</th>
-
 						</tr>
 					</thead>
 					<tbody>
-						@{
-							// Filtrar solo mensualidades y agrupar por IdAlumno e IdPeriodo para evitar duplicados
-							var mensualidades = Model.pagos.Where(p => p.IdTipoMovimiento == 1).ToList();
-							var gruposUnicos = mensualidades
-								.GroupBy(p => new { p.IdAlumno, p.IdPeriodo })
-								.Select(g => g.First())
-								.ToList();
-						}
-						@foreach (var pagoGrupo in gruposUnicos)
+						@foreach (var fila in Model.Filas ?? Enumerable.Empty<WebColegio.Models.ViewModel.EstadoCuentaFilaAlumno>())
 						{
+							if (fila.DatosIncompletos)
+								continue;
 							<tr>
-								@{
-									var alumno = Model.alumno.FirstOrDefault(al => al.IdAlumno == pagoGrupo.IdAlumno);
-								}
-								<td>
-									<span class="btn btn-sm btn-info">
-										@alumno?.Nombre @alumno?.Apellido
-									</span>
+								<td data-order="@(fila.IdPagoParaEnlace ?? 0)">
+									<span class="btn btn-sm btn-info">@fila.NombreCompleto</span>
 								</td>
-
-								@* Buscar grado y periodo asociados si aplica *@
-								@{
-									var grado = Model.grados.FirstOrDefault(g => g.IdGrado == alumno.IdGrado);
-									
-								}
-
-								<td>@(grado?.NombreGrado ?? "-")</td>
-								@{
-
-									var periodo = Model.periodo.FirstOrDefault(p => p.IdPeriodo == pagoGrupo.IdPeriodo);
-
-								}
-								<td>@(periodo?.Periodo.ToString() ?? "-")</td>
-
-								@* Mostrar columnas de los 12 meses *@
-								@for (int mes = 1; mes <= 12; mes++)
-								{
-									var pagoMes = mensualidades
-									.FirstOrDefault(p => p.IdAlumno == alumno.IdAlumno && p.IdMes == mes && p.IdPeriodo == pagoGrupo.IdPeriodo);
-									@if (pagoMes != null)
+								<td>@(fila.NombreGrado ?? "-")</td>
+								<td>@(fila.AnioPeriodo > 0 ? fila.AnioPeriodo.ToString() : "—")</td>
+								<td class="text-center">
+									@if (fila.MatriculaReferencia <= 0.01m)
 									{
-										<td>
-											<span class="badge bg-success">Pagado</span>
-										</td>
+										<span class="text-muted">—</span>
 									}
-									
+									else if (fila.MatriculaCancelada)
+									{
+										<span class="badge bg-success">Pagado</span>
+									}
+									else if (fila.TieneAbonoMatricula)
+									{
+										<span class="badge bg-warning text-dark">Abono</span>
+									}
 									else
 									{
-										<td><span class="badge bg-warning text-dark">Pendiente</span>
-										</td>
+										<span class="badge bg-warning text-dark">Pendiente</span>
 									}
-									
+								</td>
+								<td class="text-center">
+									@if (fila.RifaSemestre1Pagada)
+									{
+										<span class="badge bg-success">Pagado</span>
+									}
+									else
+									{
+										<span class="badge bg-warning text-dark">Pendiente</span>
+									}
+								</td>
+								<td class="text-center">
+									@if (fila.RifaSemestre2Pagada)
+									{
+										<span class="badge bg-success">Pagado</span>
+									}
+									else
+									{
+										<span class="badge bg-warning text-dark">Pendiente</span>
+									}
+								</td>
+								<td class="text-center">
+									@if (!fila.AplicaPromocion)
+									{
+										<span class="text-muted" title="Solo 3er nivel, 6.° y 11.°">—</span>
+									}
+									else if (fila.PromocionPagada)
+									{
+										<span class="badge bg-success">Pagado</span>
+									}
+									else
+									{
+										<span class="badge bg-warning text-dark">Pendiente</span>
+									}
+								</td>
+								@foreach (var cel in fila.Meses ?? Array.Empty<WebColegio.Models.ViewModel.EstadoCuentaMesCelda>())
+								{
+									<td class="text-center">
+										@if (cel.NoCorresponde)
+										{
+											<span class="text-muted">—</span>
+										}
+										else if (cel.Cancelado)
+										{
+											<span class="badge bg-success">Pagado</span>
+										}
+										else if (cel.TieneAbonoParcial)
+										{
+											<span class="badge bg-warning text-dark">Abono</span>
+										}
+										else
+										{
+											<span class="badge bg-warning text-dark">Pendiente</span>
+										}
+									</td>
 								}
 							</tr>
 						}
 					</tbody>
-
 				</table>
 			</div>
 		</div>
-		</div>
 	</div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
 	$(document).ready(function () {
-			$('#estadocuenta').DataTable({
+		$('#estadocuenta').DataTable({
 			responsive: false,
-			dom: 'Bfrtip', // Botones + filtro + tabla
-			buttons: [
-				{
-					extend: 'excelHtml5',
-					text: 'Exportar a Excel',
-					className: 'btn btn-success'
-				}
-			],
+			pageLength: 10,
+			lengthMenu: [[5, 10, 20], [5, 10, 20]],
+			paging: true,
+			order: [[0, 'desc']],
+			dom: 'lfrtip',
 			language: {
 				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 			}

@@ -18,6 +18,23 @@
         <div class="card-body">
         <form asp-action="Create" method="post" enctype="multipart/form-data" >
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" id="siguienteNumero" value="@Model.SiguienteCodigo" />
+            <div class="mb-3 p-3 border rounded bg-light">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="modoInventario" id="modoNuevo" value="nuevo" checked />
+                    <label class="form-check-label" for="modoNuevo">Producto nuevo (se genera el siguiente código)</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="modoInventario" id="modoExistente" value="existente" />
+                    <label class="form-check-label" for="modoExistente">Ingreso a un producto que ya existe</label>
+                </div>
+                <div id="panelBuscar" class="mt-3" style="display:none;">
+                    <label class="form-label">Buscar producto existente</label>
+                    <input type="text" id="buscarProducto" class="form-control" placeholder="Escriba código o nombre (ej. saca puntas o SACPUN-00010)" autocomplete="off" />
+                    <small class="text-muted">Al elegirlo se carga el código. Solo indique la cantidad que ingresa.</small>
+                    <div id="avisoExistente" class="alert alert-info mt-2 mb-0 py-2" style="display:none;"></div>
+                </div>
+            </div>
            <div class="row">
                <div class="col-lg-4">
                    @*          <div class="form-group">
@@ -69,6 +86,13 @@
                             </select>
                             <span class="text-muted small">Ubicación del inventario (opcional).</span>
                         </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.IdProveedor" class="control-label">Proveedor</label>
+                            <select asp-for="tblproducto.IdProveedor" asp-items="Model.ListaProveedores" class="form-select">
+                                <option value="">— Seleccione proveedor —</option>
+                            </select>
+                            <span class="text-muted small">Catálogo de proveedores relacionado al producto.</span>
+                        </div>
                             </div>
                 <div class="col-lg-4">
 
@@ -84,6 +108,12 @@
                             <span class="text-muted small">En producto nuevo se iguala a la existencia inicial. En ingreso a existente no se usa.</span>
                             <span asp-validation-for="tblproducto.StockActual" class="text-danger"></span>
             </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.StockMinimo" class="control-label">Stock mínimo</label>
+                            <input asp-for="tblproducto.StockMinimo" id="stockMinimo" class="form-control" value="@(Model.tblproducto?.StockMinimo > 0 ? Model.tblproducto.StockMinimo : 10)" />
+                            <span class="text-muted small">Si el stock actual llega a este valor (mínimo 10) se alerta para reponer inventario.</span>
+                            <span asp-validation-for="tblproducto.StockMinimo" class="text-danger"></span>
+                        </div>
                         <div class="form-group">
                             <label asp-for="tblproducto.ImporteInventario" class="control-label">Importe de Inventario</label>
                             <input asp-for="tblproducto.ImporteInventario" id="importeInventario" class="form-control" readonly />
@@ -133,61 +163,136 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <script>
-        document.getElementById("NombreProducto").addEventListener("change", function () {
-            const nombre = this.value.trim().toUpperCase();
-           
-            if (nombre.length === 0) {
-                document.getElementById("CodigoProducto").value = "";
+        function esModoExistente() {
+            return $('#modoExistente').is(':checked');
+        }
+
+        function generarCodigoNuevo() {
+            if (esModoExistente()) return;
+            const nombre = ($('#NombreProducto').val() || '').trim().toUpperCase();
+            const numero = $('#siguienteNumero').val() || '';
+            if (!nombre) {
+                $('#CodigoProducto').val(numero);
                 return;
             }
+            const sinAcentos = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const palabras = sinAcentos.split(' ').filter(function (p) { return p.length > 0; });
+            let codigoBase = palabras.length >= 2
+                ? palabras[0].substring(0, 3) + palabras[1].substring(0, 3)
+                : palabras[0].substring(0, 6);
+            $('#CodigoProducto').val(codigoBase.toUpperCase() + '-' + numero);
+        }
 
-            // Quitar tildes
-            const sinAcentos = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-            // Dividir por espacios
-            const palabras = sinAcentos.split(" ").filter(p => p.length > 0);
-
-            let codigoBase = "";
-
-            // Si tiene 2 o más palabras → tomar 3 primeras letras de la 1ra + 3 de la 2da
-            if (palabras.length >= 2) {
-                codigoBase = palabras[0].substring(0, 3) + palabras[1].substring(0, 3);
+        function aplicarModo() {
+            const existente = esModoExistente();
+            $('#panelBuscar').toggle(existente);
+            $('#CodigoProducto').prop('readonly', existente);
+            $('#NombreProducto').prop('readonly', existente);
+            $('#tblproducto_IdCateProducto').prop('disabled', existente);
+            $('#stockActual').prop('readonly', existente);
+            if (existente) {
+                $('#existenciaInicial').val('');
+                $('#avisoExistente').hide();
+            } else {
+                $('#buscarProducto').val('');
+                $('#avisoExistente').hide().text('');
+                $('#CodigoProducto').val($('#siguienteNumero').val());
+                $('#NombreProducto').val('').prop('readonly', false);
+                $('#tblproducto_IdCateProducto').prop('disabled', false);
+                $('#stockActual').val('0').prop('readonly', false);
+                $('#stockMinimo').val('10');
+                $('#existenciaInicial').val('0');
+                $('#costoUnitario').val('0');
+                $('#importeInventario').val('0.00');
             }
-            // Si solo hay una palabra → tomar 6 primeras letras
-            else {
-                codigoBase = palabras[0].substring(0, 6);
-            }
-
-            codigoBase = codigoBase.toUpperCase();
-
-            // Agregar número (esto puedes cambiarlo por el correlativo real)
-            const numero = document.getElementById("CodigoProducto").value;
-
-            document.getElementById("CodigoProducto").value = `${codigoBase}-${numero}`;
-            
-        
-        });
+        }
 
         function calcularImporteInventario() {
-            var existenciaInicial = parseFloat($("#existenciaInicial").val()) || 0;
-            var stockActual = parseFloat($("#stockActual").val()) || 0;
-            var costoUnitario = parseFloat($("#costoUnitario").val()) || 0;
-            // Para producto nuevo: importe = existencia * costo. Si solo llenan existencia, usarla como base.
-            var cantidad = stockActual > 0 ? stockActual : existenciaInicial;
-            var importeInventario = cantidad * costoUnitario;
-            $("#importeInventario").val(importeInventario.toFixed(2));
+            var existenciaInicial = parseFloat($('#existenciaInicial').val()) || 0;
+            var stockActual = parseFloat($('#stockActual').val()) || 0;
+            var costoUnitario = parseFloat($('#costoUnitario').val()) || 0;
+            var cantidad = esModoExistente()
+                ? existenciaInicial
+                : (stockActual > 0 ? stockActual : existenciaInicial);
+            $('#importeInventario').val((cantidad * costoUnitario).toFixed(2));
         }
-        $(document).ready(function() {
-            $("#costoUnitario, #stockActual, #existenciaInicial").on("input", calcularImporteInventario);
-            // Si cambian existencia inicial y stock está vacío, sugerir mismo valor para producto nuevo
-            $("#existenciaInicial").on("change", function() {
-                var ex = $(this).val();
-                if (ex && !$("#stockActual").val()) $("#stockActual").val(ex);
+
+        $(document).ready(function () {
+            $('#NombreProducto').on('change', generarCodigoNuevo);
+            $('input[name="modoInventario"]').on('change', aplicarModo);
+            $('#costoUnitario, #stockActual, #existenciaInicial').on('input', calcularImporteInventario);
+            $('#existenciaInicial').on('change', function () {
+                if (!esModoExistente()) {
+                    var ex = $(this).val();
+                    if (ex) $('#stockActual').val(ex);
+                }
                 calcularImporteInventario();
             });
+
+            $('#buscarProducto').autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: '@Url.Action("Buscar", "Productos")',
+                        data: { q: request.term },
+                        success: function (data) {
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item.label,
+                                    value: item.label,
+                                    codigo: item.codigo,
+                                    nombre: item.nombre,
+                                    idCategoria: item.idCategoria,
+                                    idRecinto: item.idRecinto,
+                                    idMovimiento: item.idMovimiento,
+                                    idProveedor: item.idProveedor,
+                                    costo: item.costo,
+                                    stock: item.stock,
+                                    stockMinimo: item.stockMinimo
+                                };
+                            }));
+                        },
+                        error: function () { response([]); }
+                    });
+                },
+                minLength: 2,
+                select: function (event, ui) {
+                    $('#CodigoProducto').val(ui.item.codigo);
+                    $('#NombreProducto').val(ui.item.nombre);
+                    if (ui.item.idCategoria)
+                        $('#tblproducto_IdCateProducto').val(String(ui.item.idCategoria));
+                    if (ui.item.idRecinto)
+                        $('#tblproducto_IdRecinto').val(String(ui.item.idRecinto));
+                    if (ui.item.idMovimiento)
+                        $('#tblproducto_IdMovInventario').val(String(ui.item.idMovimiento));
+                    $('#costoUnitario').val(ui.item.costo);
+                    $('#stockActual').val(ui.item.stock);
+                    if (ui.item.stockMinimo)
+                        $('#stockMinimo').val(ui.item.stockMinimo);
+                    if (ui.item.idProveedor)
+                        $('#tblproducto_IdProveedor').val(String(ui.item.idProveedor));
+                    $('#existenciaInicial').val('').focus();
+                    var aviso = 'Producto encontrado. Stock actual: ' + ui.item.stock +
+                        '. Escriba solo la cantidad que ingresa (se sumará). No cambie el código.';
+                    if (ui.item.stockMinimo && ui.item.stock <= ui.item.stockMinimo)
+                        aviso += ' Atención: está en o bajo el stock mínimo (' + ui.item.stockMinimo + ').';
+                    $('#avisoExistente').show().text(aviso);
+                    calcularImporteInventario();
+                }
+            });
+
+            $('#btnLimpiar').on('click', function () {
+                setTimeout(function () {
+                    $('#modoNuevo').prop('checked', true);
+                    aplicarModo();
+                }, 0);
+            });
+
+            $('form').on('submit', function () {
+                $('#tblproducto_IdCateProducto').prop('disabled', false);
+            });
+
             calcularImporteInventario();
         });
-
     </script>
     
   

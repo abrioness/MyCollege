@@ -4,6 +4,7 @@
 	ViewData["Title"] = "Estado de Cuenta";
 	var colsMes = 12;
 	var cultMes = CultureInfo.GetCultureInfo("es-NI");
+	string Exp(decimal v) => v.ToString("0.##", CultureInfo.InvariantCulture);
 }
 
 <div class="container-fluid p-1" style="padding:2px;">
@@ -44,6 +45,9 @@
 							<th class="text-center" title="Muestra hasta qué mes del año lectivo tiene pagada la mensualidad. Insolvente si debe meses anteriores al mes calendario actual.">Estado pago</th>
 							<th class="text-end">Tarifa mensual</th>
 							<th class="text-end" title="Tarifa de matrícula del catálogo (recinto, modalidad y período lectivo actual)">Matrícula</th>
+							<th class="text-center">Rifa 1</th>
+							<th class="text-center">Rifa 2</th>
+							<th class="text-center">Promoción</th>
 							@for (int m = 1; m <= colsMes; m++)
 							{
 								<th class="text-end" style="min-width:72px" title="@cultMes.DateTimeFormat.GetMonthName(m)">@cultMes.DateTimeFormat.GetAbbreviatedMonthName(m)</th>
@@ -65,6 +69,9 @@
 									<td class="text-center">—</td>
 									<td>—</td>
 									<td>—</td>
+									<td>—</td>
+									<td>—</td>
+									<td>—</td>
 									@for (int m = 0; m < colsMes; m++)
 									{
 										<td>—</td>
@@ -76,7 +83,7 @@
 							else
 							{
 							<tr>
-								<td>
+								<td data-order="@(fila.IdPagoParaEnlace ?? 0)">
 									@if (fila.IdPagoParaEnlace.HasValue)
 									{
 										<a class="btn btn-sm btn-info" asp-action="Edit" asp-controller="Pagos" asp-route-id="@fila.IdPagoParaEnlace.Value">@fila.NombreCompleto</a>
@@ -117,7 +124,7 @@
 										<span class="estado-pago-texto text-danger fw-semibold">Endeudado</span>
 									}
 								</td>
-								<td class="text-end">
+								<td class="text-end" data-export="@(fila.SinTarifaMensualidad ? "" : Exp(fila.MensualidadReferencia))">
 									@if (fila.SinTarifaMensualidad)
 									{
 										<span class="badge bg-secondary">Sin tarifa en catálogo</span>
@@ -127,41 +134,68 @@
 										<text>C$ @fila.MensualidadReferencia.ToString("N2")</text>
 									}
 								</td>
-								<td class="text-end @(fila.MatriculaCancelada ? "table-success" : "")">
+								<td class="text-end @(fila.MatriculaCancelada ? "table-success" : "")" data-export="@(fila.MatriculaReferencia <= 0 ? "" : Exp(fila.MatriculaCancelada ? 0 : fila.SaldoMatricula))" title="@(fila.MatriculaReferencia > 0 ? $"Tarifa C$ {fila.MatriculaReferencia:N2} · Abonado C$ {fila.TotalPagadoMatricula:N2}" : "")">
 									@if (fila.MatriculaReferencia <= 0)
 									{
-										<span class="badge bg-secondary">Sin tarifa en catálogo</span>
+										<span class="text-muted">—</span>
 									}
 									else
 									{
-										<text>C$ @fila.MatriculaReferencia.ToString("N2")</text>
-										@if (fila.MatriculaCancelada)
-										{
-											<br /><small class="text-success">Pagada</small>
-										}
-										else if (fila.SaldoMatricula > 0.01m)
-										{
-											var tituloMat = $"Tarifa C$ {fila.MatriculaReferencia:N2} · Pagado C$ {fila.TotalPagadoMatricula:N2}";
-											<br /><small class="text-danger fw-semibold" title="@tituloMat">Pendiente C$ @fila.SaldoMatricula.ToString("N2")</small>
-										}
+										<text>C$ @((fila.MatriculaCancelada ? 0m : fila.SaldoMatricula).ToString("N2"))</text>
+									}
+								</td>
+								<td class="text-end @(fila.MontoRifaSemestre1 > 0.01m ? "table-success" : "")" data-export="@(fila.MontoRifaSemestre1 > 0.01m ? Exp(fila.MontoRifaSemestre1) : "")">
+									@if (fila.MontoRifaSemestre1 > 0.01m)
+									{
+										<text>C$ @fila.MontoRifaSemestre1.ToString("N2")</text>
+									}
+									else
+									{
+										<span class="text-muted">—</span>
+									}
+								</td>
+								<td class="text-end @(fila.MontoRifaSemestre2 > 0.01m ? "table-success" : "")" data-export="@(fila.MontoRifaSemestre2 > 0.01m ? Exp(fila.MontoRifaSemestre2) : "")">
+									@if (fila.MontoRifaSemestre2 > 0.01m)
+									{
+										<text>C$ @fila.MontoRifaSemestre2.ToString("N2")</text>
+									}
+									else
+									{
+										<span class="text-muted">—</span>
+									}
+								</td>
+								<td class="text-end @(fila.MontoPromocion > 0.01m ? "table-success" : "")" data-export="@(fila.MontoPromocion > 0.01m ? Exp(fila.MontoPromocion) : "")">
+									@if (fila.MontoPromocion > 0.01m)
+									{
+										<text>C$ @fila.MontoPromocion.ToString("N2")</text>
+									}
+									else
+									{
+										<span class="text-muted" title="@(fila.AplicaPromocion ? "" : "Solo 3er nivel, 6.° y 11.°")">—</span>
 									}
 								</td>
 								@foreach (var cel in fila.Meses ?? Array.Empty<WebColegio.Models.ViewModel.EstadoCuentaMesCelda>())
 								{
-									var titulo = $"Esperado C$ {cel.MontoEsperado:N2} · Pagado C$ {cel.MontoPagado:N2}";
-									if (cel.Cancelado)
+									var titulo = $"Tarifa C$ {cel.MontoEsperado:N2} · Pagado C$ {cel.MontoPagado:N2}";
+									if (cel.NoCorresponde)
 									{
-										<td class="table-success text-center" title="@titulo">
-											<strong>C$ 0,00</strong><br /><small class="text-success">Pagado</small>
-										</td>
+										<td class="text-center text-muted" data-export="" title="No corresponde: ingreso por traslado en un mes posterior">—</td>
+									}
+									else if (cel.Cancelado)
+									{
+										<td class="table-success text-end" data-export="0" title="@titulo">C$ 0,00</td>
+									}
+									else if (cel.TieneAbonoParcial)
+									{
+										<td class="table-warning text-end" data-export="@Exp(cel.Saldo)" title="@titulo">C$ @cel.Saldo.ToString("N2")</td>
 									}
 									else
 									{
-										<td class="text-end table-danger text-danger fw-semibold" title="@titulo">C$ @cel.Saldo.ToString("N2")</td>
+										<td class="text-end table-danger" data-export="@Exp(cel.Saldo)" title="@titulo">C$ @cel.Saldo.ToString("N2")</td>
 									}
 								}
-								<td class="text-end fw-semibold">C$ @fila.TotalSaldoMensualidades.ToString("N2")</td>
-								<td class="text-end fw-bold">C$ @fila.GranTotalPendiente.ToString("N2")</td>
+								<td class="text-end fw-semibold" data-export="@Exp(fila.TotalSaldoMensualidades)">C$ @fila.TotalSaldoMensualidades.ToString("N2")</td>
+								<td class="text-end fw-bold" data-export="@Exp(fila.GranTotalPendiente)">C$ @fila.GranTotalPendiente.ToString("N2")</td>
 							</tr>
 							}
 						}
@@ -187,12 +221,36 @@
 			function textoCeldaExport(data) {
 				return $('<div>').html(data).text().replace(/\s+/g, ' ').trim();
 			}
+			function valorExcel(data, node) {
+				var texto = '';
+				if (node) {
+					var attr = node.getAttribute('data-export');
+					if (attr !== null)
+						texto = String(attr).trim();
+					else
+						texto = textoCeldaExport(data);
+				} else {
+					texto = textoCeldaExport(data);
+				}
+				if (!texto || texto === '—' || texto === '-' || /^(pagado|pendiente)$/i.test(texto))
+					return '';
+				var match = texto.replace(/C\$/gi, '').match(/-?\d+[.,]?\d*/);
+				if (match) {
+					var n = parseFloat(match[0].replace(',', '.'));
+					if (!isNaN(n))
+						return n;
+				}
+				return texto;
+			}
 
 			$('#estadocuenta').DataTable({
 				responsive: false,
 				scrollX: true,
-				pageLength: 25,
-				dom: 'Bfrtip',
+				pageLength: 10,
+				lengthMenu: [[5, 10, 20], [5, 10, 20]],
+				paging: true,
+				order: [[0, 'desc']],
+				dom: 'Blfrtip',
 				buttons: [
 					{
 						extend: 'excelHtml5',
@@ -203,7 +261,7 @@
 							columns: ':visible',
 							modifier: { search: 'applied', order: 'applied' },
 							format: {
-								body: function (data) { return textoCeldaExport(data); }
+								body: function (data, row, column, node) { return valorExcel(data, node); }
 							}
 						}
 					}

@@ -29,6 +29,7 @@
         public List<CatMetodoPago> metodoPago { get; set; } = new List<CatMetodoPago>();
 
         public List<CategoriaProducto> categoriasProducto { get;  set; } = new List<CategoriaProducto>();
+        public List<CatProveedor> proveedores { get; set; } = new List<CatProveedor>();
         public List<CatDiscapacidad> discapacidad { get; set; } = new List<CatDiscapacidad>();
         public List<CatMovInventario> movinventario { get; set; } = new List<CatMovInventario>();
         //public List<TblInventario> inventario { get; set; } = new List<TblInventario>();

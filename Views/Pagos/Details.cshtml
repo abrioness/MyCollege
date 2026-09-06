@@ -11,93 +11,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recibo de Caja - @Model.Pago.NumeroRecibo</title>
-    <style>
-        /* CONTENEDOR estilo voucher */
-        .voucher {
-        width: 260px; /* tamaño típico de voucher/ticket */
-        padding: 10px;
-        margin: auto;
-        font-family: "Courier New", monospace;
-        font-size: 13px;
-        border: 1px solid #000;
-        }
-
-        /* Encabezado */
-        .v-header {
-        text-align: center;
-        border-bottom: 1px dashed #000;
-        padding-bottom: 8px;
-        }
-
-        .v-header .title {
-        font-weight: bold;
-        font-size: 14px;
-        }
-
-        .v-header .sub {
-        font-size: 12px;
-        }
-
-        /* Secciones */
-        .v-section {
-        border-bottom: 1px dashed #000;
-        margin-top: 6px;
-        padding-bottom: 6px;
-        }
-
-        /* Filas */
-        .v-row {
-        padding: 2px 0;
-        }
-
-        .center {
-        text-align: center;
-        }
-
-        .bold {
-        font-weight: bold;
-        }
-
-        /* Firma */
-        .firma {
-        margin-top: 15px;
-        text-align: center;
-        }
-
-        .firma .line {
-        border-top: 1px solid #000;
-        width: 80%;
-        margin: auto;
-        margin-bottom: 4px;
-        }
-
-        .firma .txt {
-        font-size: 12px;
-        }
-
-        /* Botón imprimir */
-        .print-button {
-        margin-top: 15px;
-        padding: 6px 12px;
-        font-size: 14px;
-        cursor: pointer;
-        }
-
-        @@media print {
-        .no-print
-
-        {
-        display: none;
-        }
-
-        /* Ajustar todo al ancho del voucher */
-        .voucher {
-        border: none;
-        width: 220px;
-        }
-
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/voucher-tmu220.css" />
 </head>
 <body>
     @{
@@ -105,7 +19,7 @@
         .FirstOrDefault(s => s.Value == Model.Pago.IdRecinto.ToString());
 
     }
-    <div class="">
+    <div class="voucher">
 
         <!-- Encabezado -->
         <div class="v-header">
@@ -161,7 +75,6 @@
                 @if (Model.Pago.IdTipoMovimiento == 2 && Model.MontoTotalRecibo.HasValue && Model.MontoTotalRecibo > 0)
                 {
                     <span>C$ @Model.MontoTotalRecibo.Value.ToString("N2")</span>
-                    <span class="v-row" style="font-size: 11px;">(Matrícula + 1ª mensualidad)</span>
                 }
                 else if (Model.Pago.IdTipoMovimiento == 1 && Model.MontoTotalRecibo.HasValue && Model.MontoTotalRecibo > 0)
                 {
@@ -176,12 +89,29 @@
                     <span>C$ @Model.Pago.Monto.ToString("N2")</span>
                 }
             </div>
+            @if (Model.Pago.IdTipoMovimiento == 2 && Model.LineasRecibo != null && Model.LineasRecibo.Count > 0)
+            {
+                foreach (var linea in Model.LineasRecibo)
+                {
+                    <div class="v-row">@linea.Etiqueta: <span>C$ @linea.Monto.ToString("N2")</span></div>
+                }
+            }
             @if (Model.Pago.IdTipoMovimiento == 1)
             {
                 var montoMensualidad = Model.MontoMensualidadRecibo ?? Model.Pago.Monto;
                 var moraRecibo = Model.MoraRecibo ?? 0m;
                 var totalPagar = Model.TotalPagarRecibo ?? (montoMensualidad + moraRecibo);
-                <div class="v-row"><b>Monto mensualidad:</b> <span>C$ @montoMensualidad.ToString("N2")</span></div>
+                if (Model.LineasRecibo != null && Model.LineasRecibo.Count > 0)
+                {
+                    foreach (var linea in Model.LineasRecibo)
+                    {
+                        <div class="v-row">@linea.Etiqueta: <span>C$ @linea.Monto.ToString("N2")</span></div>
+                    }
+                }
+                else
+                {
+                    <div class="v-row"><b>Monto mensualidad:</b> <span>C$ @montoMensualidad.ToString("N2")</span></div>
+                }
                 @if (moraRecibo > 0)
                 {
                     <div class="v-row"><b>Monto mora:</b> <span>C$ @moraRecibo.ToString("N2")</span></div>

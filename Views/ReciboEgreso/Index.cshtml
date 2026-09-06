@@ -15,11 +15,6 @@
 		</div>
 
 		<div class="card-body">
-			@if (TempData["Mensaje"] != null)
-			{
-				var tipoAlerta = TempData["Tipo"]?.ToString() ?? "info";
-				<div class="alert alert-@tipoAlerta">@TempData["Mensaje"]</div>
-			}
 			<div class="table-responsive" style="font-size:12px">
 				<div class="col-4 text-center">
 					@using (Html.BeginForm("Index", "ReciboEgreso", FormMethod.Get))
@@ -61,6 +56,7 @@
 						<th>Año</th>
 						<th>Colegio</th>
 						<th>Fecha Registro</th>
+						<th>Cajero</th>
 						<th>Estado</th>
 						@if (puedeAnularRecibo)
 						{
@@ -75,7 +71,7 @@
 						<tr class="@(itemEgreso.Activo ? "" : "table-secondary")">
 
 
-							<td>
+							<td data-order="@itemEgreso.IdEgreso">
 
 								<a asp-action="Details" asp-controller="ReciboEgreso" asp-route-id="@itemEgreso.IdEgreso" class="btn btn-sm btn-info">@itemEgreso.NumeroRecibo</a>
 
@@ -95,14 +91,12 @@
 								@itemEgreso.Nombre
 							</td>
 
-							@foreach (var tipoMovimiento in Model.tipoMovimiento.Where(a => a.IdTipoMovimiento == itemEgreso.Concepto))
-							{
-								<td>
-
-									@tipoMovimiento.Concepto
-
-								</td>
+							@{
+								var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == itemEgreso.Concepto);
 							}
+							<td>
+								@(tipoMovimiento?.Concepto ?? "—")
+							</td>
 							<td>
 
 								C$	@itemEgreso.Monto
@@ -112,25 +106,29 @@
 
 								@itemEgreso.Descripcion
 							</td>
-							@foreach (var periodo in Model.periodo.Where(a => a.IdPeriodo == itemEgreso.IdPeriodo))
-							{
-								<td>
-
-									@periodo.Periodo
-
-								</td>
+							@{
+								var periodo = Model.periodo?.FirstOrDefault(a => a.IdPeriodo == itemEgreso.IdPeriodo);
+								var recinto = Model.recintos?.FirstOrDefault(s => s.IdRecinto == itemEgreso.IdRecinto);
 							}
-								@foreach (var recinto in Model.recintos.Where(s => s.IdRecinto == itemEgreso.IdRecinto))
-								{
-									
-								<td>
-								@recinto?.Recinto
-								</td>
-								}
+							<td>
+								@(periodo?.Periodo.ToString() ?? "—")
+							</td>
+							<td>
+								@(recinto?.Recinto ?? "—")
+							</td>
 							
 							<td>
 
 								@itemEgreso.FechaRegistro.ToString("dd/MM/yyyy")
+							</td>
+							<td>
+								@{
+									var cajero = Model.usuarios?.FirstOrDefault(u => u.IdUsuario == itemEgreso.UsuarioRegistro);
+									var nombreCajero = !string.IsNullOrWhiteSpace(cajero?.NombreCompleto)
+										? cajero.NombreCompleto
+										: (cajero?.NombreUsuario ?? "—");
+								}
+								@nombreCajero
 							</td>
 							<td>
 								@if (itemEgreso.Activo)
@@ -147,8 +145,8 @@
 								<td>
 									@if (itemEgreso.Activo)
 									{
-										<form asp-action="AnularRecibo" asp-controller="ReciboEgreso" method="post" class="d-inline"
-											  onsubmit="return confirm('¿Anular el recibo de egreso @itemEgreso.NumeroRecibo?');">
+										<form asp-action="AnularRecibo" asp-controller="ReciboEgreso" method="post" class="d-inline js-anular-recibo"
+											  data-mensaje="¿Anular el recibo de egreso @itemEgreso.NumeroRecibo?">
 											@Html.AntiForgeryToken()
 											<input type="hidden" name="id" value="@itemEgreso.IdEgreso" />
 											<input type="hidden" name="fechainicio" value="@Context.Request.Query["fechainicio"]" />
@@ -187,21 +185,62 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+	$(document).on("submit", "form.js-anular-recibo", function (e) {
+		e.preventDefault();
+		var form = this;
+		var mensaje = form.getAttribute("data-mensaje") || "¿Anular el recibo?";
+		if (typeof Swal === "undefined") {
+			if (window.confirm(mensaje)) form.submit();
+			return;
+		}
+		Swal.fire({
+			title: "Atención",
+			text: mensaje,
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonText: "Aceptar",
+			cancelButtonText: "Cancelar"
+		}).then(function (result) {
+			if (result.isConfirmed) form.submit();
+		});
+	});
 	$(document).ready(function () {
-			$('#tablaPagos').DataTable({
+		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
+		var botones = esCajero ? [] : [
+			{
+				extend: 'excelHtml5',
+				text: 'Exportar a Excel',
+				className: 'btn btn-success'
+			}
+		];
+		$('#tablaPagos').DataTable({
 			responsive: false,
-			dom: 'Bfrtip', // Botones + filtro + tabla
-			buttons: [
-				{
-					extend: 'excelHtml5',
-					text: 'Exportar a Excel',
-					className: 'btn btn-success'
-				}
-			],
+			pageLength: 10,
+			lengthMenu: [[5, 10, 20], [5, 10, 20]],
+			paging: true,
+			order: [[0, 'desc']],
+			dom: esCajero ? 'lfrtip' : 'Blfrtip',
+			buttons: botones,
 			language: {
 				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 			}
 		});
 	});
 </script>
+@if (TempData["Mensaje"] != null)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+			var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+			Swal.fire({
+				title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+				text: mensaje,
+				icon: tipo,
+				confirmButtonText: "Aceptar"
+			});
+		});
+	</script>
+}

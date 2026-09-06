@@ -28,15 +28,6 @@
 
 		<div class="card-body">
 
-			@if (TempData["Mensaje"] != null)
-
-			{
-
-				var tipoAlerta = TempData["Tipo"]?.ToString() ?? "info";
-
-				<div class="alert alert-@tipoAlerta">@TempData["Mensaje"]</div>
-
-			}
 
 			<div class="table-responsive" style="font-size:12px">
 
@@ -137,6 +128,7 @@
 							<th>Colegio</th>
 
 							<th>Fecha Emisión</th>
+							<th>Cajero</th>
 							<th>Estado</th>
 							@if (puedeAnularRecibo)
 							{
@@ -155,7 +147,7 @@
 
 							<tr class="@(itemPago.Activo ? "" : "table-secondary")">
 
-								<td><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
+								<td data-order="@itemPago.IdPago"><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
 
 
 
@@ -297,6 +289,15 @@
 
 						</td>
 							<td>
+								@{
+									var cajero = Model.usuarios?.FirstOrDefault(u => u.IdUsuario == itemPago.UsuarioRegistro);
+									var nombreCajero = !string.IsNullOrWhiteSpace(cajero?.NombreCompleto)
+										? cajero.NombreCompleto
+										: (cajero?.NombreUsuario ?? "—");
+								}
+								@nombreCajero
+							</td>
+							<td>
 								@if (itemPago.Activo)
 								{
 									<span class="badge bg-success">Activo</span>
@@ -311,8 +312,8 @@
 								<td>
 									@if (itemPago.Activo)
 									{
-										<form asp-action="AnularRecibo" asp-controller="Pagos" method="post" class="d-inline"
-											  onsubmit="return confirm('¿Anular el recibo @itemPago.NumeroRecibo? Esta acción anulará todas las líneas del mismo recibo.');">
+										<form asp-action="AnularRecibo" asp-controller="Pagos" method="post" class="d-inline js-anular-recibo"
+											  data-mensaje="¿Anular el recibo @itemPago.NumeroRecibo? Esta acción anulará todas las líneas del mismo recibo.">
 											@Html.AntiForgeryToken()
 											<input type="hidden" name="id" value="@itemPago.IdPago" />
 											<input type="hidden" name="fechainicio" value="@Context.Request.Query["fechainicio"]" />
@@ -354,8 +355,28 @@
 </div>
 
 @section Scripts {
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+
+	$(document).on("submit", "form.js-anular-recibo", function (e) {
+		e.preventDefault();
+		var form = this;
+		var mensaje = form.getAttribute("data-mensaje") || "¿Anular el recibo?";
+		if (typeof Swal === "undefined") {
+			if (window.confirm(mensaje)) form.submit();
+			return;
+		}
+		Swal.fire({
+			title: "Atención",
+			text: mensaje,
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonText: "Aceptar",
+			cancelButtonText: "Cancelar"
+		}).then(function (result) {
+			if (result.isConfirmed) form.submit();
+		});
+	});
 
 	$(document).ready(function () {
 
@@ -383,7 +404,15 @@
 
 				responsive: false,
 
-				dom: esCajero ? 'frtip' : 'Bfrtip',
+				pageLength: 10,
+
+				lengthMenu: [[5, 10, 20], [5, 10, 20]],
+
+				paging: true,
+
+				order: [[0, 'desc']],
+
+				dom: esCajero ? 'lfrtip' : 'Blfrtip',
 
 				buttons: botones,
 
@@ -400,6 +429,21 @@
 	});
 
 </script>
+@if (TempData["Mensaje"] != null)
+{
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+			var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+			Swal.fire({
+				title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+				text: mensaje,
+				icon: tipo,
+				confirmButtonText: "Aceptar"
+			});
+		});
+	</script>
+}
 
 }
 

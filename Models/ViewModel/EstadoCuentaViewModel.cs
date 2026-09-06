@@ -24,6 +24,15 @@ namespace WebColegio.Models.ViewModel
         public decimal TotalPagadoMatricula { get; set; }
         public decimal SaldoMatricula { get; set; }
         public bool MatriculaCancelada { get; set; }
+        public bool TieneAbonoMatricula { get; set; }
+        public bool RifaPagada { get; set; }
+        public bool RifaSemestre1Pagada { get; set; }
+        public bool RifaSemestre2Pagada { get; set; }
+        public decimal MontoRifaSemestre1 { get; set; }
+        public decimal MontoRifaSemestre2 { get; set; }
+        public bool AplicaPromocion { get; set; }
+        public bool PromocionPagada { get; set; }
+        public decimal MontoPromocion { get; set; }
         public EstadoCuentaMesCelda[] Meses { get; set; } = Array.Empty<EstadoCuentaMesCelda>();
         public decimal TotalSaldoMensualidades { get; set; }
         public decimal GranTotalPendiente { get; set; }
@@ -51,5 +60,9 @@ namespace WebColegio.Models.ViewModel
         public decimal MontoPagado { get; set; }
         public decimal Saldo { get; set; }
         public bool Cancelado { get; set; }
+        /// <summary>Hay pago parcial (abono) y aún queda saldo.</summary>
+        public bool TieneAbonoParcial { get; set; }
+        /// <summary>Mes anterior al ingreso por traslado; no se cobra en el colegio destino.</summary>
+        public bool NoCorresponde { get; set; }
     }
 }

@@ -30,6 +30,9 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> Grados { get; set; } = new();
         public List<SelectListItem> Periodo { get; set; } = new();
         public DateTime Fecha { get; set; }
+        public DateTime InicioVentana { get; set; }
+        public DateTime FinVentana { get; set; }
+        public bool ArqueoYaCerrado { get; set; }
         public List<TblEgreso> EgresosCaja { get; set; } = new();
         public List<IngresoDto> Ingresos { get; set; } = new();
         public List<IngresoCajaDto> IngresoCajaDto { get; set; } = new();

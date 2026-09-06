@@ -1,0 +1,224 @@
+@model WebColegio.Models.ViewModel.TrasladoViewModel
+@{
+    ViewData["Title"] = "Traslado entre colegios";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-arrow-left-right"></i> Traslado entre colegios</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">
+                El alumno no se duplica. En el colegio destino debe pagar <strong>matrícula (enero)</strong>
+                y las mensualidades <strong>desde el mes en que ingresa</strong>.
+                Los meses anteriores ya pagados en el origen se respetan.
+            </p>
+
+            <form asp-action="Traslado" method="post" id="formTraslado">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="IdAlumno" id="IdAlumno" />
+                <input type="hidden" asp-for="IdRecintoOrigen" />
+                <input type="hidden" asp-for="IdPeriodo" />
+                <input type="hidden" asp-for="NombreAlumno" id="NombreAlumnoHidden" />
+                <input type="hidden" asp-for="NombreRecintoOrigen" />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Alumno</label>
+                            <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar por nombre o apellido..." value="@Model.NombreAlumno" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label">Colegio actual</label>
+                            <input class="form-control" value="@Model.NombreRecintoOrigen" readonly />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="IdRecintoDestino" class="form-label">Colegio destino</label>
+                            <select asp-for="IdRecintoDestino" id="idRecintoDestino" asp-items="Model.RecintosDestino" class="form-select" required>
+                                <option value="">Seleccione el colegio destino</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="IdGrado" class="form-label">Nivel</label>
+                            <select asp-for="IdGrado" asp-items="Model.Grados" class="form-select" required>
+                                <option value="">Seleccione el nivel</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="IdModalidad" class="form-label">Modalidad</label>
+                            <select asp-for="IdModalidad" asp-items="Model.Modalidades" class="form-select">
+                                <option value="">Seleccione la modalidad</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="MesIngreso" class="form-label">Mes de ingreso al colegio destino</label>
+                            <select asp-for="MesIngreso" id="mesIngreso" class="form-select" required>
+                                @{
+                                    var cultMes = System.Globalization.CultureInfo.GetCultureInfo("es-NI");
+                                    int mesSel = Model.MesIngreso is >= 1 and <= 12 ? Model.MesIngreso : DateTime.Today.Month;
+                                }
+                                @for (int m = 1; m <= 12; m++)
+                                {
+                                    if (m == mesSel)
+                                    {
+                                        <option value="@m" selected>@cultMes.DateTimeFormat.GetMonthName(m)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@m">@cultMes.DateTimeFormat.GetMonthName(m)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="alert alert-info mb-0">
+                            <div>Tarifa origen: <strong>C$ @Model.TarifaOrigen.ToString("N2")</strong></div>
+                            <div>Tarifa destino: <strong id="txtTarifaDestino">C$ @Model.TarifaDestino.ToString("N2")</strong></div>
+                            <div>Matrícula destino: <strong id="txtMatricula">C$ @Model.MontoMatricula.ToString("N2")</strong>
+                                <span id="lblCobraMatricula">@(Model.CobraMatricula ? "(se cobra)" : "(ya cancelada)")</span>
+                            </div>
+                            <div class="mt-1">Total a cobrar: <strong id="txtTotalCobrar">C$ @Model.TotalACobrar.ToString("N2")</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm table-bordered" id="tablaMesesTraslado">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mes</th>
+                                <th class="text-end">Ya pagado</th>
+                                <th>Estado</th>
+                                <th class="text-end">Cobra el cajero</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var mes in Model.Meses)
+                            {
+                                <tr>
+                                    <td>@mes.Nombre</td>
+                                    <td class="text-end">C$ @mes.Pagado.ToString("N2")</td>
+                                    <td>
+                                        @if (mes.Respetado)
+                                        {
+                                            <span class="text-success">Pagado (se respeta)</span>
+                                        }
+                                        else if (mes.NoCorresponde)
+                                        {
+                                            <span class="text-muted">No corresponde (antes del ingreso)</span>
+                                        }
+                                        else if (mes.SaldoACobrar > 0)
+                                        {
+                                            <span class="text-danger">Pendiente en destino</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Sin cargo aún</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">C$ @mes.SaldoACobrar.ToString("N2")</td>
+                                </tr>
+                            }
+                            @if (!Model.Meses.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-muted">Seleccione el alumno y el colegio destino para ver el desglose.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btnConfirmarTraslado">
+                    <i class="bi bi-check2-circle"></i> Confirmar traslado y cobrar pendientes
+                </button>
+                <a asp-action="Create" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(function () {
+        const urlResumen = '@Url.Action("ObtenerResumenTraslado", "Pagos")';
+        const urlBuscar = '@Url.Action("Buscar", "Alumnos")';
+
+        $('#AlumnoNombre').autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: urlBuscar,
+                    data: { q: request.term },
+                    success: function (data) {
+                        response($.map(data, function (item) {
+                            return { label: item.nombreCompleto, value: item.nombreCompleto, id: item.id };
+                        }));
+                    },
+                    error: function () { response([]); }
+                });
+            },
+            minLength: 2,
+            select: function (event, ui) {
+                $('#IdAlumno').val(ui.item.id);
+                $('#NombreAlumnoHidden').val(ui.item.label);
+                cargarResumen();
+            }
+        });
+
+        $('#idRecintoDestino, #mesIngreso').on('change', cargarResumen);
+
+        function cargarResumen() {
+            const idAlumno = parseInt($('#IdAlumno').val(), 10) || 0;
+            const idDestino = parseInt($('#idRecintoDestino').val(), 10) || 0;
+            const mesIngreso = parseInt($('#mesIngreso').val(), 10) || 0;
+            if (!idAlumno || !idDestino) return;
+
+            $.getJSON(urlResumen, { idAlumno: idAlumno, idRecintoDestino: idDestino, mesIngreso: mesIngreso }, function (data) {
+                if (!data || !data.ok) return;
+                $('#txtTarifaDestino').text('C$ ' + Number(data.tarifaDestino).toFixed(2));
+                $('#txtMatricula').text('C$ ' + Number(data.montoMatricula).toFixed(2));
+                $('#lblCobraMatricula').text(data.cobraMatricula ? '(se cobra)' : '(ya cancelada)');
+                $('#txtTotalCobrar').text('C$ ' + Number(data.totalACobrar).toFixed(2));
+                const $tb = $('#tablaMesesTraslado tbody');
+                $tb.empty();
+                (data.meses || []).forEach(function (m) {
+                    let estado = '<span class="text-muted">Sin cargo aún</span>';
+                    if (m.respetado) estado = '<span class="text-success">Pagado (se respeta)</span>';
+                    else if (m.noCorresponde) estado = '<span class="text-muted">No corresponde (antes del ingreso)</span>';
+                    else if (m.saldoACobrar > 0) estado = '<span class="text-danger">Pendiente en destino</span>';
+                    $tb.append(
+                        '<tr><td>' + m.nombre + '</td>' +
+                        '<td class="text-end">C$ ' + Number(m.pagado).toFixed(2) + '</td>' +
+                        '<td>' + estado + '</td>' +
+                        '<td class="text-end">C$ ' + Number(m.saldoACobrar).toFixed(2) + '</td></tr>'
+                    );
+                });
+            });
+        }
+
+        $('#formTraslado').on('submit', function (e) {
+            if (!(parseInt($('#IdAlumno').val(), 10) > 0)) {
+                e.preventDefault();
+                Swal.fire({ title: 'Atención', text: 'Busque y seleccione el alumno.', icon: 'warning' });
+            }
+        });
+    });
+</script>
+
+@if (TempData["Mensaje"] != null)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" : TempData["Tipo"]?.ToString() == "warning" ? "Atención" : "Información")',
+                text: @Html.Raw(Json.Serialize(TempData["Mensaje"])),
+                icon: '@(TempData["Tipo"]?.ToString() ?? "info")',
+                confirmButtonText: 'Aceptar'
+            });
+        });
+    </script>
+}

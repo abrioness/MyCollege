@@ -15,6 +15,14 @@
 
         </div>
         <div class="card-body">
+            @if (Model.EsCobroTraslado)
+            {
+                <div class="alert alert-info">
+                    Cobro de traslado: el alumno debe pagar la matrícula (enero) del colegio destino
+                    y la mensualidad del mes en que ingresa y los posteriores.
+                    Los meses anteriores ya pagados en el origen se respetan.
+                </div>
+            }
             <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="row">
@@ -26,8 +34,8 @@
                         </div>
                         <div class="form-group">
                             <label asp-for="Pago.IdAlumno">Nombre del Alumno</label>
-                            <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar Alumno..." />
-                            <input type="hidden" id="IdAlumno" name="Pago.IdAlumno" />
+                            <input type="text" id="AlumnoNombre" class="form-control" placeholder="Buscar Alumno..." value="@Model.PreloadNombreAlumno" />
+                            <input type="hidden" id="IdAlumno" name="Pago.IdAlumno" value="@(Model.PreloadIdAlumno ?? Model.Pago.IdAlumno)" />
                         </div>
 
                         <div class="form-group">
@@ -52,6 +60,9 @@
                             <select asp-for="Pago.IdPeriodo" id="periodo" asp-items="Model.periodo" class="form-select">
                                 <option value="">Seleccione una Opción</option>
                             </select>
+                            <small id="ayudaCicloPago" class="text-muted d-block">
+                                Mensualidad, morosos y adelantos usan el ciclo actual. El siguiente ciclo solo aplica a reserva o matrícula nueva.
+                            </small>
                             <span asp-validation-for="Pago.IdPeriodo" class="text-danger"></span>
 
                         </div>
@@ -116,16 +127,18 @@
                             <label asp-for="Pago.Monto" class="control-label">Monto a pagar</label>
 
                             <input asp-for="Pago.Monto" id="cantidad" class="form-control"  />
+                            <small class="text-muted d-block">Puede pagar el mes completo o registrar un abono con un monto menor. Si entrega de más, el sobrante pasa al mes siguiente. La matrícula debe estar cancelada o abonada antes de la mensualidad.</small>
                             <span id="mensajemontomatricual" class="text-info fw-bold" style="display: none;"></span>
                         </div>
 
                         <div class="form-check mt-2" id="continuidadMatriculaPanel" style="display: none;">
                             <input asp-for="Pago.Continuidad" class="form-check-input" id="chkContinuidad" />
                             <label asp-for="Pago.Continuidad" class="form-check-label">
-                                Es continuidad (reingreso a mitad de año)
+                                Es continuidad (sigue activo este ciclo)
                             </label>
                             <small class="text-muted d-block">
-                                Incluye matrícula + mensualidad de enero (igual que matrícula normal). La diferencia es que podrá pagar en mensualidad los meses anteriores al mes de matrícula.
+                                Para alumnos que siguen estudiando aunque no hayan pagado matrícula ni mensualidades.
+                                El pago es matrícula + enero de <strong>este ciclo</strong> (no el siguiente). Luego podrá pagar los meses anteriores al mes de matrícula.
                             </small>
                         </div>
 
@@ -235,6 +248,7 @@
             const urlsPagos = {
                 buscarAlumnos: '@Url.Action("Buscar", "Alumnos")',
                 obtenerAbonosPrevios: '@Url.Action("ObtenerAbonosPrevios", "Pagos")',
+                obtenerSaldoMeses: '@Url.Action("ObtenerSaldoMeses", "Pagos")',
                 obtenerMensualidad: '@Url.Action("ObtenerMensualidad", "Pagos")',
                 obtenerMatricula: '@Url.Action("ObtenerMatricula", "Pagos")',
                 obtenerMora: '@Url.Action("ObtenerMora", "Pagos")',
@@ -261,16 +275,56 @@
 
             // Constantes para tipos de movimiento
             const TIPO_MENSUALIDAD = 1;
-            const TIPO_MATRICULA_COMPLETA = 2; // Matrícula Completa
-            const TIPO_MATRICULA = 4; // Confirmación de Matrícula
+            const TIPO_MATRICULA_COMPLETA = 2;
+            const TIPO_ABONO_MATRICULA = 4; // Abono del ciclo en curso
             const TIPO_RIFA = 10;
+            const MONTO_MINIMO_RESERVA = 250;
             const tiposConMeses = [TIPO_MENSUALIDAD, TIPO_RIFA];
-            
-            // Tipos de movimiento que requieren cargar matrícula
-            const tiposMatricula = [TIPO_MATRICULA_COMPLETA, TIPO_MATRICULA];
+            const tiposMatricula = [TIPO_MATRICULA_COMPLETA, TIPO_ABONO_MATRICULA];
 
             function sinDiacriticos(str) {
                 return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function textoTipoMovimiento() {
+                return sinDiacriticos($tipoMovimiento.find('option:selected').text()).toLowerCase();
+            }
+
+            /** Reserva de cupo del siguiente ciclo. El tipo 4 es abono del año en curso. */
+            function esConfirmacionMatricula() {
+                const id = parseInt($tipoMovimiento.val(), 10);
+                if (id === TIPO_ABONO_MATRICULA) return false;
+                const texto = textoTipoMovimiento();
+                return texto.indexOf('confirmacion') >= 0 || texto.indexOf('reserva') >= 0;
+            }
+
+            /** Abono de matrícula del ciclo vigente (alumnos activos que aún no la pagan). */
+            function esAbonoMatricula() {
+                if (esConfirmacionMatricula()) return false;
+                const id = parseInt($tipoMovimiento.val(), 10);
+                if (id === TIPO_ABONO_MATRICULA) return true;
+                const texto = textoTipoMovimiento();
+                return texto.indexOf('abono') >= 0 && texto.indexOf('matric') >= 0 && texto.indexOf('completa') < 0;
+            }
+
+            function esMensualidadOAbono() {
+                const id = parseInt($tipoMovimiento.val(), 10);
+                if (id === TIPO_MENSUALIDAD) return true;
+                const texto = textoTipoMovimiento();
+                if (texto.indexOf('matric') >= 0 || texto.indexOf('rifa') >= 0) return false;
+                return texto.indexOf('mensualidad') >= 0;
+            }
+
+            function esMatriculaCompleta() {
+                if (esConfirmacionMatricula()) {
+                    return false;
+                }
+                const id = parseInt($tipoMovimiento.val(), 10);
+                if (id === TIPO_MATRICULA_COMPLETA) {
+                    return true;
+                }
+                const texto = textoTipoMovimiento();
+                return texto.indexOf('matric') >= 0 && texto.indexOf('completa') >= 0;
             }
 
             /** Matrícula por Id o por texto del concepto (por si en BD los Id no son 2/4). */
@@ -280,8 +334,7 @@
                 if (!isNaN(id) && id > 0 && tiposMatricula.includes(id)) {
                     return true;
                 }
-                const texto = sinDiacriticos($tipoMovimiento.find('option:selected').text()).toLowerCase();
-                return texto.indexOf('matric') >= 0;
+                return esMatriculaCompleta() || esConfirmacionMatricula() || esAbonoMatricula();
             }
 
             function esContinuidadMarcada() {
@@ -289,10 +342,41 @@
             }
 
             function actualizarPanelContinuidad() {
-                const esMat = esConceptoMatricula();
+                const esMat = esMatriculaCompleta();
+                const estabaVisible = $continuidadPanel.is(':visible');
                 $continuidadPanel.toggle(esMat);
                 if (!esMat) {
                     $chkContinuidad.prop('checked', false);
+                } else if (window._sugerirContinuidad && !estabaVisible) {
+                    $chkContinuidad.prop('checked', true);
+                }
+            }
+
+            function aplicarPeriodoSegunTipo() {
+                // Mensualidad / rifa / otros: siempre el ciclo vigente (no el 2027 habilitado).
+                if (!esConceptoMatricula()) {
+                    if (window._idPeriodoActual) {
+                        $periodo.val(String(window._idPeriodoActual));
+                    }
+                    return;
+                }
+
+                // Reserva del siguiente ciclo (confirmación).
+                if (esConfirmacionMatricula() && window._idPeriodoConfirmacion) {
+                    $periodo.val(String(window._idPeriodoConfirmacion));
+                    return;
+                }
+
+                // Abono o deuda del ciclo en curso: nunca el 2027.
+                if ((esAbonoMatricula() || esMatriculaCompleta())
+                    && window._idPeriodoActual
+                    && (esAbonoMatricula() || esContinuidadMarcada() || window._tienePendienteMatriculaCicloActual)) {
+                    $periodo.val(String(window._idPeriodoActual));
+                    return;
+                }
+
+                if (esConceptoMatricula() && window._idPeriodoMatricula) {
+                    $periodo.val(String(window._idPeriodoMatricula));
                 }
             }
 
@@ -302,9 +386,12 @@
                 if (!$lbl.length) {
                     return;
                 }
-                if (esConceptoMatricula()) {
+                if (esMatriculaCompleta()) {
                     $lbl.text('Fecha que se presentó a matricularse');
                     $ayuda.show();
+                } else if (esConfirmacionMatricula()) {
+                    $lbl.text('Fecha de reserva');
+                    $ayuda.hide();
                 } else {
                     $lbl.text('Fecha de pago');
                     $ayuda.hide();
@@ -350,7 +437,8 @@
 
                 function aplicarMontoMatricula(costoMatricula, totalAbonos) {
                     const matNeto = Math.max(0, costoMatricula - totalAbonos);
-                    if (tipoMovimientoId === TIPO_MATRICULA_COMPLETA) {
+                    if (esMatriculaCompleta() || esAbonoMatricula()) {
+                        const esAbono = esAbonoMatricula();
                         if (grado) {
                             const idG = parseInt(grado, 10);
                             const idP = parseInt(periodo, 10);
@@ -366,46 +454,60 @@
                             $.getJSON(urlsPagos.obtenerMensualidad, paramsMens, function(dataMen) {
                                 const costoMensualidad = parseFloat(dataMen && dataMen.costo) || 0;
                                 window._ultimaMensualidadMatricula = costoMensualidad;
-                                const parteMatricula = Math.max(0, matNeto - costoMensualidad);
-                                $monto.val(matNeto.toFixed(2));
-                                let txt = 'Total matrícula (catálogo) C$ ' + matNeto.toFixed(2) + ': Matrícula neta C$ ' + parteMatricula.toFixed(2) + ' (total − enero) + Mensualidad enero C$ ' + costoMensualidad.toFixed(2) + '.';
-                                if (esContinuidadMarcada()) {
-                                    txt += ' Continuidad: podrá pagar meses anteriores al mes de matrícula en mensualidad.';
+                                const matriculaNeta = Math.max(0, matNeto - (esAbono ? 0 : costoMensualidad));
+                                const saldoNeta = Math.max(0, (costoMatricula - costoMensualidad) - totalAbonos);
+                                if (esAbono) {
+                                    $monto.val(saldoNeta.toFixed(2));
+                                    let txt = 'Abono de matrícula del ciclo en curso. Saldo de matrícula C$ ' + saldoNeta.toFixed(2)
+                                        + '. Puede pagar menos. No reserva el siguiente ciclo.';
+                                    if (totalAbonos > 0) {
+                                        txt = 'Ya abonado C$ ' + totalAbonos.toFixed(2) + '. ' + txt;
+                                    }
+                                    $mensajeMontoMatricula.text(txt).css('display', 'block');
+                                } else {
+                                    $monto.val(matNeto.toFixed(2));
+                                    let txt = 'Matrícula C$ ' + matriculaNeta.toFixed(2) + ' + enero C$ ' + costoMensualidad.toFixed(2)
+                                        + ' = C$ ' + matNeto.toFixed(2)
+                                        + '. Si paga menos, se cubre primero la matrícula y el resto se abona a enero.';
+                                    if (esContinuidadMarcada()) {
+                                        txt += ' Continuidad: matrícula + enero de este ciclo.';
+                                    }
+                                    if (dataMen && dataMen.sinConfiguracion && costoMensualidad === 0) {
+                                        txt = 'No hay mensualidad en catálogo. Monto de matrícula C$ ' + matNeto.toFixed(2) + '.';
+                                    }
+                                    if (totalAbonos > 0) {
+                                        txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. ' + txt;
+                                    }
+                                    $mensajeMontoMatricula.text(txt).css('display', 'block');
                                 }
-                                if (dataMen && dataMen.sinConfiguracion && costoMensualidad === 0) {
-                                    txt = 'No hay mensualidad en catálogo para este recinto, nivel, ciclo y modalidad (p. ej. modalidad ' + (idMod || '—') + '): no se puede restar enero al total. Revise Tbl costo mensualidad. Monto a pagar C$ ' + matNeto.toFixed(2) + '.';
-                                }
-                                if (totalAbonos > 0) {
-                                    txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de confirmación previa. ' + txt;
-                                }
-                                $mensajeMontoMatricula.text(txt).css('display', 'block');
                                 calcularTotalPagar();
                             }).fail(function() {
                                 $monto.val(matNeto.toFixed(2));
-                                let txt = 'No se pudo cargar la mensualidad. Monto total C$ ' + matNeto.toFixed(2) + '.';
-                                if (totalAbonos > 0) {
-                                    txt = 'Abonos previos C$ ' + totalAbonos.toFixed(2) + '. ' + txt;
-                                }
-                                $mensajeMontoMatricula.text(txt).css('display', 'block');
+                                $mensajeMontoMatricula.text('No se pudo cargar la mensualidad. Monto C$ ' + matNeto.toFixed(2) + '.').css('display', 'block');
                                 calcularTotalPagar();
                             });
                         } else {
                             $monto.val(matNeto.toFixed(2));
-                            let txt = 'Seleccione nivel (grado) para desglosar enero; monto total C$ ' + matNeto.toFixed(2) + '.';
-                            if (totalAbonos > 0) {
-                                txt = 'Se descontaron C$ ' + totalAbonos.toFixed(2) + ' de confirmación previa. ' + txt;
-                            }
-                            $mensajeMontoMatricula.text(txt).css('display', 'block');
+                            $mensajeMontoMatricula.text((esAbono
+                                ? 'Abono de matrícula del ciclo en curso. Seleccione nivel. Saldo C$ '
+                                : 'Seleccione nivel (grado) para desglosar enero; monto C$ ')
+                                + matNeto.toFixed(2) + '.').css('display', 'block');
                             calcularTotalPagar();
                         }
                         return;
                     }
-                    $monto.val(matNeto.toFixed(2));
+
+                    const sugeridoReserva = totalAbonos >= MONTO_MINIMO_RESERVA
+                        ? MONTO_MINIMO_RESERVA
+                        : MONTO_MINIMO_RESERVA;
+                    $monto.val(sugeridoReserva.toFixed(2));
+                    let txtConfirmacion = 'Confirmación de matrícula: reserva de cupo del siguiente ciclo. Mínimo C$ '
+                        + MONTO_MINIMO_RESERVA.toFixed(2)
+                        + '. No abona la matrícula del año en curso ni incluye enero.';
                     if (totalAbonos > 0) {
-                        $mensajeMontoMatricula.text('Se le restó C$ ' + totalAbonos.toFixed(2) + ' de abonos previos. Monto: C$ ' + matNeto.toFixed(2)).css('display', 'block');
-                    } else {
-                        $mensajeMontoMatricula.text('').css('display', 'none');
+                        txtConfirmacion = 'Ya reservado C$ ' + totalAbonos.toFixed(2) + '. ' + txtConfirmacion;
                     }
+                    $mensajeMontoMatricula.text(txtConfirmacion).css('display', 'block');
                     calcularTotalPagar();
                 }
 
@@ -444,7 +546,7 @@
             }
 
             function recalcularMontoPorMeses() {
-                if (parseInt($tipoMovimiento.val(), 10) !== TIPO_MENSUALIDAD) return;
+                if (!esMensualidadOAbono()) return;
 
                 const cantidadMeses = obtenerCantidadMesesSeleccionados();
                 if (costoMensualidadUnitario <= 0) {
@@ -459,12 +561,49 @@
                 if (cantidadMeses === 0) {
                     $monto.val('');
                     $mensajeMontoMatricula
-                        .text('Mensualidad: C$ ' + costoMensualidadUnitario.toFixed(2) + ' por mes. Seleccione los meses a pagar.')
+                        .text('Mensualidad: C$ ' + costoMensualidadUnitario.toFixed(2) + ' por mes. Seleccione los meses a pagar. Un sobrante se aplica como abono al mes siguiente.')
                         .css('display', 'block');
                     calcularTotalPagar();
                     return;
                 }
 
+                const idAlumno = $idAlumno.val();
+                const meses = $('#MesesSeleccionados').val();
+                if (idAlumno && meses && urlsPagos.obtenerSaldoMeses) {
+                    $.getJSON(urlsPagos.obtenerSaldoMeses, {
+                        idAlumno: idAlumno,
+                        idPeriodo: $periodo.val(),
+                        idRecinto: $recinto.val(),
+                        idGrado: $grado.val(),
+                        idModalidad: $modalidad.val(),
+                        meses: meses
+                    }, function(data) {
+                        const tarifa = parseFloat(data && data.tarifa) || costoMensualidadUnitario;
+                        costoMensualidadUnitario = tarifa;
+                        const restante = parseFloat(data && data.totalRestante);
+                        const montoBase = isNaN(restante) ? tarifa * cantidadMeses : restante;
+                        $monto.val(montoBase.toFixed(2));
+
+                        let txt = cantidadMeses + ' mes(es) × C$ ' + tarifa.toFixed(2) + '. Saldo a cancelar: C$ ' + montoBase.toFixed(2) + '.';
+                        const detalleAbonos = (data && data.meses ? data.meses : []).filter(function(m) { return m.tieneAbono; });
+                        if (detalleAbonos.length) {
+                            txt += ' Ya hay abono en: ' + detalleAbonos.map(function(m) {
+                                return 'mes ' + m.idMes + ' (C$ ' + parseFloat(m.pagado).toFixed(2) + ')';
+                            }).join(', ') + '.';
+                        }
+                        txt += ' Puede abonar menos del saldo. Si entrega de más, el sobrante pasa al mes siguiente.';
+                        $mensajeMontoMatricula.text(txt).css('display', 'block');
+                        calcularTotalPagar();
+                    }).fail(function() {
+                        aplicarMontoMensualidadSinSaldo(cantidadMeses);
+                    });
+                    return;
+                }
+
+                aplicarMontoMensualidadSinSaldo(cantidadMeses);
+            }
+
+            function aplicarMontoMensualidadSinSaldo(cantidadMeses) {
                 const subtotal = costoMensualidadUnitario * cantidadMeses;
                 const montoFinal = Math.max(0, subtotal - totalAbonosMensualidad);
                 $monto.val(montoFinal.toFixed(2));
@@ -473,6 +612,7 @@
                 if (totalAbonosMensualidad > 0) {
                     txt += '. Abonos previos: −C$ ' + totalAbonosMensualidad.toFixed(2) + '. Total: C$ ' + montoFinal.toFixed(2);
                 }
+                txt += '. Puede abonar menos del saldo. Si entrega de más, el sobrante se aplica al mes siguiente.';
                 $mensajeMontoMatricula.text(txt).css('display', 'block');
                 calcularTotalPagar();
             }
@@ -560,7 +700,7 @@
                 const totalmora = parseFloat($totalMora.val()) || 0;
                 const tipoMovimientoId = parseInt($tipoMovimiento.val()) || 0;
 
-                if (tipoMovimientoId === TIPO_MENSUALIDAD) {
+                if (esMensualidadOAbono()) {
                     $totalPagar.val((costomensualidad + totalmora).toFixed(2));
                 } else if (esConceptoMatricula()) {
                     $totalPagar.val(costomatricula.toFixed(2));
@@ -620,11 +760,11 @@
             // Manejar cambio de tipo de movimiento (optimizado)
             function onTipoMovimientoChange() {
                 const tipoMovimientoId = parseInt($tipoMovimiento.val(), 10) || 0;
-                const mostrarMeses = tiposConMeses.includes(tipoMovimientoId);
+                const mostrarMeses = tiposConMeses.includes(tipoMovimientoId) || esMensualidadOAbono();
 
                 $mesPagado.toggle(mostrarMeses);
 
-                if (tipoMovimientoId === TIPO_MENSUALIDAD) {
+                if (esMensualidadOAbono()) {
                     configurarListenersPorTipo(TIPO_MENSUALIDAD);
                     cargarMora();
                 } else if (tiposMatricula.includes(tipoMovimientoId) || esConceptoMatricula()) {
@@ -635,18 +775,62 @@
                     limpiarListeners();
                 }
 
-                actualizarEtiquetaFechaEmision();
                 actualizarPanelContinuidad();
+                aplicarPeriodoSegunTipo();
+                actualizarEtiquetaFechaEmision();
             }
 
             $chkContinuidad.on('change', function() {
                 if (esConceptoMatricula()) {
+                    aplicarPeriodoSegunTipo();
                     cargarMatricula();
                 }
             });
 
             $tipoMovimiento.on('change', onTipoMovimientoChange);
             onTipoMovimientoChange();
+
+            $('form[asp-action], form').first().on('submit', function (e) {
+                if (esConfirmacionMatricula()) {
+                    const montoReserva = parseFloat($monto.val()) || 0;
+                    if (montoReserva + 0.01 < MONTO_MINIMO_RESERVA) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Reserva de cupo',
+                            text: 'La confirmación de matrícula del siguiente ciclo requiere un mínimo de C$ ' + MONTO_MINIMO_RESERVA.toFixed(2) + '.'
+                        });
+                        return false;
+                    }
+                    return true;
+                }
+
+                if (!esMensualidadOAbono())
+                    return true;
+
+                const meses = ($('#MesesSeleccionados').val() || '').trim();
+                if (!meses) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Meses',
+                        text: 'Seleccione el mes o los meses pendientes para el pago o abono.'
+                    });
+                    return false;
+                }
+
+                if (window._tienePendienteMatriculaCicloActual) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Matrícula pendiente',
+                        text: 'Debe pagar o abonar la matrícula antes de registrar un pago o abono de mensualidad.'
+                    });
+                    return false;
+                }
+
+                return true;
+            });
 
             // Autocompletado de alumnos
             $alumnoNombre.autocomplete({
@@ -684,9 +868,16 @@
                                 if (data.idGrado) {
                                     $grado.val(String(data.idGrado));
                                 }
-                                if (data.idPeriodo) {
-                                    $periodo.val(String(data.idPeriodo));
+                                window._idPeriodoActual = data.idPeriodo;
+                                window._idPeriodoMatricula = data.idPeriodoMatricula || data.idPeriodo;
+                                window._idPeriodoConfirmacion = data.idPeriodoConfirmacion || data.idPeriodoMatricula || data.idPeriodo;
+                                window._sugerirContinuidad = !!data.sugerirContinuidad;
+                                window._tienePendienteMatriculaCicloActual = !!data.tienePendienteMatriculaCicloActual;
+                                actualizarPanelContinuidad();
+                                if (window._sugerirContinuidad && esMatriculaCompleta()) {
+                                    $chkContinuidad.prop('checked', true);
                                 }
+                                aplicarPeriodoSegunTipo();
                             }
                         })
                         .always(function() {
@@ -699,7 +890,7 @@
                                 if (recinto && modalidad && periodo) {
                                     cargarMatricula();
                                 }
-                            } else if (tipoMovimientoId === TIPO_MENSUALIDAD) {
+                            } else if (esMensualidadOAbono()) {
                                 const recinto = $recinto.val();
                                 const grado = $grado.val();
                                 const periodo = $periodo.val();
@@ -752,6 +943,30 @@
 
                 recalcularMontoPorMeses();
             };
+
+            const preloadPago = {
+                alumno: @(Model.PreloadIdAlumno ?? 0),
+                recinto: @(Model.PreloadIdRecinto ?? 0),
+                grado: @(Model.PreloadIdGrado ?? 0),
+                modalidad: @(Model.PreloadIdModalidad ?? 0),
+                periodo: @(Model.PreloadIdPeriodo ?? 0),
+                meses: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PreloadMeses ?? ""))
+            };
+            if (preloadPago.alumno > 0) {
+                if (!@((Model.CobraMatriculaTraslado ? "true" : "false")))
+                    $tipoMovimiento.val('1').trigger('change');
+                if (preloadPago.recinto) $recinto.val(String(preloadPago.recinto));
+                if (preloadPago.grado) $grado.val(String(preloadPago.grado));
+                if (preloadPago.modalidad) $modalidad.val(String(preloadPago.modalidad));
+                if (preloadPago.periodo) $periodo.val(String(preloadPago.periodo));
+                const mesesPre = String(preloadPago.meses || '').split(',').filter(function (x) { return x.trim(); });
+                mesesPre.forEach(function (id) {
+                    const chk = document.getElementById('mes_' + id.trim());
+                    if (chk) chk.checked = true;
+                });
+                if (mesesPre.length) window.confirmarMeses();
+                else cargarMensualidad();
+            }
         });
     </script>
 

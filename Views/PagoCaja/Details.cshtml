@@ -1,4 +1,5 @@
 ﻿@model WebColegio.Models.ViewModel.pagoCajasViewModel
+@using WebColegio.Helpers
 
 @{
     Layout = null;
@@ -11,89 +12,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recibo de Caja - @Model.PagosCaja.NumeroRecibo</title>
-    <style>
-        /* CONTENEDOR estilo voucher */
-        .voucher {
-        width: 260px; /* tamaño típico de voucher/ticket */
-        padding: 10px;
-        margin: auto;
-        font-family: "Courier New", monospace;
-        font-size: 13px;
-        border: 1px solid #000;
-        }
-
-        /* Encabezado */
-        .v-header {
-        text-align: center;
-        border-bottom: 1px dashed #000;
-        padding-bottom: 8px;
-        }
-
-        .v-header .title {
-        font-weight: bold;
-        font-size: 14px;
-        }
-
-        .v-header .sub {
-        font-size: 12px;
-        }
-
-        /* Secciones */
-        .v-section {
-        border-bottom: 1px dashed #000;
-        margin-top: 6px;
-        padding-bottom: 6px;
-        }
-
-        /* Filas */
-        .v-row {
-        padding: 2px 0;
-        }
-
-        .center {
-        text-align: center;
-        }
-
-        .bold {
-        font-weight: bold;
-        }
-
-        /* Firma */
-        .firma {
-        margin-top: 15px;
-        text-align: center;
-        }
-
-        .firma .line {
-        border-top: 1px solid #000;
-        width: 80%;
-        margin: auto;
-        margin-bottom: 4px;
-        }
-
-        .firma .txt {
-        font-size: 12px;
-        }
-
-        /* Botón imprimir */
-        .print-button {
-        margin-top: 15px;
-        padding: 6px 12px;
-        font-size: 14px;
-        cursor: pointer;
-        }
-
-        @@media print {
-        .no-print {
-        display: none;
-        }
-        /* Ajustar todo al ancho del voucher */
-        .voucher {
-        border: none;
-        width: 220px;
-        }
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/voucher-tmu220.css" />
 </head>
 <body>
     @{
@@ -101,7 +20,7 @@
         .FirstOrDefault(s => s.Value == Model.PagosCaja.IdRecinto.ToString());
 
     }
-    <div class="">
+    <div class="voucher">
 
 
         <!-- Encabezado -->
@@ -136,15 +55,20 @@
             var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.PagosCaja.IdGrado);
             var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.PagosCaja.Concepto);
             var turno = Model.turnos?.FirstOrDefault(a => a.IdTurno == Model.PagosCaja.IdTurno);
-            var fecha = Model.PagosCaja.FechaRegistro=DateTime.Now;
-            // var fechaemision=Model.PagosCaja.fe
+            var fecha = Model.PagosCaja.FechaEmision ?? Model.PagosCaja.FechaRegistro;
+            var descripcionVisible = EstadoCuentaCalculoHelper.QuitarMarcasInternasDescripcion(Model.PagosCaja.Descripcion);
+            var conceptoVisible = string.IsNullOrWhiteSpace(descripcionVisible)
+                ? (tipoMovimiento?.Concepto ?? "—")
+                : string.IsNullOrWhiteSpace(tipoMovimiento?.Concepto)
+                    ? descripcionVisible
+                    : $"{tipoMovimiento.Concepto}: {descripcionVisible}";
         }
         <div class="v-section">
             <div class="v-row"><b>Recibí de:</b> <span>@Model.PagosCaja.Nombre</span></div>
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
-            <div class="v-row"><b>Fec Emisión:</b> <span>C$ @Model.PagosCaja.FechaEmision</span></div>
-            <div class="v-row"><b>Fecha Pago:</b> <span>C$ @Model.PagosCaja.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
-            <div class="v-row"><b>Concepto:</b> <span>@tipoMovimiento?.Concepto, @Model.PagosCaja.Descripcion</span></div>
+            <div class="v-row"><b>Fec Emisión:</b> <span>@(Model.PagosCaja.FechaEmision?.ToString("dd/MM/yyyy") ?? "—")</span></div>
+            <div class="v-row"><b>Fecha Pago:</b> <span>@Model.PagosCaja.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
+            <div class="v-row"><b>Concepto:</b> <span>@conceptoVisible</span></div>
             <div class="v-row"><b>Turno:</b> <span>@turno?.NombreTurno</span></div>
             <div class="v-row"><b>La cantidad de:</b> <span>C$ @Model.PagosCaja.Monto.ToString("N2")</span></div>
            @*  <div class="v-row"><b>En letras:</b><br />@Model.cantidadEnLetras (C$ @Model.PagosCaja.Monto)</div> *@
@@ -190,10 +114,15 @@
 @if (TempData["Mensaje"] != null)
 {
     <script>
-        Swal.fire({
-            title: '@TempData["Tipo"]',
-            text: '@TempData["Mensaje"]',
-            icon: '@TempData["Tipo"]'
+        document.addEventListener("DOMContentLoaded", function () {
+            var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+            var tipo = '@(TempData["Tipo"]?.ToString() ?? "info")';
+            Swal.fire({
+                title: tipo === "success" ? "Éxito" : tipo === "warning" ? "Atención" : tipo === "error" ? "Error" : "Información",
+                text: mensaje,
+                icon: tipo,
+                confirmButtonText: "Aceptar"
+            });
         });
     </script>
 }

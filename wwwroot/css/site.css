@@ -27,44 +27,84 @@ body {
 }
 
 /*
-  Logos del topbar: reglas en site.css (<head>) antes del primer pintado.
-  Si solo estan en un style al final del body, la insignia puede verse muy grande un instante.
+  Logos del encabezado: mismo tamaño, circular, recorte del emblema
+  (el PNG derecho trae mucho fondo negro).
 */
+.navbar.topbar.topbar-nav {
+  min-height: 128px !important;
+  height: auto !important;
+  padding-top: 0.55rem !important;
+  padding-bottom: 0.55rem !important;
+}
+
 .topbar-nav .topbar-header .topbar-logo-wrap {
-  flex: 0 0 auto !important;
+  flex: 0 0 96px !important;
+  width: 96px !important;
+  height: 96px !important;
+  max-width: 96px !important;
+  max-height: 96px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  max-width: min(160px, 26vw) !important;
-  max-height: 56px !important;
   overflow: hidden !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.82), 0 4px 12px rgba(0, 0, 0, 0.22) !important;
 }
 
 .topbar-nav .topbar-header .logo-izquierda,
 .topbar-nav .topbar-header .logo-derecha {
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: 52px !important;
-  object-fit: contain !important;
-  object-position: center center !important;
   display: block !important;
   margin: 0 !important;
 }
 
+.topbar-nav .topbar-header .logo-izquierda {
+  width: 92% !important;
+  height: 92% !important;
+  max-width: 92% !important;
+  max-height: 92% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+
+.topbar-nav .topbar-header .logo-derecha {
+  width: 175% !important;
+  height: 175% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center 46% !important;
+}
+
+@media (max-width: 991.98px) {
+  .navbar.topbar.topbar-nav {
+    min-height: 108px !important;
+  }
+
+  .topbar-nav .topbar-header .topbar-logo-wrap {
+    flex-basis: 76px !important;
+    width: 76px !important;
+    height: 76px !important;
+    max-width: 76px !important;
+    max-height: 76px !important;
+  }
+}
+
 @media (max-width: 576px) {
+  .navbar.topbar.topbar-nav {
+    min-height: 88px !important;
+  }
+
   .topbar-nav .topbar-header {
     padding: 0.35rem 0.5rem !important;
   }
 
   .topbar-nav .topbar-header .topbar-logo-wrap {
-    max-width: min(120px, 32vw) !important;
-    max-height: 44px !important;
-  }
-
-  .topbar-nav .topbar-header .logo-izquierda,
-  .topbar-nav .topbar-header .logo-derecha {
-    max-height: 40px !important;
+    flex-basis: 60px !important;
+    width: 60px !important;
+    height: 60px !important;
+    max-width: 60px !important;
+    max-height: 60px !important;
   }
 }
 

@@ -171,6 +171,21 @@
                             <div class="bg-white py-2 collapse-inner rounded">
 
                                 <a class="collapse-item" asp-controller="Alumnos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Estudiante</a>
+                                <a class="collapse-item" asp-controller="Pagos" asp-action="Traslado"> <i class="bi bi-arrow-return-right text-black"></i> Traslado entre colegios</a>
+                            </div>
+                        </div>
+                    </li>
+                    <!-- Matrícula -->
+                    <li class="nav-item active">
+                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseMatricula"
+                        aria-expanded="false" aria-controls="collapseMatricula" role="button">
+                            <i class="bi bi-journal-check"></i>
+                            <span>Matrícula</span>
+                        </a>
+                        <div id="collapseMatricula" class="collapse" data-bs-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <a class="collapse-item" asp-controller="Matriculas" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Matrículas por ciclo</a>
+                                <a class="collapse-item" asp-controller="Matriculas" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Matricular / rematricular</a>
                             </div>
                         </div>
                     </li>
@@ -231,6 +246,7 @@
                                 <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create"><i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Egresos</a>
 
                                 <a class="collapse-item" asp-controller="Pagos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Mensualidad</a>
+                                <a class="collapse-item" asp-controller="Pagos" asp-action="Traslado"> <i class="bi bi-arrow-return-right text-black"></i> Traslado entre colegios</a>
                                 @* <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a> *@
                                 @* <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a> *@
                                 @* <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Arqueo Diarío</a> *@
@@ -263,6 +279,8 @@
                                     <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
                                     <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
                                     <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
+                                    <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
+                                    <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Egreso</a>
                                 }
                                 @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
                                 {
@@ -301,6 +319,26 @@
                 }
                 @if (User.IsInRole("UserSystem") || User.IsInRole("Admin"))
                 {
+                    <li class="nav-item active">
+                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseTarifas"
+                           aria-expanded="false" aria-controls="collapseTarifas" role="button">
+                            <i class="bi bi-currency-dollar"></i>
+                            <span>Tarifas y ciclo</span>
+                        </a>
+                        <div id="collapseTarifas" class="collapse" data-bs-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <a class="collapse-item" asp-controller="Costos" asp-action="Index">
+                                    <i class="bi bi-arrow-return-right text-black"></i> Matrícula y mensualidad
+                                </a>
+                                <a class="collapse-item" asp-controller="Costos" asp-action="CreateMatricula">
+                                    <i class="bi bi-arrow-return-right text-black"></i> Agregar matrícula
+                                </a>
+                                <a class="collapse-item" asp-controller="Costos" asp-action="CreateMensualidad">
+                                    <i class="bi bi-arrow-return-right text-black"></i> Agregar mensualidad
+                                </a>
+                            </div>
+                        </div>
+                    </li>
                     <!-- Usuario -->
                     <li class="nav-item active">
                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsuario"
@@ -343,7 +381,7 @@
 
     <div class="header topbar-header">
                         <div class="topbar-logo-wrap">
-                            <img src="~/image/colegiosanfrancisco.png" alt="Colegio Parroquial San Francisco Javier" class="logo-izquierda" width="160" height="52" decoding="async">
+                            <img src="~/image/colegiosanfrancisco.png" alt="Colegio Parroquial San Francisco Javier" class="logo-izquierda" width="96" height="96" decoding="async">
                         </div>
 
                         <div class="titulo" style="flex: 1;">
@@ -354,7 +392,7 @@
                         </div>
 
                         <div class="topbar-logo-wrap">
-                            <img src="~/image/SanFrancisco.png" alt="Emblema San Francisco" class="logo-derecha" width="160" height="52" decoding="async">
+                            <img src="~/image/SanFrancisco.png" alt="Emblema San Francisco" class="logo-derecha" width="96" height="96" decoding="async">
                         </div>
 
                     </div>

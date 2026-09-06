@@ -2,6 +2,9 @@
 @* @{
 	ViewData["Title"] = "Index";
 } *@
+@{
+	var puedeAnular = User.IsInRole("Admin") || User.IsInRole("UserSystem");
+}
 <script src="~/js/site.js"></script>
 @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" /> *@
@@ -19,12 +22,12 @@
 							<div class="col-4">
 								<label class="control-label">Desde:</label>
 								<input type="date" name="fechainicio" id="FechaInicio" class="form-control"
-								value="@@(Request.QueryString[" fechainicio"])" />
+								value="@Context.Request.Query["fechainicio"]" />
 							</div>
 							<div class="col-4">
 								<label class="control-label">Hasta:</label>
 								<input type="date" name="fechafin" id="FechaFin" class="form-control"
-								value="@@(Request.QueryString[" fechafin"])" />
+								value="@Context.Request.Query["fechafin"]" />
 							</div>
 							<div class="col-4">
 								<br />
@@ -55,13 +58,18 @@
 							<th>Colegio</th>
 							<th>Fecha Registro</th>
 							<th>Estado</th>
-							<th>Hoja Matrícula</th>
+							<th>Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
 						@foreach(var itemAlumno in Model.alumno){
-							<tr>
-								<td>
+							var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == itemAlumno.IdGrado);
+							var turno = Model.turnos?.FirstOrDefault(a => a.IdTurno == itemAlumno.IdTurno);
+							var sexo = Model.sexos?.FirstOrDefault(a => a.IdSexo == itemAlumno.IdSexo);
+							var recinto = Model.recintos?.FirstOrDefault(a => a.IdRecinto == itemAlumno.IdRecinto);
+							var nombreAlumno = $"{itemAlumno.Nombre} {itemAlumno.Apellido}".Trim();
+							<tr class="@(itemAlumno.Activo == true ? "" : "table-secondary")">
+								<td data-order="@itemAlumno.IdAlumno">
 									<a asp-action="Edit" asp-controller="Alumnos" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-info">	@itemAlumno.CodigoAlumno</a>
 								</td>
 								<td>
@@ -76,66 +84,55 @@
 								<td>
 									@itemAlumno.Edad
 								</td>
-								@* <td>
-					@itemAlumno.Cedula
-				</td> *@
-								@foreach (var grado in Model.grados.Where(a=>a.IdGrado==itemAlumno.IdGrado))
-								{
-									<td>
-
-										@grado.NombreGrado 
-
-									</td>
-								}
-								@foreach (var turno in Model.turnos.Where(a => a.IdTurno == itemAlumno.IdTurno))
-								{
-									<td>
-										@turno.NombreTurno
-
-									</td>
-								}
-								@foreach (var sexo in Model.sexos.Where(a => a.IdSexo == itemAlumno.IdSexo))
-								{
-									<td>
-
-										@sexo.Sexo
-
-									</td>
-								}
-								@foreach (var recinto in Model.recintos.Where(a => a.IdRecinto == itemAlumno.IdRecinto))
-								{
-									<td>
-
-										@recinto.Recinto
-
-									</td>
-								}
 								<td>
-
+									@(grado?.NombreGrado ?? "—")
+								</td>
+								<td>
+									@(turno?.NombreTurno ?? "—")
+								</td>
+								<td>
+									@(sexo?.Sexo ?? "—")
+								</td>
+								<td>
+									@(recinto?.Recinto ?? "—")
+								</td>
+								<td>
 									@itemAlumno.FechaRegistro.ToString("dd/MM/yyyy")
 								</td>
-								@{
-
-									var activo = @itemAlumno.Activo;
-
-								}
-
-								@if (activo == true)
+								@if (itemAlumno.Activo == true)
 								{
 									<td>
-										<span class="badge bg-success">
-											Activo
-										</span></td>
+										<span class="badge bg-success">Activo</span>
+									</td>
 								}
 								else
 								{
-									<td><span class="badge bg-warning text-dark">Inactivo</span></td>
+									<td><span class="badge bg-secondary">Anulado</span></td>
 								}
-
-
-
 								<td>
-									<a asp-action="Details" asp-route-id="@itemAlumno.IdAlumno" class="btn btn-sm btn-success"><i class="bi bi-printer-fill"></i></a>
+									@if (itemAlumno.Activo == true)
+									{
+										<a asp-controller="Matriculas" asp-action="Create" asp-route-idAlumno="@itemAlumno.IdAlumno" class="btn btn-sm btn-outline-primary" title="Rematricular">
+											<i class="bi bi-journal-plus"></i> Rematricular
+										</a>
+										@if (puedeAnular)
+										{
+											<form asp-action="Anular" asp-controller="Alumnos" method="post" class="d-inline js-anular-recibo"
+												  data-mensaje="¿Anular el registro de @nombreAlumno?">
+												@Html.AntiForgeryToken()
+												<input type="hidden" name="id" value="@itemAlumno.IdAlumno" />
+												<input type="hidden" name="fechainicio" value="@Context.Request.Query["fechainicio"]" />
+												<input type="hidden" name="fechafin" value="@Context.Request.Query["fechafin"]" />
+												<button type="submit" class="btn btn-sm btn-outline-danger" title="Anular estudiante">
+													<i class="bi bi-x-circle"></i> Anular
+												</button>
+											</form>
+										}
+									}
+									else
+									{
+										<span class="text-muted small">—</span>
+									}
 								</td>
 							</tr>
 						}
@@ -153,28 +150,50 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-	$(document).ready(function () {
-	var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
-	var botones = esCajero ? [] : [
-		{
-		extend: 'excelHtml5',
-		text: 'Exportar a Excel',
-		className: 'btn btn-success'
+	$(document).on("submit", "form.js-anular-recibo", function (e) {
+		e.preventDefault();
+		var form = this;
+		var mensaje = form.getAttribute("data-mensaje") || "¿Anular el registro?";
+		if (typeof Swal === "undefined") {
+			if (window.confirm(mensaje)) form.submit();
+			return;
 		}
-	];
-	$('#tablaAlumnos').DataTable({
-	responsive: false,
-	dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
-	buttons: botones,
-		language: {
-			url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
-		}
+		Swal.fire({
+			title: "Atención",
+			text: mensaje,
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonText: "Aceptar",
+			cancelButtonText: "Cancelar"
+		}).then(function (result) {
+			if (result.isConfirmed) form.submit();
+		});
 	});
-});
+	$(document).ready(function () {
+		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
+		var botones = esCajero ? [] : [
+			{
+				extend: 'excelHtml5',
+				text: 'Exportar a Excel',
+				className: 'btn btn-success'
+			}
+		];
+		$('#tablaAlumnos').DataTable({
+			responsive: false,
+			pageLength: 10,
+			lengthMenu: [[5, 10, 20], [5, 10, 20]],
+			paging: true,
+			order: [[0, 'desc']],
+			dom: esCajero ? 'lfrtip' : 'Blfrtip',
+			buttons: botones,
+			language: {
+				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+			}
+		});
+	});
 </script>
-<script src="~/seewtalert/sweetalert.all.min.js"></script>
-<link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
 @if (TempData["Mensaje"] != null)
 {
 	<script>

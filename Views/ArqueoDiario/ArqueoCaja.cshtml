@@ -55,6 +55,20 @@
             <p style="margin: 0;"><strong>Recinto:</strong> @(Model.Colegio ?? "N/A")</p>
             <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.9rem;">Arqueo correspondiente a su centro de trabajo.</p>
         }
+        @if (Model.InicioVentana != default && Model.FinVentana != default)
+        {
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                <strong>Turno de caja:</strong>
+                @Model.InicioVentana.ToString("dd/MM/yyyy hh:mm tt")
+                – @Model.FinVentana.ToString("dd/MM/yyyy hh:mm tt").
+                Incluye cobros desde el cierre anterior (o las 5 p.m. de ayer si no hubo arqueo reciente) hasta ahora.
+                Al guardar (habitualmente 3–4 p.m.) se cierra el turno; lo cobrado después pasa al arqueo de mañana.
+                @if (Model.ArqueoYaCerrado)
+                {
+                    <span> Este recinto ya tiene arqueo cerrado en esta fecha.</span>
+                }
+            </p>
+        }
     </div>
     <form method="post" asp-action="Create" enctype="multipart/form-data" id="formArqueo">
         <input type="hidden" asp-for="Fecha" />

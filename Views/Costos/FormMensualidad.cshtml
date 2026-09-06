@@ -1,0 +1,88 @@
+@model WebColegio.Models.ViewModel.CostoMensualidadFormViewModel
+@{
+    ViewData["Title"] = Model.EsEdicion ? "Editar mensualidad" : "Nueva mensualidad";
+    var accion = Model.EsEdicion ? "EditMensualidad" : "CreateMensualidad";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="bi bi-calendar-month"></i>
+                @(Model.EsEdicion ? "Editar valor de mensualidad" : "Registrar valor de mensualidad")
+            </h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="@accion" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Costo.IdMensualidad" />
+                <input type="hidden" asp-for="Costo.UsuarioRegistro" />
+                <input type="hidden" asp-for="Costo.FechaRegistro" />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Costo.IdPeriodo" class="form-label">Ciclo</label>
+                            <select asp-for="Costo.IdPeriodo" asp-items="Model.Periodos" class="form-select" required>
+                                <option value="">Seleccione el ciclo</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Costo.IdRecinto" class="form-label">Colegio</label>
+                            <select asp-for="Costo.IdRecinto" asp-items="Model.Recintos" class="form-select" required>
+                                <option value="">Seleccione el colegio</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Costo.IdGrado" class="form-label">Nivel (grado)</label>
+                            <select asp-for="Costo.IdGrado" asp-items="Model.Grados" class="form-select" required>
+                                <option value="">Seleccione el nivel</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Costo.IdModalidad" class="form-label">Modalidad</label>
+                            <select asp-for="Costo.IdModalidad" asp-items="Model.Modalidades" class="form-select">
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Costo.CostoMensualidad" class="form-label">Valor de mensualidad (C$)</label>
+                            <input asp-for="Costo.CostoMensualidad" type="number" min="1" step="1" class="form-control" required />
+                        </div>
+                        <div class="form-check mb-3">
+                            <input asp-for="Costo.Activo" class="form-check-input" />
+                            <label asp-for="Costo.Activo" class="form-check-label">Activo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-action="Index" asp-route-idPeriodo="@Model.Costo.IdPeriodo" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@if (TempData["Mensaje"] != null)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var mensaje = @Html.Raw(Json.Serialize(TempData["Mensaje"]));
+            var titulo = '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+                TempData["Tipo"]?.ToString() == "warning" ? "Atención" : "Información")';
+            var icono = '@(TempData["Tipo"]?.ToString() ?? "info")';
+            if (typeof Swal !== 'undefined' && Swal.fire) {
+                Swal.fire({
+                    title: titulo,
+                    text: mensaje,
+                    icon: icono,
+                    confirmButtonText: 'Aceptar'
+                });
+            } else {
+                alert(titulo + ': ' + mensaje);
+            }
+        });
+    </script>
+}

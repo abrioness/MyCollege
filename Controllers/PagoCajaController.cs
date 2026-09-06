@@ -33,6 +33,7 @@ namespace WebColegio.Controllers
             var _periodo = await _Iservices.GetPeriodoAsync();
             var _tipoMovimiento=await _Iservices.GetTipoMovimientoAsync();
             var _recinto = await _Iservices.GetRecintosAsync();
+            var _usuarios = await _Iservices.GetUsuariosAsync() ?? new List<TblUsuarios>();
             //var _metodoPago = await _Iservices.GetMetodoPagoAsync();
             //var _meses = await _Iservices.GetMesesAsync();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
@@ -58,7 +59,7 @@ namespace WebColegio.Controllers
                 tipoMovimiento = _tipoMovimiento,
                 periodo = _periodo,
                 recintos = _recinto,
-
+                usuarios = _usuarios,
             };
             if (VieModelPagoCaja == null)
             {
@@ -178,7 +179,9 @@ namespace WebColegio.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(
             [Bind(Prefix = "PagosCaja")] TblPagoCaja pagoscaja,
-            [FromForm] List<DetallePagoCajaItem>? DetalleItems)
+            [FromForm] List<DetallePagoCajaItem>? DetalleItems,
+            [FromForm] int idAlumno = 0,
+            [FromForm] int semestreRifa = 0)
         {
             var buscarIdGuardado = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
             var buscarperiodo = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
@@ -200,6 +203,7 @@ namespace WebColegio.Controllers
                 .Select(g => new DetallePagoCajaItem { IdProducto = g.Key, Cantidad = g.Sum(x => x.Cantidad) })
                 .ToList();
 
+            var lineasProducto = new List<(int Cantidad, string Nombre)>();
             if (itemsValidos.Count > 0)
             {
                 decimal totalCalculado = 0m;
@@ -219,6 +223,7 @@ namespace WebColegio.Controllers
                         return RedirectToAction("Create");
                     }
                     totalCalculado += producto.CostoUnitario * item.Cantidad;
+                    lineasProducto.Add((item.Cantidad, producto.NombreProducto ?? $"Producto {item.IdProducto}"));
                 }
                 pagoscaja.Monto = totalCalculado;
             }
@@ -235,8 +240,45 @@ namespace WebColegio.Controllers
                 pagoscaja.UsuarioRegistro = idUsuario;
                 pagoscaja.Activo = true;
                 pagoscaja.FechaRegistro = DateTime.Now;
-                if (periodo != null)
+                if (pagoscaja.IdPeriodo <= 0 && periodo != null)
                     pagoscaja.IdPeriodo = periodo.IdPeriodo;
+                if (lineasProducto.Count > 0)
+                {
+                    pagoscaja.Descripcion = EstadoCuentaCalculoHelper.CombinarDescripcionVisible(
+                        pagoscaja.Descripcion,
+                        EstadoCuentaCalculoHelper.TextoLineasProducto(lineasProducto));
+                }
+                pagoscaja.Descripcion = EstadoCuentaCalculoHelper.AdjuntarMarcaAlumno(pagoscaja.Descripcion, idAlumno);
+
+                var tiposMovCaja = await _Iservices.GetTipoMovimientoAsync() ?? new List<CatTipoMovimiento>();
+                var idsRifaCaja = EstadoCuentaCalculoHelper.IdsPorConcepto(tiposMovCaja, "rifa", "rifas");
+                idsRifaCaja.Add(EstadoCuentaCalculoHelper.TipoRifa);
+                if (idsRifaCaja.Contains(pagoscaja.Concepto))
+                {
+                    TblAlumno alumnoRifa = idAlumno > 0
+                        ? await _Iservices.GetAlumnoIdAsync(idAlumno) ?? new TblAlumno { Nombre = pagoscaja.Nombre }
+                        : new TblAlumno { Nombre = pagoscaja.Nombre };
+                    int rifasCajaPrevias = EstadoCuentaCalculoHelper
+                        .RecibosCajaDelAlumno(buscarIdGuardado, alumnoRifa, pagoscaja.IdPeriodo, DateTime.Now.Year)
+                        .Count(c => EstadoCuentaCalculoHelper.EsReciboRifa(c, idsRifaCaja, tiposMovCaja));
+                    int rifasPagoPrevias = 0;
+                    if (alumnoRifa.IdAlumno > 0)
+                    {
+                        var pagosRifa = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
+                        rifasPagoPrevias = pagosRifa.Count(p =>
+                            p.Activo && p.IdAlumno == alumnoRifa.IdAlumno
+                            && idsRifaCaja.Contains(p.IdTipoMovimiento));
+                    }
+                    int siguienteRifa = EstadoCuentaCalculoHelper.SiguienteSemestreRifa(rifasCajaPrevias + rifasPagoPrevias);
+                    if (siguienteRifa == 0)
+                    {
+                        TempData["Mensaje"] = "Este alumno ya tiene pagadas las dos rifas del año (1.er y 2.º semestre).";
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction("Create");
+                    }
+                    semestreRifa = siguienteRifa;
+                    pagoscaja.Descripcion = EstadoCuentaCalculoHelper.AdjuntarMarcaRifa(pagoscaja.Descripcion, semestreRifa);
+                }
 
                 bool response = await _Iservices.PostPagosCajaAsync(pagoscaja);
                 if (!response)
@@ -259,6 +301,7 @@ namespace WebColegio.Controllers
                 if (itemsValidos.Count > 0 && idNuevoRecibo > 0)
                 {
                     var erroresInventario = new List<string>();
+                    var avisosBajoMinimo = new List<string>();
                     foreach (var item in itemsValidos)
                     {
                         var producto = await _Iservices.GetProductoByIdAsync(item.IdProducto);
@@ -292,11 +335,21 @@ namespace WebColegio.Controllers
                             UsuarioRegistro = idUsuario,
                             FechaRegistro = DateTime.Now
                         });
+
+                        if (InventarioAlertaHelper.EstaBajoMinimo(producto))
+                            avisosBajoMinimo.Add(InventarioAlertaHelper.TextoAlerta(producto));
                     }
 
                     if (erroresInventario.Count > 0)
                     {
                         TempData["Mensaje"] = "Pago registrado, pero hubo problemas al descontar inventario: " + string.Join("; ", erroresInventario);
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
+                    }
+
+                    if (avisosBajoMinimo.Count > 0)
+                    {
+                        TempData["Mensaje"] = "Pago registrado. Inventario bajo, reponer: " + string.Join("; ", avisosBajoMinimo);
                         TempData["Tipo"] = "warning";
                         return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
                     }
@@ -348,40 +401,53 @@ namespace WebColegio.Controllers
         [Authorize]
         public async Task<ActionResult> EstadoCuenta()
         {
-
-            var _pagos = await _Iservices.GetPagosAsync();
-            var _alumnos = await _Iservices.GetAlumnosAsync();
-            var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
-            var _tipoRecibo = await _Iservices.GetTipoReciboAsync();
-            var _metodoPago = await _Iservices.GetMetodoPagoAsync();
-            var _meses = await _Iservices.GetMesesAsync();
-            var _notas = await _Iservices.GetNotasAsync();
-            var _periodo = await _Iservices.GetPeriodoAsync();
-            var _grados = await _Iservices.GetGradosAsync();
-
-
-            var VieModelEstadoCuenta = new ColeccionCatalogos
+            var pagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
+            var alumnos = (await _Iservices.GetAlumnosAsync())?.Where(a => a.Activo != false).ToList()
+                ?? new List<TblAlumno>();
+            var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodoRef = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos);
+            if (periodoRef == null)
             {
-                pagos = _pagos,
-                alumno = _alumnos,
-                tipoMovimiento = _tipoMovimiento,
-                tipoRecibo = _tipoRecibo,
-                metodoPago = _metodoPago,
-                meses = _meses,
-                periodo = _periodo,
-                grados = _grados
-
-            };
-            if (VieModelEstadoCuenta == null)
-            {
-                TempData["Message"] = "No hay estado de cuenta registradas";
-                return View("NotFound"); // Redirige a una vista de error o no encontrado
+                TempData["Message"] = "No hay período lectivo activo configurado.";
+                return View(new EstadoCuentaViewModel
+                {
+                    MensajePeriodo = "No hay período lectivo activo. Configure un período en catálogo."
+                });
             }
-            else
+
+            int idPeriodoRef = periodoRef.IdPeriodo;
+            var matriculasCiclo = (await _Iservices.GetMatriculasAsync() ?? new List<TblMatricula>())
+                .Where(m => m.Activo)
+                .ToList();
+
+            int mesReq = EstadoCuentaSolvenciaHelper.ObtenerMesMensualidadRequerido();
+            var tiposMov = await _Iservices.GetTipoMovimientoAsync() ?? new List<CatTipoMovimiento>();
+            var pagosCaja = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
+            var filas = EstadoCuentaCalculoHelper.ConstruirFilas(
+                alumnos,
+                pagos,
+                await _Iservices.GetCostosMensualidadAsync() ?? new List<TblCostoMensualidad>(),
+                await _Iservices.GetCostosMatriculaAsync() ?? new List<TblCostoMatricula>(),
+                matriculasCiclo,
+                await _Iservices.GetGradosAsync() ?? new List<Grados>(),
+                await _Iservices.GetRecintosAsync() ?? new List<Recintos>(),
+                await _Iservices.GetMesesAsync() ?? new List<TblCatMeses>(),
+                idPeriodoRef,
+                periodoRef.Periodo,
+                periodos,
+                EstadoCuentaCalculoHelper.IdsPorConcepto(tiposMov, "mensualidad"),
+                EstadoCuentaCalculoHelper.IdsPorConcepto(tiposMov, "rifa", "rifas"),
+                EstadoCuentaCalculoHelper.IdsPorConcepto(tiposMov, "promoc"),
+                pagosCaja,
+                tiposMov);
+
+            return View(new EstadoCuentaViewModel
             {
-                TempData["Message"] = "Estado de Cuenta encontradas";
-                return View(VieModelEstadoCuenta);
-            }
+                AnioPeriodoReferencia = periodoRef.Periodo,
+                MesMensualidadRequerido = mesReq,
+                Filas = filas,
+                MensajePeriodo = $"Período {periodoRef.Periodo}."
+            });
         }
 
         [Authorize(Roles = "Admin,UserSystem")]

@@ -43,6 +43,8 @@ namespace WebColegio.Helpers
             foreach (int mes in ObtenerMesesExigibles(referencia))
             {
                 var celda = lista.FirstOrDefault(m => m.Mes == mes) ?? lista[mes - 1];
+                if (celda.NoCorresponde)
+                    continue;
                 if (!celda.Cancelado)
                     return "Insolvente";
             }
@@ -66,6 +68,8 @@ namespace WebColegio.Helpers
             foreach (int mes in ObtenerMesesExigibles(referencia))
             {
                 var celda = lista.FirstOrDefault(m => m.Mes == mes) ?? lista[mes - 1];
+                if (celda.NoCorresponde)
+                    continue;
                 if (!celda.Cancelado)
                     pendientes.Add(celda.NombreMes);
             }
@@ -89,6 +93,8 @@ namespace WebColegio.Helpers
             for (int mes = 1; mes <= 12; mes++)
             {
                 var celda = lista.FirstOrDefault(m => m.Mes == mes) ?? lista[mes - 1];
+                if (celda.NoCorresponde)
+                    continue;
                 if (!celda.Cancelado)
                     break;
                 ultimo = mes;
@@ -111,6 +117,8 @@ namespace WebColegio.Helpers
             for (int mes = 1; mes <= 12; mes++)
             {
                 var celda = lista.FirstOrDefault(m => m.Mes == mes) ?? lista[mes - 1];
+                if (celda.NoCorresponde)
+                    continue;
                 if (celda.Cancelado)
                     max = mes;
             }

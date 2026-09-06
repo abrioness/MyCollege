@@ -563,6 +563,33 @@ namespace WebColegio.Services
 
         }
 
+        public async Task<List<CatProveedor>> GetProveedoresAsync()
+        {
+            foreach (var ruta in new[]
+            {
+                "api/TblCatProveedores",
+                "api/CatProveedores",
+                "api/Proveedores",
+                "api/CatProveedore"
+            })
+            {
+                try
+                {
+                    using var httpClient = CreateApiClient();
+                    var response = await httpClient.GetAsync(url + ruta);
+                    if (!response.IsSuccessStatusCode)
+                        continue;
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<CatProveedor>>(content) ?? new List<CatProveedor>();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"GET {ruta}: {ex.Message}");
+                }
+            }
+            return new List<CatProveedor>();
+        }
+
         public async Task<List<CatTipoMovimiento>> GetTipoMovimientoAsync()
         {
             List<CatTipoMovimiento> tipoMovimientos = new List<CatTipoMovimiento>();
@@ -621,7 +648,7 @@ namespace WebColegio.Services
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     var resultado = JsonConvert.DeserializeObject<List<TblCostoMensualidad>>(content);
-                    costoMensualidad = resultado;
+                    costoMensualidad = resultado ?? new List<TblCostoMensualidad>();
                 }
                 return costoMensualidad;
             }
@@ -701,18 +728,25 @@ namespace WebColegio.Services
         public async Task<List<CatPeriodo>> GetPeriodoAsync()
         {
             List<CatPeriodo> periodo = new List<CatPeriodo>();
-            using (var httpclient = CreateApiClient())
+            try
             {
-                var response = await httpclient.GetAsync(url + "api/CatPeriodo");
-                if (response.IsSuccessStatusCode)
+                using (var httpclient = CreateApiClient())
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonConvert.DeserializeObject<List<CatPeriodo>>(content);
-                    periodo = resultado;
+                    var response = await httpclient.GetAsync(url + "api/CatPeriodo");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+                        var resultado = JsonConvert.DeserializeObject<List<CatPeriodo>>(content);
+                        periodo = resultado ?? new List<CatPeriodo>();
+                    }
                 }
-                return periodo;
             }
-
+            catch (Exception ex)
+            {
+                LastApiError = ex.Message;
+                Debug.WriteLine($"Error en GetPeriodoAsync: {ex.Message}");
+            }
+            return periodo;
         }
         //public  async Task<List<TblInventario>> GetInventarioAsync()
         //{
@@ -1520,26 +1554,39 @@ namespace WebColegio.Services
                 return arqueo!;
             }
         }
-        public async Task<TblPago> GetPagoById(int id)
+        public async Task<TblPago?> GetPagoById(int id)
         {
-            // Suponiendo que tu API tiene un endpoint como:
-            // GET https://tuservidor/api/arqueo/{id}
-            using (var httpclient = CreateApiClient())
+            if (id <= 0)
+                return null;
+
+            try
             {
-
-                var response = await httpclient.GetAsync(url+$"api/Pagos/"+id);
-
-                if (!response.IsSuccessStatusCode)
+                using (var httpclient = CreateApiClient())
                 {
-                    throw new Exception($"Error al obtener el arqueo: {response.StatusCode}");
+                    var response = await httpclient.GetAsync(url + $"api/Pagos/" + id);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync();
+                        var pago = JsonConvert.DeserializeObject<TblPago>(json);
+                        if (pago != null && pago.IdPago > 0)
+                            return pago;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GetPagoById({id}): {ex.Message}");
+            }
 
-                var json = await response.Content.ReadAsStringAsync();
-
-                // Usar Newtonsoft.Json o System.Text.Json para deserializar
-                var pago = JsonConvert.DeserializeObject<TblPago>(json);
-
-                return pago!;
+            try
+            {
+                var lista = await GetPagosAsync();
+                return lista?.FirstOrDefault(p => p.IdPago == id);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GetPagoById fallback ({id}): {ex.Message}");
+                return null;
             }
         }
         public async Task<TblPagoCaja> GetPagoCajaById(int id)
@@ -2192,6 +2239,244 @@ namespace WebColegio.Services
         //    .Select(p => p.IdMes).Count();
         //    return pendientes;
         //}
+        #endregion
+
+        #region Costos y ciclo lectivo
+        public async Task<(bool Exito, string? DetalleError)> PostCostoMatriculaAsync(TblCostoMatricula costo)
+            => await PostConRutasAsync(costo, "api/TblCostoMatriculas", "api/TblCostoMatricula");
+
+        public async Task<(bool Exito, string? DetalleError)> UpdateCostoMatriculaAsync(TblCostoMatricula costo)
+        {
+            if (costo == null || costo.IdCostoMatricula <= 0)
+                return (false, "Costo de matrícula no válido.");
+            return await PutConRutasAsync(costo,
+                $"api/TblCostoMatriculas/{costo.IdCostoMatricula}",
+                $"api/TblCostoMatricula/{costo.IdCostoMatricula}");
+        }
+
+        public async Task<(bool Exito, string? DetalleError)> PostCostoMensualidadAsync(TblCostoMensualidad costo)
+            => await PostConRutasAsync(costo, "api/TblCostoMensualidad", "api/TblCostoMensualidads");
+
+        public async Task<(bool Exito, string? DetalleError)> UpdateCostoMensualidadAsync(TblCostoMensualidad costo)
+        {
+            if (costo == null || costo.IdMensualidad <= 0)
+                return (false, "Costo de mensualidad no válido.");
+            return await PutConRutasAsync(costo,
+                $"api/TblCostoMensualidad/{costo.IdMensualidad}",
+                $"api/TblCostoMensualidads/{costo.IdMensualidad}");
+        }
+
+        /// <summary>
+        /// La API de CatPeriodo valida como requeridas las navegaciones EF
+        /// TblAlumnos y TblCatPagos. Se envían listas vacías para el POST/PUT.
+        /// </summary>
+        private static object PayloadPeriodoApi(CatPeriodo periodo) => new
+        {
+            periodo.IdPeriodo,
+            periodo.Periodo,
+            periodo.Actual,
+            periodo.Activo,
+            periodo.UsuarioRegistro,
+            periodo.FechaRegistro,
+            periodo.UsuarioActualizo,
+            periodo.FechaActualizo,
+            TblAlumnos = Array.Empty<object>(),
+            TblCatPagos = Array.Empty<object>()
+        };
+
+        public async Task<(bool Exito, string? DetalleError, CatPeriodo? Creado)> PostPeriodoAsync(CatPeriodo periodo)
+        {
+            var (ok, err, cuerpo) = await PostConRutasConCuerpoAsync(PayloadPeriodoApi(periodo), "api/CatPeriodo", "api/CatPeriodos");
+            if (!ok)
+                return (false, err, null);
+
+            CatPeriodo? creado = null;
+            if (!string.IsNullOrWhiteSpace(cuerpo))
+            {
+                try
+                {
+                    creado = JsonConvert.DeserializeObject<CatPeriodo>(cuerpo);
+                }
+                catch (JsonException ex)
+                {
+                    Debug.WriteLine("POST CatPeriodo: no se pudo leer el ciclo creado. " + ex.Message);
+                }
+            }
+            return (true, null, creado);
+        }
+
+        public async Task<(bool Exito, string? DetalleError)> UpdatePeriodoAsync(CatPeriodo periodo)
+        {
+            if (periodo == null || periodo.IdPeriodo <= 0)
+                return (false, "Período no válido.");
+            return await PutConRutasAsync(PayloadPeriodoApi(periodo),
+                $"api/CatPeriodo/{periodo.IdPeriodo}",
+                $"api/CatPeriodos/{periodo.IdPeriodo}");
+        }
+
+        public async Task<List<TblMatricula>> GetMatriculasAsync(int? idPeriodo = null, int? idAlumno = null)
+        {
+            var qs = new List<string>();
+            if (idPeriodo.HasValue && idPeriodo.Value > 0)
+                qs.Add("idPeriodo=" + idPeriodo.Value);
+            if (idAlumno.HasValue && idAlumno.Value > 0)
+                qs.Add("idAlumno=" + idAlumno.Value);
+            var ruta = "api/TblMatriculas" + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
+            return await GetListaAsync<TblMatricula>(ruta);
+        }
+
+        public async Task<TblMatricula?> GetMatriculaByIdAsync(int id)
+        {
+            if (id <= 0)
+                return null;
+            return await GetUnoAsync<TblMatricula>($"api/TblMatriculas/{id}");
+        }
+
+        public async Task<TblMatricula?> GetMatriculaAlumnoPeriodoAsync(int idAlumno, int idPeriodo)
+        {
+            if (idAlumno <= 0 || idPeriodo <= 0)
+                return null;
+            return await GetUnoAsync<TblMatricula>($"api/TblMatriculas/alumno/{idAlumno}/periodo/{idPeriodo}");
+        }
+
+        public async Task<(bool Exito, string? DetalleError)> PostMatriculaAsync(TblMatricula matricula)
+            => await PostConRutasAsync(matricula, "api/TblMatriculas");
+
+        public async Task<(bool Exito, string? DetalleError)> UpdateMatriculaAsync(TblMatricula matricula)
+        {
+            if (matricula == null || matricula.IdMatricula <= 0)
+                return (false, "Matrícula no válida.");
+            return await PutConRutasAsync(matricula, $"api/TblMatriculas/{matricula.IdMatricula}");
+        }
+
+        private async Task<List<T>> GetListaAsync<T>(string relativeUrl)
+        {
+            try
+            {
+                using var httpClient = CreateApiClient();
+                var response = await httpClient.GetAsync(url + relativeUrl);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var cuerpo = await response.Content.ReadAsStringAsync();
+                    RegistrarErrorApi("GET " + relativeUrl, response, cuerpo);
+                    return new List<T>();
+                }
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<List<T>>(content) ?? new List<T>();
+            }
+            catch (Exception ex)
+            {
+                LastApiError = ex.Message;
+                Debug.WriteLine($"GET {relativeUrl}: {ex.Message}");
+                return new List<T>();
+            }
+        }
+
+        private async Task<T?> GetUnoAsync<T>(string relativeUrl) where T : class
+        {
+            try
+            {
+                using var httpClient = CreateApiClient();
+                var response = await httpClient.GetAsync(url + relativeUrl);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<T>(content);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GET {relativeUrl}: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task<(bool Exito, string? Error)> PostConRutasAsync(object body, params string[] rutas)
+        {
+            var (ok, err, _) = await PostConRutasConCuerpoAsync(body, rutas);
+            return (ok, err);
+        }
+
+        private async Task<(bool Exito, string? Error, string? Cuerpo)> PostConRutasConCuerpoAsync(object body, params string[] rutas)
+        {
+            string? ultimoError = null;
+            foreach (var ruta in rutas)
+            {
+                var (ok, err, cuerpo) = await EnviarJsonAsync(HttpMethod.Post, ruta, body);
+                if (ok)
+                    return (true, null, cuerpo);
+                ultimoError = err;
+                if (!EsRutaInexistente(err))
+                    return (false, err, null);
+            }
+            return (false, ultimoError, null);
+        }
+
+        private async Task<(bool Exito, string? Error)> PutConRutasAsync(object body, params string[] rutas)
+        {
+            string? ultimoError = null;
+            foreach (var ruta in rutas)
+            {
+                var (ok, err, _) = await EnviarJsonAsync(HttpMethod.Put, ruta, body);
+                if (ok)
+                    return (true, null);
+                ultimoError = err;
+                if (!EsRutaInexistente(err))
+                    return (false, err);
+            }
+            return (false, ultimoError);
+        }
+
+        private static bool EsRutaInexistente(string? error)
+            => !string.IsNullOrWhiteSpace(error)
+               && (error.Contains("404")
+                   || error.Contains("405")
+                   || error.Contains("Not Found", StringComparison.OrdinalIgnoreCase)
+                   || error.Contains("Method Not Allowed", StringComparison.OrdinalIgnoreCase));
+
+        private static readonly JsonSerializerSettings JsonApiSettings = new()
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+            DateFormatString = "yyyy-MM-ddTHH:mm:ss",
+            DateTimeZoneHandling = DateTimeZoneHandling.Unspecified
+        };
+
+        private async Task<(bool Exito, string? Error, string? Cuerpo)> EnviarJsonAsync(HttpMethod method, string relativeUrl, object body)
+        {
+            try
+            {
+                using var httpClient = CreateApiClient();
+                var json = JsonConvert.SerializeObject(body, JsonApiSettings);
+                using var request = new HttpRequestMessage(method, url + relativeUrl)
+                {
+                    Content = new StringContent(json, Encoding.UTF8, "application/json")
+                };
+                var response = await httpClient.SendAsync(request);
+                var cuerpo = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                    return (true, null, cuerpo);
+
+                var detalle = string.IsNullOrWhiteSpace(cuerpo)
+                    ? $"{(int)response.StatusCode} {response.ReasonPhrase}"
+                    : TruncarErrorApi(cuerpo.Trim());
+                RegistrarErrorApi($"{method} {relativeUrl}", response, cuerpo);
+                return (false, detalle, null);
+            }
+            catch (Exception ex)
+            {
+                LastApiError = ex.Message;
+                Debug.WriteLine($"Excepción en {method} {relativeUrl}: {ex.Message}");
+                return (false, ex.Message, null);
+            }
+        }
+
+        private static string TruncarErrorApi(string error)
+        {
+            if (error.Length <= 400)
+                return error;
+            var sinHtml = System.Text.RegularExpressions.Regex.Replace(error, "<[^>]+>", " ");
+            sinHtml = System.Text.RegularExpressions.Regex.Replace(sinHtml, @"\s+", " ").Trim();
+            return sinHtml.Length <= 400 ? sinHtml : sinHtml[..400] + "…";
+        }
         #endregion
 
         #region Generar Código Estudiante

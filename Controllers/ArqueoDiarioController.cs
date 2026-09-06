@@ -122,7 +122,14 @@ namespace WebColegio.Controllers
                     && r.FechaRegistro.Date == DateTime.Today);
                 if (yaGuardadoHoyEsteRecinto)
                 {
-                    TempData["Mensaje"] = "Ya se registró un arqueo para este recinto hoy. No se puede duplicar.";
+                    var horaCierre = buscarIdGuardado
+                        .Where(r => r.Activo && r.Serie == "A" && r.IdRecinto == idRecGuardar.Value && r.FechaRegistro.Date == DateTime.Today)
+                        .OrderByDescending(r => r.FechaRegistro)
+                        .Select(r => r.FechaRegistro)
+                        .FirstOrDefault();
+                    TempData["Mensaje"] = horaCierre != default
+                        ? $"Ya se registró el arqueo de este recinto hoy ({horaCierre:hh:mm tt}). Los pagos posteriores se incluirán en el arqueo de mañana."
+                        : "Ya se registró un arqueo para este recinto hoy. Los pagos posteriores se incluirán en el arqueo de mañana.";
                     TempData["Tipo"] = "warning";
                     return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
                 }
@@ -206,9 +213,18 @@ namespace WebColegio.Controllers
                 if (recintoEfectivo == 0) recintoEfectivo = null;
             }
 
-            // Obtener pagos y pagos caja del día: Admin por recinto (todos los usuarios), Cajero solo los suyos en su recinto
-            var todosPagosDia = (await _Iservices.GetPagosAsync())?.Where(r => r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPago>();
-            var todosPagosCajaDia = (await _Iservices.GetPagoCajaAsync())?.Where(r => r.FechaRegistro.Date == fecha && r.Activo).ToList() ?? new List<TblPagoCaja>();
+            var (inicioVentana, finVentana, arqueoDelDia, inicioEsArqueoAnterior) =
+                ArqueoCierreHelper.ResolverVentana(recibos, recintoEfectivo, fecha, DateTime.Now);
+            arqueo.InicioVentana = inicioVentana;
+            arqueo.FinVentana = finVentana;
+            arqueo.ArqueoYaCerrado = arqueoDelDia != null;
+
+            bool EnTurno(DateTime fechaPago) =>
+                ArqueoCierreHelper.EstaEnVentana(fechaPago, inicioVentana, finVentana, inicioEsArqueoAnterior);
+
+            // Del último arqueo (p. ej. 3–4 p.m. de ayer) hasta el cierre de hoy. Lo posterior va al día siguiente.
+            var todosPagosDia = (await _Iservices.GetPagosAsync())?.Where(r => r.Activo && EnTurno(r.FechaRegistro)).ToList() ?? new List<TblPago>();
+            var todosPagosCajaDia = (await _Iservices.GetPagoCajaAsync())?.Where(r => r.Activo && EnTurno(r.FechaRegistro)).ToList() ?? new List<TblPagoCaja>();
 
             List<TblPago> pagosDelDia;
             List<TblPagoCaja> pagosCajaDia;
@@ -294,7 +310,7 @@ namespace WebColegio.Controllers
             var ultimoRecibo = ordenarNumeroRecibo.LastOrDefault();
             // Egresos del día: Admin por recinto (todos), Cajero solo los suyos en su recinto
             var todosEgresosDia = (await _Iservices.GetEgresoAsync())?
-                .Where(p => p.FechaRegistro.Date == fecha.Date && p.Activo)
+                .Where(p => p.Activo && EnTurno(p.FechaRegistro))
                 .ToList() ?? new List<TblEgreso>();
             List<TblEgreso> egresosDelDia;
             if (esAdmin && recintoEfectivo.HasValue && recintoEfectivo.Value > 0)

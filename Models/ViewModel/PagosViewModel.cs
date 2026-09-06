@@ -31,6 +31,8 @@ namespace WebColegio.Models.ViewModel
         public decimal? MontoMensualidadRecibo { get; set; }
         public decimal? MoraRecibo { get; set; }
         public decimal? TotalPagarRecibo { get; set; }
+        /// <summary>Líneas del mismo recibo (mensualidad completa + abono al mes siguiente).</summary>
+        public List<ReciboLineaDetalle> LineasRecibo { get; set; } = new();
         public List<TblReciboCaja> reciboCajas { get; set; } = new List<TblReciboCaja>();
         public List<TblPago> listPagos {get;set;} = new();
 
@@ -54,5 +56,21 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> gradosSelectListItem { get; set; } = new();
         public List<TblCatMeses>? meses { get; set; } = new List<TblCatMeses>();
         public List<SelectListItem> periodo { get; set; } = new ();
+        public int? PreloadIdAlumno { get; set; }
+        public string? PreloadNombreAlumno { get; set; }
+        public int? PreloadIdRecinto { get; set; }
+        public int? PreloadIdGrado { get; set; }
+        public int? PreloadIdModalidad { get; set; }
+        public int? PreloadIdPeriodo { get; set; }
+        public string? PreloadMeses { get; set; }
+        public bool EsCobroTraslado { get; set; }
+        public bool CobraMatriculaTraslado { get; set; }
+    }
+
+    public class ReciboLineaDetalle
+    {
+        public string Etiqueta { get; set; } = "";
+        public decimal Monto { get; set; }
+        public bool EsAbono { get; set; }
     }
 }

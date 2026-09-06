@@ -47,9 +47,8 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Index(DateTime? fechainicio, DateTime? fechafin)
         {
 
-                var _alumnos = await _Iservices.GetAlumnosAsync();
+                var _alumnos = await _Iservices.GetAlumnosAsync() ?? new List<TblAlumno>();
              _alumnos = _alumnos
-            .Where(r => r.Activo==true)
             .OrderByDescending(r => r.IdAlumno)
             .ToList();
             var _sexos = await _Iservices.GetSexosAsync();
@@ -521,6 +520,56 @@ namespace WebColegio.Controllers
             {
                 return View();
             }
+        }
+
+        [Authorize(Roles = "Admin,UserSystem")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Anular(int id, DateTime? fechainicio, DateTime? fechafin)
+        {
+            TblAlumno? alumno;
+            try
+            {
+                alumno = await _Iservices.GetAlumnoIdAsync(id);
+            }
+            catch
+            {
+                TempData["Mensaje"] = "Estudiante no encontrado.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            if (alumno == null || alumno.IdAlumno <= 0)
+            {
+                TempData["Mensaje"] = "Estudiante no encontrado.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            if (alumno.Activo == false)
+            {
+                TempData["Mensaje"] = $"{alumno.Nombre} {alumno.Apellido}".Trim() + " ya está anulado.";
+                TempData["Tipo"] = "info";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            alumno.Activo = false;
+            alumno.UsuarioActualiza = idUsuario;
+            alumno.FechaActualiza = DateTime.Now;
+
+            if (await _Iservices.UpdateAlumnos(alumno))
+            {
+                TempData["Mensaje"] = $"Se anuló el registro de {alumno.Nombre} {alumno.Apellido}.".Trim();
+                TempData["Tipo"] = "success";
+            }
+            else
+            {
+                TempData["Mensaje"] = "No se pudo anular el estudiante. Revise la conexión con la API.";
+                TempData["Tipo"] = "warning";
+            }
+
+            return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
         }
 
         // GET: AlumnosController/Delete/5
