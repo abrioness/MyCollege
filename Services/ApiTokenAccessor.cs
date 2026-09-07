@@ -8,6 +8,8 @@ namespace WebColegio.Services
         public const string CookieName = "ColegioApiJwt";
         private const string SessionKey = "ApiJwtToken";
 
+        private static readonly AsyncLocal<string?> BackgroundToken = new();
+
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JwtSettings _jwtSettings;
 
@@ -21,7 +23,10 @@ namespace WebColegio.Services
         {
             var ctx = _httpContextAccessor.HttpContext;
             if (ctx == null)
+            {
+                BackgroundToken.Value = token;
                 return;
+            }
 
             ctx.Session.SetString(SessionKey, token);
 
@@ -39,6 +44,9 @@ namespace WebColegio.Services
 
         public string? GetToken()
         {
+            if (!string.IsNullOrWhiteSpace(BackgroundToken.Value))
+                return BackgroundToken.Value;
+
             var ctx = _httpContextAccessor.HttpContext;
             if (ctx == null)
                 return null;

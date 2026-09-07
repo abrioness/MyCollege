@@ -924,6 +924,18 @@ namespace WebColegio.Services
             }
         }
 
+        public Task<List<CatMenu>> GetMenusAsync()
+            => GetListaAsync<CatMenu>("api/CatMenus");
+
+        public Task<List<CatMenu>> GetMenusPorRolAsync(int idRol)
+            => GetListaAsync<CatMenu>($"api/CatMenus/porRol/{idRol}");
+
+        public Task<List<CatMenu>> GetMenusAdminRolAsync(int idRol)
+            => GetListaAsync<CatMenu>($"api/CatMenus/admin/{idRol}");
+
+        public Task<(bool Exito, string? DetalleError)> GuardarPermisosMenuAsync(int idRol, IEnumerable<int> idMenus)
+            => PutConRutasAsync(new { idRol, idMenus = idMenus.ToList() }, $"api/CatMenus/permisos/{idRol}");
+
 
         //Validación 
         public async Task<bool> validarUsuarios(string login, string cedula)//, int idtematica)

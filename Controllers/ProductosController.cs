@@ -17,9 +17,11 @@ namespace WebColegio.Controllers
     public class ProductosController : Controller
     {
         private readonly IServicesApi _Iservices;
-        public ProductosController (IServicesApi servicesApi)
+        private readonly IMenuPermisoService _menuPermiso;
+        public ProductosController (IServicesApi servicesApi, IMenuPermisoService menuPermiso)
         {
             _Iservices = servicesApi;
+            _menuPermiso = menuPermiso;
         }
 
         // GET: ProductosController
@@ -70,9 +72,12 @@ namespace WebColegio.Controllers
         }
 
         // GET: ProductosController/Create
-        [Authorize(Roles = "Admin,UserSystem")]
+        [Authorize]
         public async Task<ActionResult> Create()
         {
+            if (!await PuedeAgregarInventarioAsync())
+                return RedirectToAction("SinPermiso", "Login");
+
             var productos = await _Iservices.GetProductosAsync();
 
             int? maxNumero = productos
@@ -130,11 +135,14 @@ namespace WebColegio.Controllers
         }
 
         // POST: ProductosController/Create
-        [Authorize(Roles = "Admin,UserSystem")]
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(productoViewModel producto)
         {
+            if (!await PuedeAgregarInventarioAsync())
+                return RedirectToAction("SinPermiso", "Login");
+
             bool response = false;
             try
             {
@@ -418,6 +426,18 @@ namespace WebColegio.Controllers
             {
                 return View();
             }
+        }
+
+        private async Task<bool> PuedeAgregarInventarioAsync()
+        {
+            if (User.IsInRole("Admin") || User.IsInRole("UserSystem") || User.IsInRole("Secretaria"))
+                return true;
+
+            var idRol = IMenuPermisoService.ResolverIdRol(User, HttpContext.Session);
+            if (idRol is null or <= 0)
+                return false;
+
+            return await _menuPermiso.TieneAsync(idRol.Value, "inventario.agregar");
         }
     }
 }

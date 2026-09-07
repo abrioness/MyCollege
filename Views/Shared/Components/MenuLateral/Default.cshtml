@@ -1,0 +1,60 @@
+@model WebColegio.Models.ViewModel.MenuLateralViewModel
+
+@foreach (var inicio in Model.Inicios)
+{
+    <li class="nav-item active">
+        <a class="nav-link" asp-controller="@inicio.Controlador" asp-action="@inicio.Accion">
+            <i class="@(inicio.IconoCss ?? "fas fa-fw fa-tachometer-alt")"></i>
+            <span>@inicio.Titulo</span>
+        </a>
+    </li>
+}
+
+<hr class="sidebar-divider">
+<div class="sidebar-heading text-white">
+    Modulos
+</div>
+<hr class="sidebar-divider">
+
+@foreach (var bloque in Model.Grupos)
+{
+    <li class="nav-item active">
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#@bloque.CollapseId"
+           aria-expanded="false" aria-controls="@bloque.CollapseId" role="button">
+            <i class="@(bloque.Grupo.IconoCss ?? "bi bi-folder")"></i>
+            <span>@bloque.Grupo.Titulo</span>
+        </a>
+        <div id="@bloque.CollapseId" class="collapse" data-bs-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                @foreach (var item in bloque.Items)
+                {
+                    if (item.UsaFechaHoy)
+                    {
+                        <a class="collapse-item"
+                           asp-controller="@item.Controlador"
+                           asp-action="@item.Accion"
+                           asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")"
+                           target="@(string.IsNullOrWhiteSpace(item.Target) ? null : item.Target)">
+                            <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
+                        </a>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(item.Target))
+                    {
+                        <a class="collapse-item"
+                           asp-controller="@item.Controlador"
+                           asp-action="@item.Accion"
+                           target="@item.Target">
+                            <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="collapse-item" asp-controller="@item.Controlador" asp-action="@item.Accion">
+                            <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    </li>
+}

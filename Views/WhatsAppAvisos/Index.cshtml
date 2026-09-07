@@ -1,0 +1,158 @@
+@model WebColegio.Models.ViewModel.WhatsAppAvisoViewModel
+@{
+    ViewData["Title"] = "Avisos WhatsApp";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-whatsapp"></i> Avisos de mora y saldo a tutores</h4>
+        </div>
+        <div class="card-body">
+            @if (TempData["Mensaje"] != null)
+            {
+                <div class="alert alert-@(TempData["Tipo"]?.ToString() == "success" ? "success" : "warning")">@TempData["Mensaje"]</div>
+            }
+
+            <div class="alert alert-info">
+                @Model.MensajeEstado
+                <br />
+                Alumnos con pendiente: <strong>@Model.Destinos.Count</strong>
+                · Con teléfono: <strong>@Model.ConTelefono</strong>
+                · Sin teléfono: <strong>@Model.SinTelefono</strong>
+                · Total: <strong>C$ @Model.TotalPendiente.ToString("N2")</strong>
+                @if (!string.IsNullOrWhiteSpace(Model.UltimaCampana))
+                {
+                    <span> · Última campaña: @Model.UltimaCampana</span>
+                }
+                @if (Model.EnvioAutomatico)
+                {
+                    <span> · Envío automático el <strong>día 1</strong> activado.</span>
+                }
+            </div>
+
+            <form asp-action="EnviarSeleccion" method="post" id="formSeleccion">
+                @Html.AntiForgeryToken()
+                <div class="mb-3 d-flex flex-wrap gap-2">
+                    @if (Model.ApiConfigurada)
+                    {
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-send"></i> Enviar seleccionados (API)
+                        </button>
+                        <button type="submit" formaction="@Url.Action("EnviarCampana")" class="btn btn-outline-success"
+                                onclick="return confirm('¿Enviar WhatsApp a todos los tutores con teléfono y saldo pendiente?');">
+                            <i class="bi bi-broadcast"></i> Campaña completa
+                        </button>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Use el ícono de WhatsApp para abrir el chat uno a uno (WhatsApp Web).</span>
+                    }
+                </div>
+
+                <div class="table-responsive">
+                    <table id="tablaWhatsApp" class="table table-bordered table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Alumno</th>
+                                <th>Grado</th>
+                                <th>Contacto</th>
+                                <th>Teléfono</th>
+                                <th>Pendiente</th>
+                                <th>Detalle</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var d in Model.Destinos)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!d.SinTelefono && Model.ApiConfigurada)
+                                    {
+                                        <input type="checkbox" name="idAlumnos" value="@d.IdAlumno" />
+                                    }
+                                </td>
+                                <td>@d.NombreAlumno</td>
+                                <td>@d.Grado</td>
+                                <td>@(d.NombreContacto ?? "—") <span class="text-muted small">(@(d.OrigenTelefono ?? "s/d"))</span></td>
+                                <td>@(d.TelefonoE164 ?? "Sin teléfono")</td>
+                                <td>C$ @d.TotalPendiente.ToString("N2")</td>
+                                <td>
+                                    @if (d.SaldoMatricula > 0.01m)
+                                    {
+                                        <div>Matrícula C$ @d.SaldoMatricula.ToString("N2")</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(d.MesesPendientes))
+                                    {
+                                        <div>Meses: @d.MesesPendientes</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(d.EstadoPago))
+                                    {
+                                        <span class="badge @(d.EstadoPago == "Insolvente" ? "bg-danger" : "bg-secondary")">@d.EstadoPago</span>
+                                    }
+                                </td>
+                                <td class="text-nowrap">
+                                    @if (!string.IsNullOrWhiteSpace(d.EnlaceWaMe))
+                                    {
+                                        <a class="btn btn-sm btn-success" href="@d.EnlaceWaMe" target="_blank" title="Abrir WhatsApp">
+                                            <i class="bi bi-whatsapp"></i>
+                                        </a>
+                                    }
+                                    @if (Model.ApiConfigurada && !d.SinTelefono)
+                                    {
+                                        <button type="submit" formaction="@Url.Action("EnviarUno")" name="idAlumno" value="@d.IdAlumno" class="btn btn-sm btn-outline-success">
+                                            API
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+
+            @if (Model.Historial.Count > 0)
+            {
+                <h5 class="mt-4">Últimos envíos</h5>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Alumno</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var h in Model.Historial)
+                    {
+                        <tr>
+                            <td>@h.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@h.NombreAlumno</td>
+                            <td>@h.Telefono</td>
+                            <td>@(h.Exito ? "Enviado" : h.Detalle)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            if ($.fn.DataTable) {
+                $('#tablaWhatsApp').DataTable({
+                    pageLength: 25,
+                    order: [[5, 'desc']],
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-MX.json' }
+                });
+            }
+        });
+    </script>
+}

@@ -52,6 +52,10 @@ namespace WebColegio.Services
         Task<List<TblCostoMensualidad>> GetCostosMensualidadAsync();
         Task<List<TblCostoMatricula>> GetCostosMatriculaAsync();
         Task<List<TblRol>> GetRolAsync();
+        Task<List<CatMenu>> GetMenusAsync();
+        Task<List<CatMenu>> GetMenusPorRolAsync(int idRol);
+        Task<List<CatMenu>> GetMenusAdminRolAsync(int idRol);
+        Task<(bool Exito, string? DetalleError)> GuardarPermisosMenuAsync(int idRol, IEnumerable<int> idMenus);
         Task<(bool Exito, string? DetalleError)> PostCostoMatriculaAsync(TblCostoMatricula costo);
         Task<(bool Exito, string? DetalleError)> UpdateCostoMatriculaAsync(TblCostoMatricula costo);
         Task<(bool Exito, string? DetalleError)> PostCostoMensualidadAsync(TblCostoMensualidad costo);

@@ -1,0 +1,96 @@
+@model WebColegio.Models.ViewModel.MenuPermisosViewModel
+@{
+    ViewData["Title"] = "Permisos de menú";
+    var grupos = Model.Menus.Where(m => string.Equals(m.Tipo, "Grupo", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(m.Tipo, "Inicio", StringComparison.OrdinalIgnoreCase)).ToList();
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Permisos del menú lateral</h4>
+        </div>
+        <div class="card-body">
+            @if (TempData["Mensaje"] != null)
+            {
+                <div class="alert alert-@(TempData["Tipo"]?.ToString() == "success" ? "success" : "warning")">@TempData["Mensaje"]</div>
+            }
+            <p class="text-muted">
+                Marque las opciones que verá cada rol. Ejemplo: para que un cajero agregue inventario,
+                elija el rol <strong>Cajero</strong> y marque <strong>Inventario</strong> y <strong>Agregar Inventario</strong>.
+            </p>
+
+            <form method="get" class="row g-2 align-items-end mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Rol</label>
+                    <select name="idRol" class="form-select" onchange="this.form.submit()">
+                        @foreach (var rol in Model.Roles)
+                        {
+                            @if (rol.IdRol == Model.IdRol)
+                            {
+                                <option value="@rol.IdRol" selected>@rol.NombreRol</option>
+                            }
+                            else
+                            {
+                                <option value="@rol.IdRol">@rol.NombreRol</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </form>
+
+            <form asp-action="Index" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="idRol" value="@Model.IdRol" />
+
+                @foreach (var grupo in grupos.OrderBy(g => g.Orden))
+                {
+                    var hijos = Model.Menus.Where(m => m.IdMenuPadre == grupo.IdMenu).OrderBy(m => m.Orden).ToList();
+                    <div class="border rounded p-3 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input menu-padre" type="checkbox" name="idMenus" value="@grupo.IdMenu"
+                                   id="m-@grupo.IdMenu" data-grupo="@grupo.IdMenu"
+                                   @(Model.IdMenusSeleccionados.Contains(grupo.IdMenu) ? "checked" : null) />
+                            <label class="form-check-label fw-semibold" for="m-@grupo.IdMenu">
+                                <i class="@grupo.IconoCss"></i> @grupo.Titulo
+                                <span class="text-muted small">(@grupo.Tipo)</span>
+                            </label>
+                        </div>
+                        @foreach (var item in hijos)
+                        {
+                            <div class="form-check ms-4 mt-1">
+                                <input class="form-check-input menu-hijo" type="checkbox" name="idMenus" value="@item.IdMenu"
+                                       id="m-@item.IdMenu" data-padre="@grupo.IdMenu"
+                                       @(Model.IdMenusSeleccionados.Contains(item.IdMenu) ? "checked" : null) />
+                                <label class="form-check-label" for="m-@item.IdMenu">@item.Titulo</label>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Guardar permisos
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.menu-padre').forEach(function (padre) {
+        padre.addEventListener('change', function () {
+            var id = this.getAttribute('data-grupo');
+            document.querySelectorAll('.menu-hijo[data-padre="' + id + '"]').forEach(function (hijo) {
+                hijo.checked = padre.checked;
+            });
+        });
+    });
+    document.querySelectorAll('.menu-hijo').forEach(function (hijo) {
+        hijo.addEventListener('change', function () {
+            if (!this.checked) return;
+            var padreId = this.getAttribute('data-padre');
+            var padre = document.querySelector('.menu-padre[data-grupo="' + padreId + '"]');
+            if (padre) padre.checked = true;
+        });
+    });
+</script>

@@ -35,7 +35,15 @@ namespace WebColegio
             });
 
             builder.Services.AddControllers();
+            builder.Services.AddMemoryCache();
+            builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection(WhatsAppSettings.SectionName));
+            builder.Services.AddHttpClient("WhatsAppGraph");
+            builder.Services.AddSingleton<WhatsAppCampanaStore>();
+            builder.Services.AddScoped<IWhatsAppSender, WhatsAppCloudSender>();
+            builder.Services.AddScoped<WhatsAppAvisoService>();
+            builder.Services.AddHostedService<WhatsAppMensualHostedService>();
             builder.Services.AddScoped<IServicesApi, ServicesApi>();
+            builder.Services.AddScoped<IMenuPermisoService, MenuPermisoService>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
             builder.Services.AddScoped<IApiTokenAccessor, ApiTokenAccessor>();
             builder.Services.AddTransient<ApiHostHeaderHandler>();
