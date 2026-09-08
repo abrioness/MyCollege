@@ -10,7 +10,8 @@ namespace WebColegio.Helpers
     {
         public const int TipoMensualidad = 1;
         public const int TipoMatricula = 2;
-        public const int TipoMatriculaAbono = 4;
+        /// <summary>Catálogo: 18 = Abono de Matrícula. El 4 es Confirmación Matrícula (siguiente ciclo).</summary>
+        public const int TipoMatriculaAbono = 18;
         public const int TipoRifa = 10;
 
         public static HashSet<int> IdsPorConcepto(IEnumerable<CatTipoMovimiento>? tipos, params string[] claves)
@@ -55,22 +56,13 @@ namespace WebColegio.Helpers
             var tiposMes = new HashSet<int>(idsMensualidad ?? Array.Empty<int>()) { TipoMensualidad };
             var tiposRifa = new HashSet<int>(idsRifa ?? Array.Empty<int>()) { TipoRifa };
             var tiposPromo = new HashSet<int>(idsPromocion ?? Array.Empty<int>());
-            var tiposMatriculaPago = new HashSet<int> { TipoMatricula, TipoMatriculaAbono };
+            var tiposMatriculaPago = TiposPagoMatricula(tiposMovimiento);
             if (tiposMovimiento != null)
             {
                 foreach (var id in IdsPorConcepto(tiposMovimiento, "rifa", "rifas"))
                     tiposRifa.Add(id);
                 foreach (var id in IdsPorConcepto(tiposMovimiento, "promoc"))
                     tiposPromo.Add(id);
-                foreach (var t in tiposMovimiento)
-                {
-                    var n = NormalizarNombrePersona(t.Concepto);
-                    if (!n.Contains("matricula"))
-                        continue;
-                    if (n.Contains("confirmacion") || n.Contains("reserva"))
-                        continue;
-                    tiposMatriculaPago.Add(t.IdTipoMovimiento);
-                }
             }
             var filas = new List<EstadoCuentaFilaAlumno>();
             var matsPorAlumno = (matriculas ?? Array.Empty<TblMatricula>())
@@ -322,6 +314,73 @@ namespace WebColegio.Helpers
                 return (matCualquiera.IdPeriodo, AnioDe(matCualquiera.IdPeriodo), matCualquiera);
 
             return (idPeriodoFallback, anioFallback, null);
+        }
+
+        public static HashSet<int> TiposPagoMatricula(IEnumerable<CatTipoMovimiento>? tipos)
+        {
+            var ids = new HashSet<int> { TipoMatricula, TipoMatriculaAbono };
+            if (tipos == null)
+                return ids;
+            foreach (var t in tipos)
+            {
+                var n = NormalizarNombrePersona(t.Concepto);
+                if (!n.Contains("matricula"))
+                    continue;
+                if (n.Contains("confirmacion") || n.Contains("reserva"))
+                    continue;
+                ids.Add(t.IdTipoMovimiento);
+            }
+            return ids;
+        }
+
+        public static decimal SumarPagadoMatricula(
+            IEnumerable<TblPago> pagos,
+            int idAlumno,
+            int idPeriodo,
+            int anioPeriodo,
+            IReadOnlyList<CatPeriodo>? periodos,
+            IReadOnlyCollection<int>? tiposMatriculaPago)
+        {
+            var tipos = tiposMatriculaPago is { Count: > 0 }
+                ? tiposMatriculaPago
+                : new HashSet<int> { TipoMatricula, TipoMatriculaAbono };
+
+            return pagos
+                .Where(p =>
+                {
+                    if (!p.Activo || p.IdAlumno != idAlumno)
+                        return false;
+                    if (!tipos.Contains(p.IdTipoMovimiento))
+                        return false;
+                    if (p.IdPeriodo == idPeriodo)
+                        return true;
+                    var anioPago = periodos?.FirstOrDefault(x => x.IdPeriodo == p.IdPeriodo)?.Periodo ?? 0;
+                    return anioPago > 0 && anioPago == anioPeriodo;
+                })
+                .Sum(p => p.Monto);
+        }
+
+        public static decimal SumarPagadoEnero(
+            IEnumerable<TblPago> pagos,
+            int idAlumno,
+            int idPeriodo,
+            IReadOnlyCollection<int>? idsMensualidad)
+        {
+            var tiposMes = new HashSet<int>(idsMensualidad ?? Array.Empty<int>()) { TipoMensualidad };
+            return pagos
+                .Where(p => p.Activo
+                    && p.IdAlumno == idAlumno
+                    && p.IdPeriodo == idPeriodo
+                    && tiposMes.Contains(p.IdTipoMovimiento)
+                    && p.IdMes == 1)
+                .Sum(p => p.Monto);
+        }
+
+        public static HashSet<int> TiposPagoMensualidad(IEnumerable<CatTipoMovimiento>? tipos)
+        {
+            var ids = IdsPorConcepto(tipos, "mensualidad");
+            ids.Add(TipoMensualidad);
+            return ids;
         }
 
         /// <summary>

@@ -190,9 +190,8 @@
                                         <div class="col-md-4 mb-2">
                                             <div class="form-check">
                                                 <input type="checkbox"
-                                                       name="MesesSeleccionados"
                                                        value="@itemMeses.IdMes"
-                                                       class="form-check-input" id="mes_@itemMeses.IdMes" />
+                                                       class="form-check-input chk-mes-pago" id="mes_@itemMeses.IdMes" />
                                                 <label class="form-check-label" for="mes_@itemMeses.IdMes">
                                                     @itemMeses.Mes
                                                 </label>
@@ -276,7 +275,7 @@
             // Constantes para tipos de movimiento
             const TIPO_MENSUALIDAD = 1;
             const TIPO_MATRICULA_COMPLETA = 2;
-            const TIPO_ABONO_MATRICULA = 4; // Abono del ciclo en curso
+            const TIPO_ABONO_MATRICULA = 18; // Abono de matrícula del ciclo en curso (el 4 es confirmación)
             const TIPO_RIFA = 10;
             const MONTO_MINIMO_RESERVA = 250;
             const tiposConMeses = [TIPO_MENSUALIDAD, TIPO_RIFA];
@@ -290,7 +289,7 @@
                 return sinDiacriticos($tipoMovimiento.find('option:selected').text()).toLowerCase();
             }
 
-            /** Reserva de cupo del siguiente ciclo. El tipo 4 es abono del año en curso. */
+            /** Reserva de cupo del siguiente ciclo. El tipo 18 es abono del año en curso. */
             function esConfirmacionMatricula() {
                 const id = parseInt($tipoMovimiento.val(), 10);
                 if (id === TIPO_ABONO_MATRICULA) return false;
@@ -819,17 +818,35 @@
                     return false;
                 }
 
-                if (window._tienePendienteMatriculaCicloActual) {
-                    e.preventDefault();
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Matrícula pendiente',
-                        text: 'Debe pagar o abonar la matrícula antes de registrar un pago o abono de mensualidad.'
-                    });
+                const form = this;
+                if (form.dataset.matriculaValidada === '1')
+                    return true;
+
+                e.preventDefault();
+                const idAlumno = parseInt($idAlumno.val(), 10) || 0;
+                const continuar = function () {
+                    if (window._tienePendienteMatriculaCicloActual) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Matrícula pendiente',
+                            text: 'Debe pagar o abonar la matrícula antes de registrar un pago o abono de mensualidad.'
+                        });
+                        return;
+                    }
+                    form.dataset.matriculaValidada = '1';
+                    form.submit();
+                };
+                if (!idAlumno) {
+                    continuar();
                     return false;
                 }
-
-                return true;
+                $.getJSON(urlsPagos.obtenerDatosAlumnoMatricula, { idAlumno: idAlumno })
+                    .done(function (data) {
+                        if (data && data.ok)
+                            window._tienePendienteMatriculaCicloActual = !!data.tienePendienteMatriculaCicloActual;
+                    })
+                    .always(continuar);
+                return false;
             });
 
             // Autocompletado de alumnos

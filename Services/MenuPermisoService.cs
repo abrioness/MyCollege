@@ -25,6 +25,24 @@ namespace WebColegio.Services
                     return id;
             }
 
+            foreach (var claim in user.FindAll(ClaimTypes.Role).Concat(user.FindAll("nombre_rol")))
+            {
+                var n = (claim.Value ?? "").Trim().ToLowerInvariant();
+                var mapped = n switch
+                {
+                    "admin" or "administrador" => 1,
+                    "cajero" or "cajera" => 2,
+                    "docente" or "profesor" or "profesora" => 3,
+                    "tutor" or "tutora" => 4,
+                    "secretaria" or "secretario" => 5,
+                    "usersystem" or "user system" or "sistema" => 6,
+                    "director" or "directora" => 1,
+                    _ => 0
+                };
+                if (mapped > 0)
+                    return mapped;
+            }
+
             return null;
         }
     }
@@ -48,6 +66,9 @@ namespace WebColegio.Services
                 return cached;
 
             var lista = await _api.GetMenusPorRolAsync(idRol) ?? new List<CatMenu>();
+            if (lista.Count == 0)
+                return lista;
+
             _cache.Set(key, lista, TimeSpan.FromMinutes(2));
             return lista;
         }

@@ -104,8 +104,8 @@ namespace WebColegio.Controllers
         // Tipos de movimiento alineados con registro de pagos (mensualidad / matrícula)
         private const int TipoMovimientoMensualidad = 1;
         private const int TipoMovimientoMatricula = 2;
-        /// <summary>Abono de matrícula del ciclo en curso (alumnos activos que aún no la cancelan).</summary>
-        private const int TipoMovimientoMatriculaAbono = 4;
+        /// <summary>Abono de matrícula del ciclo en curso (Tbl_CatTipoMovimiento 18). El 4 es confirmación del siguiente ciclo.</summary>
+        private const int TipoMovimientoMatriculaAbono = 18;
         private const decimal MontoMinimoReservaCupo = 250m;
 
         private static string NormalizarTexto(string? texto)
@@ -122,7 +122,7 @@ namespace WebColegio.Controllers
         }
 
         /// <summary>
-        /// Reserva de cupo del siguiente ciclo (mínimo C$ 250). No es el tipo 4.
+        /// Reserva de cupo del siguiente ciclo (mínimo C$ 250). En catálogo es el tipo 4, no el abono 18.
         /// </summary>
         private static bool EsConfirmacionDeMatricula(int idTipoMovimiento, string? conceptoNormalizado)
         {
@@ -1258,7 +1258,18 @@ namespace WebColegio.Controllers
                             return RedirectToAction("Create");
                         }
 
-                        var ids = MesesSeleccionados.Split(',').Select(int.Parse).ToList();
+                        var ids = MesesSeleccionados.Split(',')
+                            .Select(s => int.TryParse(s.Trim(), out var n) ? n : 0)
+                            .Where(n => n is >= 1 and <= 12)
+                            .Distinct()
+                            .OrderBy(n => n)
+                            .ToList();
+                        if (ids.Count == 0)
+                        {
+                            TempData["Mensaje"] = "Debe seleccionar el mes o los meses pendientes para el pago o abono de mensualidad.";
+                            TempData["Tipo"] = "warning";
+                            return RedirectToAction("Create");
+                        }
                         var listpagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
                         var periodosCatMens = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
                         pagos.Pago.IdPeriodo = ResolverIdPeriodoMensualidad(periodosCatMens, pagos.Pago.IdPeriodo);
@@ -1345,24 +1356,12 @@ namespace WebColegio.Controllers
                         if (tieneMediaBeca)
                             tarifaMensual *= 0.5m;
 
-                        decimal pagadoMatCheck = listpagos
-                            .Where(p => p.Activo
-                                && p.IdAlumno == pagos.Pago.IdAlumno
-                                && p.IdPeriodo == pagos.Pago.IdPeriodo
-                                && (p.IdTipoMovimiento == TipoMovimientoMatricula
-                                    || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono))
-                            .Sum(p => p.Monto);
-                        decimal pagadoEneroCheck = listpagos
-                            .Where(p => p.Activo
-                                && p.IdAlumno == pagos.Pago.IdAlumno
-                                && p.IdPeriodo == pagos.Pago.IdPeriodo
-                                && p.IdTipoMovimiento == TipoMovimientoMensualidad
-                                && p.IdMes == 1)
-                            .Sum(p => p.Monto);
-                        decimal catalogoMatCheck = await ObtenerMatriculaDecimal(
-                            pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, pagos.Pago.IdPeriodo);
-                        var estadoMatCheck = CalcularEstadoMatriculaEstadoCuenta(
-                            catalogoMatCheck, tarifaMensual, pagadoMatCheck, pagadoEneroCheck);
+                        var estadoMatCheck = await EvaluarMatriculaComoEstadoCuentaAsync(
+                            pagos.Pago.IdAlumno,
+                            pagos.Pago.IdRecinto,
+                            pagos.Pago.IdGrado,
+                            pagos.Pago.IdModalidad,
+                            pagos.Pago.IdPeriodo);
                         if (!estadoMatCheck.Cancelada && estadoMatCheck.SaldoPendiente > 0.01m)
                         {
                             TempData["Mensaje"] =
@@ -1391,7 +1390,8 @@ namespace WebColegio.Controllers
                             .Select(kv => kv.Key)
                             .ToHashSet();
 
-                        var idsOrdenados = ids.OrderBy(m => m).ToList();
+                        var idsOrdenados = ids;
+                        var mesesEnEstePago = idsOrdenados.ToHashSet();
 
                         if (pagos.Pago.Monto <= MensualidadSobranteHelper.Centavo)
                         {
@@ -1461,13 +1461,17 @@ namespace WebColegio.Controllers
                             else
                             {
                                 var entre = Enumerable.Range(inicioSecuenciaMensual, idMes - inicioSecuenciaMensual).ToList();
-                                mesesPendientes = entre.Where(m => !MesCanceladoLocal(m)).ToList();
+                                mesesPendientes = entre
+                                    .Where(m => !MesCanceladoLocal(m) && !mesesEnEstePago.Contains(m))
+                                    .ToList();
                             }
 
                             if (mesesPendientes.Any())
                             {
                                 var primerMesFaltante = mesesPendientes.Min();
-                                TempData["Mensaje"] = $"No puede pagar el mes de {Mes(idMes).Result}. Debe pagar primero el mes de {Mes(primerMesFaltante).Result}.";
+                                TempData["Mensaje"] =
+                                    $"No puede pagar el mes de {Mes(idMes).Result} sin {Mes(primerMesFaltante).Result}. " +
+                                    "Incluya ese mes (y los anteriores pendientes) en la misma selección del modal.";
                                 TempData["Tipo"] = "warning";
                                 return RedirectToAction("Create");
                             }
@@ -2228,21 +2232,64 @@ namespace WebColegio.Controllers
             if (idAlumno <= 0 || ciclo == null)
                 return false;
 
-            decimal costoMat = await ObtenerMatriculaDecimal(idRecinto, idModalidad, ciclo.IdPeriodo);
-            decimal costoMen = idGrado > 0
-                ? await ObtenerMensualidadDecimal(idRecinto, idGrado, ciclo.IdPeriodo, idModalidad)
-                : 0m;
-            var pagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
-            var delCiclo = pagos.Where(p => p.IdAlumno == idAlumno && p.IdPeriodo == ciclo.IdPeriodo && p.Activo).ToList();
-            decimal pagadoMat = delCiclo
-                .Where(p => p.IdTipoMovimiento == TipoMovimientoMatricula
-                            || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono)
-                .Sum(p => p.Monto);
-            decimal pagadoEnero = delCiclo
-                .Where(p => p.IdTipoMovimiento == TipoMovimientoMensualidad && p.IdMes == 1)
-                .Sum(p => p.Monto);
-            var estado = CalcularEstadoMatriculaEstadoCuenta(costoMat, costoMen, pagadoMat, pagadoEnero);
+            var estado = await EvaluarMatriculaComoEstadoCuentaAsync(
+                idAlumno, idRecinto, idGrado, idModalidad, ciclo.IdPeriodo);
             return !estado.Cancelada && estado.SaldoPendiente > 0.01m;
+        }
+
+        /// <summary>
+        /// Misma regla que el estado de cuenta: tipos de matrícula del catálogo
+        /// y pagos del mismo año lectivo, no solo tipos 2/4 del IdPeriodo del formulario.
+        /// </summary>
+        private async Task<(bool Cancelada, decimal SaldoPendiente)> EvaluarMatriculaComoEstadoCuentaAsync(
+            int idAlumno,
+            int? idRecintoForm,
+            int idGradoForm,
+            int? idModalidadForm,
+            int idPeriodoForm)
+        {
+            var alumno = await _Iservices.GetAlumnoIdAsync(idAlumno);
+            var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var periodoRef = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos);
+            int idPeriodoRef = periodoRef?.IdPeriodo ?? idPeriodoForm;
+            int anioRef = periodoRef is { Periodo: > 0 } ? periodoRef.Periodo : DateTime.Now.Year;
+
+            var mats = (await _Iservices.GetMatriculasAsync(idAlumno: idAlumno) ?? new List<TblMatricula>())
+                .Where(m => m.Activo)
+                .ToList();
+            var ciclo = EstadoCuentaCalculoHelper.ResolverCicloAlumno(
+                alumno ?? new TblAlumno { IdAlumno = idAlumno },
+                mats,
+                periodos,
+                idPeriodoRef,
+                anioRef);
+
+            var mat = ciclo.Matricula;
+            int? idR = mat is { IdRecinto: > 0 } ? mat.IdRecinto : (idRecintoForm ?? alumno?.IdRecinto);
+            int idG = mat is { IdGrado: > 0 }
+                ? mat.IdGrado
+                : (idGradoForm > 0 ? idGradoForm : alumno?.IdGrado ?? 0);
+            int? idMod = mat is { IdModalidad: > 0 } ? mat.IdModalidad : (idModalidadForm ?? alumno?.IdModalidad);
+
+            decimal costoMat = await ObtenerMatriculaDecimal(idR, idMod, ciclo.IdPeriodo);
+            decimal costoMen = idG > 0
+                ? await ObtenerMensualidadDecimal(idR, idG, ciclo.IdPeriodo, idMod)
+                : 0m;
+            if (await BecaCompleta(idAlumno, ciclo.IdPeriodo))
+                costoMen = 0m;
+            else if (costoMen > 0 && await MediaBeca(idAlumno, ciclo.IdPeriodo))
+                costoMen *= 0.5m;
+
+            var pagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
+            var tipos = await _Iservices.GetTipoMovimientoAsync() ?? new List<CatTipoMovimiento>();
+            var tiposMat = EstadoCuentaCalculoHelper.TiposPagoMatricula(tipos);
+            var tiposMen = EstadoCuentaCalculoHelper.TiposPagoMensualidad(tipos);
+            decimal pagadoMat = EstadoCuentaCalculoHelper.SumarPagadoMatricula(
+                pagos, idAlumno, ciclo.IdPeriodo, ciclo.Anio, periodos, tiposMat);
+            decimal pagadoEnero = EstadoCuentaCalculoHelper.SumarPagadoEnero(
+                pagos, idAlumno, ciclo.IdPeriodo, tiposMen);
+
+            return EstadoCuentaCalculoHelper.CalcularEstadoMatricula(costoMat, costoMen, pagadoMat, pagadoEnero);
         }
 
         /// <summary>

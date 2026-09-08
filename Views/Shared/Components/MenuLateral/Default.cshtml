@@ -1,60 +1,276 @@
 @model WebColegio.Models.ViewModel.MenuLateralViewModel
 
-@foreach (var inicio in Model.Inicios)
+@if (Model.Inicios.Count > 0 || Model.Grupos.Count > 0)
 {
-    <li class="nav-item active">
-        <a class="nav-link" asp-controller="@inicio.Controlador" asp-action="@inicio.Accion">
-            <i class="@(inicio.IconoCss ?? "fas fa-fw fa-tachometer-alt")"></i>
-            <span>@inicio.Titulo</span>
-        </a>
-    </li>
-}
+    @foreach (var inicio in Model.Inicios)
+    {
+        <li class="nav-item active">
+            <a class="nav-link" asp-controller="@inicio.Controlador" asp-action="@inicio.Accion">
+                <i class="@(inicio.IconoCss ?? "fas fa-fw fa-tachometer-alt")"></i>
+                <span>@inicio.Titulo</span>
+            </a>
+        </li>
+    }
 
-<hr class="sidebar-divider">
-<div class="sidebar-heading text-white">
-    Modulos
-</div>
-<hr class="sidebar-divider">
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-white">
+        Modulos
+    </div>
+    <hr class="sidebar-divider">
 
-@foreach (var bloque in Model.Grupos)
-{
-    <li class="nav-item active">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#@bloque.CollapseId"
-           aria-expanded="false" aria-controls="@bloque.CollapseId" role="button">
-            <i class="@(bloque.Grupo.IconoCss ?? "bi bi-folder")"></i>
-            <span>@bloque.Grupo.Titulo</span>
-        </a>
-        <div id="@bloque.CollapseId" class="collapse" data-bs-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                @foreach (var item in bloque.Items)
-                {
-                    if (item.UsaFechaHoy)
+    @foreach (var bloque in Model.Grupos)
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#@bloque.CollapseId"
+               aria-expanded="false" aria-controls="@bloque.CollapseId" role="button">
+                <i class="@(bloque.Grupo.IconoCss ?? "bi bi-folder")"></i>
+                <span>@bloque.Grupo.Titulo</span>
+            </a>
+            <div id="@bloque.CollapseId" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    @foreach (var item in bloque.Items)
                     {
-                        <a class="collapse-item"
-                           asp-controller="@item.Controlador"
-                           asp-action="@item.Accion"
-                           asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")"
-                           target="@(string.IsNullOrWhiteSpace(item.Target) ? null : item.Target)">
-                            <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
-                        </a>
+                        @* Vista de WhatsApp y Permisos de menú ocultos a pedido. *@
+                        if (string.Equals(item.Codigo, "caja.whatsapp", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(item.Codigo, "usuario.permisos", StringComparison.OrdinalIgnoreCase)
+                            || (item.Titulo ?? "").Contains("WhatsApp", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(item.Titulo, "Permisos de menú", StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+                        if (item.UsaFechaHoy)
+                        {
+                            <a class="collapse-item"
+                               asp-controller="@item.Controlador"
+                               asp-action="@item.Accion"
+                               asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")"
+                               target="@(string.IsNullOrWhiteSpace(item.Target) ? null : item.Target)">
+                                <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
+                            </a>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.Target))
+                        {
+                            <a class="collapse-item"
+                               asp-controller="@item.Controlador"
+                               asp-action="@item.Accion"
+                               target="@item.Target">
+                                <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="collapse-item" asp-controller="@item.Controlador" asp-action="@item.Accion">
+                                <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
+                            </a>
+                        }
                     }
-                    else if (!string.IsNullOrWhiteSpace(item.Target))
-                    {
-                        <a class="collapse-item"
-                           asp-controller="@item.Controlador"
-                           asp-action="@item.Accion"
-                           target="@item.Target">
-                            <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
-                        </a>
-                    }
-                    else
-                    {
-                        <a class="collapse-item" asp-controller="@item.Controlador" asp-action="@item.Accion">
-                            <i class="@(item.IconoCss ?? "bi bi-arrow-return-right text-black")"></i> @item.Titulo
-                        </a>
-                    }
-                }
+                </div>
             </div>
-        </div>
-    </li>
+        </li>
+    }
+}
+else
+{
+    @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link" asp-controller="Pagos" asp-action="EstadoCuenta">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Inicio</span>
+            </a>
+        </li>
+    }
+    @if (User.IsInRole("Cajero"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link" asp-controller="PagoCaja" asp-action="EstadoCuenta">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Inicio</span>
+            </a>
+        </li>
+    }
+    @if (User.IsInRole("Docente"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link" asp-controller="Notas" asp-action="Index">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Inicio</span>
+            </a>
+        </li>
+    }
+
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-white">
+        Modulos
+    </div>
+    <hr class="sidebar-divider">
+
+    @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAlumnos"
+               aria-expanded="false" aria-controls="collapseAlumnos" role="button">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>Alumnos</span>
+            </a>
+            <div id="collapseAlumnos" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="Alumnos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Estudiante</a>
+                    <a class="collapse-item" asp-controller="Pagos" asp-action="Traslado"> <i class="bi bi-arrow-return-right text-black"></i> Traslado entre colegios</a>
+                </div>
+            </div>
+        </li>
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseMatricula"
+               aria-expanded="false" aria-controls="collapseMatricula" role="button">
+                <i class="bi bi-journal-check"></i>
+                <span>Matrícula</span>
+            </a>
+            <div id="collapseMatricula" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="Matriculas" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Matrículas por ciclo</a>
+                    <a class="collapse-item" asp-controller="Matriculas" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Matricular / rematricular</a>
+                </div>
+            </div>
+        </li>
+    }
+    @if (User.IsInRole("Docente") || User.IsInRole("Secretaria") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseNotas"
+               aria-expanded="false" aria-controls="collapseNotas" role="button">
+                <i class="bi bi-pencil-square"></i>
+                <span>Notas</span>
+            </a>
+            <div id="collapseNotas" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="Notas" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Notas</a>
+                    <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
+                </div>
+            </div>
+        </li>
+    }
+    @if (User.IsInRole("Secretaria") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducto"
+               aria-expanded="false" aria-controls="collapseProducto" role="button">
+                <i class="bi bi-clipboard-check"></i>
+                <span>Inventario</span>
+            </a>
+            <div id="collapseProducto" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="Productos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Inventario</a>
+                </div>
+            </div>
+        </li>
+    }
+    @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePagoCaja"
+               aria-expanded="false" aria-controls="collapsePagoCaja" role="button">
+                <i class="bi bi-cash-coin"></i>
+                <span>Caja</span>
+            </a>
+            <div id="collapsePagoCaja" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="PagoCaja" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Varios</a>
+                    <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Create"><i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Egresos</a>
+                    <a class="collapse-item" asp-controller="Pagos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Mensualidad</a>
+                    <a class="collapse-item" asp-controller="Pagos" asp-action="Traslado"> <i class="bi bi-arrow-return-right text-black"></i> Traslado entre colegios</a>
+                    <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
+                    @* <a class="collapse-item" asp-controller="WhatsAppAvisos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Avisos WhatsApp</a> *@
+                </div>
+            </div>
+        </li>
+    }
+    @if (User.IsInRole("Admin") || User.IsInRole("Cajero") || User.IsInRole("UserSystem"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePago"
+               aria-expanded="false" aria-controls="collapsePago">
+                <i class="bi bi-collection"></i>
+                <span>Reportes</span>
+            </a>
+            <div id="collapsePago" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    @if (User.IsInRole("Director") || User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+                    {
+                        <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
+                        <a class="collapse-item" asp-controller="Notas" asp-action="Index"><i class="bi bi-arrow-return-right text-black"></i> Reporte de Notas</a>
+                    }
+                    @if (User.IsInRole("Cajero"))
+                    {
+                        <a class="collapse-item" asp-controller="Alumnos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Alumnos</a>
+                        <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
+                        <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
+                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
+                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Egreso</a>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+                    {
+                        <a class="collapse-item" asp-controller="Pagos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Mensualidad</a>
+                        <a class="collapse-item" asp-controller="PagoCaja" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Varios</a>
+                        <a class="collapse-item" asp-controller="ReciboEgreso" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Caja Egreso</a>
+                        <a class="collapse-item" asp-controller="Productos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Inventario</a>
+                        <a class="collapse-item" asp-controller="Pagos" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
+                    }
+                </div>
+            </div>
+        </li>
+    }
+    @if (User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("Secretaria") || User.IsInRole("UserSystem"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseRecibos"
+               aria-expanded="false" aria-controls="collapseRecibos" role="button">
+                <i class="bi bi-stickies"></i>
+                <span>Arqueo Diario</span>
+            </a>
+            <div id="collapseRecibos" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="Index"><i class="bi bi-list-ul text-black"></i> Lista de Arqueos</a>
+                    <a class="collapse-item" asp-controller="ArqueoDiario" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")" asp-action="ArqueoCaja" target="_blank"><i class="bi bi-arrow-return-right text-black"></i> Generar Arqueo</a>
+                </div>
+            </div>
+        </li>
+    }
+    @if (User.IsInRole("UserSystem") || User.IsInRole("Admin"))
+    {
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseTarifas"
+               aria-expanded="false" aria-controls="collapseTarifas" role="button">
+                <i class="bi bi-currency-dollar"></i>
+                <span>Tarifas y ciclo</span>
+            </a>
+            <div id="collapseTarifas" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="Costos" asp-action="Index">
+                        <i class="bi bi-arrow-return-right text-black"></i> Matrícula y mensualidad
+                    </a>
+                    <a class="collapse-item" asp-controller="Costos" asp-action="CreateMatricula">
+                        <i class="bi bi-arrow-return-right text-black"></i> Agregar matrícula
+                    </a>
+                    <a class="collapse-item" asp-controller="Costos" asp-action="CreateMensualidad">
+                        <i class="bi bi-arrow-return-right text-black"></i> Agregar mensualidad
+                    </a>
+                </div>
+            </div>
+        </li>
+        <li class="nav-item active">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsuario"
+               aria-expanded="false" aria-controls="collapseUsuario">
+                <i class="bi bi-person"></i>
+                <span>Usuario</span>
+            </a>
+            <div id="collapseUsuario" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" asp-controller="Usuarios" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Reporte de Usuarios</a>
+                    <a class="collapse-item" asp-controller="Usuarios" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Agregar Usuario</a>
+                    @* <a class="collapse-item" asp-controller="MenuPermisos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Permisos de menú</a> *@
+                </div>
+            </div>
+        </li>
+    }
 }
