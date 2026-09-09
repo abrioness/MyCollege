@@ -55,7 +55,9 @@
             var grado = Model.grados?.FirstOrDefault(a => a.IdGrado == Model.PagosCaja.IdGrado);
             var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.PagosCaja.Concepto);
             var turno = Model.turnos?.FirstOrDefault(a => a.IdTurno == Model.PagosCaja.IdTurno);
-            var fecha = Model.PagosCaja.FechaEmision ?? Model.PagosCaja.FechaRegistro;
+            var fechaPago = Model.PagosCaja.FechaEmision;
+            var fechaEmision = Model.PagosCaja.FechaRegistro;
+            var fecha = fechaEmision != default ? fechaEmision : (fechaPago ?? DateTime.Now);
             var descripcionVisible = EstadoCuentaCalculoHelper.QuitarMarcasInternasDescripcion(Model.PagosCaja.Descripcion);
             var conceptoVisible = string.IsNullOrWhiteSpace(descripcionVisible)
                 ? (tipoMovimiento?.Concepto ?? "—")
@@ -66,8 +68,8 @@
         <div class="v-section">
             <div class="v-row"><b>Recibí de:</b> <span>@Model.PagosCaja.Nombre</span></div>
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
-            <div class="v-row"><b>Fec Emisión:</b> <span>@(Model.PagosCaja.FechaEmision?.ToString("dd/MM/yyyy") ?? "—")</span></div>
-            <div class="v-row"><b>Fecha Pago:</b> <span>@Model.PagosCaja.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
+            <div class="v-row"><b>Fecha de pago:</b> <span>@(fechaPago?.ToString("dd/MM/yyyy") ?? "—")</span></div>
+            <div class="v-row"><b>Fecha de emisión:</b> <span>@(fechaEmision != default ? fechaEmision.ToString("dd/MM/yyyy") : "—")</span></div>
             <div class="v-row"><b>Concepto:</b> <span>@conceptoVisible</span></div>
             <div class="v-row"><b>Turno:</b> <span>@turno?.NombreTurno</span></div>
             <div class="v-row"><b>La cantidad de:</b> <span>C$ @Model.PagosCaja.Monto.ToString("N2")</span></div>

@@ -15,7 +15,9 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5009",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Production"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ApiSettings__BaseUrl": "https://localhost:7008/",
+        "ApiSettings__AllowInvalidCertificate": "true"
       }
     },
     "https": {
@@ -23,16 +25,20 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7247;http://localhost:5009",
-        "environmentVariables": {
-            "ASPNETCORE_ENVIRONMENT": "Production"
-        }
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ApiSettings__BaseUrl": "https://localhost:7008/",
+        "ApiSettings__AllowInvalidCertificate": "true"
+      }
     },
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-        "environmentVariables": {
-            "ASPNETCORE_ENVIRONMENT": "Production"
-        }
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ApiSettings__BaseUrl": "https://localhost:7008/",
+        "ApiSettings__AllowInvalidCertificate": "true"
+      }
     }
   }
 }

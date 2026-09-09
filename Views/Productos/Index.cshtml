@@ -77,11 +77,13 @@
 						<th>Descripción</th>
 								<th>Colegio</th>
 						<th>Existencia Inicial</th>
-						<th>Tipo de Movimiento</th>
+						<th>Entrada</th>
+						<th>Salida</th>
 						<th>Stock Actual</th>
 						<th>Stock mínimo</th>
 						<th>Proveedor</th>
-						<th>Costo Unitario</th>	
+						<th>Precio de compra</th>
+						<th>Precio de venta</th>
 						<th>Categoría</th>
 						<th>Importe de Inventario</th>
 						<th>Fecha Registro</th>
@@ -135,15 +137,13 @@
 
 								@itemProducto.ExistenciaInicial
 							</td>
-
-							<td>
-								@{
-									var itemMovInventario = Model.movinventario
-									.FirstOrDefault(a => a.IdMovInventario == itemProducto.IdMovInventario);
-								}
-
-								@itemMovInventario?.MovimientoInventario
-							</td>
+							@{
+								Model.TotalesMovimientoPorProducto.TryGetValue(itemProducto.IdProducto, out var totalesInv);
+								int cantEntrada = totalesInv?.Entrada ?? itemProducto.ExistenciaInicial;
+								int cantSalida = totalesInv?.Salida ?? 0;
+							}
+							<td class="text-end">@cantEntrada</td>
+							<td class="text-end">@cantSalida</td>
 							
 							<td>
 								@itemProducto.StockActual
@@ -155,9 +155,10 @@
 							<td>@minimo</td>
 							<td>@(string.IsNullOrWhiteSpace(proveedor?.NombreProveedor) ? "—" : proveedor.NombreProveedor)</td>
 							<td>
-									C$ @itemProducto.CostoUnitario
-								
-
+									C$ @itemProducto.CostoUnitario.ToString("N2")
+							</td>
+							<td>
+									C$ @itemProducto.PrecioParaVenta().ToString("N2")
 							</td>
 								
 							<td>

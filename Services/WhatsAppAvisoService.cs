@@ -38,7 +38,7 @@ namespace WebColegio.Services
             var destinos = new List<WhatsAppAvisoDestino>();
             foreach (var fila in filas)
             {
-                if (fila.DatosIncompletos)
+                if (fila.DatosIncompletos || fila.EsHistorialTraslado)
                     continue;
                 bool debe = fila.GranTotalPendiente > 0.01m
                     || string.Equals(fila.EstadoPagoMensualidad, "Insolvente", StringComparison.OrdinalIgnoreCase);

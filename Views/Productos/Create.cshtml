@@ -104,8 +104,14 @@
                 <div class="col-lg-4">
 
                         <div class="form-group">
-                            <label asp-for="tblproducto.CostoUnitario" class="control-label">Costo Unitario</label>
-                            <input type="number" asp-for="tblproducto.CostoUnitario" id="costoUnitario" class="form-control" />
+                            <label asp-for="tblproducto.CostoUnitario" class="control-label">Precio de compra</label>
+                            <input type="number" step="0.01" asp-for="tblproducto.CostoUnitario" id="costoUnitario" class="form-control" />
+                            <span class="text-muted small">Costo unitario al que se compra el producto.</span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="tblproducto.PrecioVenta" class="control-label">Precio de venta</label>
+                            <input type="number" step="0.01" asp-for="tblproducto.PrecioVenta" id="precioVenta" class="form-control" />
+                            <span class="text-muted small">Precio al público. Si queda vacío se usa el de compra.</span>
                             @* <span asp-validation-for="tblproducto.CostoUnitario" class="text-danger"></span> *@
                         </div>
                         
@@ -210,6 +216,7 @@
                 $('#stockMinimo').val('10');
                 $('#existenciaInicial').val('0');
                 $('#costoUnitario').val('0');
+                $('#precioVenta').val('0');
                 $('#importeInventario').val('0.00');
             }
         }
@@ -253,6 +260,7 @@
                                     idMovimiento: item.idMovimiento,
                                     idProveedor: item.idProveedor,
                                     costo: item.costo,
+                                    precioVenta: item.precioVenta,
                                     stock: item.stock,
                                     stockMinimo: item.stockMinimo
                                 };
@@ -272,6 +280,7 @@
                     if (ui.item.idMovimiento)
                         $('#tblproducto_IdMovInventario').val(String(ui.item.idMovimiento));
                     $('#costoUnitario').val(ui.item.costo);
+                    $('#precioVenta').val(ui.item.precioVenta || ui.item.costo);
                     $('#stockActual').val(ui.item.stock);
                     if (ui.item.stockMinimo)
                         $('#stockMinimo').val(ui.item.stockMinimo);

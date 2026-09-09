@@ -222,7 +222,7 @@ namespace WebColegio.Controllers
                         TempData["Tipo"] = "warning";
                         return RedirectToAction("Create");
                     }
-                    totalCalculado += producto.CostoUnitario * item.Cantidad;
+                    totalCalculado += producto.PrecioParaVenta() * item.Cantidad;
                     lineasProducto.Add((item.Cantidad, producto.NombreProducto ?? $"Producto {item.IdProducto}"));
                 }
                 pagoscaja.Monto = totalCalculado;

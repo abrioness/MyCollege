@@ -31,6 +31,7 @@
 							<th>Alumno</th>
 							<th>Grado</th>
 							<th>Año lectivo</th>
+							<th>Colegio</th>
 							<th>Matrícula</th>
 							<th>Rifa 1</th>
 							<th>Rifa 2</th>
@@ -60,6 +61,13 @@
 								</td>
 								<td>@(fila.NombreGrado ?? "-")</td>
 								<td>@(fila.AnioPeriodo > 0 ? fila.AnioPeriodo.ToString() : "—")</td>
+								<td>
+									@(fila.Recinto ?? "—")
+									@if (!string.IsNullOrWhiteSpace(fila.EtiquetaRecinto))
+									{
+										<span class="badge @(fila.EsHistorialTraslado ? "bg-secondary" : "bg-primary")">@fila.EtiquetaRecinto</span>
+									}
+								</td>
 								<td class="text-center">
 									@if (fila.MatriculaReferencia <= 0.01m)
 									{

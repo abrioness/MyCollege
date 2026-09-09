@@ -145,58 +145,44 @@ namespace WebColegio.Helpers
                     ? TrasladoHelper.LeerMesIngreso(matriculaAlum?.Observaciones)
                       ?? TrasladoHelper.LeerMesIngreso(alumno.Observaciones)
                     : null;
+                int? idRecintoOrigen = esTraslado
+                    ? TrasladoHelper.LeerRecintoOrigen(matriculaAlum?.Observaciones)
+                      ?? TrasladoHelper.LeerRecintoOrigen(alumno.Observaciones)
+                    : null;
+                DateTime? fechaTraslado = esTraslado
+                    ? TrasladoHelper.LeerFechaTraslado(matriculaAlum?.Observaciones)
+                      ?? TrasladoHelper.LeerFechaTraslado(alumno.Observaciones)
+                    : null;
+                if (idRecintoOrigen is > 0 && idRecintoOrigen.Value == idR)
+                    idRecintoOrigen = null;
+
+                var pagosDestino = FiltrarPagosRecinto(pagosAlum, idR.Value, idRecintoOrigen, mesIngreso, fechaTraslado, esOrigen: false);
+                var pagosOrigen = idRecintoOrigen is > 0
+                    ? FiltrarPagosRecinto(pagosAlum, idRecintoOrigen.Value, idRecintoOrigen, mesIngreso, fechaTraslado, esOrigen: true)
+                    : new List<TblPago>();
+
+                decimal pagadoMatDestino = pagos.Where(p =>
+                    PagoEsMatriculaOAbono(p) && PerteneceRecintoPago(p, idR.Value, idRecintoOrigen, mesIngreso, fechaTraslado, false)).Sum(p => p.Monto);
+                decimal pagadoEneroDestino = pagosDestino
+                    .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == 1)
+                    .Sum(p => p.Monto);
+                var (pagadoMatDest, pagadoEneroDest) = DistribuirPagoMatriculaYEnero(
+                    montoMat, pagadoMatDestino, pagadoEneroDestino, montoMensual);
+                pagadoMat = pagadoMatDest;
+                pagadoEneroConMatricula = pagadoEneroDest;
 
                 var estadoMat = CalcularEstadoMatricula(montoMat, montoMensual, pagadoMat, pagadoEneroConMatricula);
                 bool matCancelada = estadoMat.Cancelada;
                 decimal saldoMat = matCancelada ? 0m : estadoMat.SaldoPendiente;
-                bool tieneAbonoMat = !matCancelada && pagos.Any(PagoEsMatriculaOAbono);
+                bool tieneAbonoMat = !matCancelada && pagosDestino.Any(p => tiposMatriculaPago.Contains(p.IdTipoMovimiento));
 
-                var meses = new EstadoCuentaMesCelda[12];
-                decimal totalSaldoMeses = 0m;
+                    var meses = ConstruirMesesRecinto(
+                    pagosDestino, tiposMes, pagadoEneroConMatricula, montoMensual, nombresMes,
+                    mesIngreso, esHistorial: false);
+                decimal totalSaldoMeses = meses.Where(c => !c.NoCorresponde && !c.Cancelado).Sum(c => c.Saldo);
 
-                for (int m = 1; m <= 12; m++)
-                {
-                    var pagosMes = pagosAlum
-                        .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == m)
-                        .ToList();
-                    decimal pagadoMes = m == 1 ? pagadoEneroConMatricula : pagosMes.Sum(p => p.Monto);
-                    decimal esperado = montoMensual;
-                    decimal tarifaHistorica = 0m;
-                    var recintoPagoMes = pagosMes.FirstOrDefault(p => p.IdRecinto.HasValue && p.IdRecinto.Value > 0)?.IdRecinto;
-                    int? recintoHistorico = recintoPagoMes;
-                    if ((!recintoHistorico.HasValue || recintoHistorico.Value == idR) && esTraslado)
-                        recintoHistorico = TrasladoHelper.LeerRecintoOrigen(matriculaAlum?.Observaciones)
-                            ?? TrasladoHelper.LeerRecintoOrigen(alumno.Observaciones);
-                    if (recintoHistorico.HasValue && recintoHistorico.Value != idR)
-                    {
-                        var costoHist = ResolverFilaCostoMensualidad(costosMen, recintoHistorico, idG.Value, idPeriodoFila, idMod);
-                        tarifaHistorica = costoHist != null ? (decimal)costoHist.CostoMensualidad : 0m;
-                        if (mediaBeca && tarifaHistorica > 0)
-                            tarifaHistorica *= 0.5m;
-                    }
-
-                    bool noCorresponde = esTraslado && mesIngreso.HasValue && m < mesIngreso.Value
-                        && !TrasladoHelper.MesPagadoSeRespeta(pagadoMes, tarifaHistorica, esperado);
-                    bool respetado = TrasladoHelper.MesPagadoSeRespeta(pagadoMes, tarifaHistorica, esperado);
-                    decimal saldo = noCorresponde || respetado ? 0m : Math.Max(0m, esperado - pagadoMes);
-                    bool cancelado = noCorresponde || esperado <= 0m || respetado || saldo <= 0.01m;
-                    if (!noCorresponde)
-                        totalSaldoMeses += cancelado ? 0m : saldo;
-
-                    meses[m - 1] = new EstadoCuentaMesCelda
-                    {
-                        Mes = m,
-                        NombreMes = nombresMes[m - 1],
-                        MontoEsperado = noCorresponde ? 0m : esperado,
-                        MontoPagado = pagadoMes,
-                        Saldo = cancelado ? 0m : saldo,
-                        Cancelado = cancelado,
-                        TieneAbonoParcial = !noCorresponde && !cancelado && pagadoMes > 0.01m,
-                        NoCorresponde = noCorresponde
-                    };
-                }
-
-                var ultimoPago = pagosAlum.OrderByDescending(p => p.IdPago).FirstOrDefault();
+                var ultimoPago = pagosDestino.OrderByDescending(p => p.IdPago).FirstOrDefault()
+                    ?? pagosAlum.OrderByDescending(p => p.IdPago).FirstOrDefault();
                 var cajaAlum = RecibosCajaDelAlumno(pagosCaja, alumno, idPeriodoFila, anioFila).ToList();
                 string nombreGradoFila = grados.FirstOrDefault(g => g.IdGrado == idG)?.NombreGrado ?? string.Empty;
                 bool aplicaPromo = EsGradoConPromocion(nombreGradoFila);
@@ -238,6 +224,9 @@ namespace WebColegio.Helpers
                     NombreCompleto = $"{alumno.Nombre} {alumno.Apellido}".Trim(),
                     NombreGrado = nombreGradoFila,
                     Recinto = recintos.FirstOrDefault(r => r.IdRecinto == idR)?.Recinto,
+                    IdRecinto = idR,
+                    EsHistorialTraslado = false,
+                    EtiquetaRecinto = idRecintoOrigen is > 0 ? "Actual" : null,
                     AnioPeriodo = anioFila,
                     MensualidadReferencia = montoMensual,
                     MatriculaReferencia = montoMatNeta,
@@ -265,9 +254,177 @@ namespace WebColegio.Helpers
                     UltimoMesPagado = ultimoMesPagado,
                     NombreUltimoMesPagado = nombreUltimoMesPagado
                 });
+
+                if (idRecintoOrigen is > 0)
+                {
+                    var costoMenOrig = ResolverFilaCostoMensualidad(costosMen, idRecintoOrigen, idG.Value, idPeriodoFila, idMod);
+                    decimal montoMensualOrig = costoMenOrig != null ? (decimal)costoMenOrig.CostoMensualidad : 0m;
+                    if (becaCompleta)
+                        montoMensualOrig = 0m;
+                    else if (mediaBeca && montoMensualOrig > 0)
+                        montoMensualOrig *= 0.5m;
+                    var costoMatOrig = ResolverFilaCostoMatricula(costosMat, idRecintoOrigen, idPeriodoFila, idMod);
+                    decimal montoMatOrig = costoMatOrig != null ? (decimal)costoMatOrig.CostoMatricula : 0m;
+                    decimal pagadoMatOrigBruto = pagos.Where(p =>
+                        PagoEsMatriculaOAbono(p)
+                        && PerteneceRecintoPago(p, idRecintoOrigen.Value, idRecintoOrigen, mesIngreso, fechaTraslado, true)).Sum(p => p.Monto);
+                    decimal pagadoEneroOrigBruto = pagosOrigen
+                        .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == 1)
+                        .Sum(p => p.Monto);
+                    decimal montoMatNetaOrig = MatriculaNetaDesdePaquete(montoMatOrig, montoMensualOrig);
+                    var (pagadoMatOrig, pagadoEneroOrig) = DistribuirPagoMatriculaYEnero(
+                        montoMatOrig, pagadoMatOrigBruto, pagadoEneroOrigBruto, montoMensualOrig);
+                    var estadoMatOrig = CalcularEstadoMatricula(montoMatOrig, montoMensualOrig, pagadoMatOrig, pagadoEneroOrig);
+                    var mesesOrig = ConstruirMesesRecinto(
+                        pagosOrigen, tiposMes, pagadoEneroOrig, montoMensualOrig, nombresMes,
+                        mesIngreso, esHistorial: true);
+                    decimal totalSaldoOrig = mesesOrig.Where(c => !c.NoCorresponde && !c.Cancelado).Sum(c => c.Saldo);
+                    var estadoOrig = EstadoCuentaSolvenciaHelper.EvaluarEstadoPagoMensualidad(mesesOrig);
+                    var pendOrig = EstadoCuentaSolvenciaHelper.ObtenerMesesPendientes(mesesOrig);
+                    int? ultimoOrig = EstadoCuentaSolvenciaHelper.ObtenerMesHastaPagadoParaMostrar(mesesOrig);
+                    var rifasOrig = pagos
+                        .Where(p => p.IdAlumno == alumno.IdAlumno && p.Activo && tiposRifa.Contains(p.IdTipoMovimiento)
+                            && p.IdRecinto == idRecintoOrigen)
+                        .OrderBy(p => p.FechaRegistro).ThenBy(p => p.IdPago).ToList();
+                    var (rifaS1o, rifaS2o) = EstadoRifasPorOrden(rifasOrig.Count);
+                    var (montoRifa1o, montoRifa2o) = MontosRifaPorOrden(rifasOrig, Array.Empty<TblPagoCaja>());
+                    decimal montoPromoOrig = 0m;
+                    if (aplicaPromo && tiposPromo.Count > 0)
+                        montoPromoOrig = pagosOrigen.Where(p => tiposPromo.Contains(p.IdTipoMovimiento)).Sum(p => p.Monto);
+
+                    filas.Add(new EstadoCuentaFilaAlumno
+                    {
+                        IdAlumno = alumno.IdAlumno,
+                        NombreCompleto = $"{alumno.Nombre} {alumno.Apellido}".Trim(),
+                        NombreGrado = nombreGradoFila,
+                        Recinto = recintos.FirstOrDefault(r => r.IdRecinto == idRecintoOrigen)?.Recinto,
+                        IdRecinto = idRecintoOrigen,
+                        EsHistorialTraslado = true,
+                        EtiquetaRecinto = "Historial",
+                        AnioPeriodo = anioFila,
+                        MensualidadReferencia = montoMensualOrig,
+                        MatriculaReferencia = montoMatNetaOrig,
+                        TotalPagadoMatricula = pagadoMatOrig,
+                        SaldoMatricula = estadoMatOrig.Cancelada ? 0m : estadoMatOrig.SaldoPendiente,
+                        MatriculaCancelada = estadoMatOrig.Cancelada,
+                        TieneAbonoMatricula = !estadoMatOrig.Cancelada && pagadoMatOrig > 0.01m,
+                        RifaPagada = rifaS1o && rifaS2o,
+                        RifaSemestre1Pagada = rifaS1o,
+                        RifaSemestre2Pagada = rifaS2o,
+                        MontoRifaSemestre1 = montoRifa1o,
+                        MontoRifaSemestre2 = montoRifa2o,
+                        AplicaPromocion = aplicaPromo,
+                        PromocionPagada = aplicaPromo && montoPromoOrig > 0.01m,
+                        MontoPromocion = montoPromoOrig,
+                        Meses = mesesOrig,
+                        TotalSaldoMensualidades = totalSaldoOrig,
+                        GranTotalPendiente = (estadoMatOrig.Cancelada ? 0m : estadoMatOrig.SaldoPendiente) + totalSaldoOrig,
+                        IdPagoParaEnlace = pagosOrigen.OrderByDescending(p => p.IdPago).FirstOrDefault()?.IdPago,
+                        SinTarifaMensualidad = costoMenOrig == null && !becaCompleta && !mediaBeca,
+                        EstadoPagoMensualidad = estadoOrig,
+                        MesMensualidadRequerido = mesMensualidadRequerido,
+                        NombreMesMensualidadRequerido = nombreMesRequerido,
+                        MesesPendientesSolvencia = pendOrig.Count > 0 ? string.Join(", ", pendOrig) : null,
+                        UltimoMesPagado = ultimoOrig,
+                        NombreUltimoMesPagado = ultimoOrig.HasValue ? nombresMes[ultimoOrig.Value - 1] : null
+                    });
+                }
             }
 
             return filas;
+        }
+
+        /// <summary>
+        /// Un pago con recinto informado solo cuenta en ese colegio.
+        /// Sin recinto (recibos viejos) se atribuye al colegio actual, salvo traslado
+        /// con mes de ingreso, que reparte por mes.
+        /// </summary>
+        public static bool EsPagoDelRecinto(TblPago p, int? idRecinto)
+        {
+            if (idRecinto is null or <= 0)
+                return true;
+            if (p.IdRecinto is null or <= 0)
+                return true;
+            return p.IdRecinto.Value == idRecinto.Value;
+        }
+
+        private static List<TblPago> FiltrarPagosRecinto(
+            IEnumerable<TblPago> pagos,
+            int idRecinto,
+            int? idRecintoOrigen,
+            int? mesIngreso,
+            DateTime? fechaTraslado,
+            bool esOrigen)
+            => pagos.Where(p => PerteneceRecintoPago(p, idRecinto, idRecintoOrigen, mesIngreso, fechaTraslado, esOrigen)).ToList();
+
+        private static bool PerteneceRecintoPago(
+            TblPago p,
+            int idRecinto,
+            int? idRecintoOrigen,
+            int? mesIngreso,
+            DateTime? fechaTraslado,
+            bool esOrigen)
+        {
+            if (p.IdRecinto is > 0)
+            {
+                if (p.IdRecinto.Value != idRecinto)
+                    return false;
+                // El destino no hereda recibos anteriores al traslado.
+                if (!esOrigen && fechaTraslado.HasValue)
+                {
+                    var fechaPago = (p.FechaEmision ?? p.FechaRegistro).Date;
+                    if (fechaPago < fechaTraslado.Value.Date)
+                        return false;
+                }
+                return true;
+            }
+
+            if (idRecintoOrigen is null or <= 0)
+                return !esOrigen;
+
+            if (p.IdMes is >= 1 and <= 12 && mesIngreso is >= 1 and <= 12)
+                return esOrigen ? p.IdMes.Value < mesIngreso.Value : p.IdMes.Value >= mesIngreso.Value;
+
+            return esOrigen;
+        }
+
+        private static EstadoCuentaMesCelda[] ConstruirMesesRecinto(
+            IReadOnlyList<TblPago> pagosRecinto,
+            HashSet<int> tiposMes,
+            decimal pagadoEneroDistribuido,
+            decimal montoMensual,
+            string[] nombresMes,
+            int? mesIngreso,
+            bool esHistorial)
+        {
+            var meses = new EstadoCuentaMesCelda[12];
+            for (int m = 1; m <= 12; m++)
+            {
+                var pagosMes = pagosRecinto
+                    .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == m)
+                    .ToList();
+                decimal pagadoMes = m == 1 ? pagadoEneroDistribuido : pagosMes.Sum(p => p.Monto);
+                // Mes anterior al ingreso (destino) o posterior (historial) no se cobra,
+                // salvo que ese colegio ya lo haya registrado: entonces se muestra cancelado.
+                bool noCorresponde = mesIngreso is >= 1 and <= 12
+                    && (esHistorial ? m >= mesIngreso.Value : m < mesIngreso.Value)
+                    && pagadoMes <= 0.01m;
+                decimal esperado = noCorresponde ? 0m : montoMensual;
+                decimal saldo = noCorresponde ? 0m : Math.Max(0m, esperado - pagadoMes);
+                bool cancelado = noCorresponde || esperado <= 0m || saldo <= 0.01m;
+                meses[m - 1] = new EstadoCuentaMesCelda
+                {
+                    Mes = m,
+                    NombreMes = nombresMes[m - 1],
+                    MontoEsperado = esperado,
+                    MontoPagado = pagadoMes,
+                    Saldo = cancelado ? 0m : saldo,
+                    Cancelado = cancelado,
+                    TieneAbonoParcial = !noCorresponde && !cancelado && pagadoMes > 0.01m,
+                    NoCorresponde = noCorresponde
+                };
+            }
+            return meses;
         }
 
         /// <summary>
@@ -339,7 +496,8 @@ namespace WebColegio.Helpers
             int idPeriodo,
             int anioPeriodo,
             IReadOnlyList<CatPeriodo>? periodos,
-            IReadOnlyCollection<int>? tiposMatriculaPago)
+            IReadOnlyCollection<int>? tiposMatriculaPago,
+            int? idRecinto = null)
         {
             var tipos = tiposMatriculaPago is { Count: > 0 }
                 ? tiposMatriculaPago
@@ -349,6 +507,8 @@ namespace WebColegio.Helpers
                 .Where(p =>
                 {
                     if (!p.Activo || p.IdAlumno != idAlumno)
+                        return false;
+                    if (!EsPagoDelRecinto(p, idRecinto))
                         return false;
                     if (!tipos.Contains(p.IdTipoMovimiento))
                         return false;
@@ -364,13 +524,15 @@ namespace WebColegio.Helpers
             IEnumerable<TblPago> pagos,
             int idAlumno,
             int idPeriodo,
-            IReadOnlyCollection<int>? idsMensualidad)
+            IReadOnlyCollection<int>? idsMensualidad,
+            int? idRecinto = null)
         {
             var tiposMes = new HashSet<int>(idsMensualidad ?? Array.Empty<int>()) { TipoMensualidad };
             return pagos
                 .Where(p => p.Activo
                     && p.IdAlumno == idAlumno
                     && p.IdPeriodo == idPeriodo
+                    && EsPagoDelRecinto(p, idRecinto)
                     && tiposMes.Contains(p.IdTipoMovimiento)
                     && p.IdMes == 1)
                 .Sum(p => p.Monto);

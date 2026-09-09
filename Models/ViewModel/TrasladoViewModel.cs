@@ -15,9 +15,14 @@ namespace WebColegio.Models.ViewModel
         public decimal TarifaOrigen { get; set; }
         public decimal TarifaDestino { get; set; }
         public decimal MontoMatricula { get; set; }
+        /// <summary>Paquete de catálogo menos enero, lo que se cobra como matrícula.</summary>
+        public decimal MatriculaNeta { get; set; }
+        public decimal SaldoMatricula { get; set; }
         public bool CobraMatricula { get; set; }
         /// <summary>Mes en que ingresa al colegio destino (1-12). Se cobra ese mes y los siguientes.</summary>
         public int MesIngreso { get; set; }
+        public DateTime? FechaTraslado { get; set; }
+        public int AnioPeriodo { get; set; }
         public decimal TotalACobrar { get; set; }
         public string MesesACobrarCsv { get; set; } = "";
         public List<TrasladoMesFila> Meses { get; set; } = new();

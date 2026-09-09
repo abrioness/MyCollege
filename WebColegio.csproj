@@ -6,9 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <!-- Perfil http por defecto en Debug hasta confiar el certificado de desarrollo -->
+  <!-- IIS Express evita el .exe local que bloquea Smart App Control -->
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <LaunchProfileName>http</LaunchProfileName>
+    <LaunchProfileName>IIS Express</LaunchProfileName>
   </PropertyGroup>
 
   <ItemGroup>

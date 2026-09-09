@@ -49,6 +49,10 @@ namespace WebColegio.Controllers
                 .ThenByDescending(a => a.FechaRegistro)
                 .ToList();
 
+            var movimientos = await _Iservices.GetMovimientosInventarioAsync(null, null, null)
+                ?? new List<MovimientoInventario>();
+            var totalesMovimiento = ArmarTotalesMovimientoInventario(productosFiltrados, movimientos);
+
             int idRol = _usuarioId?.IdRol ?? 0;
             bool puedeConsultar = User.IsInRole("Admin") || User.IsInRole("Cajero") || User.IsInRole("UserSystem")
                 || User.IsInRole("Secretaria") || idRol is 1 or 2 or 5 or 6;
@@ -62,6 +66,7 @@ namespace WebColegio.Controllers
                 movinventario = _movInvebtario,
                 recintos = _recintos ?? new List<Recintos>(),
                 proveedores = _proveedores,
+                TotalesMovimientoPorProducto = totalesMovimiento,
             });
         }
 
@@ -124,6 +129,7 @@ namespace WebColegio.Controllers
                     idRecinto = p.IdRecinto,
                     idMovimiento = p.IdMovInventario,
                     costo = p.CostoUnitario,
+                    precioVenta = p.PrecioParaVenta(),
                     stock = p.StockActual,
                     stockMinimo = InventarioAlertaHelper.StockMinimoEfectivo(p.StockMinimo),
                     idProveedor = p.IdProveedor,
@@ -156,6 +162,8 @@ namespace WebColegio.Controllers
                 producto.tblproducto.UsuarioRegistro = idUsuario;
                 producto.tblproducto.FechaRegistro = DateTime.Now;
                 producto.tblproducto.StockMinimo = InventarioAlertaHelper.NormalizarStockMinimo(producto.tblproducto.StockMinimo);
+                if (producto.tblproducto.PrecioVenta <= 0)
+                    producto.tblproducto.PrecioVenta = producto.tblproducto.CostoUnitario;
 
                 if (existeProducto)
                 {
@@ -304,6 +312,8 @@ namespace WebColegio.Controllers
 
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 producto.tblproducto.StockMinimo = InventarioAlertaHelper.NormalizarStockMinimo(producto.tblproducto.StockMinimo);
+                if (producto.tblproducto.PrecioVenta <= 0)
+                    producto.tblproducto.PrecioVenta = producto.tblproducto.CostoUnitario;
                 producto.tblproducto.ImporteInventario = producto.tblproducto.StockActual * producto.tblproducto.CostoUnitario;
                 producto.tblproducto.UsuarioActualiza = idUsuario;
                 producto.tblproducto.FechaActualiza = DateTime.Now;
@@ -426,6 +436,43 @@ namespace WebColegio.Controllers
             {
                 return View();
             }
+        }
+
+        private static Dictionary<int, TotalesMovimientoInventario> ArmarTotalesMovimientoInventario(
+            IReadOnlyList<Productos> productos,
+            IReadOnlyList<MovimientoInventario> movimientos)
+        {
+            var activos = (movimientos ?? Array.Empty<MovimientoInventario>())
+                .Where(m => m.IdProducto > 0 && m.Cantidad > 0);
+            var agrupado = activos
+                .GroupBy(m => m.IdProducto)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new TotalesMovimientoInventario
+                    {
+                        Entrada = g.Where(m => m.TipoMovimiento == TipoMovimientoInventario.Entrada).Sum(m => m.Cantidad),
+                        Salida = g.Where(m => m.TipoMovimiento == TipoMovimientoInventario.Salida).Sum(m => m.Cantidad)
+                    });
+
+            var resultado = new Dictionary<int, TotalesMovimientoInventario>();
+            foreach (var p in productos ?? Array.Empty<Productos>())
+            {
+                if (agrupado.TryGetValue(p.IdProducto, out var tot))
+                {
+                    resultado[p.IdProducto] = tot;
+                    continue;
+                }
+
+                int inicial = Math.Max(0, p.ExistenciaInicial);
+                int stock = Math.Max(0, p.StockActual);
+                resultado[p.IdProducto] = new TotalesMovimientoInventario
+                {
+                    Entrada = inicial,
+                    Salida = Math.Max(0, inicial - stock)
+                };
+            }
+
+            return resultado;
         }
 
         private async Task<bool> PuedeAgregarInventarioAsync()

@@ -5,9 +5,10 @@ using WebColegio.Models;
 namespace WebColegio.Helpers
 {
     /// <summary>
-    /// Traslado entre colegios del mismo ciclo: se cobra matrícula destino
-    /// (paquete de enero) y las mensualidades desde el mes de ingreso.
-    /// Un mes ya cancelado en el origen, anterior al ingreso, se respeta.
+    /// Traslado del mismo ciclo y la misma ficha de alumno: no se da de baja
+    /// ni se crea otra matrícula. Se actualiza el recinto y se cobran
+    /// matrícula y mensualidad del colegio destino desde el mes de ingreso.
+    /// Los pagos del origen no abonan el destino.
     /// </summary>
     public static class TrasladoHelper
     {
@@ -31,6 +32,17 @@ namespace WebColegio.Helpers
             return int.TryParse(match.Groups[1].Value, out var id) && id > 0 ? id : null;
         }
 
+        public static DateTime? LeerFechaTraslado(string? observaciones)
+        {
+            if (string.IsNullOrWhiteSpace(observaciones))
+                return null;
+            var fechaMatch = Regex.Match(observaciones, @"\[TRASLADO[^\]]*fecha=(\d{4}-\d{2}-\d{2})", RegexOptions.IgnoreCase);
+            if (fechaMatch.Success
+                && DateTime.TryParseExact(fechaMatch.Groups[1].Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+                return fecha.Date;
+            return null;
+        }
+
         public static int? LeerMesIngreso(string? observaciones)
         {
             if (string.IsNullOrWhiteSpace(observaciones))
@@ -38,11 +50,8 @@ namespace WebColegio.Helpers
             var mesMatch = Regex.Match(observaciones, @"\[TRASLADO[^\]]*mes=(\d{1,2})", RegexOptions.IgnoreCase);
             if (mesMatch.Success && int.TryParse(mesMatch.Groups[1].Value, out var mes) && mes is >= 1 and <= 12)
                 return mes;
-            var fechaMatch = Regex.Match(observaciones, @"\[TRASLADO[^\]]*fecha=(\d{4}-\d{2}-\d{2})", RegexOptions.IgnoreCase);
-            if (fechaMatch.Success
-                && DateTime.TryParseExact(fechaMatch.Groups[1].Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
-                return fecha.Month;
-            return null;
+            var fecha = LeerFechaTraslado(observaciones);
+            return fecha?.Month;
         }
 
         public static string Anotar(
@@ -57,7 +66,7 @@ namespace WebColegio.Helpers
 
             string marca =
                 $"{MarcaObservacion} origen={idRecintoOrigen} fecha={fecha:yyyy-MM-dd} mes={mesIngreso}] " +
-                $"Desde {nombreOrigen}. Cobra matrícula destino y mensualidades desde el mes de ingreso.";
+                $"Desde {nombreOrigen}. Cobra matrícula y mensualidad del colegio destino desde el mes de ingreso.";
 
             var actual = observacionesActuales?.Trim() ?? "";
             if (actual.Contains(MarcaObservacion, StringComparison.OrdinalIgnoreCase))

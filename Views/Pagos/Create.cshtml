@@ -17,10 +17,14 @@
         <div class="card-body">
             @if (Model.EsCobroTraslado)
             {
+                var cultMesCobro = System.Globalization.CultureInfo.GetCultureInfo("es-NI");
+                var mesIngresoNombre = Model.PreloadMesIngreso is >= 1 and <= 12
+                    ? cultMesCobro.DateTimeFormat.GetMonthName(Model.PreloadMesIngreso.Value)
+                    : "el mes de ingreso";
                 <div class="alert alert-info">
-                    Cobro de traslado: el alumno debe pagar la matrícula (enero) del colegio destino
-                    y la mensualidad del mes en que ingresa y los posteriores.
-                    Los meses anteriores ya pagados en el origen se respetan.
+                    Cobro de traslado: el alumno debe pagar la matrícula del colegio destino
+                    y las mensualidades desde @mesIngresoNombre (ese mes y los siguientes).
+                    En el destino no se heredan pagos del origen.
                 </div>
             }
             <form asp-action="Create" method="post" enctype="multipart/form-data">
@@ -410,7 +414,8 @@
                 $.getJSON(urlsPagos.obtenerAbonosPrevios, {
                     idAlumno: idAlumno,
                     idTipoMovimiento: idTipoMovimiento,
-                    idPeriodo: periodo
+                    idPeriodo: periodo,
+                    idRecinto: $recinto.val() || 0
                 }, function(data) {
                     console.log('Abonos previos recibidos:', data);
                     const totalAbonos = data && data.totalAbonos ? parseFloat(data.totalAbonos) : 0;

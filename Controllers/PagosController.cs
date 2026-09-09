@@ -173,9 +173,9 @@ namespace WebColegio.Controllers
         /// Mes calendario (1–12) de la primera matrícula del alumno en el período (fecha de emisión o registro).
         /// Con matrícula prematura (p. ej. en abril), no se exige pagar febrero/marzo antes de abril.
         /// </summary>
-        private static int ObtenerMesCalendarioPrimeraMatricula(IEnumerable<TblPago> pagos, int idAlumno, int idPeriodo)
+        private static int ObtenerMesCalendarioPrimeraMatricula(IEnumerable<TblPago> pagos, int idAlumno, int idPeriodo, int? idRecinto = null)
         {
-            var p = ObtenerMatriculaReferencia(pagos, idAlumno, idPeriodo);
+            var p = ObtenerMatriculaReferencia(pagos, idAlumno, idPeriodo, idRecinto);
             if (p == null)
                 return 1;
             var m = p.FechaEmision?.Month ?? p.FechaRegistro.Month;
@@ -194,11 +194,12 @@ namespace WebColegio.Controllers
         /// Continuidad de este ciclo: alumno que sigue activo y paga matrícula durante el año
         /// (no es solo reingreso). No se toma la matrícula de otro período.
         /// </summary>
-        private static bool EsMatriculaContinuidad(IEnumerable<TblPago> pagos, int idAlumno, int idPeriodo)
+        private static bool EsMatriculaContinuidad(IEnumerable<TblPago> pagos, int idAlumno, int idPeriodo, int? idRecinto = null)
         {
             return pagos.Any(p => p.IdAlumno == idAlumno && p.Activo
                 && p.IdTipoMovimiento == TipoMovimientoMatricula
                 && p.Continuidad
+                && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto)
                 && (idPeriodo <= 0 || p.IdPeriodo == idPeriodo));
         }
 
@@ -243,12 +244,13 @@ namespace WebColegio.Controllers
             => pagos != null && pagos.Any() ? pagos.Max(p => p.IdPago) : 0;
 
         private static TblPago? ObtenerMatriculaReferencia(
-            IEnumerable<TblPago> pagos, int idAlumno, int idPeriodo)
+            IEnumerable<TblPago> pagos, int idAlumno, int idPeriodo, int? idRecinto = null)
         {
             // Solo matrícula completa (tipo 2) de ESTE ciclo. No usar la del año anterior:
             // un alumno de continuidad sigue activo y puede no haber pagado este período.
             var query = pagos.Where(p => p.IdAlumno == idAlumno && p.Activo
-                && p.IdTipoMovimiento == TipoMovimientoMatricula);
+                && p.IdTipoMovimiento == TipoMovimientoMatricula
+                && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto));
 
             if (idPeriodo > 0)
                 query = query.Where(p => p.IdPeriodo == idPeriodo);
@@ -277,7 +279,8 @@ namespace WebColegio.Controllers
             int idAlumno,
             int idPeriodo,
             decimal catalogoMatricula,
-            decimal mensualidadEnero = 0m)
+            decimal mensualidadEnero = 0m,
+            int? idRecinto = null)
         {
             if (catalogoMatricula <= 0m || pagadoPorMes == null)
                 return;
@@ -286,6 +289,7 @@ namespace WebColegio.Controllers
                 .Where(p => p.Activo
                     && p.IdAlumno == idAlumno
                     && p.IdPeriodo == idPeriodo
+                    && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto)
                     && (p.IdTipoMovimiento == TipoMovimientoMatricula
                         || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono))
                 .Sum(p => p.Monto);
@@ -296,7 +300,7 @@ namespace WebColegio.Controllers
         }
 
         private static bool ExisteMensualidadEneroEnBd(
-            IEnumerable<TblPago> pagos, int idAlumno, int idPeriodoFormulario)
+            IEnumerable<TblPago> pagos, int idAlumno, int idPeriodoFormulario, int? idRecinto = null)
         {
             if (idPeriodoFormulario <= 0)
                 return false;
@@ -304,6 +308,7 @@ namespace WebColegio.Controllers
             return pagos.Any(p => p.Activo
                 && p.IdAlumno == idAlumno
                 && p.IdPeriodo == idPeriodoFormulario
+                && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto)
                 && p.IdTipoMovimiento == TipoMovimientoMensualidad
                 && p.IdMes == 1);
         }
@@ -646,7 +651,7 @@ namespace WebColegio.Controllers
 
         // GET: PagosController/Create
         [Authorize]
-        public async Task<ActionResult> Create(int? idAlumno, int? idRecinto, int? idGrado, int? idModalidad, int? idPeriodo, string? meses, bool traslado = false, bool cobrarMatricula = false)
+        public async Task<ActionResult> Create(int? idAlumno, int? idRecinto, int? idGrado, int? idModalidad, int? idPeriodo, string? meses, bool traslado = false, bool cobrarMatricula = false, int? mesIngreso = null)
         {
             var recibos = await _Iservices.GetPagosAsync();
             //var periodos = await _Iservices.GetPeriodoAsync();
@@ -732,6 +737,7 @@ namespace WebColegio.Controllers
                     viewmodel.PreloadMeses = meses;
                     viewmodel.EsCobroTraslado = traslado;
                     viewmodel.CobraMatriculaTraslado = cobrarMatricula;
+                    viewmodel.PreloadMesIngreso = mesIngreso;
                     viewmodel.Pago.IdAlumno = alumnoPre.IdAlumno;
                     if (!cobrarMatricula)
                         viewmodel.Pago.IdTipoMovimiento = TipoMovimientoMensualidad;
@@ -809,21 +815,40 @@ namespace WebColegio.Controllers
                 return View(vm);
             }
 
-            var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
-            var periodoActual = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos);
-            int idPeriodo = periodoActual?.IdPeriodo ?? vm.IdPeriodo;
-            var matricula = idPeriodo > 0
-                ? await _Iservices.GetMatriculaAlumnoPeriodoAsync(vm.IdAlumno, idPeriodo)
-                : null;
+            int idPeriodo = vm.IdPeriodo > 0 ? vm.IdPeriodo : (alumno.IdPeriodo ?? 0);
+            var matricula = await BuscarMatriculaCicloTrasladoAsync(vm.IdAlumno, idPeriodo);
+            if (matricula != null && matricula.IdPeriodo > 0)
+                idPeriodo = matricula.IdPeriodo;
+            if (idPeriodo <= 0)
+            {
+                var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+                idPeriodo = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos)?.IdPeriodo ?? 0;
+            }
+
+            if (vm.FechaTraslado is not { Year: > 2000 } ft
+                || vm.MesIngreso is < 1 or > 12)
+            {
+                TempData["Mensaje"] = "Indique la fecha de traslado. Ese mes es el primero a cobrar en el destino; no se usa la fecha de hoy por omisión.";
+                TempData["Tipo"] = "warning";
+                return View(vm);
+            }
+
+            DateTime fechaTraslado = ft.Date;
+            if (fechaTraslado.Month != vm.MesIngreso)
+            {
+                int anio = vm.AnioPeriodo > 0 ? vm.AnioPeriodo : fechaTraslado.Year;
+                int dia = Math.Min(fechaTraslado.Day, DateTime.DaysInMonth(anio, vm.MesIngreso));
+                fechaTraslado = new DateTime(anio, vm.MesIngreso, dia);
+            }
 
             string nota = TrasladoHelper.Anotar(
                 matricula?.Observaciones ?? alumno.Observaciones,
                 vm.IdRecintoOrigen,
                 nombreOrigen,
-                DateTime.Today,
+                fechaTraslado,
                 vm.MesIngreso);
 
-            if (matricula != null)
+            if (matricula != null && matricula.IdMatricula > 0)
             {
                 matricula.IdRecinto = vm.IdRecintoDestino;
                 if (vm.IdGrado > 0)
@@ -831,6 +856,7 @@ namespace WebColegio.Controllers
                 if (form.IdModalidad.HasValue && form.IdModalidad.Value > 0)
                     matricula.IdModalidad = form.IdModalidad.Value;
                 matricula.Estado = TblMatricula.EstadoActivo;
+                matricula.Activo = true;
                 matricula.Continuidad = true;
                 matricula.TipoEstudiante = TrasladoHelper.TipoEstudianteTraslado;
                 matricula.Observaciones = nota;
@@ -839,7 +865,7 @@ namespace WebColegio.Controllers
                 var (okMat, errMat) = await _Iservices.UpdateMatriculaAsync(matricula);
                 if (!okMat)
                 {
-                    TempData["Mensaje"] = "No se pudo actualizar la matrícula. " + (errMat ?? _Iservices.LastApiError);
+                    TempData["Mensaje"] = "No se pudo actualizar la matrícula del ciclo. " + (errMat ?? _Iservices.LastApiError);
                     TempData["Tipo"] = "warning";
                     return View(vm);
                 }
@@ -868,13 +894,39 @@ namespace WebColegio.Controllers
                     Repitente = alumno.Repitente
                 };
                 var (okNueva, errNueva) = await _Iservices.PostMatriculaAsync(nueva);
+                if (!okNueva && EsConflictoMatriculaExistente(errNueva ?? _Iservices.LastApiError))
+                {
+                    matricula = await BuscarMatriculaCicloTrasladoAsync(vm.IdAlumno, idPeriodo);
+                    if (matricula != null && matricula.IdMatricula > 0)
+                    {
+                        matricula.IdRecinto = vm.IdRecintoDestino;
+                        if (vm.IdGrado > 0)
+                            matricula.IdGrado = vm.IdGrado;
+                        if (form.IdModalidad.HasValue && form.IdModalidad.Value > 0)
+                            matricula.IdModalidad = form.IdModalidad.Value;
+                        matricula.Estado = TblMatricula.EstadoActivo;
+                        matricula.Activo = true;
+                        matricula.Continuidad = true;
+                        matricula.TipoEstudiante = TrasladoHelper.TipoEstudianteTraslado;
+                        matricula.Observaciones = nota;
+                        matricula.UsuarioActualizo = IdUsuarioPago();
+                        matricula.FechaActualizo = DateTime.Now;
+                        var (okMat, errMat) = await _Iservices.UpdateMatriculaAsync(matricula);
+                        if (!okMat)
+                        {
+                            TempData["Mensaje"] = "No se pudo actualizar la matrícula del ciclo. " + (errMat ?? _Iservices.LastApiError);
+                            TempData["Tipo"] = "warning";
+                            return View(vm);
+                        }
+                        okNueva = true;
+                    }
+                }
                 if (!okNueva)
                 {
                     TempData["Mensaje"] = "No se pudo registrar la colocación en el colegio destino. " + (errNueva ?? _Iservices.LastApiError);
                     TempData["Tipo"] = "warning";
                     return View(vm);
                 }
-                matricula = nueva;
             }
 
             alumno.IdRecinto = vm.IdRecintoDestino;
@@ -884,7 +936,7 @@ namespace WebColegio.Controllers
                 alumno.IdModalidad = form.IdModalidad;
             alumno.IdPeriodo = idPeriodo;
             alumno.TipoEstudiante = TrasladoHelper.TipoEstudianteTraslado;
-            alumno.Observaciones = TrasladoHelper.Anotar(alumno.Observaciones, vm.IdRecintoOrigen, nombreOrigen, DateTime.Today, vm.MesIngreso);
+            alumno.Observaciones = TrasladoHelper.Anotar(alumno.Observaciones, vm.IdRecintoOrigen, nombreOrigen, fechaTraslado, vm.MesIngreso);
             alumno.UsuarioActualiza = IdUsuarioPago();
             alumno.FechaActualiza = DateTime.Now;
             await _Iservices.UpdateAlumnos(alumno);
@@ -894,7 +946,7 @@ namespace WebColegio.Controllers
             if (vm.CobraMatricula || mesesCobro.Count > 0)
             {
                 TempData["Mensaje"] = vm.CobraMatricula
-                    ? $"Traslado aplicado. Cobre la matrícula (enero) y las mensualidades desde {mesNombre}."
+                    ? $"Traslado aplicado. Cobre la matrícula del destino y las mensualidades desde {mesNombre}."
                     : $"Traslado aplicado. Cobre las mensualidades desde {mesNombre}.";
                 TempData["Tipo"] = "success";
                 return RedirectToAction(nameof(Create), new
@@ -906,7 +958,8 @@ namespace WebColegio.Controllers
                     idPeriodo,
                     meses = string.Join(",", mesesCobro),
                     traslado = true,
-                    cobrarMatricula = vm.CobraMatricula
+                    cobrarMatricula = vm.CobraMatricula,
+                    mesIngreso = vm.MesIngreso
                 });
             }
 
@@ -917,9 +970,17 @@ namespace WebColegio.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> ObtenerResumenTraslado(int idAlumno, int idRecintoDestino, int mesIngreso = 0)
+        public async Task<IActionResult> ObtenerResumenTraslado(
+            int idAlumno,
+            int idRecintoDestino,
+            int mesIngreso = 0,
+            DateTime? fechaTraslado = null)
         {
-            var baseVm = new TrasladoViewModel { MesIngreso = mesIngreso };
+            var baseVm = new TrasladoViewModel
+            {
+                MesIngreso = mesIngreso,
+                FechaTraslado = fechaTraslado
+            };
             var vm = await ArmarTrasladoAsync(idAlumno, idRecintoDestino, baseVm);
             if (vm == null)
                 return Json(new { ok = false });
@@ -928,6 +989,8 @@ namespace WebColegio.Controllers
             {
                 ok = true,
                 nombreAlumno = vm.NombreAlumno,
+                idPeriodo = vm.IdPeriodo,
+                anioPeriodo = vm.AnioPeriodo,
                 idRecintoOrigen = vm.IdRecintoOrigen,
                 nombreRecintoOrigen = vm.NombreRecintoOrigen,
                 tarifaOrigen = vm.TarifaOrigen,
@@ -938,12 +1001,16 @@ namespace WebColegio.Controllers
                 idModalidad = vm.IdModalidad,
                 cobraMatricula = vm.CobraMatricula,
                 montoMatricula = vm.MontoMatricula,
+                matriculaNeta = vm.MatriculaNeta,
+                saldoMatricula = vm.SaldoMatricula,
                 mesIngreso = vm.MesIngreso,
+                fechaTraslado = vm.FechaTraslado?.ToString("yyyy-MM-dd"),
+                recintosDestino = vm.RecintosDestino.Select(r => new { value = r.Value, text = r.Text }),
                 meses = vm.Meses.Select(m => new
                 {
                     m.IdMes,
                     m.Nombre,
-                    m.Pagado,
+                    tarifa = vm.TarifaDestino,
                     m.Respetado,
                     m.NoCorresponde,
                     m.SaldoACobrar
@@ -951,11 +1018,55 @@ namespace WebColegio.Controllers
             });
         }
 
+        private static bool EsConflictoMatriculaExistente(string? error)
+        {
+            if (string.IsNullOrWhiteSpace(error))
+                return false;
+            var t = error.ToLowerInvariant();
+            return t.Contains("ya tiene matr") || t.Contains("ya tiene matricula") || t.Contains("conflicto") || t.Contains("409");
+        }
+
+        private async Task<TblMatricula?> BuscarMatriculaCicloTrasladoAsync(int idAlumno, int idPeriodoPreferido)
+        {
+            if (idAlumno <= 0)
+                return null;
+
+            if (idPeriodoPreferido > 0)
+            {
+                var directa = await _Iservices.GetMatriculaAlumnoPeriodoAsync(idAlumno, idPeriodoPreferido);
+                if (directa != null && directa.IdMatricula > 0)
+                    return directa;
+            }
+
+            var lista = (await _Iservices.GetMatriculasAsync(idAlumno: idAlumno) ?? new List<TblMatricula>())
+                .Where(m => m.IdAlumno == idAlumno)
+                .OrderByDescending(m => m.IdMatricula)
+                .ToList();
+            if (lista.Count == 0)
+                return null;
+
+            static bool EsCurso(TblMatricula m)
+                => m.Activo
+                   && !string.Equals(m.Estado, TblMatricula.EstadoRetirado, StringComparison.OrdinalIgnoreCase)
+                   && !string.Equals(m.Estado, TblMatricula.EstadoReserva, StringComparison.OrdinalIgnoreCase);
+
+            if (idPeriodoPreferido > 0)
+            {
+                return lista.FirstOrDefault(m => m.IdPeriodo == idPeriodoPreferido && EsCurso(m))
+                    ?? lista.FirstOrDefault(m => m.IdPeriodo == idPeriodoPreferido)
+                    ?? lista.FirstOrDefault(EsCurso)
+                    ?? lista.FirstOrDefault();
+            }
+
+            return lista.FirstOrDefault(EsCurso) ?? lista.FirstOrDefault();
+        }
+
         private async Task CargarCatalogosTraslado(TrasladoViewModel vm)
         {
             var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
             vm.RecintosDestino = recintos
-                .Where(r => r.Activo || r.IdRecinto == vm.IdRecintoDestino)
+                .Where(r => (r.Activo || r.IdRecinto == vm.IdRecintoDestino)
+                    && (vm.IdRecintoOrigen <= 0 || r.IdRecinto != vm.IdRecintoOrigen))
                 .Select(r => new SelectListItem
                 {
                     Value = r.IdRecinto.ToString(),
@@ -985,8 +1096,12 @@ namespace WebColegio.Controllers
                 return null;
 
             var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
-            var periodo = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos);
-            int idPeriodo = periodo?.IdPeriodo ?? alumno.IdPeriodo ?? 0;
+            var periodoMensual = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos);
+            var matriculaCiclo = await BuscarMatriculaCicloTrasladoAsync(
+                idAlumno, alumno.IdPeriodo ?? periodoMensual?.IdPeriodo ?? 0);
+            int idPeriodo = matriculaCiclo is { IdPeriodo: > 0 }
+                ? matriculaCiclo.IdPeriodo
+                : (alumno.IdPeriodo ?? periodoMensual?.IdPeriodo ?? 0);
             var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
             var mesesCat = await _Iservices.GetMesesAsync() ?? new List<TblCatMeses>();
 
@@ -994,11 +1109,23 @@ namespace WebColegio.Controllers
             vm.IdAlumno = alumno.IdAlumno;
             vm.NombreAlumno = $"{alumno.Nombre} {alumno.Apellido}".Trim();
             vm.IdPeriodo = idPeriodo;
-            vm.IdRecintoOrigen = alumno.IdRecinto.Value;
+            vm.AnioPeriodo = periodos.FirstOrDefault(p => p.IdPeriodo == idPeriodo)?.Periodo
+                ?? periodoMensual?.Periodo
+                ?? DateTime.Today.Year;
+            int idRecintoOrigen = matriculaCiclo is { IdRecinto: > 0 }
+                ? matriculaCiclo.IdRecinto
+                : alumno.IdRecinto.Value;
+            vm.IdRecintoOrigen = idRecintoOrigen;
             vm.NombreRecintoOrigen = recintos.FirstOrDefault(r => r.IdRecinto == vm.IdRecintoOrigen)?.Recinto ?? "";
-            vm.IdGrado = vm.IdGrado > 0 ? vm.IdGrado : (alumno.IdGrado ?? 0);
-            vm.IdModalidad = vm.IdModalidad ?? alumno.IdModalidad;
+            vm.IdGrado = vm.IdGrado > 0
+                ? vm.IdGrado
+                : (matriculaCiclo is { IdGrado: > 0 } ? matriculaCiclo.IdGrado : alumno.IdGrado ?? 0);
+            vm.IdModalidad = vm.IdModalidad is > 0
+                ? vm.IdModalidad
+                : (matriculaCiclo is { IdModalidad: > 0 } ? matriculaCiclo.IdModalidad : alumno.IdModalidad);
             vm.IdRecintoDestino = idRecintoDestino ?? vm.IdRecintoDestino;
+            if (vm.IdRecintoDestino == vm.IdRecintoOrigen)
+                vm.IdRecintoDestino = 0;
             await CargarCatalogosTraslado(vm);
 
             int idDestino = vm.IdRecintoDestino > 0 && vm.IdRecintoDestino != vm.IdRecintoOrigen
@@ -1021,53 +1148,96 @@ namespace WebColegio.Controllers
                 vm.TarifaDestino = 0m;
             }
 
-            var pagosTodos = (await _Iservices.GetPagosAsync() ?? new List<TblPago>())
-                .Where(p => p.IdAlumno == idAlumno && p.IdPeriodo == idPeriodo && p.Activo)
+            if (vm.FechaTraslado is { Year: > 2000 } fechaSel)
+            {
+                vm.FechaTraslado = fechaSel.Date;
+                vm.MesIngreso = fechaSel.Month;
+            }
+            else if (vm.MesIngreso is >= 1 and <= 12)
+            {
+                int anioFecha = vm.AnioPeriodo > 0 ? vm.AnioPeriodo : DateTime.Today.Year;
+                vm.FechaTraslado = new DateTime(anioFecha, vm.MesIngreso, 1);
+            }
+            else
+            {
+                vm.FechaTraslado = null;
+                vm.MesIngreso = 0;
+            }
+
+            var todosPagosCiclo = (await _Iservices.GetPagosAsync() ?? new List<TblPago>())
+                .Where(p => p.IdAlumno == idAlumno
+                    && p.IdPeriodo == idPeriodo
+                    && p.Activo)
                 .ToList();
-            var pagos = pagosTodos
+            // Mientras el alumno sigue en el origen, el destino no tiene pagos de este traslado.
+            bool yaEstaEnDestino = idDestino > 0 && matriculaCiclo is { IdRecinto: > 0 }
+                && matriculaCiclo.IdRecinto == idDestino;
+            var pagosDestino = yaEstaEnDestino
+                ? todosPagosCiclo.Where(p =>
+                    p.IdRecinto == idDestino
+                    && (!vm.FechaTraslado.HasValue
+                        || (p.FechaEmision ?? p.FechaRegistro).Date >= vm.FechaTraslado.Value.Date))
+                    .ToList()
+                : new List<TblPago>();
+            var pagosMesDestino = pagosDestino
                 .Where(p => p.IdTipoMovimiento == TipoMovimientoMensualidad && p.IdMes.HasValue)
                 .ToList();
 
-            if (vm.MesIngreso < 1 || vm.MesIngreso > 12)
-                vm.MesIngreso = DateTime.Today.Month;
-
-            decimal pagadoMat = pagosTodos
-                .Where(p => p.IdTipoMovimiento == TipoMovimientoMatricula || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono)
-                .Sum(p => p.Monto);
-            decimal pagadoEnero = pagos.Where(p => p.IdMes == 1).Sum(p => p.Monto);
             vm.MontoMatricula = idDestino > 0
                 ? await ObtenerMatriculaDecimal(idDestino, vm.IdModalidad, idPeriodo)
                 : 0m;
-            var (pagadoMatDist, pagadoEneroDist) = EstadoCuentaCalculoHelper.DistribuirPagoMatriculaYEnero(
-                vm.MontoMatricula, pagadoMat, pagadoEnero, vm.TarifaDestino);
-            pagadoMat = pagadoMatDist;
-            pagadoEnero = pagadoEneroDist;
-            var estadoMat = CalcularEstadoMatriculaEstadoCuenta(vm.MontoMatricula, vm.TarifaDestino, pagadoMat, pagadoEnero);
-            vm.CobraMatricula = !estadoMat.Cancelada && estadoMat.SaldoPendiente > MensualidadSobranteHelper.Centavo;
+            vm.MatriculaNeta = EstadoCuentaCalculoHelper.MatriculaNetaDesdePaquete(
+                vm.MontoMatricula, vm.TarifaDestino);
+
+            if (idDestino <= 0 || vm.MesIngreso is < 1 or > 12)
+            {
+                vm.Meses = new List<TrasladoMesFila>();
+                vm.CobraMatricula = false;
+                vm.SaldoMatricula = 0m;
+                vm.TotalACobrar = 0m;
+                vm.MesesACobrarCsv = "";
+                return vm;
+            }
+
+            var tipos = await _Iservices.GetTipoMovimientoAsync() ?? new List<CatTipoMovimiento>();
+            var tiposMat = EstadoCuentaCalculoHelper.TiposPagoMatricula(tipos);
+            decimal pagadoMatDestino = pagosDestino
+                .Where(p => tiposMat.Contains(p.IdTipoMovimiento))
+                .Sum(p => p.Monto);
+            decimal pagadoEneroDestino = pagosMesDestino.Where(p => p.IdMes == 1).Sum(p => p.Monto);
+            var estadoMat = CalcularEstadoMatriculaEstadoCuenta(
+                vm.MontoMatricula, vm.TarifaDestino, pagadoMatDestino, pagadoEneroDestino);
+            vm.SaldoMatricula = estadoMat.Cancelada ? 0m : estadoMat.SaldoPendiente;
+            vm.CobraMatricula = idDestino > 0
+                && vm.SaldoMatricula > MensualidadSobranteHelper.Centavo;
 
             vm.Meses = new List<TrasladoMesFila>();
             for (int m = 1; m <= 12; m++)
             {
-                decimal pagado = m == 1 ? pagadoEnero : pagos.Where(p => p.IdMes == m).Sum(p => p.Monto);
-                bool respetado = TrasladoHelper.MesPagadoSeRespeta(pagado, vm.TarifaOrigen, vm.TarifaDestino);
-                bool noCorresponde = m < vm.MesIngreso && !respetado;
-                decimal saldo = noCorresponde || respetado || vm.TarifaDestino <= 0m
+                decimal pagadoDestino = m == 1
+                    ? pagadoEneroDestino
+                    : pagosMesDestino.Where(p => p.IdMes == m).Sum(p => p.Monto);
+                bool noCorresponde = m < vm.MesIngreso;
+                bool pagadoEnDestino = !noCorresponde
+                    && vm.TarifaDestino > 0m
+                    && MensualidadSobranteHelper.MesCancelado(vm.TarifaDestino, pagadoDestino);
+                decimal saldo = noCorresponde || pagadoEnDestino || vm.TarifaDestino <= 0m
                     ? 0m
-                    : Math.Max(0m, vm.TarifaDestino - pagado);
+                    : Math.Max(0m, vm.TarifaDestino - pagadoDestino);
                 string nombre = mesesCat.FirstOrDefault(x => x.IdMes == m)?.Mes
                     ?? CultureInfo.GetCultureInfo("es-NI").DateTimeFormat.GetMonthName(m);
                 vm.Meses.Add(new TrasladoMesFila
                 {
                     IdMes = m,
                     Nombre = nombre,
-                    Pagado = pagado,
-                    Respetado = respetado,
+                    Pagado = pagadoDestino,
+                    Respetado = pagadoEnDestino,
                     NoCorresponde = noCorresponde,
                     SaldoACobrar = saldo
                 });
             }
 
-            vm.TotalACobrar = (vm.CobraMatricula ? estadoMat.SaldoPendiente : 0m) + vm.Meses.Sum(x => x.SaldoACobrar);
+            vm.TotalACobrar = vm.SaldoMatricula + vm.Meses.Sum(x => x.SaldoACobrar);
             vm.MesesACobrarCsv = string.Join(",", vm.Meses.Where(x => x.SaldoACobrar > 0.01m).Select(x => x.IdMes));
             return vm;
         }
@@ -1300,9 +1470,9 @@ namespace WebColegio.Controllers
 
                         // Si la matrícula se guardó por encima del catálogo y no hay línea de enero, el sobrante es abono de enero.
                         var matriculaExistente = ObtenerMatriculaReferencia(
-                            listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo);
+                            listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo, pagos.Pago.IdRecinto);
                         if (matriculaExistente != null
-                            && !ExisteMensualidadEneroEnBd(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo))
+                            && !ExisteMensualidadEneroEnBd(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo, pagos.Pago.IdRecinto))
                         {
                             decimal catalogoMatReparar = await ObtenerMatriculaDecimal(
                                 pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, pagos.Pago.IdPeriodo);
@@ -1310,6 +1480,7 @@ namespace WebColegio.Controllers
                                 .Where(p => p.Activo
                                     && p.IdAlumno == pagos.Pago.IdAlumno
                                     && p.IdPeriodo == pagos.Pago.IdPeriodo
+                                    && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, pagos.Pago.IdRecinto)
                                     && (p.IdTipoMovimiento == TipoMovimientoMatricula
                                         || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono))
                                 .Sum(p => p.Monto);
@@ -1378,14 +1549,15 @@ namespace WebColegio.Controllers
                                         p.IdTipoMovimiento == TipoMovimientoMensualidad &&
                                         periodosConsulta.Contains(p.IdPeriodo) &&
                                         p.IdMes.HasValue &&
-                                        p.Activo)
+                                        p.Activo &&
+                                        EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, pagos.Pago.IdRecinto))
                             .GroupBy(p => p.IdMes!.Value)
                             .ToDictionary(g => g.Key, g => g.Sum(p => p.Monto));
 
                         decimal catalogoMatMensual = await ObtenerMatriculaDecimal(
                             pagos.Pago.IdRecinto, pagos.Pago.IdModalidad, pagos.Pago.IdPeriodo);
                         AplicarDistribucionMatriculaEnero(
-                            pagadoPorMes, listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo, catalogoMatMensual, montoPorMes);
+                            pagadoPorMes, listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo, catalogoMatMensual, montoPorMes, pagos.Pago.IdRecinto);
                         var mesesConAlgunPago = pagadoPorMes.Where(kv => kv.Value > MensualidadSobranteHelper.Centavo)
                             .Select(kv => kv.Key)
                             .ToHashSet();
@@ -1401,9 +1573,9 @@ namespace WebColegio.Controllers
                         }
 
                         int primerMesPagadoMensual = mesesConAlgunPago.Any() ? mesesConAlgunPago.Min() : 1;
-                        int mesCalendarioMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo);
+                        int mesCalendarioMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo, pagos.Pago.IdRecinto);
                         bool matriculaInicioCiclo = EsMatriculaInicioCicloLectivo(mesCalendarioMatricula);
-                        bool esContinuidad = EsMatriculaContinuidad(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo);
+                        bool esContinuidad = EsMatriculaContinuidad(listpagos, pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo, pagos.Pago.IdRecinto);
                         if (!esContinuidad)
                         {
                             var alumnoMens = await _Iservices.GetAlumnoIdAsync(pagos.Pago.IdAlumno);
@@ -1734,14 +1906,16 @@ namespace WebColegio.Controllers
                                            (a.IdTipoMovimiento == TipoMovimientoMatricula
                                             || a.IdTipoMovimiento == TipoMovimientoMatriculaAbono) &&
                                            a.IdPeriodo == periodoMatricula &&
-                                           a.Activo)
+                                           a.Activo &&
+                                           EstadoCuentaCalculoHelper.EsPagoDelRecinto(a, pagos.Pago.IdRecinto))
                                 .Sum(p => p.Monto);
                             decimal totalPagadoEnero = pagosPreviosCiclo
                                 .Where(a => a.IdAlumno == pagos.Pago.IdAlumno
                                     && a.IdPeriodo == periodoMatricula
                                     && a.IdTipoMovimiento == TipoMovimientoMensualidad
                                     && a.IdMes == 1
-                                    && a.Activo)
+                                    && a.Activo
+                                    && EstadoCuentaCalculoHelper.EsPagoDelRecinto(a, pagos.Pago.IdRecinto))
                                 .Sum(p => p.Monto);
 
                             decimal matriculaNeta = EstadoCuentaCalculoHelper.MatriculaNetaDesdePaquete(
@@ -1869,12 +2043,14 @@ namespace WebColegio.Controllers
                                     decimal yaMatSimple = pagosTrasSimple
                                         .Where(p => p.Activo && p.IdAlumno == pagos.Pago.IdAlumno
                                             && p.IdPeriodo == pagos.Pago.IdPeriodo
+                                            && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, pagos.Pago.IdRecinto)
                                             && (p.IdTipoMovimiento == TipoMovimientoMatricula
                                                 || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono))
                                         .Sum(p => p.Monto);
                                     decimal yaEneSimple = pagosTrasSimple
                                         .Where(p => p.Activo && p.IdAlumno == pagos.Pago.IdAlumno
                                             && p.IdPeriodo == pagos.Pago.IdPeriodo
+                                            && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, pagos.Pago.IdRecinto)
                                             && p.IdTipoMovimiento == TipoMovimientoMensualidad
                                             && p.IdMes == 1)
                                         .Sum(p => p.Monto);
@@ -1976,18 +2152,19 @@ namespace WebColegio.Controllers
 
             int mes = DateTime.Now.Month;
             var listpagos = _Iservices.GetPagosAsync().Result;
+            var alumnoMoraDatos = _Iservices.GetAlumnoIdAsync(idAlumno).Result;
             var pagosMensualidad = listpagos
                 .Where(p => p.IdAlumno == idAlumno &&
                             p.IdTipoMovimiento == idTipoMensualidad &&
                             p.IdPeriodo == periodo &&
-                            p.IdMes.HasValue)
+                            p.IdMes.HasValue &&
+                            EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, alumnoMoraDatos?.IdRecinto))
                 .ToList();
             var mesesPagadosBD = pagosMensualidad
                 .GroupBy(p => p.IdMes!.Value)
                 .ToDictionary(g => g.Key, g => g.Sum(p => p.Monto));
 
             decimal tarifaMora = 0m;
-            var alumnoMoraDatos = _Iservices.GetAlumnoIdAsync(idAlumno).Result;
             if (alumnoMoraDatos?.IdRecinto != null && alumnoMoraDatos.IdGrado.HasValue)
             {
                 tarifaMora = ObtenerMensualidadDecimal(
@@ -2007,9 +2184,9 @@ namespace WebColegio.Controllers
                 return pagado > 0;
             }
 
-            int mesMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, idAlumno, periodo);
+            int mesMatricula = ObtenerMesCalendarioPrimeraMatricula(listpagos, idAlumno, periodo, alumnoMoraDatos?.IdRecinto);
             bool matriculaInicioCiclo = EsMatriculaInicioCicloLectivo(mesMatricula);
-            bool esContinuidad = EsMatriculaContinuidad(listpagos, idAlumno, periodo);
+            bool esContinuidad = EsMatriculaContinuidad(listpagos, idAlumno, periodo, alumnoMoraDatos?.IdRecinto);
             if (!esContinuidad && EsTipoEstudianteContinuidad(alumnoMoraDatos?.TipoEstudiante))
                 esContinuidad = true;
 
@@ -2022,7 +2199,7 @@ namespace WebColegio.Controllers
             if (alumnoMoraDatos?.IdRecinto != null)
                 catalogoMatMora = ObtenerMatriculaDecimal(
                     alumnoMoraDatos.IdRecinto, alumnoMoraDatos.IdModalidad, periodo).GetAwaiter().GetResult();
-            AplicarDistribucionMatriculaEnero(mesesPagadosBD, listpagos, idAlumno, periodo, catalogoMatMora, tarifaMora);
+            AplicarDistribucionMatriculaEnero(mesesPagadosBD, listpagos, idAlumno, periodo, catalogoMatMora, tarifaMora, alumnoMoraDatos?.IdRecinto);
 
             int mesInicioMora = (matriculaInicioCiclo || esContinuidad) ? 1 : mesMatricula;
             int cantidadMesesEnVentana = mes - mesInicioMora;
@@ -2285,9 +2462,9 @@ namespace WebColegio.Controllers
             var tiposMat = EstadoCuentaCalculoHelper.TiposPagoMatricula(tipos);
             var tiposMen = EstadoCuentaCalculoHelper.TiposPagoMensualidad(tipos);
             decimal pagadoMat = EstadoCuentaCalculoHelper.SumarPagadoMatricula(
-                pagos, idAlumno, ciclo.IdPeriodo, ciclo.Anio, periodos, tiposMat);
+                pagos, idAlumno, ciclo.IdPeriodo, ciclo.Anio, periodos, tiposMat, idR);
             decimal pagadoEnero = EstadoCuentaCalculoHelper.SumarPagadoEnero(
-                pagos, idAlumno, ciclo.IdPeriodo, tiposMen);
+                pagos, idAlumno, ciclo.IdPeriodo, tiposMen, idR);
 
             return EstadoCuentaCalculoHelper.CalcularEstadoMatricula(costoMat, costoMen, pagadoMat, pagadoEnero);
         }
@@ -2400,14 +2577,15 @@ namespace WebColegio.Controllers
                             && p.IdTipoMovimiento == TipoMovimientoMensualidad
                             && periodosConsulta.Contains(p.IdPeriodo)
                             && p.IdMes.HasValue
-                            && p.Activo)
+                            && p.Activo
+                            && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto))
                 .GroupBy(p => p.IdMes!.Value)
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.Monto));
 
             decimal catalogoMatSaldo = idRecinto.HasValue
                 ? await ObtenerMatriculaDecimal(idRecinto, idModalidad, idPeriodo)
                 : 0m;
-            AplicarDistribucionMatriculaEnero(pagadoPorMes, listpagos, idAlumno, idPeriodo, catalogoMatSaldo, tarifa);
+            AplicarDistribucionMatriculaEnero(pagadoPorMes, listpagos, idAlumno, idPeriodo, catalogoMatSaldo, tarifa, idRecinto);
 
             var detalle = ids.Select(m =>
             {
@@ -2445,7 +2623,7 @@ namespace WebColegio.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult ObtenerAbonosPrevios(int idAlumno, int idTipoMovimiento, int idPeriodo)
+        public IActionResult ObtenerAbonosPrevios(int idAlumno, int idTipoMovimiento, int idPeriodo, int? idRecinto = null)
         {
             try
             {
@@ -2463,6 +2641,7 @@ namespace WebColegio.Controllers
                 {
                     totalAbonos = listpagos
                         .Where(p => p.IdAlumno == idAlumno && p.IdPeriodo == idPeriodo && p.Activo
+                            && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto)
                             && EsConfirmacionDeMatricula(
                                 p.IdTipoMovimiento,
                                 NormalizarTexto(tiposMovimiento.FirstOrDefault(t => t.IdTipoMovimiento == p.IdTipoMovimiento)?.Concepto)))
@@ -2477,6 +2656,7 @@ namespace WebColegio.Controllers
                         .Where(p => p.IdAlumno == idAlumno
                             && p.IdPeriodo == idPeriodo
                             && p.Activo
+                            && EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto)
                             && (p.IdTipoMovimiento == TipoMovimientoMatricula
                                 || p.IdTipoMovimiento == TipoMovimientoMatriculaAbono))
                         .Sum(p => p.Monto);
@@ -2497,7 +2677,8 @@ namespace WebColegio.Controllers
                             .Where(p => p.IdAlumno == idAlumno &&
                                         p.IdPeriodo == idPeriodo &&
                                         p.IdTipoMovimiento == tipoAbonoMensualidad.IdTipoMovimiento &&
-                                        p.Activo == true)
+                                        p.Activo == true &&
+                                        EstadoCuentaCalculoHelper.EsPagoDelRecinto(p, idRecinto))
                             .ToList();
                         
                         totalAbonos = abonosMensualidad.Sum(p => p.Monto);

@@ -19,6 +19,9 @@
 
         public decimal CostoUnitario { get; set; }
 
+        /// <summary>Precio al público. Si es 0, se usa CostoUnitario por compatibilidad.</summary>
+        public decimal PrecioVenta { get; set; }
+
         public decimal ImporteInventario { get; set; }
 
         public int StockActual { get; set; }
@@ -35,5 +38,7 @@
 
         public DateTime? FechaActualiza { get; set; }
 
+        public decimal PrecioParaVenta()
+            => PrecioVenta > 0m ? PrecioVenta : CostoUnitario;
     }
 }

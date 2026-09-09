@@ -32,11 +32,19 @@
         public List<CatProveedor> proveedores { get; set; } = new List<CatProveedor>();
         public List<CatDiscapacidad> discapacidad { get; set; } = new List<CatDiscapacidad>();
         public List<CatMovInventario> movinventario { get; set; } = new List<CatMovInventario>();
+        /// <summary>Cantidades de entrada y salida por IdProducto para el reporte de inventario.</summary>
+        public Dictionary<int, TotalesMovimientoInventario> TotalesMovimientoPorProducto { get; set; } = new();
         //public List<TblInventario> inventario { get; set; } = new List<TblInventario>();
         public List<TblCatMeses> meses { get; set; } = new List<TblCatMeses>();
 
         public List<CatPeriodo> periodo { get; set; } = new List<CatPeriodo>();
         public List<TblPagoCaja> pagoCajas { get; set; } = new List<TblPagoCaja>();
         public List<TblEgreso> egresos { get; set; } = new List<TblEgreso>();
+    }
+
+    public class TotalesMovimientoInventario
+    {
+        public int Entrada { get; set; }
+        public int Salida { get; set; }
     }
 }

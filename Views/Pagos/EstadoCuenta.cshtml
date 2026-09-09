@@ -95,7 +95,13 @@
 								</td>
 								<td>@(fila.NombreGrado ?? "—")</td>
 								<td>@fila.AnioPeriodo</td>
-								<td>@(fila.Recinto ?? "—")</td>
+								<td>
+									@(fila.Recinto ?? "—")
+									@if (!string.IsNullOrWhiteSpace(fila.EtiquetaRecinto))
+									{
+										<span class="badge @(fila.EsHistorialTraslado ? "bg-secondary" : "bg-primary") ms-1">@fila.EtiquetaRecinto</span>
+									}
+								</td>
 								@{
 									string? tooltipEstado = null;
 									if (fila.EstadoPagoMensualidad == "Solvente" && !string.IsNullOrEmpty(fila.NombreUltimoMesPagado))

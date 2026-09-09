@@ -65,6 +65,7 @@ namespace WebColegio.Models.ViewModel
         public string? PreloadMeses { get; set; }
         public bool EsCobroTraslado { get; set; }
         public bool CobraMatriculaTraslado { get; set; }
+        public int? PreloadMesIngreso { get; set; }
     }
 
     public class ReciboLineaDetalle

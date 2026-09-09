@@ -17,6 +17,10 @@ namespace WebColegio.Models.ViewModel
         public string NombreCompleto { get; set; } = "";
         public string? NombreGrado { get; set; }
         public string? Recinto { get; set; }
+        public int? IdRecinto { get; set; }
+        /// <summary>Fila de auditoría del colegio de origen tras un traslado.</summary>
+        public bool EsHistorialTraslado { get; set; }
+        public string? EtiquetaRecinto { get; set; }
         public int AnioPeriodo { get; set; }
         /// <summary>Tarifa mensual del catálogo para grado/recinto/modalidad y período.</summary>
         public decimal MensualidadReferencia { get; set; }

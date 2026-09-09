@@ -1369,6 +1369,7 @@ namespace WebColegio.Services
             existente.IdProveedor = producto.IdProveedor;
             existente.IdRecinto = producto.IdRecinto;
             existente.CostoUnitario = producto.CostoUnitario;
+            existente.PrecioVenta = producto.PrecioVenta;
             existente.StockActual = producto.StockActual;
             existente.StockMinimo = producto.StockMinimo;
             existente.Activo = producto.Activo;

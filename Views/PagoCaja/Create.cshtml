@@ -82,7 +82,7 @@
                         </div> *@
                         <div class="form-group">
                            
-                            <label asp-for="PagosCaja.FechaEmision" class="control-label">Fecha de Emisión</label>
+                            <label asp-for="PagosCaja.FechaEmision" class="control-label">Fecha de pago</label>
                             <input type="date" asp-for="PagosCaja.FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control"  />
                             <span asp-validation-for="PagosCaja.FechaEmision" class="text-danger"></span>
                         </div>
@@ -348,6 +348,12 @@
             return obj[k];
         }
 
+        function precioVentaProd(prod) {
+            var pv = parseFloat(getProd(prod, 'PrecioVenta'));
+            if (!isNaN(pv) && pv > 0) return pv;
+            return parseFloat(getProd(prod, 'CostoUnitario')) || 0;
+        }
+
         function formatoMoneda(n) {
             return 'C$ ' + (Number(n) || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
@@ -361,7 +367,7 @@
             }
             var prod = productosData.find(function(p) { return getProd(p, 'IdProducto') === idProd; });
             if (!prod) return;
-            var precio = parseFloat(getProd(prod, 'CostoUnitario')) || 0;
+            var precio = precioVentaProd(prod);
             $('#modalSubtotalLinea').val(formatoMoneda(precio * cant));
         }
 
@@ -387,7 +393,7 @@
                     var id = getProd(p, 'IdProducto');
                     var nombre = getProd(p, 'NombreProducto');
                     var stock = getProd(p, 'StockActual');
-                    var precio = parseFloat(getProd(p, 'CostoUnitario')) || 0;
+                    var precio = precioVentaProd(p);
                     $sel.append('<option value="' + id + '" data-stock="' + stock + '" data-precio="' + precio + '">' +
                         nombre + ' — ' + formatoMoneda(precio) + ' (Stock: ' + stock + ')</option>');
                 });
@@ -436,7 +442,7 @@
             var prod = productosData.find(function(p) { return getProd(p, 'IdProducto') === idProd; });
             if (!prod) return;
             var stockActual = parseInt(getProd(prod, 'StockActual'), 10) || 0;
-            var precioUnitario = parseFloat(getProd(prod, 'CostoUnitario')) || 0;
+            var precioUnitario = precioVentaProd(prod);
 
             var existente = detalleItems.find(function(x) { return x.idProducto === idProd; });
             var cantTotal = (existente ? existente.cantidad : 0) + cant;
