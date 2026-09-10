@@ -258,21 +258,33 @@ namespace WebColegio.Controllers
                     TblAlumno alumnoRifa = idAlumno > 0
                         ? await _Iservices.GetAlumnoIdAsync(idAlumno) ?? new TblAlumno { Nombre = pagoscaja.Nombre }
                         : new TblAlumno { Nombre = pagoscaja.Nombre };
-                    int rifasCajaPrevias = EstadoCuentaCalculoHelper
-                        .RecibosCajaDelAlumno(buscarIdGuardado, alumnoRifa, pagoscaja.IdPeriodo, DateTime.Now.Year)
-                        .Count(c => EstadoCuentaCalculoHelper.EsReciboRifa(c, idsRifaCaja, tiposMovCaja));
-                    int rifasPagoPrevias = 0;
-                    if (alumnoRifa.IdAlumno > 0)
-                    {
-                        var pagosRifa = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
-                        rifasPagoPrevias = pagosRifa.Count(p =>
-                            p.Activo && p.IdAlumno == alumnoRifa.IdAlumno
-                            && idsRifaCaja.Contains(p.IdTipoMovimiento));
-                    }
-                    int siguienteRifa = EstadoCuentaCalculoHelper.SiguienteSemestreRifa(rifasCajaPrevias + rifasPagoPrevias);
+                    var pagosRifaTodos = alumnoRifa.IdAlumno > 0
+                        ? await _Iservices.GetPagosAsync() ?? new List<TblPago>()
+                        : new List<TblPago>();
+                    var matriculaRifa = alumnoRifa.IdAlumno > 0 && pagoscaja.IdPeriodo > 0
+                        ? await _Iservices.GetMatriculaAlumnoPeriodoAsync(alumnoRifa.IdAlumno, pagoscaja.IdPeriodo)
+                        : null;
+                    var tiposMatRifa = EstadoCuentaCalculoHelper.TiposPagoMatricula(tiposMovCaja);
+                    int anioRifa = buscarperiodo.FirstOrDefault(p => p.IdPeriodo == pagoscaja.IdPeriodo)?.Periodo
+                        ?? DateTime.Now.Year;
+                    DateTime? fechaIngresoRifa = TrasladoHelper.LeerFechaTraslado(matriculaRifa?.Observaciones)
+                        ?? TrasladoHelper.LeerFechaTraslado(alumnoRifa.Observaciones);
+                    var evalRifa = EstadoCuentaCalculoHelper.EvaluarRifaAlumno(
+                        alumnoRifa.IdAlumno > 0 ? alumnoRifa : null,
+                        matriculaRifa,
+                        pagosRifaTodos,
+                        buscarIdGuardado,
+                        idsRifaCaja,
+                        tiposMatRifa,
+                        tiposMovCaja,
+                        pagoscaja.IdPeriodo,
+                        anioRifa,
+                        pagoscaja.IdRecinto ?? alumnoRifa.IdRecinto,
+                        fechaIngresoOverride: fechaIngresoRifa);
+                    int siguienteRifa = evalRifa.SiguienteSemestreACobrar();
                     if (siguienteRifa == 0)
                     {
-                        TempData["Mensaje"] = "Este alumno ya tiene pagadas las dos rifas del año (1.er y 2.º semestre).";
+                        TempData["Mensaje"] = evalRifa.MensajeSinCobro();
                         TempData["Tipo"] = "warning";
                         return RedirectToAction("Create");
                     }

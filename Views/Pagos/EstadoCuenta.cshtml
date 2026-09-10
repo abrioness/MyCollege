@@ -150,8 +150,12 @@
 										<text>C$ @((fila.MatriculaCancelada ? 0m : fila.SaldoMatricula).ToString("N2"))</text>
 									}
 								</td>
-								<td class="text-end @(fila.MontoRifaSemestre1 > 0.01m ? "table-success" : "")" data-export="@(fila.MontoRifaSemestre1 > 0.01m ? Exp(fila.MontoRifaSemestre1) : "")">
-									@if (fila.MontoRifaSemestre1 > 0.01m)
+								<td class="text-end @(fila.MontoRifaSemestre1 > 0.01m ? "table-success" : "")" data-export="@(fila.AplicaRifaSemestre1 && fila.MontoRifaSemestre1 > 0.01m ? Exp(fila.MontoRifaSemestre1) : "")" title="@(fila.AplicaRifaSemestre1 ? "" : "No aplica: matrícula posterior a la generación de la rifa 1")">
+									@if (!fila.AplicaRifaSemestre1)
+									{
+										<span class="text-muted">No aplica</span>
+									}
+									else if (fila.MontoRifaSemestre1 > 0.01m)
 									{
 										<text>C$ @fila.MontoRifaSemestre1.ToString("N2")</text>
 									}
@@ -160,8 +164,12 @@
 										<span class="text-muted">—</span>
 									}
 								</td>
-								<td class="text-end @(fila.MontoRifaSemestre2 > 0.01m ? "table-success" : "")" data-export="@(fila.MontoRifaSemestre2 > 0.01m ? Exp(fila.MontoRifaSemestre2) : "")">
-									@if (fila.MontoRifaSemestre2 > 0.01m)
+								<td class="text-end @(fila.MontoRifaSemestre2 > 0.01m ? "table-success" : "")" data-export="@(fila.AplicaRifaSemestre2 && fila.MontoRifaSemestre2 > 0.01m ? Exp(fila.MontoRifaSemestre2) : "")" title="@(fila.AplicaRifaSemestre2 ? "" : "No aplica: matrícula posterior a la generación de la rifa 2")">
+									@if (!fila.AplicaRifaSemestre2)
+									{
+										<span class="text-muted">No aplica</span>
+									}
+									else if (fila.MontoRifaSemestre2 > 0.01m)
 									{
 										<text>C$ @fila.MontoRifaSemestre2.ToString("N2")</text>
 									}

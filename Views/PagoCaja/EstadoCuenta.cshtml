@@ -87,7 +87,11 @@
 									}
 								</td>
 								<td class="text-center">
-									@if (fila.RifaSemestre1Pagada)
+									@if (!fila.AplicaRifaSemestre1)
+									{
+										<span class="text-muted" title="Matrícula posterior a la generación de la rifa 1">No aplica</span>
+									}
+									else if (fila.RifaSemestre1Pagada)
 									{
 										<span class="badge bg-success">Pagado</span>
 									}
@@ -97,7 +101,11 @@
 									}
 								</td>
 								<td class="text-center">
-									@if (fila.RifaSemestre2Pagada)
+									@if (!fila.AplicaRifaSemestre2)
+									{
+										<span class="text-muted" title="Matrícula posterior a la generación de la rifa 2">No aplica</span>
+									}
+									else if (fila.RifaSemestre2Pagada)
 									{
 										<span class="badge bg-success">Pagado</span>
 									}

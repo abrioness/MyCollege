@@ -1370,24 +1370,38 @@ namespace WebColegio.Controllers
                     pagos.Pago.FechaRegistro = DateTime.Now;
                     pagos.Pago.Serie = "A";
                     pagos.Pago.Activo = true;
-                    if (pagos.Pago.IdTipoMovimiento == 10)
+                    if (pagos.Pago.IdTipoMovimiento == EstadoCuentaCalculoHelper.TipoRifa
+                        || conceptoTipoMovimiento.Contains("rifa"))
                     {
-                        int mes = Convert.ToInt32(MesesSeleccionados);
-                        pagos.Pago.IdMes = mes;
-                        if (string.IsNullOrEmpty(MesesSeleccionados))
-                        {
-                            TempData["Mensaje"] = "Debe Ingresar el Mes para hacer el pago de la Rifa";
-                            TempData["Tipo"] = "warning";
-                            return RedirectToAction("Create");
-                        }
-                        int rifasPrevias = buscarIdGuardado.Count(a =>
-                            a.IdAlumno == pagos.Pago.IdAlumno
-                            && a.IdTipoMovimiento == 10
-                            && a.Activo);
-                        int siguienteRifa = EstadoCuentaCalculoHelper.SiguienteSemestreRifa(rifasPrevias);
+                        var alumnoRifa = await _Iservices.GetAlumnoIdAsync(pagos.Pago.IdAlumno);
+                        var matriculaRifa = pagos.Pago.IdPeriodo > 0
+                            ? await _Iservices.GetMatriculaAlumnoPeriodoAsync(pagos.Pago.IdAlumno, pagos.Pago.IdPeriodo)
+                            : null;
+                        var cajaRifa = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
+                        var idsRifa = EstadoCuentaCalculoHelper.IdsPorConcepto(tiposMovimientoCatalogo, "rifa", "rifas");
+                        idsRifa.Add(EstadoCuentaCalculoHelper.TipoRifa);
+                        var tiposMatRifa = EstadoCuentaCalculoHelper.TiposPagoMatricula(tiposMovimientoCatalogo);
+                        var periodosRifa = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
+                        int anioRifa = periodosRifa.FirstOrDefault(p => p.IdPeriodo == pagos.Pago.IdPeriodo)?.Periodo
+                            ?? DateTime.Now.Year;
+                        DateTime? fechaIngresoRifa = TrasladoHelper.LeerFechaTraslado(matriculaRifa?.Observaciones)
+                            ?? TrasladoHelper.LeerFechaTraslado(alumnoRifa?.Observaciones);
+                        var evalRifa = EstadoCuentaCalculoHelper.EvaluarRifaAlumno(
+                            alumnoRifa,
+                            matriculaRifa,
+                            buscarIdGuardado,
+                            cajaRifa,
+                            idsRifa,
+                            tiposMatRifa,
+                            tiposMovimientoCatalogo,
+                            pagos.Pago.IdPeriodo,
+                            anioRifa,
+                            pagos.Pago.IdRecinto,
+                            fechaIngresoOverride: fechaIngresoRifa);
+                        int siguienteRifa = evalRifa.SiguienteSemestreACobrar();
                         if (siguienteRifa == 0)
                         {
-                            TempData["Mensaje"] = "Este alumno ya tiene pagadas las dos rifas del año (1.er y 2.º semestre).";
+                            TempData["Mensaje"] = evalRifa.MensajeSinCobro();
                             TempData["Tipo"] = "warning";
                             return RedirectToAction("Create");
                         }
@@ -1404,7 +1418,11 @@ namespace WebColegio.Controllers
                             if (idPag <= 0)
                                 idPag = ResolverIdPagoMaximoSeguro(pagosTrasRifa);
 
-                            TempData["Mensaje"] = "Pago registrado correctamente.";
+                            var etiqueta = siguienteRifa == 1 ? "1.er semestre" : "2.º semestre";
+                            var extra = siguienteRifa == 2 && !evalRifa.AplicaRifa1
+                                ? " La rifa 1 no aplica: se matriculó después de que se generó."
+                                : "";
+                            TempData["Mensaje"] = $"Pago de rifa del {etiqueta} registrado.{extra}";
                             TempData["Tipo"] = "success";
                             if (idPag <= 0)
                                 return RedirectToAction("Index", "Pagos");

@@ -34,6 +34,9 @@ namespace WebColegio.Models.ViewModel
         public bool RifaSemestre2Pagada { get; set; }
         public decimal MontoRifaSemestre1 { get; set; }
         public decimal MontoRifaSemestre2 { get; set; }
+        /// <summary>False si se matriculó después de que esa rifa ya se había generado.</summary>
+        public bool AplicaRifaSemestre1 { get; set; } = true;
+        public bool AplicaRifaSemestre2 { get; set; } = true;
         public bool AplicaPromocion { get; set; }
         public bool PromocionPagada { get; set; }
         public decimal MontoPromocion { get; set; }

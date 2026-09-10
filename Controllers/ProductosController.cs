@@ -36,7 +36,8 @@ namespace WebColegio.Controllers
             var _usuarioId = await _Iservices.GetUsuarioIdAsync(idUsuario);
 
 
-            IQueryable<Productos> query = _productos.AsQueryable();
+            IQueryable<Productos> query = (_productos ?? new List<Productos>()).AsQueryable();
+            query = query.Where(a => a.Activo);
 
             var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
             if (ini.HasValue)
@@ -186,6 +187,7 @@ namespace WebColegio.Controllers
                         return RedirectToAction("Create", "Productos");
                     }
                     existente.StockActual += cantidadEntrante;
+                    existente.Activo = true;
                     existente.ImporteInventario = existente.StockActual * existente.CostoUnitario;
                     existente.IdRecinto = producto.tblproducto.IdRecinto;
                     existente.StockMinimo = InventarioAlertaHelper.NormalizarStockMinimo(
@@ -417,25 +419,51 @@ namespace WebColegio.Controllers
             return View(lista);
         }
 
-        // GET: ProductosController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: ProductosController/Delete/5
+        [Authorize(Roles = "Admin,UserSystem")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<ActionResult> Anular(int id, DateTime? fechainicio, DateTime? fechafin)
         {
-            try
+            if (id <= 0)
             {
-                return RedirectToAction(nameof(Index));
+                TempData["Mensaje"] = "Producto no válido.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
             }
-            catch
+
+            var producto = await _Iservices.GetProductoByIdAsync(id);
+            if (producto == null || producto.IdProducto <= 0)
             {
-                return View();
+                TempData["Mensaje"] = "No se encontró el producto.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
             }
+
+            if (!producto.Activo)
+            {
+                TempData["Mensaje"] = $"El producto {producto.NombreProducto} ya está anulado.";
+                TempData["Tipo"] = "info";
+                return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
+            }
+
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            producto.Activo = false;
+            producto.UsuarioActualiza = idUsuario;
+            producto.FechaActualiza = DateTime.Now;
+
+            var (ok, apiError) = await _Iservices.UpdateProductoAsync(producto);
+            if (ok)
+            {
+                TempData["Mensaje"] = $"Se anuló el producto {producto.NombreProducto}. Queda desactivado y no se muestra en el reporte.";
+                TempData["Tipo"] = "success";
+            }
+            else
+            {
+                TempData["Mensaje"] = apiError ?? "No se pudo anular el producto.";
+                TempData["Tipo"] = "warning";
+            }
+
+            return RedirectToAction(nameof(Index), new { fechainicio, fechafin });
         }
 
         private static Dictionary<int, TotalesMovimientoInventario> ArmarTotalesMovimientoInventario(

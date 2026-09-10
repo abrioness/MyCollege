@@ -86,7 +86,11 @@
 						<th>Precio de venta</th>
 						<th>Categoría</th>
 						<th>Importe de Inventario</th>
-						<th>Fecha Registro</th>
+						<th class="col-fecha">Fecha Registro</th>
+						@if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+						{
+							<th class="no-export">Acciones</th>
+						}
 					</tr>
 				</thead>
 				<tbody>
@@ -177,6 +181,21 @@
 							<td>
 								@itemProducto.FechaRegistro.ToString("dd/MM/yyyy")
 								</td>
+							@if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+							{
+								<td>
+									<form asp-action="Anular" asp-controller="Productos" method="post" class="d-inline js-anular-recibo"
+										  data-mensaje="¿Anular el producto @itemProducto.NombreProducto? Quedará desactivado y no se mostrará en el reporte.">
+										@Html.AntiForgeryToken()
+										<input type="hidden" name="id" value="@itemProducto.IdProducto" />
+										<input type="hidden" name="fechainicio" value="@Context.Request.Query["fechainicio"]" />
+										<input type="hidden" name="fechafin" value="@Context.Request.Query["fechafin"]" />
+										<button type="submit" class="btn btn-sm btn-outline-danger" title="Anular producto">
+											<i class="bi bi-x-circle"></i> Anular
+										</button>
+									</form>
+								</td>
+							}
 
 						</tr>
 					}
@@ -202,10 +221,32 @@
 			{
 			extend: 'excelHtml5',
 			text: 'Exportar a Excel',
-			className: 'btn btn-success'
+			className: 'btn btn-success',
+			exportOptions: { columns: ':not(.no-export)' }
 			}
 		];
-		var colFecha = $('#tablaProducto thead th').length - 1;
+		var colFecha = $('#tablaProducto thead th.col-fecha').index();
+		if (colFecha < 0) colFecha = $('#tablaProducto thead th').length - 1;
+		var colAcciones = $('#tablaProducto thead th.no-export').index();
+		$(document).on('submit', 'form.js-anular-recibo', function (e) {
+			e.preventDefault();
+			var form = this;
+			var mensaje = form.getAttribute('data-mensaje') || '¿Anular el producto?';
+			if (typeof Swal === 'undefined') {
+				if (window.confirm(mensaje)) form.submit();
+				return;
+			}
+			Swal.fire({
+				title: 'Atención',
+				text: mensaje,
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonText: 'Anular',
+				cancelButtonText: 'Cancelar'
+			}).then(function (result) {
+				if (result.isConfirmed) form.submit();
+			});
+		});
 		$('#tablaProducto').DataTable({
 		responsive: false,
 		order: [[colFecha, 'desc']],
@@ -214,6 +255,7 @@
 		paging: true,
 		dom: esCajero ? 'lfrtip' : 'Blfrtip',
 		buttons: botones,
+		columnDefs: colAcciones >= 0 ? [{ orderable: false, targets: colAcciones }] : [],
 			language: {
 				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
 			}

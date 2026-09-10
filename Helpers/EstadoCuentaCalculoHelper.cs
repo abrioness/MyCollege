@@ -64,6 +64,8 @@ namespace WebColegio.Helpers
                 foreach (var id in IdsPorConcepto(tiposMovimiento, "promoc"))
                     tiposPromo.Add(id);
             }
+            var cortesRifa = ConstruirCortesGeneracionRifa(
+                pagos, pagosCaja, tiposRifa, tiposMovimiento);
             var filas = new List<EstadoCuentaFilaAlumno>();
             var matsPorAlumno = (matriculas ?? Array.Empty<TblMatricula>())
                 .Where(m => m.Activo)
@@ -186,19 +188,23 @@ namespace WebColegio.Helpers
                 var cajaAlum = RecibosCajaDelAlumno(pagosCaja, alumno, idPeriodoFila, anioFila).ToList();
                 string nombreGradoFila = grados.FirstOrDefault(g => g.IdGrado == idG)?.NombreGrado ?? string.Empty;
                 bool aplicaPromo = EsGradoConPromocion(nombreGradoFila);
-                var rifasPagoAlum = pagos
-                    .Where(p => p.IdAlumno == alumno.IdAlumno && p.Activo && tiposRifa.Contains(p.IdTipoMovimiento))
-                    .OrderBy(p => p.FechaRegistro)
-                    .ThenBy(p => p.IdPago)
-                    .ToList();
-                var rifasCajaAlum = cajaAlum
-                    .Where(c => EsReciboRifa(c, tiposRifa, tiposMovimiento))
-                    .OrderBy(c => c.FechaRegistro)
-                    .ThenBy(c => c.IdPagoCaja)
-                    .ToList();
-                int cantidadRifas = rifasPagoAlum.Count + rifasCajaAlum.Count;
-                var (rifaS1, rifaS2) = EstadoRifasPorOrden(cantidadRifas);
-                var (montoRifa1, montoRifa2) = MontosRifaPorOrden(rifasPagoAlum, rifasCajaAlum);
+                var evalRifa = EvaluarRifaAlumno(
+                    alumno,
+                    matriculaAlum,
+                    pagos,
+                    pagosCaja,
+                    tiposRifa,
+                    tiposMatriculaPago,
+                    tiposMovimiento,
+                    idPeriodoFila,
+                    anioFila,
+                    idR,
+                    cortesRifa,
+                    fechaTraslado);
+                bool rifaS1 = evalRifa.Rifa1Pagada;
+                bool rifaS2 = evalRifa.Rifa2Pagada;
+                decimal montoRifa1 = evalRifa.MontoRifa1;
+                decimal montoRifa2 = evalRifa.MontoRifa2;
                 decimal montoPromo = 0m;
                 if (aplicaPromo)
                 {
@@ -234,11 +240,13 @@ namespace WebColegio.Helpers
                     SaldoMatricula = saldoMat,
                     MatriculaCancelada = matCancelada,
                     TieneAbonoMatricula = tieneAbonoMat,
-                    RifaPagada = rifaS1 && rifaS2,
+                    RifaPagada = evalRifa.RifasCubiertas,
                     RifaSemestre1Pagada = rifaS1,
                     RifaSemestre2Pagada = rifaS2,
                     MontoRifaSemestre1 = montoRifa1,
                     MontoRifaSemestre2 = montoRifa2,
+                    AplicaRifaSemestre1 = evalRifa.AplicaRifa1,
+                    AplicaRifaSemestre2 = evalRifa.AplicaRifa2,
                     AplicaPromocion = aplicaPromo,
                     PromocionPagada = promoPagada,
                     MontoPromocion = montoPromo,
@@ -282,12 +290,23 @@ namespace WebColegio.Helpers
                     var estadoOrig = EstadoCuentaSolvenciaHelper.EvaluarEstadoPagoMensualidad(mesesOrig);
                     var pendOrig = EstadoCuentaSolvenciaHelper.ObtenerMesesPendientes(mesesOrig);
                     int? ultimoOrig = EstadoCuentaSolvenciaHelper.ObtenerMesHastaPagadoParaMostrar(mesesOrig);
-                    var rifasOrig = pagos
-                        .Where(p => p.IdAlumno == alumno.IdAlumno && p.Activo && tiposRifa.Contains(p.IdTipoMovimiento)
-                            && p.IdRecinto == idRecintoOrigen)
-                        .OrderBy(p => p.FechaRegistro).ThenBy(p => p.IdPago).ToList();
-                    var (rifaS1o, rifaS2o) = EstadoRifasPorOrden(rifasOrig.Count);
-                    var (montoRifa1o, montoRifa2o) = MontosRifaPorOrden(rifasOrig, Array.Empty<TblPagoCaja>());
+                    var evalRifaOrig = EvaluarRifaAlumno(
+                        alumno,
+                        matriculaAlum,
+                        pagos,
+                        pagosCaja,
+                        tiposRifa,
+                        tiposMatriculaPago,
+                        tiposMovimiento,
+                        idPeriodoFila,
+                        anioFila,
+                        idRecintoOrigen,
+                        cortesRifa,
+                        fechaIngresoOverride: null);
+                    bool rifaS1o = evalRifaOrig.Rifa1Pagada;
+                    bool rifaS2o = evalRifaOrig.Rifa2Pagada;
+                    decimal montoRifa1o = evalRifaOrig.MontoRifa1;
+                    decimal montoRifa2o = evalRifaOrig.MontoRifa2;
                     decimal montoPromoOrig = 0m;
                     if (aplicaPromo && tiposPromo.Count > 0)
                         montoPromoOrig = pagosOrigen.Where(p => tiposPromo.Contains(p.IdTipoMovimiento)).Sum(p => p.Monto);
@@ -308,11 +327,13 @@ namespace WebColegio.Helpers
                         SaldoMatricula = estadoMatOrig.Cancelada ? 0m : estadoMatOrig.SaldoPendiente,
                         MatriculaCancelada = estadoMatOrig.Cancelada,
                         TieneAbonoMatricula = !estadoMatOrig.Cancelada && pagadoMatOrig > 0.01m,
-                        RifaPagada = rifaS1o && rifaS2o,
+                        RifaPagada = evalRifaOrig.RifasCubiertas,
                         RifaSemestre1Pagada = rifaS1o,
                         RifaSemestre2Pagada = rifaS2o,
                         MontoRifaSemestre1 = montoRifa1o,
                         MontoRifaSemestre2 = montoRifa2o,
+                        AplicaRifaSemestre1 = evalRifaOrig.AplicaRifa1,
+                        AplicaRifaSemestre2 = evalRifaOrig.AplicaRifa2,
                         AplicaPromocion = aplicaPromo,
                         PromocionPagada = aplicaPromo && montoPromoOrig > 0.01m,
                         MontoPromocion = montoPromoOrig,
@@ -747,6 +768,212 @@ namespace WebColegio.Helpers
 
         public static int SemestreRifaDeCaja(TblPagoCaja caja)
             => SemestreRifa(null, caja.FechaEmision, caja.FechaRegistro, caja.Descripcion);
+
+        public sealed class CortesGeneracionRifa
+        {
+            public Dictionary<(int Periodo, int Recinto, int Semestre), DateTime> PorRecinto { get; } = new();
+            public Dictionary<(int Periodo, int Semestre), DateTime> PorPeriodo { get; } = new();
+
+            public DateTime? FechaGeneracion(int idPeriodo, int? idRecinto, int semestre)
+            {
+                if (idRecinto is > 0
+                    && PorRecinto.TryGetValue((idPeriodo, idRecinto.Value, semestre), out var porR))
+                    return porR;
+                return PorPeriodo.TryGetValue((idPeriodo, semestre), out var porP) ? porP : null;
+            }
+        }
+
+        public sealed class EvaluacionRifaAlumno
+        {
+            public bool AplicaRifa1 { get; init; } = true;
+            public bool AplicaRifa2 { get; init; } = true;
+            public bool Rifa1Pagada { get; init; }
+            public bool Rifa2Pagada { get; init; }
+            public decimal MontoRifa1 { get; init; }
+            public decimal MontoRifa2 { get; init; }
+            public DateTime? FechaIngreso { get; init; }
+            public DateTime? FechaGeneracionRifa1 { get; init; }
+            public DateTime? FechaGeneracionRifa2 { get; init; }
+
+            public bool RifasCubiertas =>
+                (!AplicaRifa1 || Rifa1Pagada) && (!AplicaRifa2 || Rifa2Pagada);
+
+            public int SiguienteSemestreACobrar()
+            {
+                if (AplicaRifa1 && !Rifa1Pagada)
+                    return 1;
+                if (AplicaRifa2 && !Rifa2Pagada)
+                    return 2;
+                return 0;
+            }
+
+            public string MensajeSinCobro()
+            {
+                if (!AplicaRifa1 && !AplicaRifa2)
+                    return "No le corresponde rifa 1 ni rifa 2: se matriculó después de que se generaron.";
+                if (AplicaRifa1 && Rifa1Pagada && AplicaRifa2 && Rifa2Pagada)
+                    return "Este alumno ya tiene pagadas las dos rifas del año (1.er y 2.º semestre).";
+                if (!AplicaRifa1 && AplicaRifa2 && Rifa2Pagada)
+                    return "La rifa 1 no aplica (matrícula posterior a su generación). La rifa 2 ya está pagada.";
+                if (AplicaRifa1 && Rifa1Pagada && !AplicaRifa2)
+                    return "La rifa 1 ya está pagada. La rifa 2 no aplica (matrícula posterior a su generación).";
+                return "Este alumno ya tiene pagadas las rifas que le corresponden.";
+            }
+        }
+
+        public static CortesGeneracionRifa ConstruirCortesGeneracionRifa(
+            IEnumerable<TblPago>? pagos,
+            IEnumerable<TblPagoCaja>? pagosCaja,
+            IReadOnlyCollection<int> tiposRifa,
+            IEnumerable<CatTipoMovimiento>? tiposMovimiento)
+        {
+            var cortes = new CortesGeneracionRifa();
+            void Registrar(int idPeriodo, int? idRecinto, int semestre, DateTime fecha)
+            {
+                if (idPeriodo <= 0 || semestre is not (1 or 2) || fecha == default)
+                    return;
+                fecha = fecha.Date;
+                if (idRecinto is > 0)
+                {
+                    var keyR = (idPeriodo, idRecinto.Value, semestre);
+                    if (!cortes.PorRecinto.TryGetValue(keyR, out var actualR) || fecha < actualR)
+                        cortes.PorRecinto[keyR] = fecha;
+                }
+                var keyP = (idPeriodo, semestre);
+                if (!cortes.PorPeriodo.TryGetValue(keyP, out var actualP) || fecha < actualP)
+                    cortes.PorPeriodo[keyP] = fecha;
+            }
+
+            foreach (var p in pagos ?? Array.Empty<TblPago>())
+            {
+                if (!p.Activo || !tiposRifa.Contains(p.IdTipoMovimiento))
+                    continue;
+                Registrar(p.IdPeriodo, p.IdRecinto, SemestreRifaDePago(p), FechaMovimientoRifa(p.FechaEmision, p.FechaRegistro));
+            }
+
+            foreach (var c in pagosCaja ?? Array.Empty<TblPagoCaja>())
+            {
+                if (!c.Activo || !EsReciboRifa(c, tiposRifa, tiposMovimiento))
+                    continue;
+                Registrar(c.IdPeriodo, c.IdRecinto, SemestreRifaDeCaja(c), FechaMovimientoRifa(c.FechaEmision, c.FechaRegistro));
+            }
+
+            return cortes;
+        }
+
+        public static EvaluacionRifaAlumno EvaluarRifaAlumno(
+            TblAlumno? alumno,
+            TblMatricula? matricula,
+            IEnumerable<TblPago>? pagos,
+            IEnumerable<TblPagoCaja>? pagosCaja,
+            IReadOnlyCollection<int> tiposRifa,
+            IReadOnlyCollection<int>? tiposMatricula,
+            IEnumerable<CatTipoMovimiento>? tiposMovimiento,
+            int idPeriodo,
+            int anioPeriodo,
+            int? idRecinto,
+            CortesGeneracionRifa? cortes = null,
+            DateTime? fechaIngresoOverride = null)
+        {
+            cortes ??= ConstruirCortesGeneracionRifa(pagos, pagosCaja, tiposRifa, tiposMovimiento);
+            var tiposMat = tiposMatricula is { Count: > 0 }
+                ? tiposMatricula
+                : new HashSet<int> { TipoMatricula, TipoMatriculaAbono };
+
+            DateTime? ingreso = fechaIngresoOverride?.Date
+                ?? FechaIngresoCicloParaRifa(alumno, matricula, pagos, tiposMat, idPeriodo, anioPeriodo, idRecinto);
+            var gen1 = cortes.FechaGeneracion(idPeriodo, idRecinto, 1);
+            var gen2 = cortes.FechaGeneracion(idPeriodo, idRecinto, 2);
+            bool aplica1 = AplicaRifaSegunIngreso(ingreso, gen1);
+            bool aplica2 = AplicaRifaSegunIngreso(ingreso, gen2);
+
+            var pagosAlum = (pagos ?? Array.Empty<TblPago>())
+                .Where(p => alumno != null
+                    && p.Activo
+                    && p.IdAlumno == alumno.IdAlumno
+                    && tiposRifa.Contains(p.IdTipoMovimiento)
+                    && (idPeriodo <= 0 || p.IdPeriodo == idPeriodo)
+                    && EsPagoDelRecinto(p, idRecinto))
+                .ToList();
+            var cajaAlum = alumno != null
+                ? RecibosCajaDelAlumno(pagosCaja?.ToList(), alumno, idPeriodo, anioPeriodo)
+                    .Where(c => EsReciboRifa(c, tiposRifa, tiposMovimiento)
+                        && (idRecinto is null or <= 0 || c.IdRecinto is null or <= 0 || c.IdRecinto == idRecinto))
+                    .ToList()
+                : new List<TblPagoCaja>();
+
+            decimal monto1 = pagosAlum.Where(p => SemestreRifaDePago(p) == 1).Sum(p => p.Monto)
+                + cajaAlum.Where(c => SemestreRifaDeCaja(c) == 1).Sum(c => c.Monto);
+            decimal monto2 = pagosAlum.Where(p => SemestreRifaDePago(p) == 2).Sum(p => p.Monto)
+                + cajaAlum.Where(c => SemestreRifaDeCaja(c) == 2).Sum(c => c.Monto);
+
+            return new EvaluacionRifaAlumno
+            {
+                AplicaRifa1 = aplica1,
+                AplicaRifa2 = aplica2,
+                Rifa1Pagada = monto1 > 0.01m,
+                Rifa2Pagada = monto2 > 0.01m,
+                MontoRifa1 = monto1,
+                MontoRifa2 = monto2,
+                FechaIngreso = ingreso,
+                FechaGeneracionRifa1 = gen1,
+                FechaGeneracionRifa2 = gen2
+            };
+        }
+
+        public static DateTime? FechaIngresoCicloParaRifa(
+            TblAlumno? alumno,
+            TblMatricula? matricula,
+            IEnumerable<TblPago>? pagos,
+            IReadOnlyCollection<int> tiposMatricula,
+            int idPeriodo,
+            int anioPeriodo,
+            int? idRecinto)
+        {
+            var pagoMat = (pagos ?? Array.Empty<TblPago>())
+                .Where(p => alumno != null
+                    && p.Activo
+                    && p.IdAlumno == alumno.IdAlumno
+                    && tiposMatricula.Contains(p.IdTipoMovimiento)
+                    && (idPeriodo <= 0 || p.IdPeriodo == idPeriodo)
+                    && EsPagoDelRecinto(p, idRecinto))
+                .OrderBy(p => p.FechaEmision ?? p.FechaRegistro)
+                .ThenBy(p => p.IdPago)
+                .FirstOrDefault();
+            if (pagoMat != null)
+                return NormalizarFechaIngresoRifa(pagoMat.FechaEmision ?? pagoMat.FechaRegistro, anioPeriodo);
+
+            if (matricula?.FechaMatricula is { Year: > 2000 } fm)
+                return NormalizarFechaIngresoRifa(fm, anioPeriodo);
+
+            return null;
+        }
+
+        private static DateTime NormalizarFechaIngresoRifa(DateTime fecha, int anioPeriodo)
+        {
+            fecha = fecha.Date;
+            if (fecha.Month >= 10)
+            {
+                int anio = anioPeriodo > 2000 ? anioPeriodo : fecha.Year + 1;
+                return new DateTime(anio, 1, 1);
+            }
+            return fecha;
+        }
+
+        private static bool AplicaRifaSegunIngreso(DateTime? fechaIngreso, DateTime? fechaGeneracion)
+        {
+            if (!fechaGeneracion.HasValue)
+                return true;
+            if (!fechaIngreso.HasValue)
+                return true;
+            return fechaIngreso.Value.Date <= fechaGeneracion.Value.Date;
+        }
+
+        private static DateTime FechaMovimientoRifa(DateTime? fechaEmision, DateTime fechaRegistro)
+        {
+            var fecha = fechaEmision ?? fechaRegistro;
+            return fecha == default ? fechaRegistro : fecha.Date;
+        }
 
         /// <summary>
         /// Las rifas se cubren en orden: el primer pago cancela el 1.er semestre;
