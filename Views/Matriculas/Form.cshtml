@@ -102,6 +102,21 @@
                             <input asp-for="Matricula.MediaBeca" class="form-check-input" />
                             <label asp-for="Matricula.MediaBeca" class="form-check-label">Media beca</label>
                         </div>
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <label class="form-label fw-semibold mb-1">Rifas del ciclo</label>
+                            <p class="small text-muted mb-2">
+                                Si el alumno se matricula a mitad de año, desmarque la rifa que no le corresponde.
+                                Queda guardado en esta matrícula y el estado de cuenta lo respeta.
+                            </p>
+                            <div class="form-check">
+                                <input asp-for="AplicaRifa1" class="form-check-input" />
+                                <label asp-for="AplicaRifa1" class="form-check-label"></label>
+                            </div>
+                            <div class="form-check">
+                                <input asp-for="AplicaRifa2" class="form-check-input" />
+                                <label asp-for="AplicaRifa2" class="form-check-label"></label>
+                            </div>
+                        </div>
                         <div class="form-group mb-3">
                             <label asp-for="Matricula.Observaciones" class="form-label">Observaciones</label>
                             <textarea asp-for="Matricula.Observaciones" class="form-control" rows="2"></textarea>

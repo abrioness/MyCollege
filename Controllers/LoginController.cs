@@ -96,7 +96,7 @@ namespace WebColegio.Controllers
                 if (detalleApi.Contains("404", StringComparison.OrdinalIgnoreCase))
                     TempData["Mensaje"] = $"La URL de la API no es correcta (404). {detalleApi} En el mismo servidor IIS use ApiSettings__BaseUrl=http://127.0.0.1/ColSanFranciscoTest_Api/ y ApiSettings__Host=colegioparroquialsanfranciscojavier.com";
                 else if (detalleApi.Contains("500", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("503", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("base_datos", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = "La API no puede leer la base de datos. En IIS, edite el web.config de ColSanFranciscoTest_Api y configure ConnectionStrings__Conexion con la cadena SQL correcta.";
+                    TempData["Mensaje"] = $"La API no puede leer la base de datos. En ColSanFranciscoTest_Api el web.config debe usar Api_Colegio.dll (no WebColegio.dll) y ConnectionStrings__Conexion. Detalle: {detalleApi}";
                 else if (detalleApi.Contains("401", StringComparison.OrdinalIgnoreCase))
                     TempData["Mensaje"] = "La API rechazó la solicitud (401). Verifique JWT_SECRET_KEY igual en Web y API.";
                 else if (detalleApi.Contains("ConnectionError", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("No such host", StringComparison.OrdinalIgnoreCase))

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
+using WebColegio.Models;
 
 namespace WebColegio.Models.ViewModel
 {
@@ -10,6 +11,7 @@ namespace WebColegio.Models.ViewModel
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
         public int? IdRecintoFilter { get; set; }
+        public bool PuedeElegirRecinto { get; set; } = true;
     }
 
     public class ArqueoDiarioViewModel
@@ -33,6 +35,8 @@ namespace WebColegio.Models.ViewModel
         public DateTime InicioVentana { get; set; }
         public DateTime FinVentana { get; set; }
         public bool ArqueoYaCerrado { get; set; }
+        public bool CajaCerrada { get; set; }
+        public DateTime? FechaCierreCaja { get; set; }
         public List<TblEgreso> EgresosCaja { get; set; } = new();
         public List<IngresoDto> Ingresos { get; set; } = new();
         public List<IngresoCajaDto> IngresoCajaDto { get; set; } = new();
@@ -98,6 +102,19 @@ namespace WebColegio.Models.ViewModel
         public int Cantidad { get; set; }
         public decimal Denominacion { get; set; }
         public decimal Monto { get; set; }
+    }
+
+    public class CierreCajaViewModel
+    {
+        public DateTime Fecha { get; set; }
+        public int? IdRecinto { get; set; }
+        public string? NombreRecinto { get; set; }
+        public bool EsAdministrador { get; set; }
+        public List<Recintos> Recintos { get; set; } = new();
+        public bool CajaCerrada { get; set; }
+        public DateTime? FechaCierre { get; set; }
+        public DateTime InicioTurno { get; set; }
+        public string EstadoCierre { get; set; } = "Abierta";
     }
 }
 

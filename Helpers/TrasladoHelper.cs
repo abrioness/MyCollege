@@ -73,9 +73,9 @@ namespace WebColegio.Helpers
             {
                 actual = Regex.Replace(
                     actual,
-                    @"\[TRASLADO[^\]]*\].*?(?=\n|$)",
+                    @"\[TRASLADO[^\]]*\](?:\s*Desde .+?mes de ingreso\.)?",
                     "",
-                    RegexOptions.IgnoreCase).Trim();
+                    RegexOptions.IgnoreCase | RegexOptions.Singleline).Trim();
             }
 
             return string.IsNullOrWhiteSpace(actual) ? marca : marca + " " + actual;

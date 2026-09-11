@@ -60,12 +60,17 @@ namespace WebColegio.Controllers
             var _discapacidad = await _Iservices.GetDiscapacidadAsync();
 
             IQueryable<TblAlumno> query = _alumnos.AsQueryable();
+            var filtroRecinto = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
 
             var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
             if (ini.HasValue)
                 query = query.Where(a => a.FechaRegistro.Date >= ini.Value.Date);
             if (fin.HasValue)
                 query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
+            if (filtroRecinto.HasValue)
+                query = filtroRecinto.Value > 0
+                    ? query.Where(a => a.IdRecinto == filtroRecinto.Value)
+                    : query.Where(a => false);
 
             var alumnosFiltrados = query
                 .OrderByDescending(a => a.FechaRegistro)
@@ -80,7 +85,7 @@ namespace WebColegio.Controllers
                     grados = _grados,
                     turnos = _turnos,
                     modalidades = _modalidades,
-                    recintos = _recintos,
+                    recintos = RecintoSesionHelper.RecintosVisibles(_recintos, filtroRecinto),
                     discapacidad=_discapacidad,
 
                     

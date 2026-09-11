@@ -32,6 +32,7 @@ namespace WebColegio.Services
         Task<List<TblReciboCaja>> GetRecibosCajaAsync();
         Task<List<TblEgreso>> GetEgresoAsync();
         Task<List<TblArqueoDiario>> GetArqueoDiarioAsync();
+        Task<List<TblCierreCaja>> GetCierreCajaAsync();
 
         Task<List<Productos>> GetProductosAsync();
         Task<Productos?> GetProductoByIdAsync(int id);
@@ -88,6 +89,7 @@ namespace WebColegio.Services
         Task<(bool Exito, string? DetalleError)> UpdateProductosAsync(Productos producto);
         /// <returns>Éxito y, si falla, texto de error devuelto por la API (o mensaje genérico).</returns>
         Task<(bool Ok, string? ErrorMessage)> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
+        Task<(bool Ok, string? ErrorMessage)> PostCierreCajaAsync(TblCierreCaja cierre);
         Task<bool> PostUsuarios(TblUsuarios usuario);
 
         #endregion

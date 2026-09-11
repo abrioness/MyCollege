@@ -314,8 +314,20 @@ namespace WebColegio.Controllers
 
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 producto.tblproducto.StockMinimo = InventarioAlertaHelper.NormalizarStockMinimo(producto.tblproducto.StockMinimo);
-                if (producto.tblproducto.PrecioVenta <= 0)
-                    producto.tblproducto.PrecioVenta = producto.tblproducto.CostoUnitario;
+
+                var actual = await _Iservices.GetProductoByIdAsync(producto.tblproducto.IdProducto);
+                if (actual != null && actual.IdProducto > 0)
+                {
+                    // El precio de venta no se toca al cambiar el de compra.
+                    if (producto.tblproducto.PrecioVenta <= 0)
+                    {
+                        if (actual.PrecioVenta > 0)
+                            producto.tblproducto.PrecioVenta = actual.PrecioVenta;
+                        else if (actual.CostoUnitario > 0)
+                            producto.tblproducto.PrecioVenta = actual.CostoUnitario;
+                    }
+                }
+
                 producto.tblproducto.ImporteInventario = producto.tblproducto.StockActual * producto.tblproducto.CostoUnitario;
                 producto.tblproducto.UsuarioActualiza = idUsuario;
                 producto.tblproducto.FechaActualiza = DateTime.Now;

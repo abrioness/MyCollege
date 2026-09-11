@@ -48,12 +48,13 @@ namespace WebColegio.Controllers
                     : $"No se pudieron cargar los pagos. {err}";
                 TempData["Tipo"] = "warning";
             }
-            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var filtroRecinto = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            var _alumnos = RecintoSesionHelper.Filtrar(await _Iservices.GetAlumnosAsync(), filtroRecinto, a => a.IdRecinto);
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             var _tipoRecibo = await _Iservices.GetTipoReciboAsync();
             var _metodoPago = await _Iservices.GetMetodoPagoAsync();
             var _meses = await _Iservices.GetMesesAsync();
-            var _recinto = await _Iservices.GetRecintosAsync();
+            var _recinto = RecintoSesionHelper.RecintosVisibles(await _Iservices.GetRecintosAsync(), filtroRecinto);
             var _usuarios = await _Iservices.GetUsuariosAsync() ?? new List<TblUsuarios>();
             //var _modalidad = await _Iservices.GetModalidadesAsync();
             //var _grados = await _Iservices.GetGradosAsync();
@@ -66,6 +67,10 @@ namespace WebColegio.Controllers
                 query = query.Where(a => a.FechaRegistro.Date >= ini.Value.Date);
             if (fin.HasValue)
                 query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
+            if (filtroRecinto.HasValue)
+                query = filtroRecinto.Value > 0
+                    ? query.Where(a => a.IdRecinto == filtroRecinto.Value)
+                    : query.Where(a => false);
 
             var pagosFiltrados = query
                 .OrderByDescending(a => a.FechaRegistro)
@@ -424,6 +429,7 @@ namespace WebColegio.Controllers
 
             var tiposMov = await _Iservices.GetTipoMovimientoAsync() ?? new List<CatTipoMovimiento>();
             var pagosCaja = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
+            var filtroRecinto = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
             var filas = EstadoCuentaCalculoHelper.ConstruirFilas(
                 alumnos,
                 pagos,
@@ -441,6 +447,7 @@ namespace WebColegio.Controllers
                 EstadoCuentaCalculoHelper.IdsPorConcepto(tiposMov, "promoc"),
                 pagosCaja,
                 tiposMov);
+            filas = RecintoSesionHelper.Filtrar(filas, filtroRecinto, f => f.IdRecinto);
 
             TempData["Message"] = "Estado de cuenta por período lectivo actual y tarifas de catálogo.";
             return View(new EstadoCuentaViewModel
@@ -660,6 +667,9 @@ namespace WebColegio.Controllers
                .Max(r => (int?)r.NumeroRecibo);
 
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 10001;
+            var filtroRecintoCreate = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            if (filtroRecintoCreate is > 0)
+                idRecinto = filtroRecintoCreate.Value;
             var viewmodel = new PagosViewModel
             {
                 //listPeriodos = periodos,
@@ -703,14 +713,7 @@ namespace WebColegio.Controllers
                     Text = r.NombreGrado,
                     //Selected = r.IdPregunta == respuestas.IdPregunta
                 }).ToList(),
-                recintos = (await _Iservices.GetRecintosAsync())
-                .Select(r => new SelectListItem
-                {
-
-                    Value = r.IdRecinto.ToString(),
-                    Text = r.Recinto.ToString(),
-                }
-                ).ToList(),
+                recintos = RecintoSesionHelper.ToSelectList(await _Iservices.GetRecintosAsync(), filtroRecintoCreate, idRecinto),
                 modalidadSelectListItem = (await _Iservices.GetModalidadesAsync())
                 .Select(r => new SelectListItem
                 {
@@ -1264,6 +1267,10 @@ namespace WebColegio.Controllers
                 TempData["Tipo"] = "warning";
                 return RedirectToAction("Create");
             }
+
+            var filtroRecintoPago = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            if (filtroRecintoPago is > 0)
+                pagos.Pago.IdRecinto = filtroRecintoPago.Value;
 
             // Validar campos críticos manualmente antes de validar el ModelState
             var erroresManuales = new List<string>();

@@ -30,12 +30,17 @@ namespace WebColegio.Controllers
             var _usuarios = await _Iservices.GetUsuariosAsync() ?? new List<TblUsuarios>();
 
             IQueryable<TblEgreso> query = _egresos.AsQueryable();
+            var filtroRecinto = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
 
             var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
             if (ini.HasValue)
                 query = query.Where(a => a.FechaRegistro.Date >= ini.Value.Date);
             if (fin.HasValue)
                 query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
+            if (filtroRecinto.HasValue)
+                query = filtroRecinto.Value > 0
+                    ? query.Where(a => a.IdRecinto == filtroRecinto.Value)
+                    : query.Where(a => false);
 
             var egresosFiltrados = query
                 .OrderByDescending(a => a.FechaRegistro)
@@ -47,7 +52,7 @@ namespace WebColegio.Controllers
                 egresos = egresosFiltrados,               
                 tipoMovimiento = _tipoMovimiento,
                 periodo = _periodo,
-                recintos = _recinto,
+                recintos = RecintoSesionHelper.RecintosVisibles(_recinto, filtroRecinto),
                 usuarios = _usuarios
             };
             if (VieModelEgresado == null)
@@ -106,6 +111,7 @@ namespace WebColegio.Controllers
                 .Max(r => (int?)r.NumeroRecibo);
 
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 30001;
+            var filtroRecintoCreate = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
             var viewmodel = new EgresoViewModel
             {
                 SiguienteNumero = siguienteNumero,
@@ -126,12 +132,7 @@ namespace WebColegio.Controllers
                                        Text = r.Periodo.ToString(),
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
-                recintos=(await _Iservices.GetRecintosAsync())
-                .Select(r=>new SelectListItem
-                {
-                    Value=r.IdRecinto.ToString(),
-                    Text=r.Recinto.ToString()
-                }).ToList(),
+                recintos = RecintoSesionHelper.ToSelectList(await _Iservices.GetRecintosAsync(), filtroRecintoCreate),
 
 
 
@@ -175,6 +176,9 @@ namespace WebColegio.Controllers
                     egresos.UsuarioRegistro = idUsuario;
                     egresos.Activo = true;
                     egresos.FechaRegistro = DateTime.Now;
+                    var filtroRecintoGuardar = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+                    if (filtroRecintoGuardar is > 0)
+                        egresos.IdRecinto = filtroRecintoGuardar.Value;
                    
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostEgresoAsync(egresos);

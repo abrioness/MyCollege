@@ -39,8 +39,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="web.config" CopyToPublishDirectory="PreserveNewest" />
+    <Content Update="web.config" CopyToPublishDirectory="Never" />
     <Content Include="logs\.gitkeep" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <!-- El web.config de IIS (JWT y URL de la API) no debe reemplazarse al publicar. -->
+  <Target Name="ExcludeWebConfigFromPublishOutput" AfterTargets="Publish">
+    <Delete Files="$(PublishDir)web.config" Condition="Exists('$(PublishDir)web.config')" />
+  </Target>
 
 </Project>

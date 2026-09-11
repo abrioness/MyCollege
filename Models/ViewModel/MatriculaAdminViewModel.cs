@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using WebColegio.Models;
 
@@ -32,5 +33,11 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> Turnos { get; set; } = new();
         public List<SelectListItem> Grupos { get; set; } = new();
         public List<SelectListItem> Estados { get; set; } = new();
+
+        [Display(Name = "Debe pagar rifa 1 (1.er semestre)")]
+        public bool AplicaRifa1 { get; set; } = true;
+
+        [Display(Name = "Debe pagar rifa 2 (2.º semestre)")]
+        public bool AplicaRifa2 { get; set; } = true;
     }
 }

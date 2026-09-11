@@ -28,6 +28,9 @@ namespace WebColegio.Controllers
         {
             var arqueos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
             var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var filtroRecinto = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            if (filtroRecinto.HasValue)
+                idRecinto = filtroRecinto.Value > 0 ? filtroRecinto : 0;
 
             var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
 
@@ -40,14 +43,17 @@ namespace WebColegio.Controllers
                 arqueos = arqueos.Where(a => a.FechaRegistro.Date <= fin.Value.Date).ToList();
             if (idRecinto.HasValue && idRecinto.Value > 0)
                 arqueos = arqueos.Where(a => a.IdRecinto == idRecinto.Value).ToList();
+            else if (filtroRecinto == 0)
+                arqueos = new List<TblArqueoDiario>();
 
             var model = new ArqueoDiarioIndexViewModel
             {
                 ListaArqueos = arqueos,
-                Recintos = recintos.Where(r => r.Activo).ToList(),
+                Recintos = RecintoSesionHelper.RecintosVisibles(recintos, filtroRecinto),
                 FechaInicio = ini,
                 FechaFin = fin,
-                IdRecintoFilter = idRecinto
+                IdRecintoFilter = idRecinto,
+                PuedeElegirRecinto = !filtroRecinto.HasValue
             };
             return View(model);
         }
@@ -97,6 +103,7 @@ namespace WebColegio.Controllers
             arqueoDia.arqueoDiario.Activo = true;
             arqueoDia.arqueoDiario.Serie = "A";
             var buscarIdGuardado = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
+            var cierres = await _Iservices.GetCierreCajaAsync() ?? new List<TblCierreCaja>();
             //var buscarperiodo = await _Iservices.GetPeriodoAsync();
             //var periodo = buscarperiodo.Where(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true).FirstOrDefault();
           
@@ -116,6 +123,15 @@ namespace WebColegio.Controllers
             var idRecGuardar = arqueoDia.arqueoDiario.IdRecinto;
             if (idRecGuardar.HasValue && idRecGuardar.Value > 0)
             {
+                var ventanaCierre = ArqueoCierreHelper.ResolverVentana(
+                    buscarIdGuardado, cierres, idRecGuardar, fechaReporte, DateTime.Now);
+                if (!ventanaCierre.HayCierreDelDia)
+                {
+                    TempData["Mensaje"] = "Caja aún no ha cerrado este recinto. Primero registre el cierre; el arqueo se genera después y solo incluye cobros hasta esa hora.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
+                }
+
                 var yaGuardadoHoyEsteRecinto = buscarIdGuardado.Any(r =>
                     r.Activo && r.Serie == "A"
                     && r.IdRecinto == idRecGuardar.Value
@@ -128,8 +144,8 @@ namespace WebColegio.Controllers
                         .Select(r => r.FechaRegistro)
                         .FirstOrDefault();
                     TempData["Mensaje"] = horaCierre != default
-                        ? $"Ya se registró el arqueo de este recinto hoy ({horaCierre:hh:mm tt}). Los pagos posteriores se incluirán en el arqueo de mañana."
-                        : "Ya se registró un arqueo para este recinto hoy. Los pagos posteriores se incluirán en el arqueo de mañana.";
+                        ? $"Ya se registró el arqueo de este recinto hoy ({horaCierre:hh:mm tt}). Los cobros posteriores al cierre se incluirán en el siguiente cierre."
+                        : "Ya se registró un arqueo para este recinto hoy. Los cobros posteriores al cierre se incluirán en el siguiente cierre.";
                     TempData["Tipo"] = "warning";
                     return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
                 }
@@ -188,6 +204,7 @@ namespace WebColegio.Controllers
 
             var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
             var recibos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
+            var cierres = await _Iservices.GetCierreCajaAsync() ?? new List<TblCierreCaja>();
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             bool esAdmin = User.IsInRole("Admin");
             var usuarioActual = await _Iservices.GetUsuarioIdAsync(idUsuario);
@@ -213,16 +230,17 @@ namespace WebColegio.Controllers
                 if (recintoEfectivo == 0) recintoEfectivo = null;
             }
 
-            var (inicioVentana, finVentana, arqueoDelDia, inicioEsArqueoAnterior) =
-                ArqueoCierreHelper.ResolverVentana(recibos, recintoEfectivo, fecha, DateTime.Now);
-            arqueo.InicioVentana = inicioVentana;
-            arqueo.FinVentana = finVentana;
-            arqueo.ArqueoYaCerrado = arqueoDelDia != null;
+            var ventana = ArqueoCierreHelper.ResolverVentana(recibos, cierres, recintoEfectivo, fecha, DateTime.Now);
+            arqueo.InicioVentana = ventana.Inicio;
+            arqueo.FinVentana = ventana.Fin;
+            arqueo.ArqueoYaCerrado = ventana.ArqueoDelDia != null;
+            arqueo.CajaCerrada = ventana.HayCierreDelDia;
+            arqueo.FechaCierreCaja = ventana.CierreDelDia?.FechaCierre;
 
             bool EnTurno(DateTime fechaPago) =>
-                ArqueoCierreHelper.EstaEnVentana(fechaPago, inicioVentana, finVentana, inicioEsArqueoAnterior);
+                ArqueoCierreHelper.EstaEnVentana(fechaPago, ventana);
 
-            // Del último arqueo (p. ej. 3–4 p.m. de ayer) hasta el cierre de hoy. Lo posterior va al día siguiente.
+            // Del cierre anterior hasta el cierre de hoy. Lo posterior va al siguiente día.
             var todosPagosDia = (await _Iservices.GetPagosAsync())?.Where(r => r.Activo && EnTurno(r.FechaRegistro)).ToList() ?? new List<TblPago>();
             var todosPagosCajaDia = (await _Iservices.GetPagoCajaAsync())?.Where(r => r.Activo && EnTurno(r.FechaRegistro)).ToList() ?? new List<TblPagoCaja>();
 
@@ -469,6 +487,105 @@ namespace WebColegio.Controllers
             arqueo.AbrirImpresion = TempData["AbrirImpresion"]?.ToString() == "1";
 
             return View(arqueo);
+        }
+
+        [Authorize]
+        public async Task<ActionResult> CerrarCaja(DateTime? fecha, int? idRecinto = null)
+        {
+            var dia = fecha is { Year: > 1 } ? fecha.Value.Date : DateTime.Now.Date;
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            bool esAdmin = User.IsInRole("Admin") || User.IsInRole("UserSystem");
+            var usuarioActual = await _Iservices.GetUsuarioIdAsync(idUsuario);
+            var recintosTodos = (await _Iservices.GetRecintosAsync() ?? new List<Recintos>()).Where(r => r.Activo).ToList();
+            var filtroRecintoUi = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            var recintos = RecintoSesionHelper.RecintosVisibles(recintosTodos, filtroRecintoUi);
+
+            int? recintoEfectivo = idRecinto;
+            if (!esAdmin)
+            {
+                recintoEfectivo = usuarioActual?.IdRecinto is > 0
+                    ? usuarioActual.IdRecinto
+                    : (filtroRecintoUi is > 0 ? filtroRecintoUi : null);
+            }
+
+            var arqueos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
+            var cierres = await _Iservices.GetCierreCajaAsync() ?? new List<TblCierreCaja>();
+            var ventana = ArqueoCierreHelper.ResolverVentana(arqueos, cierres, recintoEfectivo, dia, DateTime.Now);
+            var recintoSel = recintoEfectivo is > 0
+                ? recintos.FirstOrDefault(r => r.IdRecinto == recintoEfectivo.Value)
+                : null;
+
+            var vm = new CierreCajaViewModel
+            {
+                Fecha = dia,
+                IdRecinto = recintoEfectivo,
+                NombreRecinto = recintoSel?.Recinto,
+                EsAdministrador = esAdmin,
+                Recintos = recintos,
+                CajaCerrada = ventana.HayCierreDelDia,
+                FechaCierre = ventana.CierreDelDia?.FechaCierre,
+                InicioTurno = ventana.Inicio,
+                EstadoCierre = ventana.HayCierreDelDia ? TblCierreCaja.EstadoCerrado : "Abierta"
+            };
+            return View(vm);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CerrarCaja(DateTime fecha, int? idRecinto, string? volverA)
+        {
+            var dia = fecha.Year > 1 ? fecha.Date : DateTime.Now.Date;
+            int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            bool esAdmin = User.IsInRole("Admin") || User.IsInRole("UserSystem");
+            var usuarioActual = await _Iservices.GetUsuarioIdAsync(idUsuario);
+
+            int? recintoEfectivo = idRecinto;
+            if (!esAdmin)
+            {
+                recintoEfectivo = usuarioActual?.IdRecinto ?? 0;
+                if (recintoEfectivo == 0) recintoEfectivo = idRecinto;
+            }
+
+            if (recintoEfectivo is null or <= 0)
+            {
+                TempData["Mensaje"] = "Seleccione el recinto para cerrar caja.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(CerrarCaja), new { fecha = dia, idRecinto });
+            }
+
+            ActionResult IrDespuesDeCerrar()
+            {
+                if (string.Equals(volverA, "arqueo", StringComparison.OrdinalIgnoreCase))
+                    return RedirectToAction(nameof(ArqueoCaja), new { fecha = dia, idRecinto = recintoEfectivo });
+                return RedirectToAction(nameof(CerrarCaja), new { fecha = dia, idRecinto = recintoEfectivo });
+            }
+
+            var arqueos = await _Iservices.GetArqueoDiarioAsync() ?? new List<TblArqueoDiario>();
+            var cierres = await _Iservices.GetCierreCajaAsync() ?? new List<TblCierreCaja>();
+            var ventana = ArqueoCierreHelper.ResolverVentana(arqueos, cierres, recintoEfectivo, dia, DateTime.Now);
+            if (ventana.HayCierreDelDia)
+            {
+                TempData["Mensaje"] = $"Caja de este recinto ya está cerrada ({ventana.CierreDelDia!.FechaCierre:hh:mm tt}). Los cobros posteriores entran al siguiente cierre.";
+                TempData["Tipo"] = "info";
+                return IrDespuesDeCerrar();
+            }
+
+            var ahora = DateTime.Now;
+            var cierre = ArqueoCierreHelper.CrearCierre(idUsuario, recintoEfectivo.Value, ventana.Inicio, ahora);
+            var (ok, err) = await _Iservices.PostCierreCajaAsync(cierre);
+            if (!ok)
+            {
+                TempData["Mensaje"] = string.IsNullOrWhiteSpace(err)
+                    ? "No se pudo registrar el cierre de caja."
+                    : "No se pudo registrar el cierre de caja. " + err;
+                TempData["Tipo"] = "warning";
+                return IrDespuesDeCerrar();
+            }
+
+            TempData["Mensaje"] = $"Caja cerrada a las {ahora:hh:mm tt}. El arqueo del día incluirá cobros hasta esta hora, aunque se genere más tarde.";
+            TempData["Tipo"] = "success";
+            return IrDespuesDeCerrar();
         }
 
         /// <summary>Devuelve la dirección conocida del recinto (1 y 2 configurados; otros vacío).</summary>

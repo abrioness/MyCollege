@@ -39,12 +39,17 @@ namespace WebColegio.Controllers
             //var _modalidad = await _Iservices.GetModalidadesAsync();
             //var _grados = await _Iservices.GetGradosAsync();
             IQueryable<TblPagoCaja> query = _pagoscaja.AsQueryable();
+            var filtroRecinto = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
 
             var (ini, fin) = ReporteFechaQuery.ResolverRango(Request, fechainicio, fechafin);
             if (ini.HasValue)
                 query = query.Where(a => a.FechaRegistro.Date >= ini.Value.Date);
             if (fin.HasValue)
                 query = query.Where(a => a.FechaRegistro.Date <= fin.Value.Date);
+            if (filtroRecinto.HasValue)
+                query = filtroRecinto.Value > 0
+                    ? query.Where(a => a.IdRecinto == filtroRecinto.Value)
+                    : query.Where(a => false);
 
             var pagosFiltrados = query
                 .OrderByDescending(a => a.FechaRegistro)
@@ -58,7 +63,7 @@ namespace WebColegio.Controllers
                 turnos = _turnos,
                 tipoMovimiento = _tipoMovimiento,
                 periodo = _periodo,
-                recintos = _recinto,
+                recintos = RecintoSesionHelper.RecintosVisibles(_recinto, filtroRecinto),
                 usuarios = _usuarios,
             };
             if (VieModelPagoCaja == null)
@@ -89,13 +94,9 @@ namespace WebColegio.Controllers
                 tipoMovimiento = _tipoMovimiento,
                 turnos=_turnos,
                 grados = _grados,
-                recintos =  (await _Iservices.GetRecintosAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdRecinto.ToString(),
-                                       Text = r.Recinto,
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
+                recintos = RecintoSesionHelper.ToSelectList(
+                    await _Iservices.GetRecintosAsync(),
+                    await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices)),
 
             };
 
@@ -124,6 +125,7 @@ namespace WebColegio.Controllers
                 .Max(r => (int?)r.NumeroRecibo);
 
             var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 20001;
+            var filtroRecintoCreate = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
             var viewmodel = new pagoCajasViewModel
             {
                 SiguienteNumero=siguienteNumero,
@@ -157,13 +159,7 @@ namespace WebColegio.Controllers
                                       Text = r.Periodo.ToString(),
                                        //Selected = r.IdPregunta == respuestas.IdPregunta
                                    }).ToList(),
-                recintos = (await _Iservices.GetRecintosAsync())
-                                   .Select(r => new SelectListItem
-                                   {
-                                       Value = r.IdRecinto.ToString(),
-                                       Text = r.Recinto.ToString(),
-                                       //Selected = r.IdPregunta == respuestas.IdPregunta
-                                   }).ToList(),
+                recintos = RecintoSesionHelper.ToSelectList(await _Iservices.GetRecintosAsync(), filtroRecintoCreate),
 
                 DetalleItems = new List<DetallePagoCajaItem>(),
                 CategoriasProducto = (await _Iservices.GetCategoriaProductoAsync()).Where(c => c.Activo).ToList(),
@@ -189,6 +185,9 @@ namespace WebColegio.Controllers
                 .FirstOrDefault(r => r.Periodo == DateTime.Now.Year && r.Activo && r.Actual)
                 ?? buscarperiodo.FirstOrDefault(r => r.Activo);
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var filtroRecintoGuardar = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            if (filtroRecintoGuardar is > 0)
+                pagoscaja.IdRecinto = filtroRecintoGuardar.Value;
 
             if (buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo && r.Serie == "A" && r.Activo))
             {
@@ -452,6 +451,8 @@ namespace WebColegio.Controllers
                 EstadoCuentaCalculoHelper.IdsPorConcepto(tiposMov, "promoc"),
                 pagosCaja,
                 tiposMov);
+            var filtroRecintoEc = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            filas = RecintoSesionHelper.Filtrar(filas, filtroRecintoEc, f => f.IdRecinto);
 
             return View(new EstadoCuentaViewModel
             {

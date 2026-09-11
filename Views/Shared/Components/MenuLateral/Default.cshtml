@@ -180,6 +180,7 @@ else
                     <a class="collapse-item" asp-controller="Pagos" asp-action="Create"> <i class="bi bi-arrow-return-right text-black"></i> Recibo de Caja Mensualidad</a>
                     <a class="collapse-item" asp-controller="Pagos" asp-action="Traslado"> <i class="bi bi-arrow-return-right text-black"></i> Traslado entre colegios</a>
                     <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
+                    <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="CerrarCaja" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")"> <i class="bi bi-lock text-black"></i> Cerrar caja</a>
                     @* <a class="collapse-item" asp-controller="WhatsAppAvisos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Avisos WhatsApp</a> *@
                 </div>
             </div>

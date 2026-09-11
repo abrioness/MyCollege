@@ -1,0 +1,118 @@
+@model WebColegio.Models.ViewModel.CierreCajaViewModel
+@{
+    ViewData["Title"] = "Cerrar caja";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-lock"></i> Cierre de caja</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">
+                El cierre fija hasta qué hora entra el arqueo del día. Caja puede seguir cobrando después;
+                esos recibos se verán en el siguiente cierre, no en el arqueo de hoy.
+            </p>
+
+            @if (Model.EsAdministrador)
+            {
+                <form method="get" asp-action="CerrarCaja" class="row g-2 align-items-end mb-3">
+                    <input type="hidden" name="fecha" value="@Model.Fecha.ToString("yyyy-MM-dd")" />
+                    <div class="col-md-6">
+                        <label class="form-label">Recinto</label>
+                        <select name="idRecinto" class="form-select" onchange="this.form.submit()">
+                            <option value="">Seleccione el recinto</option>
+                            @foreach (var rec in Model.Recintos)
+                            {
+                                if (Model.IdRecinto == rec.IdRecinto)
+                                {
+                                    <option value="@rec.IdRecinto" selected>@rec.Recinto</option>
+                                }
+                                else
+                                {
+                                    <option value="@rec.IdRecinto">@rec.Recinto</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <p><strong>Recinto:</strong> @(Model.NombreRecinto ?? "N/A")</p>
+            }
+
+            @if (Model.IdRecinto is > 0)
+            {
+                <div class="border rounded p-3 mb-3 @(Model.CajaCerrada ? "bg-light" : "")">
+                    <p class="mb-1"><strong>Estado:</strong> @(Model.CajaCerrada ? "Cerrado" : "Abierta")</p>
+                    <p class="mb-1">
+                        <strong>Turno:</strong>
+                        @Model.InicioTurno.ToString("dd/MM/yyyy hh:mm tt")
+                        @if (Model.CajaCerrada && Model.FechaCierre.HasValue)
+                        {
+                            <text>– @Model.FechaCierre.Value.ToString("dd/MM/yyyy hh:mm tt")</text>
+                        }
+                        else
+                        {
+                            <text>– ahora (pendiente de cierre)</text>
+                        }
+                    </p>
+                    @if (Model.CajaCerrada && Model.FechaCierre.HasValue)
+                    {
+                        <p class="mb-0 text-success">
+                            Cerrada a las @Model.FechaCierre.Value.ToString("hh:mm tt").
+                            El administrador puede generar el arqueo cuando quiera: solo verá cobros hasta esta hora.
+                        </p>
+                    }
+                </div>
+
+                @if (!Model.CajaCerrada)
+                {
+                    <form method="post" asp-action="CerrarCaja">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="fecha" value="@Model.Fecha.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="idRecinto" value="@Model.IdRecinto" />
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-lock"></i> Cerrar caja del día
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a class="btn btn-primary"
+                       asp-action="ArqueoCaja"
+                       asp-route-fecha="@Model.Fecha.ToString("yyyy-MM-dd")"
+                       asp-route-idRecinto="@Model.IdRecinto"
+                       target="_blank">
+                        Generar arqueo del día
+                    </a>
+                }
+            }
+            else if (Model.EsAdministrador)
+            {
+                <p class="text-muted mb-0">Seleccione el recinto para ver el estado y cerrar caja.</p>
+            }
+            else
+            {
+                <p class="text-warning mb-0">Su usuario no tiene recinto asignado. No se puede cerrar caja.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Mensaje"] != null)
+{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                title: '@(TempData["Tipo"]?.ToString() == "success" ? "Éxito" :
+                    TempData["Tipo"]?.ToString() == "warning" ? "Atención" : "Información")',
+                text: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["Mensaje"]?.ToString() ?? "")),
+                icon: '@(TempData["Tipo"]?.ToString() ?? "info")',
+                confirmButtonText: 'Aceptar'
+            });
+        });
+    </script>
+}

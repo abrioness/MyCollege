@@ -61,13 +61,36 @@
                 <strong>Turno de caja:</strong>
                 @Model.InicioVentana.ToString("dd/MM/yyyy hh:mm tt")
                 – @Model.FinVentana.ToString("dd/MM/yyyy hh:mm tt").
-                Incluye cobros desde el cierre anterior (o las 5 p.m. de ayer si no hubo arqueo reciente) hasta ahora.
-                Al guardar (habitualmente 3–4 p.m.) se cierra el turno; lo cobrado después pasa al arqueo de mañana.
+                @if (Model.CajaCerrada)
+                {
+                    <span>
+                        Caja cerrada a las @Model.FechaCierreCaja?.ToString("hh:mm tt").
+                        El arqueo muestra cobros hasta ese cierre, aunque se genere más tarde.
+                        Lo cobrado después entra al siguiente cierre.
+                    </span>
+                }
+                else
+                {
+                    <span>
+                        Caja aún abierta: se muestran cobros hasta ahora.
+                        Cierre caja para fijar el corte del día.
+                    </span>
+                }
                 @if (Model.ArqueoYaCerrado)
                 {
-                    <span> Este recinto ya tiene arqueo cerrado en esta fecha.</span>
+                    <span> Este recinto ya tiene arqueo guardado en esta fecha.</span>
                 }
             </p>
+            @if (!Model.CajaCerrada && Model.arqueoDiario?.IdRecinto > 0)
+            {
+                <form method="post" asp-action="CerrarCaja" asp-controller="ArqueoDiario" class="no-print" style="margin-top: 0.5rem;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="fecha" value="@Model.Fecha.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="idRecinto" value="@Model.arqueoDiario.IdRecinto" />
+                    <input type="hidden" name="volverA" value="arqueo" />
+                    <button type="submit" class="btn btn-sm btn-warning">Cerrar caja del día</button>
+                </form>
+            }
         }
     </div>
     <form method="post" asp-action="Create" enctype="multipart/form-data" id="formArqueo">
@@ -361,9 +384,13 @@
     
     <button type="button" class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
 
-        <button type="submit" id="btnGuardarArqueo" class="btn btn-primary no-print">
+        <button type="submit" id="btnGuardarArqueo" class="btn btn-primary no-print" @(Model.CajaCerrada ? "" : "disabled")>
             <i class="bi bi-save"></i> Guardar Arqueo
         </button>
+        @if (!Model.CajaCerrada)
+        {
+            <p class="no-print" style="margin-top: 0.5rem; color: #856404;">Primero cierre caja. El arqueo se guarda después y no incluirá cobros posteriores al cierre.</p>
+        }
 
     </form>
 </body>
@@ -407,6 +434,15 @@
                 }
                 return false;
             }
+        }
+        if (@(Model.CajaCerrada ? "false" : "true")) {
+            e.preventDefault();
+            if (typeof Swal !== "undefined") {
+                Swal.fire({ title: "Caja abierta", text: "Primero cierre caja. El arqueo del día llega hasta esa hora, aunque lo genere más tarde.", icon: "warning", confirmButtonText: "Aceptar" });
+            } else {
+                alert("Primero cierre caja.");
+            }
+            return false;
         }
         envioArqueoEnCurso = true;
         var btn = document.getElementById("btnGuardarArqueo");

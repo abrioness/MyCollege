@@ -443,6 +443,23 @@ namespace WebColegio.Services
             }
         }
 
+        public async Task<List<TblCierreCaja>> GetCierreCajaAsync()
+        {
+            var cierres = new List<TblCierreCaja>();
+            using (var httpclient = CreateApiClient())
+            {
+                var response = await httpclient.GetAsync(url + "api/CierreCajas");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var resultado = JsonConvert.DeserializeObject<List<TblCierreCaja>>(content);
+                    if (resultado != null)
+                        cierres = resultado;
+                }
+                return cierres;
+            }
+        }
+
         public async Task<List<TblReciboCaja>> GetRecibosCajaAsync()
         {
             List<TblReciboCaja> reciboCajas = new List<TblReciboCaja>();
@@ -1368,8 +1385,11 @@ namespace WebColegio.Services
             existente.IdCateProducto = producto.IdCateProducto;
             existente.IdProveedor = producto.IdProveedor;
             existente.IdRecinto = producto.IdRecinto;
+            var precioVentaConservado = producto.PrecioVenta > 0
+                ? producto.PrecioVenta
+                : (existente.PrecioVenta > 0 ? existente.PrecioVenta : existente.CostoUnitario);
             existente.CostoUnitario = producto.CostoUnitario;
-            existente.PrecioVenta = producto.PrecioVenta;
+            existente.PrecioVenta = precioVentaConservado;
             existente.StockActual = producto.StockActual;
             existente.StockMinimo = producto.StockMinimo;
             existente.Activo = producto.Activo;
@@ -1482,6 +1502,33 @@ namespace WebColegio.Services
                 return (false, ex.Message);
             }
         }
+
+        public async Task<(bool Ok, string? ErrorMessage)> PostCierreCajaAsync(TblCierreCaja cierre)
+        {
+            try
+            {
+                using (var httpClient = CreateApiClient())
+                {
+                    string json = JsonConvert.SerializeObject(cierre);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync(url + "api/CierreCajas", content);
+                    if (response.IsSuccessStatusCode)
+                        return (true, null);
+
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    var brief = string.IsNullOrWhiteSpace(errorMsg)
+                        ? $"HTTP {(int)response.StatusCode}"
+                        : (errorMsg.Length > 500 ? errorMsg.Substring(0, 500) + "…" : errorMsg);
+                    return (false, brief);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Excepción en PostCierreCajaAsync: " + ex.Message);
+                return (false, ex.Message);
+            }
+        }
+
         //Post registro de usuarios
         public async Task<bool> PostUsuarios(TblUsuarios usuario)
         {

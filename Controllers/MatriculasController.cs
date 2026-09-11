@@ -44,6 +44,9 @@ namespace WebColegio.Controllers
                 matriculas = matriculas.Where(m => string.Equals(m.Estado, estado, StringComparison.OrdinalIgnoreCase)).ToList();
 
             var alumnosLista = await _services.GetAlumnosAsync() ?? new List<TblAlumno>();
+            var filtroRecinto = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _services);
+            matriculas = RecintoSesionHelper.Filtrar(matriculas, filtroRecinto, m => m.IdRecinto);
+            alumnosLista = RecintoSesionHelper.Filtrar(alumnosLista, filtroRecinto, a => a.IdRecinto);
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var term = q.Trim();
@@ -72,7 +75,7 @@ namespace WebColegio.Controllers
                 Periodos = periodos.OrderByDescending(p => p.Periodo).ToList(),
                 Grados = await _services.GetGradosAsync() ?? new List<Grados>(),
                 Modalidades = await _services.GetModalidadesAsync() ?? new List<Modalidades>(),
-                Recintos = await _services.GetRecintosAsync() ?? new List<Recintos>(),
+                Recintos = RecintoSesionHelper.RecintosVisibles(await _services.GetRecintosAsync(), filtroRecinto),
                 Turnos = await _services.GetTurnosAsync() ?? new List<Turnos>(),
                 Grupos = await _services.GetGruposAsync() ?? new List<Grupos>(),
                 IdPeriodoFiltro = idFiltro > 0 ? idFiltro : null,
@@ -137,7 +140,7 @@ namespace WebColegio.Controllers
             if (!Validar(m, out var error))
             {
                 SetMensaje(error, "warning");
-                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, false));
+                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, false, form?.AplicaRifa1, form?.AplicaRifa2));
             }
 
             var ya = await _services.GetMatriculaAlumnoPeriodoAsync(m.IdAlumno, m.IdPeriodo);
@@ -153,11 +156,13 @@ namespace WebColegio.Controllers
             if (m.FechaMatricula == null)
                 m.FechaMatricula = DateTime.Today;
 
+            GuardarOpcionRifa(m, form);
+
             var (ok, err) = await _services.PostMatriculaAsync(m);
             if (!ok)
             {
                 SetMensaje("No se pudo guardar la matrícula. " + (err ?? _services.LastApiError), "warning");
-                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, false));
+                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, false, form?.AplicaRifa1, form?.AplicaRifa2));
             }
 
             await SincronizarFichaAlumnoSiCorresponde(m);
@@ -250,12 +255,12 @@ namespace WebColegio.Controllers
             if (m.IdMatricula <= 0)
             {
                 SetMensaje("Registro no válido.", "warning");
-                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, true));
+                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, true, form?.AplicaRifa1, form?.AplicaRifa2));
             }
             if (!Validar(m, out var errorEdit))
             {
                 SetMensaje(errorEdit, "warning");
-                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, true));
+                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, true, form?.AplicaRifa1, form?.AplicaRifa2));
             }
 
             var original = await _services.GetMatriculaByIdAsync(m.IdMatricula);
@@ -266,12 +271,13 @@ namespace WebColegio.Controllers
             }
             m.UsuarioActualizo = IdUsuarioActual();
             m.FechaActualizo = DateTime.Now;
+            GuardarOpcionRifa(m, form);
 
             var (ok, err) = await _services.UpdateMatriculaAsync(m);
             if (!ok)
             {
                 SetMensaje("No se pudo actualizar. " + (err ?? _services.LastApiError), "warning");
-                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, true));
+                return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, true, form?.AplicaRifa1, form?.AplicaRifa2));
             }
 
             await SincronizarFichaAlumnoSiCorresponde(m);
@@ -305,14 +311,23 @@ namespace WebColegio.Controllers
             await _services.UpdateAlumnos(alumno);
         }
 
-        private async Task<MatriculaFormViewModel> ConstruirFormAsync(TblMatricula m, string? nombre, bool esEdicion)
+        private async Task<MatriculaFormViewModel> ConstruirFormAsync(
+            TblMatricula m,
+            string? nombre,
+            bool esEdicion,
+            bool? aplicaRifa1 = null,
+            bool? aplicaRifa2 = null)
         {
             var periodos = await _services.GetPeriodoAsync() ?? new List<CatPeriodo>();
+            var leidoRifa = EstadoCuentaCalculoHelper.LeerAplicaRifa(m.Observaciones);
+            m.Observaciones = EstadoCuentaCalculoHelper.QuitarMarcaAplicaRifa(m.Observaciones);
             return new MatriculaFormViewModel
             {
                 Matricula = m,
                 NombreAlumno = nombre ?? string.Empty,
                 EsEdicion = esEdicion,
+                AplicaRifa1 = aplicaRifa1 ?? (leidoRifa.TieneMarca ? leidoRifa.Aplica1 : true),
+                AplicaRifa2 = aplicaRifa2 ?? (leidoRifa.TieneMarca ? leidoRifa.Aplica2 : true),
                 Periodos = periodos.Where(p => p.Activo || p.IdPeriodo == m.IdPeriodo)
                     .OrderByDescending(p => p.Periodo)
                     .Select(p => new SelectListItem
@@ -328,6 +343,14 @@ namespace WebColegio.Controllers
                 Grupos = ToSelectOpcional((await _services.GetGruposAsync())?.Select(x => (x.IdGrupo, x.NombreGrupo, x.Activo)), m.IdGrupo),
                 Estados = Estados.Select(e => new SelectListItem { Value = e, Text = e, Selected = e == m.Estado }).ToList()
             };
+        }
+
+        private static void GuardarOpcionRifa(TblMatricula m, MatriculaFormViewModel? form)
+        {
+            m.Observaciones = EstadoCuentaCalculoHelper.AnotarAplicaRifa(
+                m.Observaciones,
+                form?.AplicaRifa1 ?? true,
+                form?.AplicaRifa2 ?? true);
         }
 
         private static List<SelectListItem> ToSelect(IEnumerable<(int Id, string Texto, bool Activo)>? src, int seleccionado)

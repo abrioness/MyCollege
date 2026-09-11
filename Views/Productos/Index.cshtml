@@ -82,11 +82,11 @@
 						<th>Stock Actual</th>
 						<th>Stock mínimo</th>
 						<th>Proveedor</th>
-						<th>Precio de compra</th>
 						<th>Precio de venta</th>
 						<th>Categoría</th>
 						<th>Importe de Inventario</th>
 						<th class="col-fecha">Fecha Registro</th>
+						<th>Precio de compra</th>
 						@if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
 						{
 							<th class="no-export">Acciones</th>
@@ -159,9 +159,6 @@
 							<td>@minimo</td>
 							<td>@(string.IsNullOrWhiteSpace(proveedor?.NombreProveedor) ? "—" : proveedor.NombreProveedor)</td>
 							<td>
-									C$ @itemProducto.CostoUnitario.ToString("N2")
-							</td>
-							<td>
 									C$ @itemProducto.PrecioParaVenta().ToString("N2")
 							</td>
 								
@@ -173,7 +170,7 @@
 								@itemCategoriaProducto?.NombreCategoria
 							</td>
 							
-							<td>
+							<td title="Stock actual × precio de compra">
 
 								C$ @((itemProducto.StockActual * itemProducto.CostoUnitario).ToString("N2"))
 
@@ -181,6 +178,9 @@
 							<td>
 								@itemProducto.FechaRegistro.ToString("dd/MM/yyyy")
 								</td>
+							<td>
+									C$ @itemProducto.CostoUnitario.ToString("N2")
+							</td>
 							@if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
 							{
 								<td>

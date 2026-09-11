@@ -22,23 +22,33 @@
 							<input type="date" name="fechafin" class="form-control form-control-sm"
 								   value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" />
 						</div>
-						<div class="col-md-3">
-							<label class="form-label">Recinto</label>
-							<select name="idRecinto" class="form-select form-select-sm">
-								<option value="">-- Todos --</option>
-								@foreach (var r in Model.Recintos)
-								{
-									@if (Model.IdRecintoFilter == r.IdRecinto)
-								{
-									<option value="@r.IdRecinto" selected>@r.Recinto</option>
-								}
-								else
-								{
-									<option value="@r.IdRecinto">@r.Recinto</option>
-								}
-								}
-							</select>
-						</div>
+						@if (Model.PuedeElegirRecinto)
+						{
+							<div class="col-md-3">
+								<label class="form-label">Recinto</label>
+								<select name="idRecinto" class="form-select form-select-sm">
+									<option value="">-- Todos --</option>
+									@foreach (var r in Model.Recintos)
+									{
+										@if (Model.IdRecintoFilter == r.IdRecinto)
+										{
+											<option value="@r.IdRecinto" selected>@r.Recinto</option>
+										}
+										else
+										{
+											<option value="@r.IdRecinto">@r.Recinto</option>
+										}
+									}
+								</select>
+							</div>
+						}
+						else if (Model.Recintos.Count == 1)
+						{
+							<div class="col-md-3">
+								<label class="form-label">Recinto</label>
+								<input class="form-control form-control-sm" value="@Model.Recintos[0].Recinto" readonly />
+							</div>
+						}
 						<div class="col-md-2">
 							<button type="submit" class="btn btn-success btn-sm w-100">
 								<i class="bi bi-funnel"></i> Filtrar

@@ -247,6 +247,8 @@ namespace WebColegio.Helpers
                     MontoRifaSemestre2 = montoRifa2,
                     AplicaRifaSemestre1 = evalRifa.AplicaRifa1,
                     AplicaRifaSemestre2 = evalRifa.AplicaRifa2,
+                    MotivoRifaSemestre1 = evalRifa.AplicaRifa1 ? null : evalRifa.MotivoNoAplica(1),
+                    MotivoRifaSemestre2 = evalRifa.AplicaRifa2 ? null : evalRifa.MotivoNoAplica(2),
                     AplicaPromocion = aplicaPromo,
                     PromocionPagada = promoPagada,
                     MontoPromocion = montoPromo,
@@ -334,6 +336,8 @@ namespace WebColegio.Helpers
                         MontoRifaSemestre2 = montoRifa2o,
                         AplicaRifaSemestre1 = evalRifaOrig.AplicaRifa1,
                         AplicaRifaSemestre2 = evalRifaOrig.AplicaRifa2,
+                        MotivoRifaSemestre1 = evalRifaOrig.AplicaRifa1 ? null : evalRifaOrig.MotivoNoAplica(1),
+                        MotivoRifaSemestre2 = evalRifaOrig.AplicaRifa2 ? null : evalRifaOrig.MotivoNoAplica(2),
                         AplicaPromocion = aplicaPromo,
                         PromocionPagada = aplicaPromo && montoPromoOrig > 0.01m,
                         MontoPromocion = montoPromoOrig,
@@ -717,6 +721,7 @@ namespace WebColegio.Helpers
 
         public const string MarcaAlumnoPagoCaja = "[ALUMNO:";
         public const string MarcaRifaSemestre = "[RIFA:";
+        public const string MarcaRifaAplica = "[RIFA_APLICA:";
 
         public static bool EsGradoConPromocion(string? nombreGrado)
         {
@@ -787,6 +792,7 @@ namespace WebColegio.Helpers
         {
             public bool AplicaRifa1 { get; init; } = true;
             public bool AplicaRifa2 { get; init; } = true;
+            public bool AplicaDefinidoEnMatricula { get; init; }
             public bool Rifa1Pagada { get; init; }
             public bool Rifa2Pagada { get; init; }
             public decimal MontoRifa1 { get; init; }
@@ -807,16 +813,32 @@ namespace WebColegio.Helpers
                 return 0;
             }
 
+            public string MotivoNoAplica(int semestre)
+            {
+                bool aplica = semestre == 2 ? AplicaRifa2 : AplicaRifa1;
+                if (aplica)
+                    return "";
+                if (AplicaDefinidoEnMatricula)
+                    return $"No aplica: en la matrícula se indicó que no debe pagar rifa {semestre}";
+                return $"No aplica: matrícula posterior a la generación de la rifa {semestre}";
+            }
+
             public string MensajeSinCobro()
             {
                 if (!AplicaRifa1 && !AplicaRifa2)
-                    return "No le corresponde rifa 1 ni rifa 2: se matriculó después de que se generaron.";
+                    return AplicaDefinidoEnMatricula
+                        ? "En la matrícula se indicó que no debe pagar rifa 1 ni rifa 2."
+                        : "No le corresponde rifa 1 ni rifa 2: se matriculó después de que se generaron.";
                 if (AplicaRifa1 && Rifa1Pagada && AplicaRifa2 && Rifa2Pagada)
                     return "Este alumno ya tiene pagadas las dos rifas del año (1.er y 2.º semestre).";
                 if (!AplicaRifa1 && AplicaRifa2 && Rifa2Pagada)
-                    return "La rifa 1 no aplica (matrícula posterior a su generación). La rifa 2 ya está pagada.";
+                    return AplicaDefinidoEnMatricula
+                        ? "La rifa 1 no aplica (indicado en la matrícula). La rifa 2 ya está pagada."
+                        : "La rifa 1 no aplica (matrícula posterior a su generación). La rifa 2 ya está pagada.";
                 if (AplicaRifa1 && Rifa1Pagada && !AplicaRifa2)
-                    return "La rifa 1 ya está pagada. La rifa 2 no aplica (matrícula posterior a su generación).";
+                    return AplicaDefinidoEnMatricula
+                        ? "La rifa 1 ya está pagada. La rifa 2 no aplica (indicado en la matrícula)."
+                        : "La rifa 1 ya está pagada. La rifa 2 no aplica (matrícula posterior a su generación).";
                 return "Este alumno ya tiene pagadas las rifas que le corresponden.";
             }
         }
@@ -884,8 +906,13 @@ namespace WebColegio.Helpers
                 ?? FechaIngresoCicloParaRifa(alumno, matricula, pagos, tiposMat, idPeriodo, anioPeriodo, idRecinto);
             var gen1 = cortes.FechaGeneracion(idPeriodo, idRecinto, 1);
             var gen2 = cortes.FechaGeneracion(idPeriodo, idRecinto, 2);
-            bool aplica1 = AplicaRifaSegunIngreso(ingreso, gen1);
-            bool aplica2 = AplicaRifaSegunIngreso(ingreso, gen2);
+            var marcaAplica = LeerAplicaRifa(matricula?.Observaciones, alumno?.Observaciones);
+            bool aplica1 = marcaAplica.TieneMarca
+                ? marcaAplica.Aplica1
+                : AplicaRifaSegunIngreso(ingreso, gen1);
+            bool aplica2 = marcaAplica.TieneMarca
+                ? marcaAplica.Aplica2
+                : AplicaRifaSegunIngreso(ingreso, gen2);
 
             var pagosAlum = (pagos ?? Array.Empty<TblPago>())
                 .Where(p => alumno != null
@@ -911,6 +938,7 @@ namespace WebColegio.Helpers
             {
                 AplicaRifa1 = aplica1,
                 AplicaRifa2 = aplica2,
+                AplicaDefinidoEnMatricula = marcaAplica.TieneMarca,
                 Rifa1Pagada = monto1 > 0.01m,
                 Rifa2Pagada = monto2 > 0.01m,
                 MontoRifa1 = monto1,
@@ -919,6 +947,55 @@ namespace WebColegio.Helpers
                 FechaGeneracionRifa1 = gen1,
                 FechaGeneracionRifa2 = gen2
             };
+        }
+
+        public static (bool TieneMarca, bool Aplica1, bool Aplica2) LeerAplicaRifa(params string?[] textos)
+        {
+            foreach (var texto in textos)
+            {
+                var leido = LeerAplicaRifaDeTexto(texto);
+                if (leido.TieneMarca)
+                    return leido;
+            }
+            return (false, true, true);
+        }
+
+        public static string QuitarMarcaAplicaRifa(string? observaciones)
+        {
+            if (string.IsNullOrWhiteSpace(observaciones))
+                return string.Empty;
+            return Regex.Replace(observaciones, @"\[RIFA_APLICA:[^\]]*\]\s*", "", RegexOptions.IgnoreCase).Trim();
+        }
+
+        public static string AnotarAplicaRifa(string? observaciones, bool aplica1, bool aplica2)
+        {
+            string valor = aplica1 && aplica2 ? "1,2"
+                : aplica1 ? "1"
+                : aplica2 ? "2"
+                : "no";
+            string marca = $"{MarcaRifaAplica}{valor}]";
+            var resto = QuitarMarcaAplicaRifa(observaciones);
+            var combined = string.IsNullOrWhiteSpace(resto) ? marca : marca + " " + resto;
+            const int max = 300;
+            if (combined.Length <= max)
+                return combined;
+            int maxResto = max - marca.Length - 1;
+            if (maxResto <= 0)
+                return marca.Length <= max ? marca : marca[..max];
+            return marca + " " + resto[..Math.Min(resto.Length, maxResto)];
+        }
+
+        private static (bool TieneMarca, bool Aplica1, bool Aplica2) LeerAplicaRifaDeTexto(string? observaciones)
+        {
+            if (string.IsNullOrWhiteSpace(observaciones))
+                return (false, true, true);
+            var match = Regex.Match(observaciones, @"\[RIFA_APLICA:([^\]]*)\]", RegexOptions.IgnoreCase);
+            if (!match.Success)
+                return (false, true, true);
+            var raw = match.Groups[1].Value.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(raw) || raw is "no" or "ninguna" or "ninguno" or "0")
+                return (true, false, false);
+            return (true, raw.Contains('1'), raw.Contains('2'));
         }
 
         public static DateTime? FechaIngresoCicloParaRifa(

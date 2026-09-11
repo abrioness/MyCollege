@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Error";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="alert alert-danger">
+        <h4 class="alert-heading">No se pudo completar la operación</h4>
+        <p class="mb-0">Intente de nuevo. Si el problema continúa, verifique que la API esté en ejecución y vuelva a iniciar sesión.</p>
+    </div>
+    <a class="btn btn-primary" href="@Url.Action("Login", "Login")">Volver al inicio</a>
+</div>
