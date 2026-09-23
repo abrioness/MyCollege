@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using WebColegio.Configuration;
+using WebColegio.Filters;
+using WebColegio.Helpers;
 using WebColegio.Services;
 
 namespace WebColegio
@@ -36,12 +38,29 @@ namespace WebColegio
 
             builder.Services.AddControllers();
             builder.Services.AddMemoryCache();
-            builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection(WhatsAppSettings.SectionName));
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection(EmailSettings.SectionName));
+            builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+            builder.Services.Configure<WhatsAppSettings>(options =>
+            {
+                builder.Configuration.GetSection(WhatsAppSettings.SectionName).Bind(options);
+                if (string.IsNullOrWhiteSpace(options.NumeroRemitente))
+                    options.NumeroRemitente = "84258684";
+                var token = Environment.GetEnvironmentVariable("WhatsApp__AccessToken");
+                var phoneId = Environment.GetEnvironmentVariable("WhatsApp__PhoneNumberId");
+                if (!string.IsNullOrWhiteSpace(token))
+                    options.AccessToken = token;
+                if (!string.IsNullOrWhiteSpace(phoneId))
+                    options.PhoneNumberId = phoneId;
+            });
             builder.Services.AddHttpClient("WhatsAppGraph");
             builder.Services.AddSingleton<WhatsAppCampanaStore>();
             builder.Services.AddScoped<IWhatsAppSender, WhatsAppCloudSender>();
             builder.Services.AddScoped<WhatsAppAvisoService>();
             builder.Services.AddHostedService<WhatsAppMensualHostedService>();
+            builder.Services.AddSingleton<EmailCampanaStore>();
+            builder.Services.AddSingleton<ArqueoDetalleLocalStore>();
+            builder.Services.AddScoped<EmailAvisoService>();
+            builder.Services.AddHostedService<EmailAvisoHostedService>();
             builder.Services.AddScoped<IServicesApi, ServicesApi>();
             builder.Services.AddScoped<IMenuPermisoService, MenuPermisoService>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -85,6 +104,7 @@ namespace WebColegio
             builder.Services.AddControllersWithViews(options =>
             {
                 options.Filters.Add(new AuthorizeFilter());
+                options.Filters.Add(new SanitizarMensajesUsuarioFilter());
             });
             builder.Services.AddHttpContextAccessor();
 
@@ -141,6 +161,7 @@ namespace WebColegio
             }
 
             var app = builder.Build();
+            MensajeUsuarioHelper.MostrarDetalleTecnico = app.Environment.IsDevelopment();
 
             if (!app.Environment.IsDevelopment())
             {

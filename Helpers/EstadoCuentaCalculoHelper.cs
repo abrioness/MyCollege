@@ -10,7 +10,9 @@ namespace WebColegio.Helpers
     {
         public const int TipoMensualidad = 1;
         public const int TipoMatricula = 2;
-        /// <summary>Catálogo: 18 = Abono de Matrícula. El 4 es Confirmación Matrícula (siguiente ciclo).</summary>
+        /// <summary>Catálogo: 4 = Confirmación / reserva. Si quedó en el mismo ciclo, abona esa matrícula.</summary>
+        public const int TipoConfirmacionMatricula = 4;
+        /// <summary>Catálogo: 18 = Abono de Matrícula. El 4 es Confirmación Matrícula.</summary>
         public const int TipoMatriculaAbono = 18;
         public const int TipoRifa = 10;
 
@@ -66,6 +68,10 @@ namespace WebColegio.Helpers
             }
             var cortesRifa = ConstruirCortesGeneracionRifa(
                 pagos, pagosCaja, tiposRifa, tiposMovimiento);
+            var tarifasRifa = ConstruirTarifasConcepto(RecopilarMontosConcepto(
+                pagos, pagosCaja, tiposRifa, tiposMovimiento, esRifa: true));
+            var tarifasPromo = ConstruirTarifasConcepto(RecopilarMontosConcepto(
+                pagos, pagosCaja, tiposPromo, tiposMovimiento, esRifa: false));
             var filas = new List<EstadoCuentaFilaAlumno>();
             var matsPorAlumno = (matriculas ?? Array.Empty<TblMatricula>())
                 .Where(m => m.Activo)
@@ -84,6 +90,8 @@ namespace WebColegio.Helpers
                 int idPeriodoFila = ciclo.IdPeriodo;
                 int anioFila = ciclo.Anio;
                 var matriculaAlum = ciclo.Matricula;
+                bool esRetiradoOInactivo = EsAlumnoRetiradoOInactivo(alumno, matriculaAlum);
+                string? etiquetaEstadoAlumno = EtiquetaEstadoAlumno(alumno, matriculaAlum);
 
                 int? idG = matriculaAlum is { IdGrado: > 0 } ? matriculaAlum.IdGrado : alumno.IdGrado;
                 int? idR = matriculaAlum is { IdRecinto: > 0 } ? matriculaAlum.IdRecinto : alumno.IdRecinto;
@@ -97,6 +105,9 @@ namespace WebColegio.Helpers
                         NombreCompleto = $"{alumno.Nombre} {alumno.Apellido}".Trim(),
                         AnioPeriodo = anioFila,
                         DatosIncompletos = true,
+                        EsRetiradoOInactivo = esRetiradoOInactivo,
+                        EtiquetaEstadoAlumno = etiquetaEstadoAlumno,
+                        NoAplicaMatricula = esRetiradoOInactivo,
                         MotivoIncompleto = "Falta grado, recinto o modalidad en la matrícula del ciclo o en la ficha."
                     });
                     continue;
@@ -108,14 +119,16 @@ namespace WebColegio.Helpers
                     && (matriculaAlum?.MediaBeca == true || alumno.MediaBeca == true)
                     && (alumno.IdPeriodo == idPeriodoFila || matriculaAlum != null);
 
-                var costoMen = ResolverFilaCostoMensualidad(costosMen, idR, idG.Value, idPeriodoFila, idMod);
+                var costoMen = ResolverFilaCostoMensualidad(costosMen, idR, idG.Value, idPeriodoFila, idMod, grados);
                 decimal montoMensual = costoMen != null ? (decimal)costoMen.CostoMensualidad : 0m;
                 if (becaCompleta)
                     montoMensual = 0m;
                 else if (mediaBeca && montoMensual > 0)
                     montoMensual *= 0.5m;
 
-                var costoMat = ResolverFilaCostoMatricula(costosMat, idR, idPeriodoFila, idMod);
+                var costoMat = esRetiradoOInactivo
+                    ? null
+                    : ResolverFilaCostoMatricula(costosMat, idR, idPeriodoFila, idMod);
                 decimal montoMat = costoMat != null ? (decimal)costoMat.CostoMatricula : 0m;
 
                 var pagosAlum = pagos
@@ -139,14 +152,15 @@ namespace WebColegio.Helpers
                     .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == 1)
                     .Sum(p => p.Monto);
                 decimal montoMatNeta = MatriculaNetaDesdePaquete(montoMat, montoMensual);
+                pagadoMatBruto += AcreditarReservaSiguienteSiMatriculaPendiente(
+                    pagos, alumno.IdAlumno, idPeriodoFila, anioFila, periodos,
+                    TiposPagoConfirmacion(tiposMovimiento), pagadoMatBruto, montoMatNeta, idR);
                 var (pagadoMat, pagadoEneroConMatricula) = DistribuirPagoMatriculaYEnero(
                     montoMat, pagadoMatBruto, pagadoEneroBruto, montoMensual);
 
                 bool esTraslado = TrasladoHelper.EsTraslado(matriculaAlum, alumno);
-                int? mesIngreso = esTraslado
-                    ? TrasladoHelper.LeerMesIngreso(matriculaAlum?.Observaciones)
-                      ?? TrasladoHelper.LeerMesIngreso(alumno.Observaciones)
-                    : null;
+                int? mesIngreso = ResolverMesInicioMensualidad(
+                    matriculaAlum, alumno, pagos, tiposMatriculaPago, idPeriodoFila, idR);
                 int? idRecintoOrigen = esTraslado
                     ? TrasladoHelper.LeerRecintoOrigen(matriculaAlum?.Observaciones)
                       ?? TrasladoHelper.LeerRecintoOrigen(alumno.Observaciones)
@@ -165,6 +179,10 @@ namespace WebColegio.Helpers
 
                 decimal pagadoMatDestino = pagos.Where(p =>
                     PagoEsMatriculaOAbono(p) && PerteneceRecintoPago(p, idR.Value, idRecintoOrigen, mesIngreso, fechaTraslado, false)).Sum(p => p.Monto);
+                decimal reservaSiguiente = AcreditarReservaSiguienteSiMatriculaPendiente(
+                    pagos, alumno.IdAlumno, idPeriodoFila, anioFila, periodos,
+                    TiposPagoConfirmacion(tiposMovimiento), pagadoMatDestino, montoMatNeta, idR);
+                pagadoMatDestino += reservaSiguiente;
                 decimal pagadoEneroDestino = pagosDestino
                     .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == 1)
                     .Sum(p => p.Monto);
@@ -176,7 +194,16 @@ namespace WebColegio.Helpers
                 var estadoMat = CalcularEstadoMatricula(montoMat, montoMensual, pagadoMat, pagadoEneroConMatricula);
                 bool matCancelada = estadoMat.Cancelada;
                 decimal saldoMat = matCancelada ? 0m : estadoMat.SaldoPendiente;
-                bool tieneAbonoMat = !matCancelada && pagosDestino.Any(p => tiposMatriculaPago.Contains(p.IdTipoMovimiento));
+                bool tieneAbonoMat = !matCancelada
+                    && (pagosDestino.Any(p => tiposMatriculaPago.Contains(p.IdTipoMovimiento))
+                        || reservaSiguiente > 0.01m);
+                if (esRetiradoOInactivo)
+                {
+                    montoMatNeta = 0m;
+                    matCancelada = false;
+                    saldoMat = 0m;
+                    tieneAbonoMat = false;
+                }
 
                     var meses = ConstruirMesesRecinto(
                     pagosDestino, tiposMes, pagadoEneroConMatricula, montoMensual, nombresMes,
@@ -201,10 +228,11 @@ namespace WebColegio.Helpers
                     idR,
                     cortesRifa,
                     fechaTraslado);
-                bool rifaS1 = evalRifa.Rifa1Pagada;
-                bool rifaS2 = evalRifa.Rifa2Pagada;
                 decimal montoRifa1 = evalRifa.MontoRifa1;
                 decimal montoRifa2 = evalRifa.MontoRifa2;
+                decimal tarifaRifa = ResolverTarifaConcepto(tarifasRifa, idPeriodoFila, idR);
+                var saldoRifa1 = EvaluarSaldoConcepto(evalRifa.AplicaRifa1, tarifaRifa, montoRifa1);
+                var saldoRifa2 = EvaluarSaldoConcepto(evalRifa.AplicaRifa2, tarifaRifa, montoRifa2);
                 decimal montoPromo = 0m;
                 if (aplicaPromo)
                 {
@@ -212,7 +240,10 @@ namespace WebColegio.Helpers
                         montoPromo += pagosAlum.Where(p => tiposPromo.Contains(p.IdTipoMovimiento)).Sum(p => p.Monto);
                     montoPromo += cajaAlum.Where(c => EsReciboPromocion(c, tiposPromo, tiposMovimiento)).Sum(c => c.Monto);
                 }
-                bool promoPagada = aplicaPromo && montoPromo > 0.01m;
+                decimal tarifaPromo = TarifaPromocionPorGrado(nombreGradoFila);
+                if (tarifaPromo <= 0.01m)
+                    tarifaPromo = ResolverTarifaConcepto(tarifasPromo, idPeriodoFila, idR);
+                var saldoPromo = EvaluarSaldoConcepto(aplicaPromo, tarifaPromo, montoPromo);
 
                 string estadoPagoMensualidad = EstadoCuentaSolvenciaHelper.EvaluarEstadoPagoMensualidad(meses);
                 var mesesPendientesSolvencia = EstadoCuentaSolvenciaHelper.ObtenerMesesPendientes(meses);
@@ -224,6 +255,35 @@ namespace WebColegio.Helpers
                     ? nombresMes[ultimoMesPagado.Value - 1]
                     : null;
 
+                bool aplicaRifa1 = evalRifa.AplicaRifa1;
+                bool aplicaRifa2 = evalRifa.AplicaRifa2;
+                if (esRetiradoOInactivo)
+                {
+                    montoMensual = 0m;
+                    montoMatNeta = 0m;
+                    pagadoMat = 0m;
+                    saldoMat = 0m;
+                    matCancelada = false;
+                    tieneAbonoMat = false;
+                    meses = MesesSinCobro(nombresMes);
+                    totalSaldoMeses = 0m;
+                    aplicaPromo = false;
+                    aplicaRifa1 = false;
+                    aplicaRifa2 = false;
+                    tarifaRifa = 0m;
+                    tarifaPromo = 0m;
+                    montoRifa1 = 0m;
+                    montoRifa2 = 0m;
+                    montoPromo = 0m;
+                    saldoRifa1 = default;
+                    saldoRifa2 = default;
+                    saldoPromo = default;
+                    estadoPagoMensualidad = null;
+                    textoMesesPendientes = null;
+                    ultimoMesPagado = null;
+                    nombreUltimoMesPagado = null;
+                }
+
                 filas.Add(new EstadoCuentaFilaAlumno
                 {
                     IdAlumno = alumno.IdAlumno,
@@ -234,29 +294,41 @@ namespace WebColegio.Helpers
                     EsHistorialTraslado = false,
                     EtiquetaRecinto = idRecintoOrigen is > 0 ? "Actual" : null,
                     AnioPeriodo = anioFila,
+                    EsRetiradoOInactivo = esRetiradoOInactivo,
+                    EtiquetaEstadoAlumno = etiquetaEstadoAlumno,
+                    NoAplicaMatricula = esRetiradoOInactivo,
                     MensualidadReferencia = montoMensual,
                     MatriculaReferencia = montoMatNeta,
                     TotalPagadoMatricula = pagadoMat,
                     SaldoMatricula = saldoMat,
                     MatriculaCancelada = matCancelada,
                     TieneAbonoMatricula = tieneAbonoMat,
-                    RifaPagada = evalRifa.RifasCubiertas,
-                    RifaSemestre1Pagada = rifaS1,
-                    RifaSemestre2Pagada = rifaS2,
+                    RifaPagada = (!aplicaRifa1 || saldoRifa1.Cancelado)
+                        && (!aplicaRifa2 || saldoRifa2.Cancelado),
+                    RifaSemestre1Pagada = saldoRifa1.Cancelado,
+                    RifaSemestre2Pagada = saldoRifa2.Cancelado,
                     MontoRifaSemestre1 = montoRifa1,
                     MontoRifaSemestre2 = montoRifa2,
-                    AplicaRifaSemestre1 = evalRifa.AplicaRifa1,
-                    AplicaRifaSemestre2 = evalRifa.AplicaRifa2,
-                    MotivoRifaSemestre1 = evalRifa.AplicaRifa1 ? null : evalRifa.MotivoNoAplica(1),
-                    MotivoRifaSemestre2 = evalRifa.AplicaRifa2 ? null : evalRifa.MotivoNoAplica(2),
+                    RifaReferencia = tarifaRifa,
+                    SaldoRifaSemestre1 = saldoRifa1.Saldo,
+                    SaldoRifaSemestre2 = saldoRifa2.Saldo,
+                    TieneAbonoRifaSemestre1 = saldoRifa1.AbonoParcial,
+                    TieneAbonoRifaSemestre2 = saldoRifa2.AbonoParcial,
+                    AplicaRifaSemestre1 = aplicaRifa1,
+                    AplicaRifaSemestre2 = aplicaRifa2,
+                    MotivoRifaSemestre1 = aplicaRifa1 ? null : (esRetiradoOInactivo ? "Retirado o bloqueado: no se generan cobros" : evalRifa.MotivoNoAplica(1)),
+                    MotivoRifaSemestre2 = aplicaRifa2 ? null : (esRetiradoOInactivo ? "Retirado o bloqueado: no se generan cobros" : evalRifa.MotivoNoAplica(2)),
                     AplicaPromocion = aplicaPromo,
-                    PromocionPagada = promoPagada,
+                    PromocionPagada = saldoPromo.Cancelado,
+                    PromocionReferencia = saldoPromo.Esperado,
                     MontoPromocion = montoPromo,
+                    SaldoPromocion = saldoPromo.Saldo,
+                    TieneAbonoPromocion = saldoPromo.AbonoParcial,
                     Meses = meses,
                     TotalSaldoMensualidades = totalSaldoMeses,
-                    GranTotalPendiente = saldoMat + totalSaldoMeses,
+                    GranTotalPendiente = esRetiradoOInactivo ? 0m : saldoMat + totalSaldoMeses + saldoRifa1.Saldo + saldoRifa2.Saldo + saldoPromo.Saldo,
                     IdPagoParaEnlace = ultimoPago?.IdPago,
-                    SinTarifaMensualidad = costoMen == null && !becaCompleta && !mediaBeca,
+                    SinTarifaMensualidad = !esRetiradoOInactivo && costoMen == null && !becaCompleta && !mediaBeca,
                     EstadoPagoMensualidad = estadoPagoMensualidad,
                     MesMensualidadRequerido = mesMensualidadRequerido,
                     NombreMesMensualidadRequerido = nombreMesRequerido,
@@ -267,13 +339,15 @@ namespace WebColegio.Helpers
 
                 if (idRecintoOrigen is > 0)
                 {
-                    var costoMenOrig = ResolverFilaCostoMensualidad(costosMen, idRecintoOrigen, idG.Value, idPeriodoFila, idMod);
+                    var costoMenOrig = ResolverFilaCostoMensualidad(costosMen, idRecintoOrigen, idG.Value, idPeriodoFila, idMod, grados);
                     decimal montoMensualOrig = costoMenOrig != null ? (decimal)costoMenOrig.CostoMensualidad : 0m;
                     if (becaCompleta)
                         montoMensualOrig = 0m;
                     else if (mediaBeca && montoMensualOrig > 0)
                         montoMensualOrig *= 0.5m;
-                    var costoMatOrig = ResolverFilaCostoMatricula(costosMat, idRecintoOrigen, idPeriodoFila, idMod);
+                    var costoMatOrig = esRetiradoOInactivo
+                        ? null
+                        : ResolverFilaCostoMatricula(costosMat, idRecintoOrigen, idPeriodoFila, idMod);
                     decimal montoMatOrig = costoMatOrig != null ? (decimal)costoMatOrig.CostoMatricula : 0m;
                     decimal pagadoMatOrigBruto = pagos.Where(p =>
                         PagoEsMatriculaOAbono(p)
@@ -282,6 +356,9 @@ namespace WebColegio.Helpers
                         .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == 1)
                         .Sum(p => p.Monto);
                     decimal montoMatNetaOrig = MatriculaNetaDesdePaquete(montoMatOrig, montoMensualOrig);
+                    pagadoMatOrigBruto += AcreditarReservaSiguienteSiMatriculaPendiente(
+                        pagos, alumno.IdAlumno, idPeriodoFila, anioFila, periodos,
+                        TiposPagoConfirmacion(tiposMovimiento), pagadoMatOrigBruto, montoMatNetaOrig, idRecintoOrigen);
                     var (pagadoMatOrig, pagadoEneroOrig) = DistribuirPagoMatriculaYEnero(
                         montoMatOrig, pagadoMatOrigBruto, pagadoEneroOrigBruto, montoMensualOrig);
                     var estadoMatOrig = CalcularEstadoMatricula(montoMatOrig, montoMensualOrig, pagadoMatOrig, pagadoEneroOrig);
@@ -305,13 +382,39 @@ namespace WebColegio.Helpers
                         idRecintoOrigen,
                         cortesRifa,
                         fechaIngresoOverride: null);
-                    bool rifaS1o = evalRifaOrig.Rifa1Pagada;
-                    bool rifaS2o = evalRifaOrig.Rifa2Pagada;
                     decimal montoRifa1o = evalRifaOrig.MontoRifa1;
                     decimal montoRifa2o = evalRifaOrig.MontoRifa2;
+                    decimal tarifaRifaOrig = ResolverTarifaConcepto(tarifasRifa, idPeriodoFila, idRecintoOrigen);
+                    var saldoRifa1o = EvaluarSaldoConcepto(evalRifaOrig.AplicaRifa1, tarifaRifaOrig, montoRifa1o);
+                    var saldoRifa2o = EvaluarSaldoConcepto(evalRifaOrig.AplicaRifa2, tarifaRifaOrig, montoRifa2o);
                     decimal montoPromoOrig = 0m;
                     if (aplicaPromo && tiposPromo.Count > 0)
                         montoPromoOrig = pagosOrigen.Where(p => tiposPromo.Contains(p.IdTipoMovimiento)).Sum(p => p.Monto);
+                    decimal tarifaPromoOrig = TarifaPromocionPorGrado(nombreGradoFila);
+                    if (tarifaPromoOrig <= 0.01m)
+                        tarifaPromoOrig = ResolverTarifaConcepto(tarifasPromo, idPeriodoFila, idRecintoOrigen);
+                    var saldoPromoOrig = EvaluarSaldoConcepto(aplicaPromo, tarifaPromoOrig, montoPromoOrig);
+                    decimal saldoMatOrig = esRetiradoOInactivo || estadoMatOrig.Cancelada ? 0m : estadoMatOrig.SaldoPendiente;
+                    decimal montoMatNetaOrigMostrar = esRetiradoOInactivo ? 0m : montoMatNetaOrig;
+                    if (esRetiradoOInactivo)
+                    {
+                        montoMensualOrig = 0m;
+                        mesesOrig = MesesSinCobro(nombresMes);
+                        totalSaldoOrig = 0m;
+                        saldoMatOrig = 0m;
+                        montoMatNetaOrigMostrar = 0m;
+                        saldoRifa1o = default;
+                        saldoRifa2o = default;
+                        saldoPromoOrig = default;
+                        tarifaRifaOrig = 0m;
+                        tarifaPromoOrig = 0m;
+                        montoRifa1o = 0m;
+                        montoRifa2o = 0m;
+                        montoPromoOrig = 0m;
+                        estadoOrig = string.Empty;
+                        pendOrig = new List<string>();
+                        ultimoOrig = null;
+                    }
 
                     filas.Add(new EstadoCuentaFilaAlumno
                     {
@@ -323,29 +426,42 @@ namespace WebColegio.Helpers
                         EsHistorialTraslado = true,
                         EtiquetaRecinto = "Historial",
                         AnioPeriodo = anioFila,
+                        EsRetiradoOInactivo = esRetiradoOInactivo,
+                        EtiquetaEstadoAlumno = etiquetaEstadoAlumno,
+                        NoAplicaMatricula = esRetiradoOInactivo,
                         MensualidadReferencia = montoMensualOrig,
-                        MatriculaReferencia = montoMatNetaOrig,
-                        TotalPagadoMatricula = pagadoMatOrig,
-                        SaldoMatricula = estadoMatOrig.Cancelada ? 0m : estadoMatOrig.SaldoPendiente,
-                        MatriculaCancelada = estadoMatOrig.Cancelada,
-                        TieneAbonoMatricula = !estadoMatOrig.Cancelada && pagadoMatOrig > 0.01m,
-                        RifaPagada = evalRifaOrig.RifasCubiertas,
-                        RifaSemestre1Pagada = rifaS1o,
-                        RifaSemestre2Pagada = rifaS2o,
+                        MatriculaReferencia = montoMatNetaOrigMostrar,
+                        TotalPagadoMatricula = esRetiradoOInactivo ? 0m : pagadoMatOrig,
+                        SaldoMatricula = saldoMatOrig,
+                        MatriculaCancelada = !esRetiradoOInactivo && estadoMatOrig.Cancelada,
+                        TieneAbonoMatricula = !esRetiradoOInactivo && !estadoMatOrig.Cancelada && pagadoMatOrig > 0.01m,
+                        RifaPagada = !esRetiradoOInactivo
+                            && (!evalRifaOrig.AplicaRifa1 || saldoRifa1o.Cancelado)
+                            && (!evalRifaOrig.AplicaRifa2 || saldoRifa2o.Cancelado),
+                        RifaSemestre1Pagada = !esRetiradoOInactivo && saldoRifa1o.Cancelado,
+                        RifaSemestre2Pagada = !esRetiradoOInactivo && saldoRifa2o.Cancelado,
                         MontoRifaSemestre1 = montoRifa1o,
                         MontoRifaSemestre2 = montoRifa2o,
-                        AplicaRifaSemestre1 = evalRifaOrig.AplicaRifa1,
-                        AplicaRifaSemestre2 = evalRifaOrig.AplicaRifa2,
-                        MotivoRifaSemestre1 = evalRifaOrig.AplicaRifa1 ? null : evalRifaOrig.MotivoNoAplica(1),
-                        MotivoRifaSemestre2 = evalRifaOrig.AplicaRifa2 ? null : evalRifaOrig.MotivoNoAplica(2),
-                        AplicaPromocion = aplicaPromo,
-                        PromocionPagada = aplicaPromo && montoPromoOrig > 0.01m,
+                        RifaReferencia = tarifaRifaOrig,
+                        SaldoRifaSemestre1 = saldoRifa1o.Saldo,
+                        SaldoRifaSemestre2 = saldoRifa2o.Saldo,
+                        TieneAbonoRifaSemestre1 = saldoRifa1o.AbonoParcial,
+                        TieneAbonoRifaSemestre2 = saldoRifa2o.AbonoParcial,
+                        AplicaRifaSemestre1 = !esRetiradoOInactivo && evalRifaOrig.AplicaRifa1,
+                        AplicaRifaSemestre2 = !esRetiradoOInactivo && evalRifaOrig.AplicaRifa2,
+                        MotivoRifaSemestre1 = esRetiradoOInactivo ? "Retirado o bloqueado: no se generan cobros" : (evalRifaOrig.AplicaRifa1 ? null : evalRifaOrig.MotivoNoAplica(1)),
+                        MotivoRifaSemestre2 = esRetiradoOInactivo ? "Retirado o bloqueado: no se generan cobros" : (evalRifaOrig.AplicaRifa2 ? null : evalRifaOrig.MotivoNoAplica(2)),
+                        AplicaPromocion = !esRetiradoOInactivo && aplicaPromo,
+                        PromocionPagada = !esRetiradoOInactivo && saldoPromoOrig.Cancelado,
+                        PromocionReferencia = saldoPromoOrig.Esperado,
                         MontoPromocion = montoPromoOrig,
+                        SaldoPromocion = saldoPromoOrig.Saldo,
+                        TieneAbonoPromocion = saldoPromoOrig.AbonoParcial,
                         Meses = mesesOrig,
                         TotalSaldoMensualidades = totalSaldoOrig,
-                        GranTotalPendiente = (estadoMatOrig.Cancelada ? 0m : estadoMatOrig.SaldoPendiente) + totalSaldoOrig,
+                        GranTotalPendiente = esRetiradoOInactivo ? 0m : saldoMatOrig + totalSaldoOrig + saldoRifa1o.Saldo + saldoRifa2o.Saldo + saldoPromoOrig.Saldo,
                         IdPagoParaEnlace = pagosOrigen.OrderByDescending(p => p.IdPago).FirstOrDefault()?.IdPago,
-                        SinTarifaMensualidad = costoMenOrig == null && !becaCompleta && !mediaBeca,
+                        SinTarifaMensualidad = !esRetiradoOInactivo && costoMenOrig == null && !becaCompleta && !mediaBeca,
                         EstadoPagoMensualidad = estadoOrig,
                         MesMensualidadRequerido = mesMensualidadRequerido,
                         NombreMesMensualidadRequerido = nombreMesRequerido,
@@ -357,6 +473,75 @@ namespace WebColegio.Helpers
             }
 
             return filas;
+        }
+
+        /// <summary>
+        /// Primer mes que se cobra de mensualidad. Traslado: mes de ingreso al destino.
+        /// Matrícula tardía (feb–sep): el mes de la ficha o del primer pago de matrícula.
+        /// Oct–dic o continuidad: el ciclo completo desde enero.
+        /// </summary>
+        public static int? ResolverMesInicioMensualidad(
+            TblMatricula? matricula,
+            TblAlumno? alumno,
+            IEnumerable<TblPago>? pagos = null,
+            IReadOnlyCollection<int>? tiposMatricula = null,
+            int idPeriodo = 0,
+            int? idRecinto = null)
+        {
+            if (TrasladoHelper.EsTraslado(matricula, alumno))
+            {
+                var mesTraslado = TrasladoHelper.ResolverMesIngreso(matricula, alumno);
+                if (mesTraslado is >= 1 and <= 12)
+                    return mesTraslado;
+            }
+
+            if (matricula?.Continuidad == true || EsTipoContinuidad(matricula?.TipoEstudiante) || EsTipoContinuidad(alumno?.TipoEstudiante))
+                return null;
+
+            if (matricula?.FechaMatricula is { Year: > 2000 } fechaAcad)
+            {
+                if (fechaAcad.Month >= 10)
+                    return null;
+                if (fechaAcad.Month >= 2)
+                    return fechaAcad.Month;
+            }
+
+            if (pagos != null && tiposMatricula is { Count: > 0 } && alumno != null)
+            {
+                var pagoMat = pagos
+                    .Where(p => p.Activo
+                        && p.IdAlumno == alumno.IdAlumno
+                        && tiposMatricula.Contains(p.IdTipoMovimiento)
+                        && (idPeriodo <= 0 || p.IdPeriodo == idPeriodo)
+                        && EsPagoDelRecinto(p, idRecinto))
+                    .OrderBy(p => p.FechaEmision ?? p.FechaRegistro)
+                    .ThenBy(p => p.IdPago)
+                    .FirstOrDefault();
+                if (pagoMat != null)
+                {
+                    if (pagoMat.Continuidad)
+                        return null;
+                    var mesPago = (pagoMat.FechaEmision ?? pagoMat.FechaRegistro).Month;
+                    if (mesPago >= 10)
+                        return null;
+                    if (mesPago >= 2)
+                        return mesPago;
+                }
+            }
+
+            if (matricula?.FechaRegistro is { Year: > 2000 } fechaReg
+                && fechaReg.Month is >= 2 and <= 9)
+                return fechaReg.Month;
+
+            return null;
+        }
+
+        private static bool EsTipoContinuidad(string? tipoEstudiante)
+        {
+            if (string.IsNullOrWhiteSpace(tipoEstudiante))
+                return false;
+            var t = tipoEstudiante.Trim().ToLowerInvariant();
+            return t.Contains("continuidad") || t.Contains("reintegro") || t.Contains("reingreso");
         }
 
         /// <summary>
@@ -429,8 +614,8 @@ namespace WebColegio.Helpers
                     .Where(p => tiposMes.Contains(p.IdTipoMovimiento) && p.IdMes == m)
                     .ToList();
                 decimal pagadoMes = m == 1 ? pagadoEneroDistribuido : pagosMes.Sum(p => p.Monto);
-                // Mes anterior al ingreso (destino) o posterior (historial) no se cobra,
-                // salvo que ese colegio ya lo haya registrado: entonces se muestra cancelado.
+                // Mes anterior al ingreso (traslado o matrícula tardía) o posterior (historial)
+                // no se cobra, salvo que ese colegio ya lo haya registrado.
                 bool noCorresponde = mesIngreso is >= 1 and <= 12
                     && (esHistorial ? m >= mesIngreso.Value : m < mesIngreso.Value)
                     && pagadoMes <= 0.01m;
@@ -447,6 +632,21 @@ namespace WebColegio.Helpers
                     Cancelado = cancelado,
                     TieneAbonoParcial = !noCorresponde && !cancelado && pagadoMes > 0.01m,
                     NoCorresponde = noCorresponde
+                };
+            }
+            return meses;
+        }
+
+        private static EstadoCuentaMesCelda[] MesesSinCobro(string[] nombresMes)
+        {
+            var meses = new EstadoCuentaMesCelda[12];
+            for (int m = 1; m <= 12; m++)
+            {
+                meses[m - 1] = new EstadoCuentaMesCelda
+                {
+                    Mes = m,
+                    NombreMes = nombresMes[m - 1],
+                    NoCorresponde = true
                 };
             }
             return meses;
@@ -498,21 +698,242 @@ namespace WebColegio.Helpers
             return (idPeriodoFallback, anioFallback, null);
         }
 
+        public static List<TblAlumno> AlumnosParaEstadoCuenta(
+            IEnumerable<TblAlumno>? alumnos,
+            IEnumerable<TblMatricula>? matriculas,
+            int idPeriodoRef)
+        {
+            var lista = alumnos?.ToList() ?? new List<TblAlumno>();
+            var idsCiclo = new HashSet<int>(
+                (matriculas ?? Array.Empty<TblMatricula>())
+                    .Where(m => m.Activo && (idPeriodoRef <= 0 || m.IdPeriodo == idPeriodoRef))
+                    .Select(m => m.IdAlumno));
+
+            return lista.Where(a =>
+            {
+                bool delCiclo = a.IdPeriodo == idPeriodoRef || idsCiclo.Contains(a.IdAlumno);
+                if (a.Activo != false)
+                    return true;
+                return delCiclo;
+            }).ToList();
+        }
+
+        public static bool EsAlumnoRetiradoOInactivo(TblAlumno? alumno, TblMatricula? matricula)
+        {
+            if (alumno?.Activo == false)
+                return true;
+            if (EsMarcaRetiradoOInactivo(alumno?.TipoEstudiante)
+                || EsMarcaRetiradoOInactivo(matricula?.TipoEstudiante))
+                return true;
+            return string.Equals(matricula?.Estado, TblMatricula.EstadoRetirado, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static string? EtiquetaEstadoAlumno(TblAlumno? alumno, TblMatricula? matricula)
+        {
+            bool retirado = EsMarcaRetirado(alumno?.TipoEstudiante)
+                || EsMarcaRetirado(matricula?.TipoEstudiante)
+                || string.Equals(matricula?.Estado, TblMatricula.EstadoRetirado, StringComparison.OrdinalIgnoreCase);
+            if (retirado)
+                return "Retirado";
+            if (alumno?.Activo == false)
+                return "Bloqueado";
+            return null;
+        }
+
+        private static bool EsMarcaRetirado(string? texto)
+        {
+            var n = NormalizarNombrePersona(texto);
+            return n.Contains("retirado");
+        }
+
+        private static bool EsMarcaRetiradoOInactivo(string? texto)
+        {
+            var n = NormalizarNombrePersona(texto);
+            return n.Contains("retirado") || n.Contains("inactivo") || n.Contains("anulado");
+        }
+
+        private readonly struct SaldoConcepto
+        {
+            public decimal Esperado { get; init; }
+            public decimal Saldo { get; init; }
+            public bool Cancelado { get; init; }
+            public bool AbonoParcial { get; init; }
+        }
+
+        private static SaldoConcepto EvaluarSaldoConcepto(bool aplica, decimal tarifa, decimal pagado)
+        {
+            if (!aplica)
+                return default;
+            decimal esperado = tarifa > 0.01m ? tarifa : (pagado > 0.01m ? pagado : 0m);
+            if (esperado <= 0.01m)
+                return default;
+            decimal saldo = Math.Max(0m, esperado - pagado);
+            bool cancelado = saldo <= 0.01m;
+            return new SaldoConcepto
+            {
+                Esperado = esperado,
+                Saldo = cancelado ? 0m : saldo,
+                Cancelado = cancelado,
+                AbonoParcial = !cancelado && pagado > 0.01m
+            };
+        }
+
+        private static IEnumerable<(int Periodo, int Recinto, decimal Monto)> RecopilarMontosConcepto(
+            IReadOnlyList<TblPago> pagos,
+            IReadOnlyList<TblPagoCaja>? pagosCaja,
+            HashSet<int> tipos,
+            IReadOnlyList<CatTipoMovimiento>? tiposMovimiento,
+            bool esRifa)
+        {
+            foreach (var p in pagos ?? Array.Empty<TblPago>())
+            {
+                if (!p.Activo || tipos.Count == 0 || !tipos.Contains(p.IdTipoMovimiento))
+                    continue;
+                yield return (p.IdPeriodo, p.IdRecinto ?? 0, p.Monto);
+            }
+
+            foreach (var c in pagosCaja ?? Array.Empty<TblPagoCaja>())
+            {
+                if (!c.Activo)
+                    continue;
+                bool coincide = esRifa
+                    ? EsReciboRifa(c, tipos, tiposMovimiento)
+                    : EsReciboPromocion(c, tipos, tiposMovimiento);
+                if (!coincide)
+                    continue;
+                yield return (c.IdPeriodo, c.IdRecinto ?? 0, c.Monto);
+            }
+        }
+
+        private static Dictionary<(int Periodo, int Recinto), decimal> ConstruirTarifasConcepto(
+            IEnumerable<(int Periodo, int Recinto, decimal Monto)> lineas)
+        {
+            var dict = new Dictionary<(int Periodo, int Recinto), decimal>();
+            var lista = lineas?.Where(x => x.Monto > 0.01m && x.Periodo > 0).ToList()
+                ?? new List<(int Periodo, int Recinto, decimal Monto)>();
+            foreach (var g in lista.GroupBy(x => (x.Periodo, Recinto: x.Recinto > 0 ? x.Recinto : 0)))
+                dict[g.Key] = MontoMasFrecuente(g.Select(x => x.Monto));
+            foreach (var g in lista.GroupBy(x => x.Periodo))
+            {
+                var key = (g.Key, 0);
+                if (!dict.ContainsKey(key))
+                    dict[key] = MontoMasFrecuente(g.Select(x => x.Monto));
+            }
+            return dict;
+        }
+
+        private static decimal ResolverTarifaConcepto(
+            IReadOnlyDictionary<(int Periodo, int Recinto), decimal> tarifas,
+            int idPeriodo,
+            int? idRecinto)
+        {
+            if (tarifas == null || tarifas.Count == 0)
+                return 0m;
+            if (idRecinto is > 0
+                && tarifas.TryGetValue((idPeriodo, idRecinto.Value), out var porRecinto)
+                && porRecinto > 0.01m)
+                return porRecinto;
+            if (tarifas.TryGetValue((idPeriodo, 0), out var porPeriodo) && porPeriodo > 0.01m)
+                return porPeriodo;
+            var delPeriodo = tarifas.FirstOrDefault(kv => kv.Key.Periodo == idPeriodo && kv.Value > 0.01m).Value;
+            if (delPeriodo > 0.01m)
+                return delPeriodo;
+            return tarifas.Values.FirstOrDefault(v => v > 0.01m);
+        }
+
+        private static decimal MontoMasFrecuente(IEnumerable<decimal> montos)
+        {
+            var positivos = montos
+                .Where(m => m > 0.01m)
+                .Select(m => decimal.Round(m, 2))
+                .ToList();
+            if (positivos.Count == 0)
+                return 0m;
+            return positivos
+                .GroupBy(x => x)
+                .OrderByDescending(g => g.Count())
+                .ThenByDescending(g => g.Key)
+                .First().Key;
+        }
+
+        public static bool EsConceptoConfirmacionMatricula(string? concepto)
+        {
+            var n = NormalizarNombrePersona(concepto);
+            return n.Contains("confirmacion") || n.Contains("reserva");
+        }
+
+        public static HashSet<int> TiposPagoConfirmacion(IEnumerable<CatTipoMovimiento>? tipos)
+        {
+            var ids = new HashSet<int> { TipoConfirmacionMatricula };
+            if (tipos == null)
+                return ids;
+            foreach (var t in tipos)
+            {
+                if (EsConceptoConfirmacionMatricula(t.Concepto))
+                    ids.Add(t.IdTipoMovimiento);
+            }
+            return ids;
+        }
+
         public static HashSet<int> TiposPagoMatricula(IEnumerable<CatTipoMovimiento>? tipos)
         {
-            var ids = new HashSet<int> { TipoMatricula, TipoMatriculaAbono };
+            var ids = new HashSet<int> { TipoMatricula, TipoMatriculaAbono, TipoConfirmacionMatricula };
             if (tipos == null)
                 return ids;
             foreach (var t in tipos)
             {
                 var n = NormalizarNombrePersona(t.Concepto);
-                if (!n.Contains("matricula"))
-                    continue;
-                if (n.Contains("confirmacion") || n.Contains("reserva"))
-                    continue;
-                ids.Add(t.IdTipoMovimiento);
+                if (n.Contains("matricula") || EsConceptoConfirmacionMatricula(t.Concepto))
+                    ids.Add(t.IdTipoMovimiento);
             }
             return ids;
+        }
+
+        /// <summary>
+        /// Si la matrícula del ciclo aún no está cubierta y la confirmación se guardó
+        /// en el año siguiente (reserva automática), esa reserva abona este ciclo.
+        /// No se usa si el ciclo ya está pagado: la reserva queda para el siguiente.
+        /// </summary>
+        public static decimal AcreditarReservaSiguienteSiMatriculaPendiente(
+            IEnumerable<TblPago> pagos,
+            int idAlumno,
+            int idPeriodo,
+            int anioPeriodo,
+            IReadOnlyList<CatPeriodo>? periodos,
+            IReadOnlyCollection<int>? tiposConfirmacion,
+            decimal yaPagadoEnCiclo,
+            decimal costoMatriculaNeta,
+            int? idRecinto = null)
+        {
+            if (idAlumno <= 0 || idPeriodo <= 0)
+                return 0m;
+            if (costoMatriculaNeta > 0.01m && yaPagadoEnCiclo >= costoMatriculaNeta - 0.01m)
+                return 0m;
+
+            var tiposConf = tiposConfirmacion is { Count: > 0 }
+                ? tiposConfirmacion
+                : new HashSet<int> { TipoConfirmacionMatricula };
+
+            bool yaHayConfirmacionEnCiclo = pagos.Any(p =>
+                p.Activo
+                && p.IdAlumno == idAlumno
+                && p.IdPeriodo == idPeriodo
+                && EsPagoDelRecinto(p, idRecinto)
+                && tiposConf.Contains(p.IdTipoMovimiento));
+            if (yaHayConfirmacionEnCiclo)
+                return 0m;
+
+            var siguiente = periodos?.FirstOrDefault(p => p.Activo && p.Periodo == anioPeriodo + 1);
+            if (siguiente == null)
+                return 0m;
+
+            return pagos
+                .Where(p => p.Activo
+                    && p.IdAlumno == idAlumno
+                    && p.IdPeriodo == siguiente.IdPeriodo
+                    && EsPagoDelRecinto(p, idRecinto)
+                    && tiposConf.Contains(p.IdTipoMovimiento))
+                .Sum(p => p.Monto);
         }
 
         public static decimal SumarPagadoMatricula(
@@ -649,15 +1070,21 @@ namespace WebColegio.Helpers
             int? idRecinto,
             int idGrado,
             int idPeriodo,
-            int? idModalidad)
+            int? idModalidad,
+            IEnumerable<Grados>? grados = null)
         {
             if (list == null || !list.Any())
                 return null;
 
-            IEnumerable<TblCostoMensualidad> Base() =>
-                list.Where(x => x.IdRecinto == idRecinto &&
-                                x.IdPeriodo == idPeriodo &&
-                                x.Activo);
+            IEnumerable<TblCostoMensualidad> Base()
+            {
+                var q = list.Where(x => x.IdRecinto == idRecinto &&
+                                        x.IdPeriodo == idPeriodo &&
+                                        x.Activo);
+                if (grados != null)
+                    q = q.Where(x => CostoNivelHelper.EsValido(x.IdGrado, grados));
+                return q;
+            }
 
             var porGrado = Base().Where(x => x.IdGrado == idGrado).ToList();
 
@@ -742,6 +1169,30 @@ namespace WebColegio.Helpers
             return esTercer && esNivel && !n.Contains("grado");
         }
 
+        public const decimal TarifaPromocionTercerNivel = 1100m;
+        public const decimal TarifaPromocionSexto = 1400m;
+        public const decimal TarifaPromocionUndecimo = 1900m;
+
+        /// <summary>
+        /// Promoción: 3.er nivel C$ 110, 6.° C$ 1 400, 11.° C$ 1 900.
+        /// </summary>
+        public static decimal TarifaPromocionPorGrado(string? nombreGrado)
+        {
+            if (!EsGradoConPromocion(nombreGrado))
+                return 0m;
+
+            var n = NormalizarNombrePersona(nombreGrado);
+            if (n.Contains("undecimo") || n.Contains("11mo") || n.Contains("11°")
+                || Regex.IsMatch(n, @"\b11\b"))
+                return TarifaPromocionUndecimo;
+
+            if (n.Contains("sexto") || n.Contains("6to") || n.Contains("6°")
+                || Regex.IsMatch(n, @"\b6\s*(to|grado)\b"))
+                return TarifaPromocionSexto;
+
+            return TarifaPromocionTercerNivel;
+        }
+
         public static int SemestreRifa(int? mes, DateTime? fechaEmision, DateTime? fechaRegistro, string? descripcion)
         {
             if (!string.IsNullOrWhiteSpace(descripcion))
@@ -750,9 +1201,11 @@ namespace WebColegio.Helpers
                 if (marca.Success && int.TryParse(marca.Groups[1].Value, out var semMarca))
                     return semMarca;
                 var d = NormalizarNombrePersona(descripcion);
-                if (d.Contains("segundo semestre") || d.Contains("2do semestre") || d.Contains("2o semestre"))
+                if (d.Contains("rifa 2") || d.Contains("julio a diciembre")
+                    || d.Contains("segundo semestre") || d.Contains("2do semestre") || d.Contains("2o semestre"))
                     return 2;
-                if (d.Contains("primer semestre") || d.Contains("1er semestre") || d.Contains("1er sem"))
+                if (d.Contains("rifa 1") || d.Contains("enero a junio")
+                    || d.Contains("primer semestre") || d.Contains("1er semestre") || d.Contains("1er sem"))
                     return 1;
             }
 
@@ -773,6 +1226,33 @@ namespace WebColegio.Helpers
 
         public static int SemestreRifaDeCaja(TblPagoCaja caja)
             => SemestreRifa(null, caja.FechaEmision, caja.FechaRegistro, caja.Descripcion);
+
+        public static string TextoPeriodoRifa(int semestre)
+            => semestre == 2
+                ? "Rifa 2 de julio a diciembre"
+                : "Rifa 1 de enero a junio";
+
+        public static bool EsConceptoRifa(string? conceptoCatalogo, int? idTipoMovimiento = null)
+        {
+            if (idTipoMovimiento == TipoRifa)
+                return true;
+            return !string.IsNullOrWhiteSpace(conceptoCatalogo)
+                && conceptoCatalogo.Contains("rifa", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static string ConceptoVisibleRifa(string? conceptoCatalogo, int semestre, string? descripcion = null)
+        {
+            var periodo = TextoPeriodoRifa(semestre);
+            var extra = QuitarMarcasInternasDescripcion(descripcion);
+            if (string.IsNullOrWhiteSpace(extra))
+                return periodo;
+            if (extra.Contains("rifa 1", StringComparison.OrdinalIgnoreCase)
+                || extra.Contains("rifa 2", StringComparison.OrdinalIgnoreCase)
+                || extra.Contains("enero a junio", StringComparison.OrdinalIgnoreCase)
+                || extra.Contains("julio a diciembre", StringComparison.OrdinalIgnoreCase))
+                return extra;
+            return $"{periodo}. {extra}";
+        }
 
         public sealed class CortesGeneracionRifa
         {

@@ -49,6 +49,12 @@ html, body {
 
 .v-row {
     padding: 0.4mm 0;
+    font-weight: 700;
+}
+
+.v-row span,
+.v-row b {
+    font-weight: 700;
 }
 
 .center {
@@ -56,7 +62,23 @@ html, body {
 }
 
 .bold {
-    font-weight: bold;
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 0.2px;
+}
+
+.v-num {
+    font-weight: 900;
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    text-align: center;
+}
+
+.v-datos .v-row,
+.v-datos span,
+.v-datos b {
+    font-weight: 900;
+    font-size: 14px;
 }
 
 .firma {
@@ -104,8 +126,25 @@ html, body {
         margin: 0 0 0 4mm;
         padding: 1mm 1.5mm;
         font-family: "Courier New", Courier, monospace;
-        font-size: 13px;
+        font-size: 14px;
+        font-weight: 700;
         -webkit-font-smoothing: none;
         font-smooth: never;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .bold,
+    .v-num {
+        font-weight: 900;
+        font-size: 16px;
+    }
+
+    .v-datos .v-row,
+    .v-datos span,
+    .v-datos b,
+    .v-row {
+        font-weight: 900;
+        font-size: 14px;
     }
 }

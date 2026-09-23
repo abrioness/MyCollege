@@ -23,7 +23,7 @@ namespace WebColegio.Controllers
             var _recibocaja  = await _Iservices.GetRecibosCajaAsync();            
             var _grados = await _Iservices.GetGradosAsync();
             var _usuario= await _Iservices.GetUsuariosAsync();
-            var _pagos = await _Iservices.GetPagosAsync();
+            var _pagos = await _Iservices.GetPagosAsync(incluirAnulados: true);
             var _alumnos = await _Iservices.GetAlumnosAsync();
             var _tipoMovimiento = await _Iservices.GetTipoMovimientoAsync();
             //var _estadoPago = await _Iservices.GetEstadoPagoAsync();

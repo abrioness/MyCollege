@@ -154,6 +154,31 @@ input:not([type="submit"]) {
     background: #e8eaf6;
 }
 
+.login-forgot {
+    margin-top: 14px;
+    text-align: center;
+}
+
+.login-forgot a {
+    color: #ffffff;
+    font-size: 14px;
+    text-decoration: underline;
+}
+
+.login-forgot a:hover {
+    color: #e8eaf6;
+}
+
+.login-back {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.login-back a {
+    color: #e8eaf6;
+    font-size: 13px;
+}
+
 /* Móvil: carrusel arriba, login abajo */
 @media (max-width: 991.98px) {
     .login-page {

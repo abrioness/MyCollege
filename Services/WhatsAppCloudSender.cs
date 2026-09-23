@@ -88,7 +88,7 @@ namespace WebColegio.Services
         private async Task<(bool Ok, string? Error)> EnviarAsync(object payload, CancellationToken ct)
         {
             if (!EstaConfigurado)
-                return (false, "Configure WhatsApp:AccessToken y WhatsApp:PhoneNumberId en appsettings.");
+                return (false, "El número del colegio aún no está vinculado para envío masivo.");
 
             var url = $"https://graph.facebook.com/{_settings.ApiVersion.Trim('/')}/{_settings.PhoneNumberId}/messages";
             using var client = _httpClientFactory.CreateClient("WhatsAppGraph");

@@ -54,6 +54,17 @@ namespace WebColegio.Helpers
             return fecha?.Month;
         }
 
+        public static int? ResolverMesIngreso(TblMatricula? matricula, TblAlumno? alumno = null)
+        {
+            return LeerMesIngreso(matricula?.Observaciones)
+                ?? LeerMesIngreso(alumno?.Observaciones)
+                ?? LeerFechaTraslado(matricula?.Observaciones)?.Month
+                ?? LeerFechaTraslado(alumno?.Observaciones)?.Month
+                ?? (EsTraslado(matricula, alumno) && matricula?.FechaMatricula is { Year: > 2000 } fm
+                    ? fm.Month
+                    : null);
+        }
+
         public static string Anotar(
             string? observacionesActuales,
             int idRecintoOrigen,

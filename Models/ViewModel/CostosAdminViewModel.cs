@@ -41,5 +41,6 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> Modalidades { get; set; } = new();
         public List<SelectListItem> Grados { get; set; } = new();
         public bool EsEdicion { get; set; }
+        public bool NivelCatalogoInvalido { get; set; }
     }
 }

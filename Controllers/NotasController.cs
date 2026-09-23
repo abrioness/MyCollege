@@ -494,9 +494,11 @@ namespace WebColegio.Controllers
                     }
 
                     var msgError = string.IsNullOrWhiteSpace(detalleApi)
-                        ? "No se pudo guardar la nota. Revise la consola de la API o la conexión."
+                        ? "No se pudo guardar la nota."
                         : (detalleApi.Length > 800 ? detalleApi[..800] + "…" : detalleApi);
-                    TempData["Mensaje"] = "Error al guardar en la API: " + msgError;
+                    TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                        "No se pudo guardar la nota. Intente de nuevo.",
+                        msgError);
                     TempData["Tipo"] = "error";
                     return RedirectToAction(nameof(Create));
                 }
@@ -507,7 +509,9 @@ namespace WebColegio.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Mensaje"] = "Error inesperado al guardar: " + ex.Message;
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "No se pudo guardar la nota. Intente de nuevo.",
+                    ex.Message);
                 TempData["Tipo"] = "error";
                 return RedirectToAction(nameof(Create));
             }
@@ -646,7 +650,9 @@ namespace WebColegio.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Mensaje"] = "Error inesperado al actualizar: " + ex.Message;
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "No se pudo actualizar la nota. Intente de nuevo.",
+                    ex.Message);
                 TempData["Tipo"] = "error";
                 return RedirectToAction(nameof(Index));
             }

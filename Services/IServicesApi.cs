@@ -27,8 +27,8 @@ namespace WebColegio.Services
         Task<List<TblEstadoPago>> GetEstadoPagoAsync();
         Task<TblAlumno> V_alumnoNotas(string cedulaTutor);
         Task<List<TblUsuarios>> GetUsuariosAsync();
-        Task<List<TblPago>> GetPagosAsync();
-        Task<List<TblPagoCaja>> GetPagoCajaAsync();
+        Task<List<TblPago>> GetPagosAsync(bool incluirAnulados = false);
+        Task<List<TblPagoCaja>> GetPagoCajaAsync(bool incluirAnulados = false);
         Task<List<TblReciboCaja>> GetRecibosCajaAsync();
         Task<List<TblEgreso>> GetEgresoAsync();
         Task<List<TblArqueoDiario>> GetArqueoDiarioAsync();
@@ -89,6 +89,7 @@ namespace WebColegio.Services
         Task<(bool Exito, string? DetalleError)> UpdateProductosAsync(Productos producto);
         /// <returns>Éxito y, si falla, texto de error devuelto por la API (o mensaje genérico).</returns>
         Task<(bool Ok, string? ErrorMessage)> PostArqueoDiarioAsync(TblArqueoDiario arqueo);
+        Task<(bool Ok, string? ErrorMessage)> UpdateArqueoDiarioAsync(TblArqueoDiario arqueo);
         Task<(bool Ok, string? ErrorMessage)> PostCierreCajaAsync(TblCierreCaja cierre);
         Task<bool> PostUsuarios(TblUsuarios usuario);
 
@@ -123,7 +124,10 @@ namespace WebColegio.Services
         Task<bool> ValidarFacturas(int idTipoColegiatura, int idEstadoPago, int idAlumno, string mesFacturado, string anyoFacturado);
         Task<bool> ValidarProductos(string codigo, int categoria);
         Task<bool> ValidarAlumnoDuplicado(string codigoMINED, string? codigoAlumno = null, int? excluirIdAlumno = null);
-        Task<bool> validarUsuarios(string cedula);
+        Task<bool> validarUsuarios(string cedula, int? excluirIdUsuario = null);
+        Task<(bool Encontrado, bool TieneCorreo, string? Correo, string? Token, string? NombreUsuario, int MinutosVigencia)> SolicitarRecuperacionPassword(string identificador);
+        Task<(bool Ok, string? Mensaje)> RestablecerPasswordAsync(string token, string passwordHash);
+        Task<(bool Ok, string? Mensaje)> DeleteUsuarioAsync(int idUsuario);
         //Task<int> ValidarMesesPendientes(List<TblPago> pagos, int idmes);
         #endregion
 

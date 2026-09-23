@@ -8,6 +8,7 @@ using WebColegio.Services;
 using WebColegio.Models;
 using Microsoft.AspNetCore.Authorization;
 using WebColegio.Helpers;
+using WebColegio.Models.ViewModel;
 
 namespace WebColegio.Controllers
 {
@@ -19,19 +20,25 @@ namespace WebColegio.Controllers
         private readonly IApiTokenAccessor _apiTokenAccessor;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IEmailSender _emailSender;
+        private readonly IWebHostEnvironment _environment;
 
         public LoginController(
             IServicesApi iservices,
             IJwtTokenService jwtTokenService,
             IApiTokenAccessor apiTokenAccessor,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            IEmailSender emailSender,
+            IWebHostEnvironment environment)
         {
             _IService = iservices;
             _jwtTokenService = jwtTokenService;
             _apiTokenAccessor = apiTokenAccessor;
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _emailSender = emailSender;
+            _environment = environment;
         }
         // GET: LoginController
         //private bool ValidateUser(string cedula, string password)
@@ -51,11 +58,14 @@ namespace WebColegio.Controllers
             return View();
         }
 
-        /// <summary>Diagnóstico: abra /Login/EstadoApi en el navegador para ver si la Web alcanza la API.</summary>
+        /// <summary>Diagnóstico interno: solo disponible en Development.</summary>
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> EstadoApi()
         {
+            if (!_environment.IsDevelopment())
+                return NotFound();
+
             var baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "(no configurada)";
             var host = _configuration["ApiSettings:Host"] ?? "(no configurado)";
             var allowInvalid = _configuration["ApiSettings:AllowInvalidCertificate"] ?? "false";
@@ -93,20 +103,9 @@ namespace WebColegio.Controllers
             if (usuario == null)
             {
                 var detalleApi = _IService.LastApiError ?? string.Empty;
-                if (detalleApi.Contains("404", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = $"La URL de la API no es correcta (404). {detalleApi} En el mismo servidor IIS use ApiSettings__BaseUrl=http://127.0.0.1/ColSanFranciscoTest_Api/ y ApiSettings__Host=colegioparroquialsanfranciscojavier.com";
-                else if (detalleApi.Contains("500", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("503", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("base_datos", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = $"La API no puede leer la base de datos. En ColSanFranciscoTest_Api el web.config debe usar Api_Colegio.dll (no WebColegio.dll) y ConnectionStrings__Conexion. Detalle: {detalleApi}";
-                else if (detalleApi.Contains("401", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = "La API rechazó la solicitud (401). Verifique JWT_SECRET_KEY igual en Web y API.";
-                else if (detalleApi.Contains("ConnectionError", StringComparison.OrdinalIgnoreCase) || detalleApi.Contains("No such host", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = $"La Web no alcanza la API. {detalleApi} En el mismo servidor use ApiSettings__BaseUrl=http://localhost/ColSanFranciscoTest_Api/ y ApiSettings__Host=colegioparroquialsanfranciscojavier.com (no use la URL pública HTTPS desde el servidor).";
-                else if (detalleApi.Contains("localhost", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = $"La Web no alcanza la API. {detalleApi} Verifique que la API esté iniciada en IIS y que ApiSettings__Host coincida con el sitio.";
-                else if (detalleApi.Contains("DeserializeError", StringComparison.OrdinalIgnoreCase))
-                    TempData["Mensaje"] = "La API respondió pero el formato del usuario no es válido. Contacte al administrador.";
-                else
-                    TempData["Mensaje"] = $"No se pudo validar el usuario con la API. {detalleApi}";
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "No se pudo iniciar sesión. Verifique el usuario y la contraseña, o intente más tarde.",
+                    detalleApi);
                 TempData["Tipo"] = "warning";
                 return View("Login");
             }
@@ -156,7 +155,9 @@ namespace WebColegio.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                TempData["Mensaje"] = ex.Message;
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "No se pudo iniciar sesión. Contacte al administrador.",
+                    ex.Message);
                 TempData["Tipo"] = "warning";
                 return View("Login");
             }
@@ -342,6 +343,126 @@ namespace WebColegio.Controllers
 
             // 4. Redirigir a la página de login
             return RedirectToAction("Login", "Login");
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult RecuperarPassword()
+        {
+            return View(new RecuperarPasswordViewModel());
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RecuperarPassword(RecuperarPasswordViewModel modelo)
+        {
+            if (!ModelState.IsValid)
+                return View(modelo);
+
+            var resultado = await _IService.SolicitarRecuperacionPassword(modelo.Identificador);
+            if (!resultado.Encontrado)
+            {
+                TempData["Mensaje"] = "Si los datos coinciden con un usuario activo y tiene correo, recibirá un enlace para restablecer la contraseña.";
+                TempData["Tipo"] = "success";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (!resultado.TieneCorreo || string.IsNullOrWhiteSpace(resultado.Correo) || string.IsNullOrWhiteSpace(resultado.Token))
+            {
+                TempData["Mensaje"] = "El usuario no tiene correo registrado. Solicite al administrador que actualice el perfil y vuelva a intentar.";
+                TempData["Tipo"] = "warning";
+                return View(modelo);
+            }
+
+            var urlRestablecer = Url.Action(
+                nameof(RestablecerPassword),
+                "Login",
+                new { token = resultado.Token },
+                Request.Scheme,
+                Request.Host.Value);
+
+            var minutos = resultado.MinutosVigencia > 0 ? resultado.MinutosVigencia : 60;
+            var cuerpo = $@"
+<p>Hola{(string.IsNullOrWhiteSpace(resultado.NombreUsuario) ? "" : " " + System.Net.WebUtility.HtmlEncode(resultado.NombreUsuario))},</p>
+<p>Recibimos una solicitud para restablecer la contraseña de su cuenta en el Colegio Parroquial San Francisco Javier.</p>
+<p><a href=""{urlRestablecer}"">Haga clic aquí para crear una nueva contraseña</a></p>
+<p>El enlace vence en {minutos} minutos. Si usted no solicitó este cambio, ignore este mensaje.</p>";
+
+            if (!_emailSender.EstaConfigurado)
+            {
+                if (_environment.IsDevelopment())
+                {
+                    TempData["Mensaje"] = "SMTP no está configurado. Enlace de prueba (solo desarrollo): " + urlRestablecer;
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(Login));
+                }
+
+                TempData["Mensaje"] = "El envío de correo no está configurado. Contacte al administrador.";
+                TempData["Tipo"] = "warning";
+                return View(modelo);
+            }
+
+            var envio = await _emailSender.EnviarAsync(
+                resultado.Correo,
+                "Restablecer contraseña - Colegio San Francisco Javier",
+                cuerpo);
+
+            if (!envio.Ok)
+            {
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "No se pudo enviar el correo de recuperación. Contacte al administrador.",
+                    envio.Error);
+                TempData["Tipo"] = "warning";
+                return View(modelo);
+            }
+
+            TempData["Mensaje"] = "Si los datos coinciden con un usuario activo, recibirá un correo con el enlace para restablecer la contraseña.";
+            TempData["Tipo"] = "success";
+            return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult RestablecerPassword(string? token)
+        {
+            if (string.IsNullOrWhiteSpace(token) || !_jwtTokenService.TryValidatePasswordResetToken(token, out _))
+            {
+                TempData["Mensaje"] = "El enlace de recuperación no es válido o ya venció. Solicite uno nuevo.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(new RestablecerPasswordViewModel { Token = token });
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestablecerPassword(RestablecerPasswordViewModel modelo)
+        {
+            if (string.IsNullOrWhiteSpace(modelo.Token) || !_jwtTokenService.TryValidatePasswordResetToken(modelo.Token, out _))
+            {
+                TempData["Mensaje"] = "El enlace de recuperación no es válido o ya venció. Solicite uno nuevo.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (!ModelState.IsValid)
+                return View(modelo);
+
+            var hash = BCrypt.Net.BCrypt.HashPassword(modelo.NuevaPassword.Trim());
+            var (ok, mensaje) = await _IService.RestablecerPasswordAsync(modelo.Token, hash);
+            if (!ok)
+            {
+                TempData["Mensaje"] = mensaje ?? "No se pudo restablecer la contraseña.";
+                TempData["Tipo"] = "warning";
+                return View(modelo);
+            }
+
+            TempData["Mensaje"] = "Contraseña actualizada correctamente. Inicie sesión con la nueva clave.";
+            TempData["Tipo"] = "success";
+            return RedirectToAction(nameof(Login));
         }
 
     }

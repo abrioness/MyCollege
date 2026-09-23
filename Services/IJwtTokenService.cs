@@ -9,5 +9,7 @@ namespace WebColegio.Services
 
         /// <summary>Regenera JWT desde la cookie de sesión del usuario (respaldo si falla la sesión).</summary>
         string? TryCreateTokenFromUser(ClaimsPrincipal? user);
+
+        bool TryValidatePasswordResetToken(string token, out int idUsuario);
     }
 }

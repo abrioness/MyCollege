@@ -28,17 +28,24 @@ namespace WebColegio.Services
 
         public bool ApiConfigurada => _sender.EstaConfigurado;
         public bool EnvioAutomatico => _settings.EnvioAutomatico;
+        public int HoraEnvio => _settings.HoraEnvio;
+        public string NumeroRemitenteMostrar =>
+            WhatsAppTelefonoHelper.FormatearMostrar(_settings.NumeroRemitente, _settings.CodigoPais);
+
+        private string? RemitenteE164 =>
+            WhatsAppTelefonoHelper.RemitenteE164(_settings.NumeroRemitente, _settings.CodigoPais);
 
         public async Task<List<WhatsAppAvisoDestino>> ListarPendientesAsync()
         {
             var filas = await CargarFilasAsync();
             var alumnos = (await _api.GetAlumnosAsync() ?? new List<TblAlumno>())
                 .ToDictionary(a => a.IdAlumno);
+            var usuarios = await _api.GetUsuariosAsync() ?? new List<TblUsuarios>();
 
             var destinos = new List<WhatsAppAvisoDestino>();
             foreach (var fila in filas)
             {
-                if (fila.DatosIncompletos || fila.EsHistorialTraslado)
+                if (fila.DatosIncompletos || fila.EsHistorialTraslado || fila.EsRetiradoOInactivo)
                     continue;
                 bool debe = fila.GranTotalPendiente > 0.01m
                     || string.Equals(fila.EstadoPagoMensualidad, "Insolvente", StringComparison.OrdinalIgnoreCase);
@@ -46,9 +53,9 @@ namespace WebColegio.Services
                     continue;
 
                 alumnos.TryGetValue(fila.IdAlumno, out var alumno);
-                var (tel, origen, nombre) = WhatsAppTelefonoHelper.ResolverContacto(
-                    alumno ?? new TblAlumno(),
-                    _settings.CodigoPais);
+                var ficha = alumno ?? new TblAlumno();
+                var (tel, origen, nombre) = WhatsAppTelefonoHelper.ResolverContacto(ficha, _settings.CodigoPais);
+                var (correo, origenCorreo, nombreCorreo) = EmailContactoHelper.Resolver(ficha, usuarios);
 
                 var destino = new WhatsAppAvisoDestino
                 {
@@ -56,9 +63,11 @@ namespace WebColegio.Services
                     NombreAlumno = fila.NombreCompleto,
                     Grado = fila.NombreGrado,
                     Recinto = fila.Recinto,
-                    NombreContacto = nombre,
+                    NombreContacto = string.IsNullOrWhiteSpace(nombre) ? nombreCorreo : nombre,
                     OrigenTelefono = origen,
                     TelefonoE164 = tel,
+                    Correo = correo,
+                    OrigenCorreo = origenCorreo,
                     MesesPendientes = fila.MesesPendientesSolvencia,
                     SaldoMatricula = fila.SaldoMatricula,
                     SaldoMensualidades = fila.TotalSaldoMensualidades,
@@ -80,11 +89,15 @@ namespace WebColegio.Services
                 .ToList();
         }
 
-        public async Task<List<WhatsAppEnvioLog>> EnviarAsync(IEnumerable<int> idAlumnos, bool marcarCampana, CancellationToken ct = default)
+        public async Task<List<WhatsAppEnvioLog>> EnviarAsync(
+            IEnumerable<int> idAlumnos,
+            bool marcarCampana,
+            CancellationToken ct = default,
+            DateTime? fechaProgramadaConsumida = null)
         {
             var ids = idAlumnos.ToHashSet();
             var destinos = (await ListarPendientesAsync())
-                .Where(d => ids.Contains(d.IdAlumno) && !d.SinTelefono)
+                .Where(d => ids.Contains(d.IdAlumno) && !d.SinTelefono && !EsRemitente(d.TelefonoE164))
                 .ToList();
 
             var logs = new List<WhatsAppEnvioLog>();
@@ -99,29 +112,48 @@ namespace WebColegio.Services
                     NombreAlumno = d.NombreAlumno,
                     Telefono = d.TelefonoE164,
                     Exito = ok,
-                    Detalle = error,
+                    Detalle = ok ? null : MensajeUsuarioHelper.ParaUsuario(error, "No se pudo enviar el mensaje."),
                     Canal = "api"
                 });
                 await Task.Delay(700, ct);
             }
 
             if (logs.Count > 0)
-                _store.Registrar(logs, marcarCampana);
+                _store.Registrar(logs, marcarCampana, fechaProgramadaConsumida);
+            else if (marcarCampana)
+                _store.Registrar(Array.Empty<WhatsAppEnvioLog>(), true, fechaProgramadaConsumida);
             return logs;
         }
 
         public Task<List<WhatsAppEnvioLog>> EnviarCampanaAsync(CancellationToken ct = default)
-            => EnviarTodosPendientesAsync(marcarCampana: true, ct);
-
-        public async Task<List<WhatsAppEnvioLog>> EnviarTodosPendientesAsync(bool marcarCampana, CancellationToken ct = default)
         {
-            var destinos = (await ListarPendientesAsync()).Where(d => !d.SinTelefono).Select(d => d.IdAlumno);
-            return await EnviarAsync(destinos, marcarCampana, ct);
+            var fechaProg = _store.Leer().FechaProgramada;
+            return EnviarTodosPendientesAsync(marcarCampana: true, ct, fechaProg);
+        }
+
+        public async Task<List<WhatsAppEnvioLog>> EnviarTodosPendientesAsync(
+            bool marcarCampana,
+            CancellationToken ct = default,
+            DateTime? fechaProgramadaConsumida = null)
+        {
+            var destinos = (await ListarPendientesAsync())
+                .Where(d => !d.SinTelefono && !EsRemitente(d.TelefonoE164))
+                .Select(d => d.IdAlumno);
+            return await EnviarAsync(destinos, marcarCampana, ct, fechaProgramadaConsumida);
         }
 
         public WhatsAppCampanaEstado EstadoCampana() => _store.Leer();
 
         public bool CampanaDelMesYaEnviada() => _store.CampanaDelMesYaEnviada();
+
+        public void Programar(DateTime fecha) => _store.Programar(fecha);
+
+        public void CancelarProgramacion() => _store.CancelarProgramacion();
+
+        public bool ProgramadaPendienteParaHoy(DateTime ahora) => _store.ProgramadaPendienteParaHoy(ahora);
+
+        private bool EsRemitente(string? telefono)
+            => WhatsAppTelefonoHelper.EsMismoNumero(telefono, RemitenteE164, _settings.CodigoPais);
 
         private async Task<(bool Ok, string? Error)> EnviarDestinoAsync(WhatsAppAvisoDestino d, CancellationToken ct)
         {

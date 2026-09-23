@@ -342,7 +342,7 @@ namespace WebColegio.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                ModelState.AddModelError("", apiError ?? "No se pudo actualizar el producto en el servidor.");
+                ModelState.AddModelError("", MensajeUsuarioHelper.ParaUsuario(apiError, "No se pudo actualizar el producto."));
 
                 return await RepoblarListasProductoEdit(producto);
             }
@@ -471,7 +471,7 @@ namespace WebColegio.Controllers
             }
             else
             {
-                TempData["Mensaje"] = apiError ?? "No se pudo anular el producto.";
+                TempData["Mensaje"] = MensajeUsuarioHelper.ParaUsuario(apiError, "No se pudo anular el producto.");
                 TempData["Tipo"] = "warning";
             }
 

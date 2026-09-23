@@ -17,7 +17,8 @@
             <div class="alert alert-info">
                 @Model.MensajeEstado
                 <br />
-                Alumnos con pendiente: <strong>@Model.Destinos.Count</strong>
+                Remitente: <strong>@(Model.NumeroRemitente ?? "—")</strong>
+                · Alumnos con pendiente: <strong>@Model.Destinos.Count</strong>
                 · Con teléfono: <strong>@Model.ConTelefono</strong>
                 · Sin teléfono: <strong>@Model.SinTelefono</strong>
                 · Total: <strong>C$ @Model.TotalPendiente.ToString("N2")</strong>
@@ -31,22 +32,49 @@
                 }
             </div>
 
+            <p class="small text-muted">
+                Los avisos masivos salen del número del colegio <strong>@(Model.NumeroRemitente ?? "84258684")</strong>.
+                El tutor verá ese número, no el teléfono de quien opera la caja.
+            </p>
+
+            <form asp-action="Programar" method="post" class="row g-2 align-items-end mb-3">
+                @Html.AntiForgeryToken()
+                <div class="col-auto">
+                    <label class="form-label mb-0 small" for="fechaProgramada">Programar envío masivo</label>
+                    <input type="date" class="form-control" id="fechaProgramada" name="fechaProgramada"
+                           value="@Model.FechaProgramadaInput" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-outline-success">
+                        <i class="bi bi-calendar-event"></i> Programar
+                    </button>
+                </div>
+                @if (Model.FechaProgramada.HasValue)
+                {
+                    <div class="col-auto">
+                        <button type="submit" formaction="@Url.Action("CancelarProgramacion")" class="btn btn-outline-secondary">
+                            Cancelar programación
+                        </button>
+                    </div>
+                }
+            </form>
+
             <form asp-action="EnviarSeleccion" method="post" id="formSeleccion">
                 @Html.AntiForgeryToken()
                 <div class="mb-3 d-flex flex-wrap gap-2">
                     @if (Model.ApiConfigurada)
                     {
                         <button type="submit" class="btn btn-success">
-                            <i class="bi bi-send"></i> Enviar seleccionados (API)
+                            <i class="bi bi-send"></i> Enviar seleccionados
                         </button>
                         <button type="submit" formaction="@Url.Action("EnviarCampana")" class="btn btn-outline-success"
-                                onclick="return confirm('¿Enviar WhatsApp a todos los tutores con teléfono y saldo pendiente?');">
+                                onclick="return confirm('¿Enviar WhatsApp a todos los tutores con teléfono y saldo pendiente desde @Model.NumeroRemitente?');">
                             <i class="bi bi-broadcast"></i> Campaña completa
                         </button>
                     }
                     else
                     {
-                        <span class="text-muted small">Use el ícono de WhatsApp para abrir el chat uno a uno (WhatsApp Web).</span>
+                        <span class="text-muted small">Use el ícono de WhatsApp para abrir el chat uno a uno. Entre a WhatsApp Web con el número del colegio.</span>
                     }
                 </div>
 
@@ -103,7 +131,7 @@
                                     @if (Model.ApiConfigurada && !d.SinTelefono)
                                     {
                                         <button type="submit" formaction="@Url.Action("EnviarUno")" name="idAlumno" value="@d.IdAlumno" class="btn btn-sm btn-outline-success">
-                                            API
+                                            Enviar
                                         </button>
                                     }
                                 </td>

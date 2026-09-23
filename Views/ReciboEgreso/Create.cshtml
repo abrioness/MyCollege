@@ -57,7 +57,8 @@
 
                     <div class="form-group">
                             <label asp-for="Egresos.Serie" class="control-label">Serie:</label>
-                            <input asp-for="Egresos.Serie" id="serie" class="form-control" readonly value="A" />
+                            <input asp-for="Egresos.Serie" id="serie" class="form-control" readonly />
+                            <small class="text-muted">F = San Francisco Javier · M = San Miguel</small>
                             <span asp-validation-for="Egresos.Serie" class="text-danger"></span>
                     </div>
                         <div class="form-group">
@@ -78,7 +79,7 @@
                         </div>
                         <div class="form-group">
                             <label asp-for="Egresos.IdRecinto" class="control-label">Centro de Estudio</label>
-                            <select asp-for="Egresos.IdRecinto" asp-items="Model.recintos" class="form-select" required>
+                            <select asp-for="Egresos.IdRecinto" id="recintoEgreso" asp-items="Model.recintos" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                             </select>
                             <span asp-validation-for="Egresos.IdRecinto" class="text-danger"></span>
@@ -159,6 +160,19 @@
 @* <script src="~/js/mensajecamprequerido.js"></script> *@
 <script src="~/seewtalert/sweetalert.all.min.js"></script>
 <script src="~/seewtalert/sweetalertstyle.js"></script>
+<script>
+    var urlSiguienteEgreso = '@Url.Action("SiguienteNumeroRecibo", "ReciboEgreso")';
+    function actualizarNumeroEgreso() {
+        var id = $('#recintoEgreso').val();
+        if (!id) return;
+        $.getJSON(urlSiguienteEgreso, { idRecinto: id }, function (data) {
+            if (!data) return;
+            $('#numeroRecibo').val(data.numero);
+            $('#serie').val(data.serie);
+        });
+    }
+    $('#recintoEgreso').on('change', actualizarNumeroEgreso);
+</script>
 <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
 @if (TempData["Mensaje"] != null)
 {

@@ -9,6 +9,8 @@ namespace WebColegio.Models.ViewModel
         public List<SelectListItem> RecintosSelectList { get; set; } = new List<SelectListItem>();
         public List<Recintos> ListRecintos { get; set; } = new List<Recintos>();
         public List<TblRol> ListRol { get; set; } = new List<TblRol>();
+        public List<TblAlumno> ListaAlumnos { get; set; } = new List<TblAlumno>();
+        public List<Grados> ListGrados { get; set; } = new List<Grados>();
         public string Password { get; set; }
         public List<SelectListItem> SubsistemasSelectList { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> RolSelectList { get; set; } = new List<SelectListItem>();

@@ -39,9 +39,21 @@ namespace WebColegio.Models.ViewModel
         public bool AplicaRifaSemestre2 { get; set; } = true;
         public string? MotivoRifaSemestre1 { get; set; }
         public string? MotivoRifaSemestre2 { get; set; }
+        public bool EsRetiradoOInactivo { get; set; }
+        public string? EtiquetaEstadoAlumno { get; set; }
+        /// <summary>Retirado/inactivo: no se cobra matrícula; la celda muestra líneas.</summary>
+        public bool NoAplicaMatricula { get; set; }
+        public decimal RifaReferencia { get; set; }
+        public decimal SaldoRifaSemestre1 { get; set; }
+        public decimal SaldoRifaSemestre2 { get; set; }
+        public bool TieneAbonoRifaSemestre1 { get; set; }
+        public bool TieneAbonoRifaSemestre2 { get; set; }
         public bool AplicaPromocion { get; set; }
         public bool PromocionPagada { get; set; }
+        public decimal PromocionReferencia { get; set; }
         public decimal MontoPromocion { get; set; }
+        public decimal SaldoPromocion { get; set; }
+        public bool TieneAbonoPromocion { get; set; }
         public EstadoCuentaMesCelda[] Meses { get; set; } = Array.Empty<EstadoCuentaMesCelda>();
         public decimal TotalSaldoMensualidades { get; set; }
         public decimal GranTotalPendiente { get; set; }
@@ -71,7 +83,7 @@ namespace WebColegio.Models.ViewModel
         public bool Cancelado { get; set; }
         /// <summary>Hay pago parcial (abono) y aún queda saldo.</summary>
         public bool TieneAbonoParcial { get; set; }
-        /// <summary>Mes anterior al ingreso por traslado; no se cobra en el colegio destino.</summary>
+        /// <summary>Mes anterior al ingreso (traslado o matrícula tardía); no se cobra.</summary>
         public bool NoCorresponde { get; set; }
     }
 }

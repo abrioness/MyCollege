@@ -88,7 +88,8 @@
                         </div>
                     <div class="form-group">
                         <label asp-for="PagosCaja.Serie" class="control-label">Serie:</label>
-                        <input asp-for="PagosCaja.Serie" id="serie" class="form-control" readonly value="A" />
+                        <input asp-for="PagosCaja.Serie" id="serie" class="form-control" readonly />
+                        <small class="text-muted">F = San Francisco Javier · M = San Miguel</small>
                         <span asp-validation-for="PagosCaja.Serie" class="text-danger"></span>
                     </div>
                         <div class="form-group">
@@ -108,7 +109,7 @@
                         </div>
                         <div class="form-group">
                             <label asp-for="PagosCaja.IdRecinto" class="control-label">Centro de Estudio</label>
-                            <select asp-for="PagosCaja.IdRecinto" asp-items="Model.recintos" class="form-select" required>
+                            <select asp-for="PagosCaja.IdRecinto" id="recintoCaja" asp-items="Model.recintos" class="form-select" required>
                                 <option value="">Seleccione una Opción</option>
                             </select>
                             <span asp-validation-for="PagosCaja.IdRecinto" class="text-danger"></span>
@@ -310,7 +311,10 @@
                                if (!data || !data.ok) return;
                                if (data.idGrado) $('#PagosCaja_IdGrado').val(String(data.idGrado));
                                if (data.idTurno) $('#PagosCaja_IdTurno').val(String(data.idTurno));
-                               if (data.idRecinto) $('#PagosCaja_IdRecinto').val(String(data.idRecinto));
+                               if (data.idRecinto) {
+                                   $('#recintoCaja').val(String(data.idRecinto));
+                                   actualizarNumeroCaja();
+                               }
                                if (data.idPeriodo) $('#PagosCaja_IdPeriodo').val(String(data.idPeriodo));
                            });
                    }
@@ -476,6 +480,18 @@
             detalleItems.splice(parseInt($(this).data('idx'), 10), 1);
             refrescarTablaYHidden();
         });
+
+        var urlSiguienteCaja = '@Url.Action("SiguienteNumeroRecibo", "PagoCaja")';
+        function actualizarNumeroCaja() {
+            var id = $('#recintoCaja').val();
+            if (!id) return;
+            $.getJSON(urlSiguienteCaja, { idRecinto: id }, function (data) {
+                if (!data) return;
+                $('#numeroRecibo').val(data.numero);
+                $('#serie').val(data.serie);
+            });
+        }
+        $('#recintoCaja').on('change', actualizarNumeroCaja);
 
         $('form').on('submit', function(e) {
             if (detalleItems.length > 0) {

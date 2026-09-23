@@ -19,6 +19,13 @@
                 <input type="hidden" asp-for="Costo.UsuarioRegistro" />
                 <input type="hidden" asp-for="Costo.FechaRegistro" />
 
+                @if (Model.NivelCatalogoInvalido)
+                {
+                    <div class="alert alert-warning">
+                        Esta tarifa apunta a un nivel que ya no existe o a <strong>NINGUNO</strong>.
+                        Asigne el grado correcto (por ejemplo PRIMERO) o desmárquela como activa.
+                    </div>
+                }
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group mb-3">

@@ -42,14 +42,25 @@ namespace WebColegio.Services
 
         private async Task IntentarCampanaAsync(CancellationToken ct)
         {
-            if (!_settings.EnvioAutomatico)
-                return;
-
             var ahora = DateTime.Now;
-            if (ahora.Day != 1 || ahora.Hour < _settings.HoraEnvio)
+            if (ahora.Hour < _settings.HoraEnvio)
                 return;
 
             using var scope = _scopeFactory.CreateScope();
+            var avisos = scope.ServiceProvider.GetRequiredService<WhatsAppAvisoService>();
+            var automaticoDia1 = _settings.EnvioAutomatico
+                && ahora.Day == 1
+                && !avisos.CampanaDelMesYaEnviada();
+            var programadaHoy = avisos.ProgramadaPendienteParaHoy(ahora);
+            if (!automaticoDia1 && !programadaHoy)
+                return;
+
+            if (!avisos.ApiConfigurada)
+            {
+                _logger.LogWarning("Campaña WhatsApp omitida: el número del colegio aún no está vinculado para envío.");
+                return;
+            }
+
             var jwt = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
             var tokens = scope.ServiceProvider.GetRequiredService<IApiTokenAccessor>();
             tokens.SetToken(jwt.CreateToken(new Models.TblUsuarios
@@ -59,15 +70,6 @@ namespace WebColegio.Services
                 NombreUsuario = "whatsapp-job",
                 NombreCompleto = "Campaña WhatsApp"
             }, "Admin"));
-
-            var avisos = scope.ServiceProvider.GetRequiredService<WhatsAppAvisoService>();
-            if (avisos.CampanaDelMesYaEnviada())
-                return;
-            if (!avisos.ApiConfigurada)
-            {
-                _logger.LogWarning("Campaña WhatsApp del día 1 omitida: falta AccessToken o PhoneNumberId.");
-                return;
-            }
 
             _logger.LogInformation("Iniciando campaña WhatsApp de moras del {Fecha}.", ahora.ToString("yyyy-MM-dd"));
             var logs = await avisos.EnviarCampanaAsync(ct);

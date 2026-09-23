@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using WebColegio.Helpers;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 
@@ -36,6 +38,30 @@ namespace WebColegio.Services
         }
 
         private void LimpiarErrorApi() => LastApiError = null;
+
+        private static string ExtraerMensajeErrorApi(string? cuerpo, int statusCode)
+        {
+            if (string.IsNullOrWhiteSpace(cuerpo))
+                return $"HTTP {statusCode}";
+            try
+            {
+                var jo = JObject.Parse(cuerpo);
+                var detalle = jo["detalle"]?.ToString();
+                var mensaje = jo["mensaje"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(detalle))
+                    return string.IsNullOrWhiteSpace(mensaje) ? detalle : $"{mensaje} {detalle}";
+                if (!string.IsNullOrWhiteSpace(mensaje))
+                    return mensaje;
+            }
+            catch
+            {
+                // HTML u otro formato
+            }
+            var texto = cuerpo.Trim();
+            if (texto.StartsWith("<", StringComparison.Ordinal))
+                return $"HTTP {statusCode}";
+            return texto.Length > 400 ? texto.Substring(0, 400) + "…" : texto;
+        }
         //Metodo para Listar usuarios
         #region Metodos Get
 
@@ -348,7 +374,7 @@ namespace WebColegio.Services
             }
         }
 
-        public async Task<List<TblPago>> GetPagosAsync()
+        public async Task<List<TblPago>> GetPagosAsync(bool incluirAnulados = false)
         {
             LimpiarErrorApi();
             if (string.IsNullOrWhiteSpace(url))
@@ -367,8 +393,8 @@ namespace WebColegio.Services
                         var content = await response.Content.ReadAsStringAsync();
                         try
                         {
-                            var resultado = JsonConvert.DeserializeObject<List<TblPago>>(content);
-                            return resultado ?? new List<TblPago>();
+                            var resultado = JsonConvert.DeserializeObject<List<TblPago>>(content) ?? new List<TblPago>();
+                            return incluirAnulados ? resultado : resultado.Where(p => p.Activo).ToList();
                         }
                         catch (JsonException ex)
                         {
@@ -396,7 +422,7 @@ namespace WebColegio.Services
                 }
             }
         }
-        public async Task<List<TblPagoCaja>> GetPagoCajaAsync()
+        public async Task<List<TblPagoCaja>> GetPagoCajaAsync(bool incluirAnulados = false)
         {
             List<TblPagoCaja> pagosCaja = new List<TblPagoCaja>();
             using (var httpclient = CreateApiClient())
@@ -405,8 +431,8 @@ namespace WebColegio.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    var resultado = JsonConvert.DeserializeObject<List<TblPagoCaja>>(content);
-                    pagosCaja = resultado;
+                    var resultado = JsonConvert.DeserializeObject<List<TblPagoCaja>>(content) ?? new List<TblPagoCaja>();
+                    pagosCaja = incluirAnulados ? resultado : resultado.Where(p => p.Activo).ToList();
                 }
                 return pagosCaja;
             }
@@ -455,6 +481,12 @@ namespace WebColegio.Services
                     var resultado = JsonConvert.DeserializeObject<List<TblCierreCaja>>(content);
                     if (resultado != null)
                         cierres = resultado;
+                    LimpiarErrorApi();
+                }
+                else
+                {
+                    var cuerpo = await response.Content.ReadAsStringAsync();
+                    LastApiError = ExtraerMensajeErrorApi(cuerpo, (int)response.StatusCode);
                 }
                 return cierres;
             }
@@ -954,20 +986,9 @@ namespace WebColegio.Services
             => PutConRutasAsync(new { idRol, idMenus = idMenus.ToList() }, $"api/CatMenus/permisos/{idRol}");
 
 
-        //Validación 
-        public async Task<bool> validarUsuarios(string login, string cedula)//, int idtematica)
-        {
-
-            using (var httpClient = CreateApiClient())
-            {
-                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}&cedula={cedula}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
-                return false;
-            }
-        }
+        //Validación de cédula duplicada (el parámetro login se ignora; la unicidad es solo por cédula).
+        public Task<bool> validarUsuarios(string login, string cedula)
+            => validarUsuarios(cedula);
 
         #endregion
         #region Metodos Post
@@ -1476,31 +1497,93 @@ namespace WebColegio.Services
 
         public async Task<(bool Ok, string? ErrorMessage)> PostArqueoDiarioAsync(TblArqueoDiario arqueo)
         {
-            try
+            arqueo.Detalle = ArqueoDetalleDineroHelper.NormalizarParaGuardar(arqueo.Detalle);
+            var (ok, err) = await PostConRutasAsync(
+                PayloadArqueoApi(arqueo, incluirId: false),
+                "api/TblArqueoDiarios",
+                "api/TblArqueoDiario");
+            if (ok)
+                return (true, null);
+
+            if (!string.IsNullOrWhiteSpace(arqueo.Detalle) && PareceErrorColumnaDetalle(err))
             {
-                using (var httpClient = CreateApiClient())
-                {
-                    string jsonArqueo = JsonConvert.SerializeObject(arqueo);
-                    var content = new StringContent(jsonArqueo, Encoding.UTF8, "application/json");
-
-                    var response = await httpClient.PostAsync(url + "api/TblArqueoDiarios", content);
-
-                    if (response.IsSuccessStatusCode)
-                        return (true, null);
-
-                    var errorMsg = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine("Error en POST TblArqueoDiarios: " + (int)response.StatusCode + " " + errorMsg);
-                    var brief = string.IsNullOrWhiteSpace(errorMsg)
-                        ? $"HTTP {(int)response.StatusCode}"
-                        : (errorMsg.Length > 500 ? errorMsg.Substring(0, 500) + "…" : errorMsg);
-                    return (false, brief);
-                }
+                var reintento = await PostConRutasAsync(
+                    PayloadArqueoApi(arqueo, incluirId: false, omitirDetalle: true),
+                    "api/TblArqueoDiarios",
+                    "api/TblArqueoDiario");
+                if (reintento.Exito)
+                    return (true, "Se guardó el arqueo, pero el conteo de billetes no cupo en el registro. Imprima el comprobante y anote las cantidades.");
             }
-            catch (Exception ex)
+
+            return (false, err);
+        }
+
+        public async Task<(bool Ok, string? ErrorMessage)> UpdateArqueoDiarioAsync(TblArqueoDiario arqueo)
+        {
+            if (arqueo.IdArqueo <= 0)
+                return (false, "No se encontró el arqueo a actualizar.");
+
+            arqueo.Detalle = ArqueoDetalleDineroHelper.NormalizarParaGuardar(arqueo.Detalle);
+            var body = PayloadArqueoApi(arqueo, incluirId: true);
+            var (ok, err) = await PutConRutasAsync(
+                body,
+                $"api/TblArqueoDiarios/{arqueo.IdArqueo}",
+                $"api/TblArqueoDiario/{arqueo.IdArqueo}");
+            if (ok)
+                return (true, null);
+
+            if (!string.IsNullOrWhiteSpace(arqueo.Detalle) && PareceErrorColumnaDetalle(err))
             {
-                Debug.WriteLine("Excepción en PostArqueoAsync: " + ex.Message);
-                return (false, ex.Message);
+                var reintento = await PutConRutasAsync(
+                    PayloadArqueoApi(arqueo, incluirId: true, omitirDetalle: true),
+                    $"api/TblArqueoDiarios/{arqueo.IdArqueo}",
+                    $"api/TblArqueoDiario/{arqueo.IdArqueo}");
+                if (reintento.Exito)
+                    return (true, "Se actualizó el arqueo, pero el conteo de billetes no cupo en el registro.");
             }
+
+            return (false, err);
+        }
+
+        private static object PayloadArqueoApi(TblArqueoDiario a, bool incluirId, bool omitirDetalle = false)
+        {
+            return new
+            {
+                IdArqueo = incluirId && a.IdArqueo > 0 ? a.IdArqueo : 0,
+                a.NumeroArqueo,
+                IdRecinto = a.IdRecinto is > 0 ? a.IdRecinto : null,
+                IdPeriodo = a.IdPeriodo is > 0 ? a.IdPeriodo : null,
+                Serie = string.IsNullOrWhiteSpace(a.Serie) ? "A" : a.Serie.Trim(),
+                a.TotalIngreso,
+                a.TotalEgreso,
+                Detalle = omitirDetalle ? null : a.Detalle,
+                a.TotalDetalleEfectivo,
+                a.Activo,
+                a.UsuarioRegistro,
+                FechaRegistro = TruncarFechaSql(a.FechaRegistro),
+                UsuarioActualizo = a.UsuarioActualizo is > 0 ? a.UsuarioActualizo : null,
+                FechaActualizo = a.FechaActualizo.HasValue ? TruncarFechaSql(a.FechaActualizo.Value) : (DateTime?)null
+            };
+        }
+
+        private static DateTime TruncarFechaSql(DateTime fecha)
+        {
+            var n = fecha.Kind == DateTimeKind.Utc ? fecha.ToLocalTime() : fecha;
+            return new DateTime(n.Year, n.Month, n.Day, n.Hour, n.Minute, n.Second, DateTimeKind.Unspecified);
+        }
+
+        private static bool PareceErrorColumnaDetalle(string? error)
+        {
+            if (string.IsNullOrWhiteSpace(error))
+                return false;
+            var t = error.ToLowerInvariant();
+            return t.Contains("detalle")
+                || t.Contains("truncat")
+                || t.Contains("string or binary")
+                || t.Contains("nvarchar")
+                || t.Contains("varchar")
+                || t.Contains("data would be truncated")
+                || t.Contains("maximum length");
         }
 
         public async Task<(bool Ok, string? ErrorMessage)> PostCierreCajaAsync(TblCierreCaja cierre)
@@ -1516,9 +1599,7 @@ namespace WebColegio.Services
                         return (true, null);
 
                     var errorMsg = await response.Content.ReadAsStringAsync();
-                    var brief = string.IsNullOrWhiteSpace(errorMsg)
-                        ? $"HTTP {(int)response.StatusCode}"
-                        : (errorMsg.Length > 500 ? errorMsg.Substring(0, 500) + "…" : errorMsg);
+                    var brief = ExtraerMensajeErrorApi(errorMsg, (int)response.StatusCode);
                     return (false, brief);
                 }
             }
@@ -1683,7 +1764,7 @@ namespace WebColegio.Services
 
             try
             {
-                var lista = await GetPagosAsync();
+                var lista = await GetPagosAsync(incluirAnulados: true);
                 return lista?.FirstOrDefault(p => p.IdPago == id);
             }
             catch (Exception ex)
@@ -2292,19 +2373,120 @@ namespace WebColegio.Services
 
         }
 
-        public async Task<bool> validarUsuarios(string login)//, int idtematica)
+        public async Task<bool> validarUsuarios(string cedula, int? excluirIdUsuario = null)
         {
-
-            using (var httpClient = CreateApiClient())
-            {
-                var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?login={login}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
+            if (string.IsNullOrWhiteSpace(cedula) || string.IsNullOrWhiteSpace(url))
                 return false;
+
+            var qs = $"cedula={Uri.EscapeDataString(cedula.Trim())}";
+            if (excluirIdUsuario is > 0)
+                qs += $"&excluirId={excluirIdUsuario.Value}";
+
+            using var httpClient = CreateApiClient();
+            var response = await httpClient.GetAsync(url + $"api/Usuarios/validarUsuario?{qs}");
+            if (!response.IsSuccessStatusCode)
+                return false;
+
+            var content = await response.Content.ReadAsStringAsync();
+            return ParseBoolRespuestaApi(content) == true;
+        }
+
+        public async Task<(bool Encontrado, bool TieneCorreo, string? Correo, string? Token, string? NombreUsuario, int MinutosVigencia)> SolicitarRecuperacionPassword(string identificador)
+        {
+            if (string.IsNullOrWhiteSpace(identificador) || string.IsNullOrWhiteSpace(url))
+                return (false, false, null, null, null, 0);
+
+            try
+            {
+                using var httpClient = CreateApiClient();
+                var json = JsonConvert.SerializeObject(new { Identificador = identificador.Trim() });
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync(url + "api/Usuarios/solicitarRecuperacion", content);
+                if (!response.IsSuccessStatusCode)
+                    return (false, false, null, null, null, 0);
+
+                var body = await response.Content.ReadAsStringAsync();
+                var dto = JsonConvert.DeserializeObject<JObject>(body);
+                if (dto == null)
+                    return (false, false, null, null, null, 0);
+
+                var encontrado = dto.Value<bool?>("encontrado") ?? dto.Value<bool?>("Encontrado") ?? false;
+                var tieneCorreo = dto.Value<bool?>("tieneCorreo") ?? dto.Value<bool?>("TieneCorreo") ?? false;
+                var correo = dto.Value<string>("correo") ?? dto.Value<string>("Correo");
+                var token = dto.Value<string>("token") ?? dto.Value<string>("Token");
+                var nombreUsuario = dto.Value<string>("nombreUsuario") ?? dto.Value<string>("NombreUsuario");
+                var minutos = dto.Value<int?>("minutosVigencia") ?? dto.Value<int?>("MinutosVigencia") ?? 60;
+                return (encontrado, tieneCorreo, correo, token, nombreUsuario, minutos);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("SolicitarRecuperacionPassword: " + ex.Message);
+                return (false, false, null, null, null, 0);
             }
         }
+
+        public async Task<(bool Ok, string? Mensaje)> RestablecerPasswordAsync(string token, string passwordHash)
+        {
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(passwordHash) || string.IsNullOrWhiteSpace(url))
+                return (false, "Datos incompletos para restablecer la contraseña.");
+
+            try
+            {
+                using var httpClient = CreateApiClient();
+                var json = JsonConvert.SerializeObject(new { Token = token, PasswordHash = passwordHash });
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync(url + "api/Usuarios/restablecerPassword", content);
+                var body = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                    return (true, null);
+
+                var mensaje = ExtraerMensajeApi(body) ?? "No se pudo restablecer la contraseña. El enlace puede haber vencido.";
+                return (false, mensaje);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("RestablecerPasswordAsync: " + ex.Message);
+                return (false, "No se pudo conectar con el servidor para restablecer la contraseña.");
+            }
+        }
+
+        private static string? ExtraerMensajeApi(string? body)
+        {
+            if (string.IsNullOrWhiteSpace(body))
+                return null;
+            try
+            {
+                var obj = JObject.Parse(body);
+                return obj.Value<string>("mensaje") ?? obj.Value<string>("Mensaje") ?? obj.Value<string>("detail");
+            }
+            catch
+            {
+                return body.Length > 200 ? body.Substring(0, 200) : body;
+            }
+        }
+
+        public async Task<(bool Ok, string? Mensaje)> DeleteUsuarioAsync(int idUsuario)
+        {
+            if (idUsuario <= 0)
+                return (false, "Usuario no válido.");
+            try
+            {
+                using var httpClient = CreateApiClient();
+                var response = await httpClient.DeleteAsync(url + $"api/Usuarios/{idUsuario}");
+                if (response.IsSuccessStatusCode)
+                    return (true, null);
+                var body = await response.Content.ReadAsStringAsync();
+                var mensaje = ExtraerMensajeApi(body)
+                    ?? ExtraerMensajeErrorApi(body, (int)response.StatusCode);
+                return (false, mensaje);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("DeleteUsuarioAsync: " + ex.Message);
+                return (false, "No se pudo conectar con el servidor para eliminar la cuenta.");
+            }
+        }
+
         public async Task<bool> ValidarProductos(string codigo, int categoria)
         {
             var existe = false;

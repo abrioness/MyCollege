@@ -93,7 +93,7 @@
 
 								<td data-order="@itemPagoCaja.IdPagoCaja">
 
-									<a asp-action="Details" asp-controller="PagoCaja" asp-route-id="@itemPagoCaja.IdPagoCaja" class="btn btn-sm btn-info">@itemPagoCaja.NumeroRecibo</a>
+									<a asp-action="Details" asp-controller="PagoCaja" asp-route-id="@itemPagoCaja.IdPagoCaja" class="btn btn-sm btn-info">@ReciboNumeracionHelper.Formato(itemPagoCaja.Serie, itemPagoCaja.NumeroRecibo)</a>
 
 								</td>
 
@@ -116,9 +116,15 @@
 
 								@{
 									var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == itemPagoCaja.Concepto);
+									var conceptoLista = EstadoCuentaCalculoHelper.EsConceptoRifa(tipoMovimiento?.Concepto, itemPagoCaja.Concepto)
+										? EstadoCuentaCalculoHelper.ConceptoVisibleRifa(
+											tipoMovimiento?.Concepto,
+											EstadoCuentaCalculoHelper.SemestreRifaDeCaja(itemPagoCaja),
+											itemPagoCaja.Descripcion)
+										: (string.IsNullOrWhiteSpace(tipoMovimiento?.Concepto) ? " " : tipoMovimiento.Concepto);
 								}
 								<td>
-									@(string.IsNullOrWhiteSpace(tipoMovimiento?.Concepto) ? " " : tipoMovimiento.Concepto)
+									@conceptoLista
 								</td>
 								<td>
 									C$	@(string.IsNullOrWhiteSpace(itemPagoCaja.Monto.ToString())

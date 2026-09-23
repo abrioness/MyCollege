@@ -305,9 +305,9 @@ namespace WebColegio.Controllers
 
                 if (!exito)
                 {
-                    TempData["Mensaje"] = string.IsNullOrWhiteSpace(detalleError)
-                        ? "No se pudo guardar el registro. Verifique la conexión con la API o los datos enviados."
-                        : detalleError;
+                    TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                        "No se pudo guardar el registro. Verifique los datos e intente de nuevo.",
+                        detalleError);
                     TempData["Tipo"] = "error";
                     return RedirectToAction("Create");
                 }
@@ -339,7 +339,9 @@ namespace WebColegio.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Mensaje"] = $"Error al registrar: {ex.Message}";
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "No se pudo registrar al estudiante. Intente de nuevo.",
+                    ex.Message);
                 TempData["Tipo"] = "error";
                 return RedirectToAction("Create");
             }
@@ -570,7 +572,7 @@ namespace WebColegio.Controllers
             }
             else
             {
-                TempData["Mensaje"] = "No se pudo anular el estudiante. Revise la conexión con la API.";
+                TempData["Mensaje"] = "No se pudo anular el estudiante. Intente de nuevo o contacte al administrador.";
                 TempData["Tipo"] = "warning";
             }
 

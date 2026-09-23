@@ -62,9 +62,9 @@ namespace WebColegio.Controllers
 
             if (!string.IsNullOrWhiteSpace(errorApi))
             {
-                TempData["Mensaje"] = errorApi.Contains("401", StringComparison.OrdinalIgnoreCase)
-                    ? "La API rechazó la sesión (401). Cierre sesión e ingrese de nuevo."
-                    : "No se pudieron leer las matrículas desde la API. " + errorApi;
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "No se pudieron cargar las matrículas. Intente de nuevo.",
+                    errorApi);
                 TempData["Tipo"] = "warning";
             }
 
@@ -82,7 +82,7 @@ namespace WebColegio.Controllers
                 EstadoFiltro = estado,
                 TextoBusqueda = q,
                 PeriodoMatriculaSugerido = periodoSugerido,
-                ErrorApi = errorApi
+                ErrorApi = MensajeUsuarioHelper.MostrarDetalleTecnico ? errorApi : null
             };
             return View(vm);
         }
@@ -161,7 +161,7 @@ namespace WebColegio.Controllers
             var (ok, err) = await _services.PostMatriculaAsync(m);
             if (!ok)
             {
-                SetMensaje("No se pudo guardar la matrícula. " + (err ?? _services.LastApiError), "warning");
+                SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo guardar la matrícula.", err ?? _services.LastApiError), "warning");
                 return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, false, form?.AplicaRifa1, form?.AplicaRifa2));
             }
 
@@ -276,7 +276,7 @@ namespace WebColegio.Controllers
             var (ok, err) = await _services.UpdateMatriculaAsync(m);
             if (!ok)
             {
-                SetMensaje("No se pudo actualizar. " + (err ?? _services.LastApiError), "warning");
+                SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo actualizar la matrícula.", err ?? _services.LastApiError), "warning");
                 return View("Form", await ConstruirFormAsync(m, form?.NombreAlumno, true, form?.AplicaRifa1, form?.AplicaRifa2));
             }
 

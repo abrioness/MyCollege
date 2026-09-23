@@ -1,4 +1,6 @@
 ﻿@model WebColegio.Models.ViewModel.UsuarioViewModel
+@using WebColegio.Helpers
+@using WebColegio.Models
 
 @{
     ViewData["Title"] = "Index";
@@ -44,8 +46,24 @@
                             Rol
                         </th>
                         <th>
+                            Código del alumno
+                        </th>
+                        <th>
+                            Nombre del alumno
+                        </th>
+                        <th>
+                            Grado asociado
+                        </th>
+                        <th>
+                            Fecha de creación
+                        </th>
+                        <th>
                             Estado
                         </th>
+                        @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+                        {
+                            <th class="no-export">Acciones</th>
+                        }
 
 
                     </tr>
@@ -91,6 +109,24 @@
             <td>
                 @rol?.NombreRol
             </td>
+            @{
+                var esTutor = TutorAlumnoVinculo.EsRolTutor(rol?.NombreRol, item.IdRol);
+                var alumnosTutor = esTutor
+                    ? TutorAlumnoVinculo.AlumnosDeTutor(Model.ListaAlumnos, item.Cedula)
+                    : Array.Empty<TblAlumno>();
+                var codigoAlumno = TutorAlumnoVinculo.TextoOGuion(alumnosTutor.Select(a =>
+                    !string.IsNullOrWhiteSpace(a.CodigoAlumno) ? a.CodigoAlumno : a.CodigoMINED));
+                var nombreAlumno = TutorAlumnoVinculo.TextoOGuion(alumnosTutor.Select(a =>
+                    $"{a.Nombre} {a.Apellido}".Trim()));
+                var gradoAlumno = TutorAlumnoVinculo.TextoOGuion(alumnosTutor.Select(a =>
+                    Model.ListGrados.FirstOrDefault(g => g.IdGrado == a.IdGrado)?.NombreGrado));
+            }
+            <td>@codigoAlumno</td>
+            <td>@nombreAlumno</td>
+            <td>@gradoAlumno</td>
+            <td data-order="@(item.FechaRegistro == default ? "" : item.FechaRegistro.ToString("yyyy-MM-dd"))">
+                @(item.FechaRegistro == default ? "—" : item.FechaRegistro.ToString("dd/MM/yyyy"))
+            </td>
             <td>
                                 @if ((item.Activo == true))
                                 {
@@ -101,11 +137,29 @@
                                     <span class="badge bg-danger">Inactivo</span>
                                 }
             </td>
-            @* <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>  *@
+            @if (User.IsInRole("Admin") || User.IsInRole("UserSystem"))
+            {
+                <td>
+                    @{
+                        var idSesion = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    }
+                    @if (idSesion != item.IdUsuario.ToString())
+                    {
+                        <form asp-action="Eliminar" asp-controller="Usuarios" method="post" class="d-inline js-eliminar-usuario"
+                              data-mensaje="¿Eliminar de forma permanente la cuenta de @item.NombreUsuario? Esta acción no se puede deshacer.">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.IdUsuario" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar cuenta">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </td>
+            }
         </tr>
                             }
                         }
@@ -122,20 +176,46 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+        $(document).on("submit", "form.js-eliminar-usuario", function (e) {
+            e.preventDefault();
+            var form = this;
+            var mensaje = form.getAttribute("data-mensaje") || "¿Eliminar la cuenta de forma permanente?";
+            if (typeof Swal === "undefined") {
+                if (window.confirm(mensaje)) form.submit();
+                return;
+            }
+            Swal.fire({
+                title: "Atención",
+                text: mensaje,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Eliminar",
+                cancelButtonText: "Cancelar"
+            }).then(function (result) {
+                if (result.isConfirmed) form.submit();
+            });
+        });
         $(document).ready(function () {
         var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
         var botones = esCajero ? [] : [
             {
             extend: 'excelHtml5',
             text: 'Exportar a Excel',
-            className: 'btn btn-success'
+            className: 'btn btn-success',
+            exportOptions: { columns: ':not(.no-export)' }
             }
         ];
+        var colAcciones = $('#tablaUsuarios thead th.no-export').index();
         $('#tablaUsuarios').DataTable({
         responsive: false,
-        dom: esCajero ? 'frtip' : 'Bfrtip', // Sin botones para Cajero
+        pageLength: 10,
+        lengthMenu: [[5, 10, 20], [5, 10, 20]],
+        paging: true,
+        dom: esCajero ? 'lfrtip' : 'Blfrtip',
         buttons: botones,
+        columnDefs: colAcciones >= 0 ? [{ orderable: false, targets: colAcciones }] : [],
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
             }

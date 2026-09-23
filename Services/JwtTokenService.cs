@@ -98,6 +98,41 @@ namespace WebColegio.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public bool TryValidatePasswordResetToken(string token, out int idUsuario)
+        {
+            idUsuario = 0;
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(_settings.SecretKey))
+                return false;
+
+            var parameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _settings.Issuer,
+                ValidAudience = _settings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey)),
+                ClockSkew = TimeSpan.FromMinutes(1)
+            };
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var principal = handler.ValidateToken(token, parameters, out _);
+                var purpose = principal.FindFirst("purpose")?.Value;
+                if (!string.Equals(purpose, "password_reset", StringComparison.Ordinal))
+                    return false;
+
+                var idValue = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                return int.TryParse(idValue, out idUsuario) && idUsuario > 0;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         private void ValidateSecretKey()
         {
             if (string.IsNullOrWhiteSpace(_settings.SecretKey) || _settings.SecretKey.Length < 32)

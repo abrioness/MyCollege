@@ -1,0 +1,181 @@
+@model WebColegio.Models.ViewModel.EmailAvisoViewModel
+@{
+    ViewData["Title"] = "Avisos por correo";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-envelope"></i> Avisos de mora y saldo por correo</h4>
+        </div>
+        <div class="card-body">
+            @if (TempData["Mensaje"] != null)
+            {
+                <div class="alert alert-@(TempData["Tipo"]?.ToString() == "success" ? "success" : "warning")">@TempData["Mensaje"]</div>
+            }
+
+            <div class="alert alert-info">
+                @Model.MensajeEstado
+                <br />
+                Alumnos con pendiente: <strong>@Model.Destinos.Count</strong>
+                · Con correo: <strong>@Model.ConCorreo</strong>
+                · Sin correo: <strong>@Model.SinCorreo</strong>
+                · Total: <strong>C$ @Model.TotalPendiente.ToString("N2")</strong>
+                @if (!string.IsNullOrWhiteSpace(Model.UltimaCampana))
+                {
+                    <span> · Última campaña: @Model.UltimaCampana</span>
+                }
+            </div>
+
+            <p class="small text-muted">
+                El correo se envía como <strong>no responder</strong>. Los tutores no deben contestar este aviso.
+                Se usa el correo de la ficha del alumno o, si no hay, el del usuario tutor.
+            </p>
+
+            <form asp-action="Programar" method="post" class="row g-2 align-items-end mb-3">
+                @Html.AntiForgeryToken()
+                <div class="col-auto">
+                    <label class="form-label mb-0 small" for="fechaProgramada">Programar envío masivo</label>
+                    <input type="date" class="form-control" id="fechaProgramada" name="fechaProgramada"
+                           value="@Model.FechaProgramadaInput" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar-event"></i> Programar
+                    </button>
+                </div>
+                @if (Model.FechaProgramada.HasValue)
+                {
+                    <div class="col-auto">
+                        <button type="submit" formaction="@Url.Action("CancelarProgramacion")" class="btn btn-outline-secondary">
+                            Cancelar programación
+                        </button>
+                    </div>
+                }
+            </form>
+
+            <form asp-action="EnviarSeleccion" method="post" id="formSeleccion">
+                @Html.AntiForgeryToken()
+                <div class="mb-3 d-flex flex-wrap gap-2">
+                    @if (Model.SmtpConfigurado)
+                    {
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Enviar seleccionados
+                        </button>
+                        <button type="submit" formaction="@Url.Action("EnviarCampana")" class="btn btn-outline-primary"
+                                onclick="return confirm('¿Enviar correo a todos los tutores con correo y saldo pendiente?');">
+                            <i class="bi bi-broadcast"></i> Campaña completa
+                        </button>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">El envío está deshabilitado hasta configurar el correo del colegio.</span>
+                    }
+                </div>
+
+                <div class="table-responsive">
+                    <table id="tablaCorreo" class="table table-bordered table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Alumno</th>
+                                <th>Grado</th>
+                                <th>Contacto</th>
+                                <th>Correo</th>
+                                <th>Pendiente</th>
+                                <th>Detalle</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var d in Model.Destinos)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!d.SinCorreo && Model.SmtpConfigurado)
+                                    {
+                                        <input type="checkbox" name="idAlumnos" value="@d.IdAlumno" />
+                                    }
+                                </td>
+                                <td>@d.NombreAlumno</td>
+                                <td>@d.Grado</td>
+                                <td>
+                                    @(d.NombreContacto ?? "—")
+                                    @if (!string.IsNullOrWhiteSpace(d.OrigenCorreo))
+                                    {
+                                        <span class="text-muted small">(@d.OrigenCorreo)</span>
+                                    }
+                                </td>
+                                <td>@(d.Correo ?? "Sin correo")</td>
+                                <td>C$ @d.TotalPendiente.ToString("N2")</td>
+                                <td>
+                                    @if (d.SaldoMatricula > 0.01m)
+                                    {
+                                        <div>Matrícula C$ @d.SaldoMatricula.ToString("N2")</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(d.MesesPendientes))
+                                    {
+                                        <div>Meses: @d.MesesPendientes</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(d.EstadoPago))
+                                    {
+                                        <span class="badge @(d.EstadoPago == "Insolvente" ? "bg-danger" : "bg-secondary")">@d.EstadoPago</span>
+                                    }
+                                </td>
+                                <td class="text-nowrap">
+                                    @if (Model.SmtpConfigurado && !d.SinCorreo)
+                                    {
+                                        <button type="submit" formaction="@Url.Action("EnviarUno")" name="idAlumno" value="@d.IdAlumno" class="btn btn-sm btn-outline-primary">
+                                            Enviar
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+
+            @if (Model.Historial.Count > 0)
+            {
+                <h5 class="mt-4">Últimos envíos</h5>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Alumno</th>
+                            <th>Correo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var h in Model.Historial)
+                    {
+                        <tr>
+                            <td>@h.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@h.NombreAlumno</td>
+                            <td>@h.Correo</td>
+                            <td>@(h.Exito ? "Enviado" : h.Detalle)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            if ($.fn.DataTable) {
+                $('#tablaCorreo').DataTable({
+                    pageLength: 25,
+                    order: [[5, 'desc']],
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-MX.json' }
+                });
+            }
+        });
+    </script>
+}

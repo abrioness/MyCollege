@@ -4,6 +4,22 @@
 }
 
 <div class="container-fluid p-1" style="margin:2px;">
+	<style>
+		#estadocuenta tbody tr.fila-alumno-inactivo > td {
+			background-color: #8d949c !important;
+			color: #1c1f23 !important;
+		}
+		#estadocuenta tbody tr.fila-alumno-inactivo .celda-sin-cobro {
+			letter-spacing: 3px;
+			font-weight: 700;
+			text-align: center;
+			color: #343a40 !important;
+		}
+		#estadocuenta tbody tr.fila-alumno-inactivo .badge-sin-cobro {
+			background-color: #343a40;
+			color: #fff;
+		}
+	</style>
 	<div class="card shadow-lg p-3 mb-5 bg-white rounded">
 		<div class="card-header bg-primary text-white">
 			<h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Estado Cuenta del Estudiante</h5>
@@ -55,9 +71,13 @@
 						{
 							if (fila.DatosIncompletos)
 								continue;
-							<tr>
+							<tr class="@(fila.EsRetiradoOInactivo ? "fila-alumno-inactivo" : "")">
 								<td data-order="@(fila.IdPagoParaEnlace ?? 0)">
-									<span class="btn btn-sm btn-info">@fila.NombreCompleto</span>
+									<span class="btn btn-sm @(fila.EsRetiradoOInactivo ? "btn-secondary" : "btn-info")">@fila.NombreCompleto</span>
+									@if (!string.IsNullOrWhiteSpace(fila.EtiquetaEstadoAlumno))
+									{
+										<span class="badge badge-sin-cobro ms-1">@fila.EtiquetaEstadoAlumno · sin cobros</span>
+									}
 								</td>
 								<td>@(fila.NombreGrado ?? "-")</td>
 								<td>@(fila.AnioPeriodo > 0 ? fila.AnioPeriodo.ToString() : "—")</td>
@@ -68,6 +88,19 @@
 										<span class="badge @(fila.EsHistorialTraslado ? "bg-secondary" : "bg-primary")">@fila.EtiquetaRecinto</span>
 									}
 								</td>
+								@if (fila.EsRetiradoOInactivo)
+								{
+									<td class="celda-sin-cobro" title="No se generan cobros">——</td>
+									<td class="celda-sin-cobro">——</td>
+									<td class="celda-sin-cobro">——</td>
+									<td class="celda-sin-cobro">——</td>
+									@for (int m = 0; m < 12; m++)
+									{
+										<td class="celda-sin-cobro">——</td>
+									}
+								}
+								else
+								{
 								<td class="text-center">
 									@if (fila.MatriculaReferencia <= 0.01m)
 									{
@@ -95,6 +128,10 @@
 									{
 										<span class="badge bg-success">Pagado</span>
 									}
+									else if (fila.TieneAbonoRifaSemestre1)
+									{
+										<span class="badge bg-warning text-dark">Abono</span>
+									}
 									else
 									{
 										<span class="badge bg-warning text-dark">Pendiente</span>
@@ -108,6 +145,10 @@
 									else if (fila.RifaSemestre2Pagada)
 									{
 										<span class="badge bg-success">Pagado</span>
+									}
+									else if (fila.TieneAbonoRifaSemestre2)
+									{
+										<span class="badge bg-warning text-dark">Abono</span>
 									}
 									else
 									{
@@ -123,6 +164,10 @@
 									{
 										<span class="badge bg-success">Pagado</span>
 									}
+									else if (fila.TieneAbonoPromocion)
+									{
+										<span class="badge bg-warning text-dark">Abono</span>
+									}
 									else
 									{
 										<span class="badge bg-warning text-dark">Pendiente</span>
@@ -133,7 +178,7 @@
 									<td class="text-center">
 										@if (cel.NoCorresponde)
 										{
-											<span class="text-muted">—</span>
+											<span class="text-muted" title="No aplica: el alumno ingresó en un mes posterior">No aplica</span>
 										}
 										else if (cel.Cancelado)
 										{
@@ -148,6 +193,7 @@
 											<span class="badge bg-warning text-dark">Pendiente</span>
 										}
 									</td>
+								}
 								}
 							</tr>
 						}

@@ -50,8 +50,9 @@ namespace WebColegio.Controllers
                 }
                 else
                 {
-                    avisoCiclo = "Ya es octubre y el ciclo siguiente aún no existe. Habilítelo aquí para poder matricular. "
-                        + (string.IsNullOrWhiteSpace(err) ? "" : err);
+                    avisoCiclo = MensajeUsuarioHelper.Combinar(
+                        "Ya es octubre y el ciclo siguiente aún no existe. Habilítelo aquí para poder matricular.",
+                        err);
                 }
             }
 
@@ -111,7 +112,7 @@ namespace WebColegio.Controllers
                     var (ok, err, creado) = await CrearPeriodoSiguienteAsync(anioSiguiente, marcarActual: false);
                     if (!ok)
                     {
-                        SetMensaje("No se pudo crear el ciclo " + anioSiguiente + ". " + (err ?? "Verifique la API de CatPeriodo."), "warning");
+                        SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo crear el ciclo " + anioSiguiente + ".", err), "warning");
                         return RedirectToAction(nameof(Index));
                     }
 
@@ -127,7 +128,7 @@ namespace WebColegio.Controllers
 
                 if (existente == null || existente.IdPeriodo <= 0)
                 {
-                    SetMensaje("El ciclo se envió a la API pero no aparece en el listado. Recargue o revise CatPeriodo.", "warning");
+                    SetMensaje("El ciclo se registró, pero aún no aparece en el listado. Recargue la página.", "warning");
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -145,6 +146,9 @@ namespace WebColegio.Controllers
                     $"Ciclo {anioSiguiente} listo para matrículas (reserva y matrícula completa). "
                     + $"Se copiaron {resultado.Copiados} tarifas del ciclo {actual.Periodo}. "
                     + (resultado.Omitidos > 0 ? $"{resultado.Omitidos} ya existían y no se duplicaron. " : "")
+                    + (resultado.Invalidos > 0
+                        ? $"{resultado.Invalidos} con nivel incorrecto (código inexistente o NINGUNO) no se copiaron. "
+                        : "")
                     + "No se marcó como ciclo actual: las mensualidades siguen en el ciclo vigente hasta que usted lo active (habitualmente en enero).";
 
                 if (resultado.Errores.Count > 0)
@@ -152,7 +156,7 @@ namespace WebColegio.Controllers
                     mensaje += " Algunas tarifas no se copiaron: " + string.Join(" ", resultado.Errores.Take(3));
                     SetMensaje(mensaje, "warning");
                 }
-                else if (resultado.Copiados == 0 && resultado.Omitidos == 0)
+                else if (resultado.Copiados == 0 && resultado.Omitidos == 0 && resultado.Invalidos == 0)
                 {
                     SetMensaje(
                         $"Ciclo {anioSiguiente} quedó habilitado, pero el ciclo {actual.Periodo} no tiene tarifas activas para copiar. Agréguelas en este ciclo o en el actual.",
@@ -167,7 +171,7 @@ namespace WebColegio.Controllers
             }
             catch (Exception ex)
             {
-                SetMensaje("No se pudo habilitar el ciclo siguiente. " + ex.Message, "warning");
+                SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo habilitar el ciclo siguiente.", ex.Message), "warning");
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -199,7 +203,7 @@ namespace WebColegio.Controllers
                 var (ok, err) = await _services.UpdatePeriodoAsync(p);
                 if (!ok)
                 {
-                    SetMensaje($"No se pudo actualizar el ciclo {p.Periodo}. " + (err ?? ""), "warning");
+                    SetMensaje(MensajeUsuarioHelper.Combinar($"No se pudo actualizar el ciclo {p.Periodo}.", err), "warning");
                     return RedirectToAction(nameof(Index));
                 }
             }
@@ -241,7 +245,7 @@ namespace WebColegio.Controllers
             var (ok, err) = await _services.PostCostoMatriculaAsync(costo);
             if (!ok)
             {
-                SetMensaje("No se pudo guardar el costo de matrícula. " + (err ?? "Revise el endpoint de la API."), "warning");
+                SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo guardar el costo de matrícula.", err), "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, false));
             }
 
@@ -296,7 +300,7 @@ namespace WebColegio.Controllers
             var (ok, err) = await _services.UpdateCostoMatriculaAsync(costo);
             if (!ok)
             {
-                SetMensaje("No se pudo actualizar el costo de matrícula. " + (err ?? ""), "warning");
+                SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo actualizar el costo de matrícula.", err), "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, true));
             }
 
@@ -319,9 +323,10 @@ namespace WebColegio.Controllers
         public async Task<IActionResult> CreateMensualidad(CostoMensualidadFormViewModel form)
         {
             var costo = form?.Costo ?? new TblCostoMensualidad();
-            if (!ValidarCostoMensualidad(costo, out var error))
+            var validacion = await ValidarCostoMensualidadAsync(costo);
+            if (!validacion.Ok)
             {
-                SetMensaje(error, "warning");
+                SetMensaje(validacion.Error, "warning");
                 return View("FormMensualidad", await ConstruirFormMensualidadAsync(costo, false));
             }
 
@@ -337,7 +342,7 @@ namespace WebColegio.Controllers
             var (ok, err) = await _services.PostCostoMensualidadAsync(costo);
             if (!ok)
             {
-                SetMensaje("No se pudo guardar el costo de mensualidad. " + (err ?? "Revise el endpoint de la API."), "warning");
+                SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo guardar el costo de mensualidad.", err), "warning");
                 return View("FormMensualidad", await ConstruirFormMensualidadAsync(costo, false));
             }
 
@@ -367,9 +372,10 @@ namespace WebColegio.Controllers
                 SetMensaje("Registro no válido.", "warning");
                 return View("FormMensualidad", await ConstruirFormMensualidadAsync(costo, true));
             }
-            if (!ValidarCostoMensualidad(costo, out var errorMen))
+            var validacion = await ValidarCostoMensualidadAsync(costo);
+            if (!validacion.Ok)
             {
-                SetMensaje(errorMen, "warning");
+                SetMensaje(validacion.Error, "warning");
                 return View("FormMensualidad", await ConstruirFormMensualidadAsync(costo, true));
             }
 
@@ -392,12 +398,63 @@ namespace WebColegio.Controllers
             var (ok, err) = await _services.UpdateCostoMensualidadAsync(costo);
             if (!ok)
             {
-                SetMensaje("No se pudo actualizar el costo de mensualidad. " + (err ?? ""), "warning");
+                SetMensaje(MensajeUsuarioHelper.Combinar("No se pudo actualizar el costo de mensualidad.", err), "warning");
                 return View("FormMensualidad", await ConstruirFormMensualidadAsync(costo, true));
             }
 
             SetMensaje("Costo de mensualidad actualizado.", "success");
             return RedirectToAction(nameof(Index), new { idPeriodo = costo.IdPeriodo });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AnularMensualidad(int id, int? idPeriodo)
+        {
+            var lista = await _services.GetCostosMensualidadAsync() ?? new List<TblCostoMensualidad>();
+            var costo = lista.FirstOrDefault(c => c.IdMensualidad == id);
+            if (costo == null)
+            {
+                SetMensaje("No se encontró la tarifa de mensualidad.", "warning");
+                return RedirectToAction(nameof(Index), new { idPeriodo });
+            }
+
+            costo.Activo = false;
+            costo.UsuarioActualizo = IdUsuarioActual();
+            costo.FechaActualizo = DateTime.Now;
+            var (ok, err) = await _services.UpdateCostoMensualidadAsync(costo);
+            SetMensaje(ok
+                ? "Se desactivó la tarifa con nivel incorrecto. Ya no se usará en cobros."
+                : MensajeUsuarioHelper.Combinar("No se pudo desactivar la tarifa.", err),
+                ok ? "success" : "warning");
+            return RedirectToAction(nameof(Index), new { idPeriodo = idPeriodo ?? costo.IdPeriodo });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DesactivarNivelesInvalidos(int? idPeriodo)
+        {
+            var lista = await _services.GetCostosMensualidadAsync() ?? new List<TblCostoMensualidad>();
+            var grados = await _services.GetGradosAsync() ?? new List<Grados>();
+            var afectados = lista
+                .Where(c => c.Activo && (!idPeriodo.HasValue || c.IdPeriodo == idPeriodo.Value)
+                    && !CostoNivelHelper.EsValido(c.IdGrado, grados))
+                .ToList();
+            int ok = 0;
+            foreach (var costo in afectados)
+            {
+                costo.Activo = false;
+                costo.UsuarioActualizo = IdUsuarioActual();
+                costo.FechaActualizo = DateTime.Now;
+                var (exito, _) = await _services.UpdateCostoMensualidadAsync(costo);
+                if (exito)
+                    ok++;
+            }
+
+            SetMensaje(ok == 0
+                ? "No había tarifas con nivel incorrecto para desactivar."
+                : $"Se desactivaron {ok} tarifa(s) con nivel incorrecto (código inexistente o NINGUNO).",
+                ok == 0 ? "info" : "success");
+            return RedirectToAction(nameof(Index), new { idPeriodo });
         }
 
         private async Task<(bool Ok, string? Error, CatPeriodo? Creado)> CrearPeriodoSiguienteAsync(int anioSiguiente, bool marcarActual)
@@ -413,10 +470,11 @@ namespace WebColegio.Controllers
             return await _services.PostPeriodoAsync(nuevo);
         }
 
-        private async Task<(int Copiados, int Omitidos, List<string> Errores)> CopiarTarifasAsync(int idPeriodoOrigen, int idPeriodoDestino)
+        private async Task<(int Copiados, int Omitidos, int Invalidos, List<string> Errores)> CopiarTarifasAsync(int idPeriodoOrigen, int idPeriodoDestino)
         {
             int copiados = 0;
             int omitidos = 0;
+            int invalidos = 0;
             var errores = new List<string>();
             int idUsuario = IdUsuarioActual();
             var fecha = AhoraSql();
@@ -466,9 +524,15 @@ namespace WebColegio.Controllers
             var destMens = (await _services.GetCostosMensualidadAsync() ?? new List<TblCostoMensualidad>())
                 .Where(c => c.IdPeriodo == idPeriodoDestino)
                 .ToList();
+            var gradosCatalogo = await _services.GetGradosAsync() ?? new List<Grados>();
 
             foreach (var origen in mens)
             {
+                if (!CostoNivelHelper.EsValido(origen.IdGrado, gradosCatalogo))
+                {
+                    invalidos++;
+                    continue;
+                }
                 bool yaExiste = destMens.Any(d =>
                     d.IdRecinto == origen.IdRecinto
                     && d.IdGrado == origen.IdGrado
@@ -502,7 +566,7 @@ namespace WebColegio.Controllers
                 }
             }
 
-            return (copiados, omitidos, errores);
+            return (copiados, omitidos, invalidos, errores);
         }
 
         private static DateTime AhoraSql()
@@ -540,15 +604,21 @@ namespace WebColegio.Controllers
                 costo.IdPeriodo = actual?.IdPeriodo ?? 0;
             }
 
-            return new CostoMensualidadFormViewModel
+            var gradosTodos = await _services.GetGradosAsync() ?? new List<Grados>();
+            var gradosLista = gradosTodos
+                .Where(g => g.Activo && !CostoNivelHelper.EsNombreInvalido(g.NombreGrado))
+                .ToList();
+            bool nivelInvalido = costo.IdGrado > 0 && !CostoNivelHelper.EsValido(costo.IdGrado, gradosTodos);
+
+            var vm = new CostoMensualidadFormViewModel
             {
                 Costo = costo,
                 EsEdicion = esEdicion,
+                NivelCatalogoInvalido = nivelInvalido,
                 Periodos = ToSelectPeriodos(periodos, costo.IdPeriodo),
                 Recintos = ToSelectRecintos(await _services.GetRecintosAsync(), costo.IdRecinto),
                 Modalidades = ToSelectModalidades(await _services.GetModalidadesAsync(), costo.IdModalidad),
-                Grados = (await _services.GetGradosAsync() ?? new List<Grados>())
-                    .Where(g => g.Activo)
+                Grados = gradosLista
                     .OrderBy(g => g.NombreGrado)
                     .Select(g => new SelectListItem
                     {
@@ -557,6 +627,18 @@ namespace WebColegio.Controllers
                         Selected = g.IdGrado == costo.IdGrado
                     }).ToList()
             };
+
+            if (nivelInvalido)
+            {
+                vm.Grados.Insert(0, new SelectListItem
+                {
+                    Value = costo.IdGrado.ToString(),
+                    Text = "Nivel no válido — elija el grado correcto",
+                    Selected = true
+                });
+            }
+
+            return vm;
         }
 
         private static List<SelectListItem> ToSelectPeriodos(IEnumerable<CatPeriodo>? periodos, int seleccionado)
@@ -634,20 +716,20 @@ namespace WebColegio.Controllers
             return true;
         }
 
-        private static bool ValidarCostoMensualidad(TblCostoMensualidad costo, out string error)
+        private async Task<(bool Ok, string Error)> ValidarCostoMensualidadAsync(TblCostoMensualidad costo)
         {
             if (costo.CostoMensualidad <= 0)
-            {
-                error = "El valor de mensualidad debe ser mayor que cero.";
-                return false;
-            }
+                return (false, "El valor de mensualidad debe ser mayor que cero.");
             if (costo.IdPeriodo <= 0 || costo.IdRecinto <= 0 || costo.IdGrado <= 0)
+                return (false, "Debe seleccionar ciclo, colegio y nivel (grado).");
+
+            var grados = await _services.GetGradosAsync() ?? new List<Grados>();
+            if (costo.Activo && !CostoNivelHelper.EsValido(costo.IdGrado, grados))
             {
-                error = "Debe seleccionar ciclo, colegio y nivel (grado).";
-                return false;
+                return (false, "El nivel seleccionado no es válido. Elija un grado real del catálogo (no NINGUNO ni códigos que ya no existen).");
             }
-            error = "";
-            return true;
+
+            return (true, "");
         }
 
         private int IdUsuarioActual()

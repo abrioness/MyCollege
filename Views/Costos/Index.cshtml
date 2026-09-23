@@ -3,7 +3,9 @@
     ViewData["Title"] = "Tarifas y ciclo";
     string NombreRecinto(int id) => Model.Recintos.FirstOrDefault(r => r.IdRecinto == id)?.Recinto ?? id.ToString();
     string NombreModalidad(int id) => id == 0 ? "Todas" : (Model.Modalidades.FirstOrDefault(m => m.IdModalidad == id)?.Modalidad ?? id.ToString());
-    string NombreGrado(int id) => Model.Grados.FirstOrDefault(g => g.IdGrado == id)?.NombreGrado ?? id.ToString();
+    string NombreGrado(int id) => CostoNivelHelper.NombreParaLista(id, Model.Grados);
+    bool NivelInvalido(int id) => !CostoNivelHelper.EsValido(id, Model.Grados);
+    var mensualidadesInvalidas = Model.CostosMensualidad.Where(c => c.Activo && NivelInvalido(c.IdGrado)).ToList();
     string NombrePeriodo(int id) => Model.Periodos.FirstOrDefault(p => p.IdPeriodo == id)?.Periodo.ToString() ?? id.ToString();
 }
 
@@ -155,6 +157,24 @@
             <h5 class="mb-0"><i class="bi bi-calendar-month"></i> Valor de mensualidad</h5>
         </div>
         <div class="card-body">
+            @if (mensualidadesInvalidas.Count > 0)
+            {
+                <div class="alert alert-warning">
+                    Hay <strong>@mensualidadesInvalidas.Count</strong> tarifa(s) con nivel incorrecto
+                    (código que ya no existe en el catálogo, como <strong>5</strong>, o el grado <strong>NINGUNO</strong>).
+                    Se copiaron de un ciclo anterior y no deben usarse para cobros.
+                    Si falta un grado real (por ejemplo PRIMERO), edite esa fila y asigne el nivel correcto;
+                    las demás puede desactivarlas.
+                    <form asp-action="DesactivarNivelesInvalidos" method="post" class="mt-2"
+                          onsubmit="return confirm('¿Desactivar todas las tarifas con nivel incorrecto de este ciclo?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idPeriodo" value="@Model.IdPeriodoFiltro" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            Desactivar tarifas con nivel incorrecto
+                        </button>
+                    </form>
+                </div>
+            }
             <div class="table-responsive">
                 <table class="table table-bordered table-sm table-striped">
                     <thead>
@@ -175,15 +195,32 @@
                         }
                         @foreach (var item in Model.CostosMensualidad)
                         {
-                            <tr>
+                            var invalido = NivelInvalido(item.IdGrado);
+                            <tr class="@(invalido && item.Activo ? "table-warning" : "")">
                                 <td>@NombrePeriodo(item.IdPeriodo)</td>
                                 <td>@NombreRecinto(item.IdRecinto)</td>
-                                <td>@NombreGrado(item.IdGrado)</td>
+                                <td>
+                                    @NombreGrado(item.IdGrado)
+                                    @if (invalido)
+                                    {
+                                        <span class="badge bg-warning text-dark">Nivel incorrecto</span>
+                                    }
+                                </td>
                                 <td>@NombreModalidad(item.IdModalidad)</td>
                                 <td class="text-end">@item.CostoMensualidad.ToString("N2")</td>
                                 <td>@(item.Activo ? "Activo" : "Inactivo")</td>
-                                <td>
+                                <td class="text-nowrap">
                                     <a asp-action="EditMensualidad" asp-route-id="@item.IdMensualidad" class="btn btn-sm btn-info">Editar</a>
+                                    @if (invalido && item.Activo)
+                                    {
+                                        <form asp-action="AnularMensualidad" method="post" class="d-inline"
+                                              onsubmit="return confirm('¿Desactivar esta tarifa con nivel incorrecto?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.IdMensualidad" />
+                                            <input type="hidden" name="idPeriodo" value="@item.IdPeriodo" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>
+                                        </form>
+                                    }
                                 </td>
                             </tr>
                         }

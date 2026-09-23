@@ -16,13 +16,18 @@ namespace WebColegio.Models.ViewModel
         public string? EstadoPago { get; set; }
         public string Mensaje { get; set; } = "";
         public string? EnlaceWaMe { get; set; }
+        public string? Correo { get; set; }
+        public string? OrigenCorreo { get; set; }
         public bool SinTelefono => string.IsNullOrWhiteSpace(TelefonoE164);
+        public bool SinCorreo => string.IsNullOrWhiteSpace(Correo);
     }
 
     public class WhatsAppAvisoViewModel
     {
         public bool ApiConfigurada { get; set; }
         public bool EnvioAutomatico { get; set; }
+        public string? NumeroRemitente { get; set; }
+        public DateTime? FechaProgramada { get; set; }
         public string? UltimaCampana { get; set; }
         public string? MensajeEstado { get; set; }
         public List<WhatsAppAvisoDestino> Destinos { get; set; } = new();
@@ -30,6 +35,7 @@ namespace WebColegio.Models.ViewModel
         public int ConTelefono => Destinos.Count(d => !d.SinTelefono);
         public int SinTelefono => Destinos.Count(d => d.SinTelefono);
         public decimal TotalPendiente => Destinos.Sum(d => d.TotalPendiente);
+        public string FechaProgramadaInput => (FechaProgramada ?? DateTime.Today).ToString("yyyy-MM-dd");
     }
 
     public class WhatsAppEnvioLog
@@ -46,6 +52,8 @@ namespace WebColegio.Models.ViewModel
     public class WhatsAppCampanaEstado
     {
         public string? UltimaCampanaYm { get; set; }
+        public DateTime? FechaProgramada { get; set; }
+        public string? UltimaProgramadaYmd { get; set; }
         public DateTime? UltimaCampanaFecha { get; set; }
         public List<WhatsAppEnvioLog> Envios { get; set; } = new();
     }

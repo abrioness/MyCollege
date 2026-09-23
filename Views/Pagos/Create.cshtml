@@ -33,7 +33,12 @@
                     <div class="col-lg-6">
                         <div class="form-group">
                             <label asp-for="Pago.NumeroRecibo" class="control-label">Número Recibo</label>
-                            <input asp-for="Pago.NumeroRecibo" value="@Model.SiguienteNumero" id="numeroRecibo" class="form-control" readonly />
+                            <div class="input-group">
+                                <span class="input-group-text" id="etiquetaSerie">@(Model.Pago.Serie ?? "F")</span>
+                                <input asp-for="Pago.NumeroRecibo" value="@Model.SiguienteNumero" id="numeroRecibo" class="form-control" readonly />
+                            </div>
+                            <input type="hidden" asp-for="Pago.Serie" id="serieRecibo" />
+                            <small class="text-muted" id="ayudaSerie">F = San Francisco Javier · M = San Miguel (correlativo propio)</small>
                             <span asp-validation-for="Pago.NumeroRecibo" class="text-danger"></span>
                         </div>
                         <div class="form-group">
@@ -123,7 +128,7 @@
                         <div class="form-group">
                             <label for="@Html.IdFor(m => m.Pago.FechaEmision)" id="lblFechaEmision" class="control-label js-lbl-fecha-emision">Fecha de pago</label>
                             <input type="date" asp-for="Pago.FechaEmision" pattern="\d{2}/\d{2}/\d{4}" placeholder="dd/mm/yyyy" class="form-control" />
-                            <small id="ayudaFechaMatricula" class="text-muted d-block mt-1" style="display: none;">La mensualidad incluida en matrícula completa se registra siempre como <strong>enero</strong>, no según esta fecha.</small>
+                            <small id="ayudaFechaMatricula" class="text-muted mt-1" style="display: none;">La mensualidad incluida en matrícula completa se registra siempre como <strong>enero</strong>, no según esta fecha.</small>
                             <span asp-validation-for="Pago.FechaEmision" class="text-danger"></span>
                         </div>
                       
@@ -146,9 +151,10 @@
                             </small>
                         </div>
 
-                        <div class="form-group" id="moraDiv">
+                        <div class="form-group" id="moraDiv" style="display: none;">
                             <label asp-for="Pago.Mora" class="control-label">Mora</label>
-                            <input asp-for="Pago.Mora" id="totalMora" class="form-control" />
+                            <input asp-for="Pago.Mora" id="totalMora" class="form-control" readonly />
+                            <small class="text-muted d-block">C$ 10 por cada mes vencido respecto a la fecha de pago (no se cobra el mes en curso).</small>
                             <span asp-validation-for="Pago.Mora" class="text-danger"></span>
                         </div>
                        @*  <div class="form-group">
@@ -255,7 +261,8 @@
                 obtenerMensualidad: '@Url.Action("ObtenerMensualidad", "Pagos")',
                 obtenerMatricula: '@Url.Action("ObtenerMatricula", "Pagos")',
                 obtenerMora: '@Url.Action("ObtenerMora", "Pagos")',
-                obtenerDatosAlumnoMatricula: '@Url.Action("ObtenerDatosAlumnoMatricula", "Pagos")'
+                obtenerDatosAlumnoMatricula: '@Url.Action("ObtenerDatosAlumnoMatricula", "Pagos")',
+                siguienteNumero: '@Url.Action("SiguienteNumeroRecibo", "Pagos")'
             };
 
             // Cachear selectores jQuery (tras DOM listo; evita etiquetas vacías si el script corre antes del formulario)
@@ -275,6 +282,19 @@
             const $anyo = $('#anyo');
             const $continuidadPanel = $('#continuidadMatriculaPanel');
             const $chkContinuidad = $('#chkContinuidad');
+            const $fechaEmision = $('input[name="Pago.FechaEmision"]');
+
+            function actualizarNumeroRecibo() {
+                const id = $recinto.val();
+                if (!id) return;
+                $.getJSON(urlsPagos.siguienteNumero, { idRecinto: id }, function (data) {
+                    if (!data) return;
+                    $('#numeroRecibo').val(data.numero);
+                    $('#serieRecibo').val(data.serie);
+                    $('#etiquetaSerie').text(data.serie);
+                });
+            }
+            $recinto.on('change.serieRecibo', actualizarNumeroRecibo);
 
             // Constantes para tipos de movimiento
             const TIPO_MENSUALIDAD = 1;
@@ -364,10 +384,16 @@
                     return;
                 }
 
-                // Reserva del siguiente ciclo (confirmación).
-                if (esConfirmacionMatricula() && window._idPeriodoConfirmacion) {
-                    $periodo.val(String(window._idPeriodoConfirmacion));
-                    return;
+                // Confirmación tardía del ciclo en curso (matrícula aún pendiente) o reserva del siguiente.
+                if (esConfirmacionMatricula()) {
+                    if (window._tienePendienteMatriculaCicloActual && window._idPeriodoActual) {
+                        $periodo.val(String(window._idPeriodoActual));
+                        return;
+                    }
+                    if (window._idPeriodoConfirmacion) {
+                        $periodo.val(String(window._idPeriodoConfirmacion));
+                        return;
+                    }
                 }
 
                 // Abono o deuda del ciclo en curso: nunca el 2027.
@@ -505,9 +531,12 @@
                         ? MONTO_MINIMO_RESERVA
                         : MONTO_MINIMO_RESERVA;
                     $monto.val(sugeridoReserva.toFixed(2));
-                    let txtConfirmacion = 'Confirmación de matrícula: reserva de cupo del siguiente ciclo. Mínimo C$ '
-                        + MONTO_MINIMO_RESERVA.toFixed(2)
-                        + '. No abona la matrícula del año en curso ni incluye enero.';
+                    let txtConfirmacion = window._tienePendienteMatriculaCicloActual
+                        ? 'Confirmación de este ciclo. Mínimo C$ ' + MONTO_MINIMO_RESERVA.toFixed(2)
+                            + '. Ese monto se descuenta de la matrícula al cobrarla. No incluye enero.'
+                        : 'Confirmación de matrícula: reserva de cupo del siguiente ciclo. Mínimo C$ '
+                            + MONTO_MINIMO_RESERVA.toFixed(2)
+                            + '. Se descuenta de esa matrícula. No incluye enero.';
                     if (totalAbonos > 0) {
                         txtConfirmacion = 'Ya reservado C$ ' + totalAbonos.toFixed(2) + '. ' + txtConfirmacion;
                     }
@@ -667,35 +696,66 @@
                 }
             }
 
-            // Función para cargar mora (solo aplica cuando la matrícula del alumno inicia en enero)
+            const MORA_POR_MES = 10;
+            function mesesSeleccionadosIds() {
+                return String($('#MesesSeleccionados').val() || '')
+                    .split(',')
+                    .map(function (x) { return parseInt(x, 10); })
+                    .filter(function (n) { return n >= 1 && n <= 12; });
+            }
+            function moraDesdeFechaYMeses() {
+                const fechaPago = $fechaEmision.val();
+                const meses = mesesSeleccionadosIds();
+                if (!fechaPago || !meses.length) return 0;
+                const partes = String(fechaPago).split('-');
+                const mesPago = parseInt(partes[1], 10);
+                if (!mesPago) return 0;
+                const mesInicio = parseInt(window._mesIngreso, 10) || 0;
+                return meses.filter(function (m) {
+                    if (m >= mesPago) return false;
+                    if (mesInicio >= 2 && m < mesInicio) return false;
+                    return true;
+                }).length * MORA_POR_MES;
+            }
+            function mostrarMora(valor) {
+                const mora = parseInt(valor, 10) || 0;
+                $totalMora.val(String(mora));
+                if (esMensualidadOAbono() && mora > 0) {
+                    $moraDiv.show();
+                } else {
+                    $moraDiv.hide();
+                }
+                calcularTotalPagar();
+            }
             function cargarMora() {
+                const local = moraDesdeFechaYMeses();
+                mostrarMora(local);
+
                 const idAlumno = $idAlumno.val();
                 const idTipoMovimiento = $tipoMovimiento.val();
                 const periodo = $periodo.val();
+                const fechaPago = $fechaEmision.val();
+                const meses = $('#MesesSeleccionados').val() || '';
 
                 if (idAlumno && idTipoMovimiento && periodo) {
                     $.getJSON(urlsPagos.obtenerMora, {
                         idAlumno: idAlumno,
                         idTipoMovimiento: idTipoMovimiento,
-                        periodo: periodo
+                        periodo: periodo,
+                        fechaPago: fechaPago || undefined,
+                        meses: meses || undefined,
+                        mesIngreso: window._mesIngreso || undefined
                     }, function(data) {
-                        if (data && data.aplicaMora === true && data.mora) {
-                            $totalMora.val(data.mora);
-                            $moraDiv.show();
-                        } else {
-                            $totalMora.val("0");
-                            $moraDiv.hide(); // No aplicar mora si se matriculó en marzo u otro mes (no enero)
-                        }
-                        calcularTotalPagar(); // Recalcular total después de cargar mora
+                        const api = (data && data.aplicaMora === true) ? (parseInt(data.mora, 10) || 0) : 0;
+                        mostrarMora(api);
                     }).fail(function() {
-                        $totalMora.val("0");
-                        $moraDiv.hide();
-                        calcularTotalPagar(); // Recalcular aunque falle
+                        mostrarMora(moraDesdeFechaYMeses());
                     });
-                } else {
-                    $moraDiv.hide();
                 }
             }
+            $fechaEmision.on('change.moraFecha', function () {
+                if (esMensualidadOAbono()) cargarMora();
+            });
 
             // Función para calcular total a pagar (corregida)
             function calcularTotalPagar() {
@@ -713,7 +773,7 @@
 
             // Remover todos los listeners relacionados con tipoMovimiento antes de configurar
             function limpiarListeners() {
-                $recinto.add($grado).add($periodo).add($modalidad).add($anyo)
+                $recinto.add($grado).add($periodo).add($modalidad).add($anyo).add($fechaEmision)
                     .off('change.tipoMovimiento');
             }
 
@@ -729,9 +789,7 @@
                             console.log('Cambio detectado en campos de mensualidad');
                             cargarMensualidad();
                         });
-                    // Grado → cargar mora
-                    $grado.on('change.tipoMovimiento', function() {
-                        console.log('Cambio detectado en grado, cargando mora');
+                    $grado.add($fechaEmision).on('change.tipoMovimiento', function() {
                         cargarMora();
                     });
                     // Año → calcular total
@@ -883,6 +941,7 @@
                             if (data && data.ok) {
                                 if (data.idRecinto) {
                                     $recinto.val(String(data.idRecinto));
+                                    actualizarNumeroRecibo();
                                 }
                                 if (data.idModalidad) {
                                     $modalidad.val(String(data.idModalidad));
@@ -895,6 +954,10 @@
                                 window._idPeriodoConfirmacion = data.idPeriodoConfirmacion || data.idPeriodoMatricula || data.idPeriodo;
                                 window._sugerirContinuidad = !!data.sugerirContinuidad;
                                 window._tienePendienteMatriculaCicloActual = !!data.tienePendienteMatriculaCicloActual;
+                                window._mesIngreso = data.mesIngreso
+                                    || (data.fechaMatricula ? parseInt(String(data.fechaMatricula).split('-')[1], 10) : 0)
+                                    || window._mesIngreso
+                                    || 0;
                                 actualizarPanelContinuidad();
                                 if (window._sugerirContinuidad && esMatriculaCompleta()) {
                                     $chkContinuidad.prop('checked', true);
@@ -964,8 +1027,12 @@
                 }, 300);
 
                 recalcularMontoPorMeses();
+                if (typeof cargarMora === 'function') {
+                    cargarMora();
+                }
             };
 
+            window._mesIngreso = @(Model.PreloadMesIngreso ?? 0);
             const preloadPago = {
                 alumno: @(Model.PreloadIdAlumno ?? 0),
                 recinto: @(Model.PreloadIdRecinto ?? 0),
@@ -977,7 +1044,10 @@
             if (preloadPago.alumno > 0) {
                 if (!@((Model.CobraMatriculaTraslado ? "true" : "false")))
                     $tipoMovimiento.val('1').trigger('change');
-                if (preloadPago.recinto) $recinto.val(String(preloadPago.recinto));
+                if (preloadPago.recinto) {
+                    $recinto.val(String(preloadPago.recinto));
+                    actualizarNumeroRecibo();
+                }
                 if (preloadPago.grado) $grado.val(String(preloadPago.grado));
                 if (preloadPago.modalidad) $modalidad.val(String(preloadPago.modalidad));
                 if (preloadPago.periodo) $periodo.val(String(preloadPago.periodo));

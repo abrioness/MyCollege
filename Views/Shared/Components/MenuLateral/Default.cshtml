@@ -30,10 +30,8 @@
                 <div class="bg-white py-2 collapse-inner rounded">
                     @foreach (var item in bloque.Items)
                     {
-                        @* Vista de WhatsApp y Permisos de menú ocultos a pedido. *@
-                        if (string.Equals(item.Codigo, "caja.whatsapp", StringComparison.OrdinalIgnoreCase)
-                            || string.Equals(item.Codigo, "usuario.permisos", StringComparison.OrdinalIgnoreCase)
-                            || (item.Titulo ?? "").Contains("WhatsApp", StringComparison.OrdinalIgnoreCase)
+                        @* Permisos de menú ocultos a pedido. *@
+                        if (string.Equals(item.Codigo, "usuario.permisos", StringComparison.OrdinalIgnoreCase)
                             || string.Equals(item.Titulo, "Permisos de menú", StringComparison.OrdinalIgnoreCase))
                         {
                             continue;
@@ -181,7 +179,8 @@ else
                     <a class="collapse-item" asp-controller="Pagos" asp-action="Traslado"> <i class="bi bi-arrow-return-right text-black"></i> Traslado entre colegios</a>
                     <a class="collapse-item" asp-controller="PagoCaja" asp-action="EstadoCuenta"> <i class="bi bi-arrow-return-right text-black"></i> Estado de Cuenta</a>
                     <a class="collapse-item" asp-controller="ArqueoDiario" asp-action="CerrarCaja" asp-route-fecha="@DateTime.Now.ToString("yyyy-MM-dd")"> <i class="bi bi-lock text-black"></i> Cerrar caja</a>
-                    @* <a class="collapse-item" asp-controller="WhatsAppAvisos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Avisos WhatsApp</a> *@
+                    <a class="collapse-item" asp-controller="EmailAvisos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Avisos por correo</a>
+                    <a class="collapse-item" asp-controller="WhatsAppAvisos" asp-action="Index"> <i class="bi bi-arrow-return-right text-black"></i> Avisos WhatsApp</a>
                 </div>
             </div>
         </li>

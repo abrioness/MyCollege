@@ -27,7 +27,7 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> Index(DateTime? fechainicio,DateTime? fechafin)
         {
 
-            var _pagoscaja = await _Iservices.GetPagoCajaAsync();
+            var _pagoscaja = await _Iservices.GetPagoCajaAsync(incluirAnulados: true);
             var _grados = await _Iservices.GetGradosAsync();
             var _turnos = await _Iservices.GetTurnosAsync();
             var _periodo = await _Iservices.GetPeriodoAsync();
@@ -118,14 +118,16 @@ namespace WebColegio.Controllers
         [Authorize]
         public async Task<ActionResult> Create()
         {
-            var recibos = await _Iservices.GetPagoCajaAsync();
-
-            var maxNumero = recibos
-                .Where(r => r.Serie == "A")
-                .Max(r => (int?)r.NumeroRecibo);
-
-            var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 20001;
+            var recibos = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
             var filtroRecintoCreate = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            var recintosCaja = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var recCaja = filtroRecintoCreate is > 0
+                ? recintosCaja.FirstOrDefault(r => r.IdRecinto == filtroRecintoCreate.Value)
+                : null;
+            var (serieCaja, siguienteNumero) = ReciboNumeracionHelper.Resolver(
+                recCaja,
+                recibos.Select(r => (r.Serie, r.NumeroRecibo)),
+                TipoCorrelativoRecibo.Caja);
             var viewmodel = new pagoCajasViewModel
             {
                 SiguienteNumero=siguienteNumero,
@@ -166,8 +168,24 @@ namespace WebColegio.Controllers
                 Productos = (await _Iservices.GetProductosAsync()).Where(p => p.Activo).ToList(),
 
             };
+            viewmodel.PagosCaja.Serie = serieCaja;
+            viewmodel.PagosCaja.NumeroRecibo = siguienteNumero;
 
             return View(viewmodel);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> SiguienteNumeroRecibo(int? idRecinto)
+        {
+            var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var rec = recintos.FirstOrDefault(r => r.IdRecinto == idRecinto);
+            var recibos = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
+            var (serie, numero) = ReciboNumeracionHelper.Resolver(
+                rec,
+                recibos.Select(r => (r.Serie, r.NumeroRecibo)),
+                TipoCorrelativoRecibo.Caja);
+            return Json(new { serie, numero, colegio = ReciboNumeracionHelper.EtiquetaColegio(serie) });
         }
         [Authorize]
         // POST: PagoCajaController/Create
@@ -189,7 +207,18 @@ namespace WebColegio.Controllers
             if (filtroRecintoGuardar is > 0)
                 pagoscaja.IdRecinto = filtroRecintoGuardar.Value;
 
-            if (buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo && r.Serie == "A" && r.Activo))
+            var recintosGuardar = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var recGuardar = recintosGuardar.FirstOrDefault(r => r.IdRecinto == pagoscaja.IdRecinto);
+            var asignadoCaja = ReciboNumeracionHelper.Resolver(
+                recGuardar,
+                buscarIdGuardado.Select(r => (r.Serie, r.NumeroRecibo)),
+                TipoCorrelativoRecibo.Caja);
+            pagoscaja.Serie = asignadoCaja.Serie;
+            pagoscaja.NumeroRecibo = asignadoCaja.Numero;
+
+            if (buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo
+                && string.Equals(r.Serie, pagoscaja.Serie, StringComparison.OrdinalIgnoreCase)
+                && r.Activo))
             {
                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
                 TempData["Tipo"] = "warning";
@@ -294,7 +323,7 @@ namespace WebColegio.Controllers
                 bool response = await _Iservices.PostPagosCajaAsync(pagoscaja);
                 if (!response)
                 {
-                    TempData["Mensaje"] = "No se procesó el pago en la API.";
+                    TempData["Mensaje"] = "No se pudo procesar el pago. Intente de nuevo.";
                     TempData["Tipo"] = "warning";
                     return RedirectToAction("Create");
                 }
@@ -372,7 +401,9 @@ namespace WebColegio.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Mensaje"] = "Error al procesar: " + ex.Message;
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "Error al procesar. Intente de nuevo.",
+                    ex.Message);
                 TempData["Tipo"] = "warning";
                 return RedirectToAction("Create");
             }
@@ -413,8 +444,7 @@ namespace WebColegio.Controllers
         public async Task<ActionResult> EstadoCuenta()
         {
             var pagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
-            var alumnos = (await _Iservices.GetAlumnosAsync())?.Where(a => a.Activo != false).ToList()
-                ?? new List<TblAlumno>();
+            var todosAlumnos = await _Iservices.GetAlumnosAsync() ?? new List<TblAlumno>();
             var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
             var periodoRef = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos);
             if (periodoRef == null)
@@ -430,6 +460,8 @@ namespace WebColegio.Controllers
             var matriculasCiclo = (await _Iservices.GetMatriculasAsync() ?? new List<TblMatricula>())
                 .Where(m => m.Activo)
                 .ToList();
+            var alumnos = EstadoCuentaCalculoHelper.AlumnosParaEstadoCuenta(
+                todosAlumnos, matriculasCiclo, idPeriodoRef);
 
             int mesReq = EstadoCuentaSolvenciaHelper.ObtenerMesMensualidadRequerido();
             var tiposMov = await _Iservices.GetTipoMovimientoAsync() ?? new List<CatTipoMovimiento>();
@@ -499,7 +531,7 @@ namespace WebColegio.Controllers
             }
             else
             {
-                TempData["Mensaje"] = $"No se pudo anular el recibo {recibo.NumeroRecibo}. Revise la conexión con la API.";
+                TempData["Mensaje"] = $"No se pudo anular el recibo {recibo.NumeroRecibo}. Intente de nuevo o contacte al administrador.";
                 TempData["Tipo"] = "warning";
             }
 

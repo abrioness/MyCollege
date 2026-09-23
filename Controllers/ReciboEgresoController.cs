@@ -104,14 +104,16 @@ namespace WebColegio.Controllers
         [Authorize]
         public async Task<ActionResult> Create()
         {
-            var recibos = await _Iservices.GetEgresoAsync();
-
-            var maxNumero = recibos
-                .Where(r => r.Serie == "A")
-                .Max(r => (int?)r.NumeroRecibo);
-
-            var siguienteNumero = maxNumero.HasValue ? maxNumero.Value + 1 : 30001;
+            var recibos = await _Iservices.GetEgresoAsync() ?? new List<TblEgreso>();
             var filtroRecintoCreate = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            var recintosEg = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var recEg = filtroRecintoCreate is > 0
+                ? recintosEg.FirstOrDefault(r => r.IdRecinto == filtroRecintoCreate.Value)
+                : null;
+            var (serieEg, siguienteNumero) = ReciboNumeracionHelper.Resolver(
+                recEg,
+                recibos.Select(r => (r.Serie, r.NumeroRecibo)),
+                TipoCorrelativoRecibo.Egreso);
             var viewmodel = new EgresoViewModel
             {
                 SiguienteNumero = siguienteNumero,
@@ -137,8 +139,24 @@ namespace WebColegio.Controllers
 
 
             };
+            viewmodel.Egresos.Serie = serieEg;
+            viewmodel.Egresos.NumeroRecibo = siguienteNumero;
 
             return View(viewmodel);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> SiguienteNumeroRecibo(int? idRecinto)
+        {
+            var recintos = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var rec = recintos.FirstOrDefault(r => r.IdRecinto == idRecinto);
+            var recibos = await _Iservices.GetEgresoAsync() ?? new List<TblEgreso>();
+            var (serie, numero) = ReciboNumeracionHelper.Resolver(
+                rec,
+                recibos.Select(r => (r.Serie, r.NumeroRecibo)),
+                TipoCorrelativoRecibo.Egreso);
+            return Json(new { serie, numero, colegio = ReciboNumeracionHelper.EtiquetaColegio(serie) });
         }
 
         // POST: ReciboEgresoController/Create
@@ -153,10 +171,23 @@ namespace WebColegio.Controllers
             //int total = 0;
           
             int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var buscarIdGuardado = await _Iservices.GetEgresoAsync();
+            var buscarIdGuardado = await _Iservices.GetEgresoAsync() ?? new List<TblEgreso>();
             var buscarperiodo = await _Iservices.GetPeriodoAsync();
             var periodo = buscarperiodo.Where(r => r.Periodo == DateTime.Now.Year && r.Activo == true && r.Actual == true).FirstOrDefault();
-            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == egresos.NumeroRecibo && r.Serie == "A" && r.Activo==true);
+            var filtroRecintoGuardar = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
+            if (filtroRecintoGuardar is > 0)
+                egresos.IdRecinto = filtroRecintoGuardar.Value;
+            var recintosEgPost = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
+            var recEgPost = recintosEgPost.FirstOrDefault(r => r.IdRecinto == egresos.IdRecinto);
+            var asignadoEg = ReciboNumeracionHelper.Resolver(
+                recEgPost,
+                buscarIdGuardado.Select(r => (r.Serie, r.NumeroRecibo)),
+                TipoCorrelativoRecibo.Egreso);
+            egresos.Serie = asignadoEg.Serie;
+            egresos.NumeroRecibo = asignadoEg.Numero;
+            validarDuplicado = buscarIdGuardado.Any(r => r.NumeroRecibo == egresos.NumeroRecibo
+                && string.Equals(r.Serie, egresos.Serie, StringComparison.OrdinalIgnoreCase)
+                && r.Activo==true);
             if(validarDuplicado)
             {
                 TempData["Mensaje"] = "El número de Recibo ya Existe.";
@@ -176,9 +207,6 @@ namespace WebColegio.Controllers
                     egresos.UsuarioRegistro = idUsuario;
                     egresos.Activo = true;
                     egresos.FechaRegistro = DateTime.Now;
-                    var filtroRecintoGuardar = await RecintoSesionHelper.ResolverFiltroRecintoAsync(User, _Iservices);
-                    if (filtroRecintoGuardar is > 0)
-                        egresos.IdRecinto = filtroRecintoGuardar.Value;
                    
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostEgresoAsync(egresos);
@@ -244,7 +272,7 @@ namespace WebColegio.Controllers
             }
             else
             {
-                TempData["Mensaje"] = $"No se pudo anular el recibo {egreso.NumeroRecibo}. Revise la conexión con la API.";
+                TempData["Mensaje"] = $"No se pudo anular el recibo {egreso.NumeroRecibo}. Intente de nuevo o contacte al administrador.";
                 TempData["Tipo"] = "warning";
             }
 

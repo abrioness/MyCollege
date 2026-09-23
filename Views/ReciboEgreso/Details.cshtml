@@ -40,8 +40,8 @@
         </div>
         <div class="v-section">
             <div class="v-row center bold">RECIBO DE CAJA</div>
-            <div class="v-row">Serie: <span>@Model.Egresos.Serie</span></div>
-            <div class="v-row">N°: <span>@Model.Egresos.NumeroRecibo</span></div>
+            <div class="v-row center bold">Serie: @Model.Egresos.Serie</div>
+            <div class="v-row v-num">N°: @Model.Egresos.NumeroRecibo</div>
         </div>
        
 
@@ -49,7 +49,7 @@
             var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.Egresos.Concepto);
             var fecha = Model.Egresos.FechaRegistro;
         }
-        <div class="v-section">
+        <div class="v-section v-datos">
             <div class="v-row"><b>Páguese A:</b> <span>@Model.Egresos.Nombre</span></div>
             <div class="v-row"><b>Fecha Pago:</b> <span>@Model.Egresos.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
             <div class="v-row"><b>En Concepto de:</b> <span>@tipoMovimiento?.Concepto, @Model.Egresos.Descripcion</span></div>

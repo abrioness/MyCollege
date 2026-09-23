@@ -46,7 +46,21 @@ namespace WebColegio.Services
             }
         }
 
-        public void Registrar(IEnumerable<WhatsAppEnvioLog> logs, bool marcarCampana)
+        public void Programar(DateTime fecha)
+        {
+            var estado = Leer();
+            estado.FechaProgramada = fecha.Date;
+            Guardar(estado);
+        }
+
+        public void CancelarProgramacion()
+        {
+            var estado = Leer();
+            estado.FechaProgramada = null;
+            Guardar(estado);
+        }
+
+        public void Registrar(IEnumerable<WhatsAppEnvioLog> logs, bool marcarCampana, DateTime? fechaProgramadaConsumida = null)
         {
             var estado = Leer();
             estado.Envios.InsertRange(0, logs);
@@ -55,6 +69,16 @@ namespace WebColegio.Services
                 var hoy = DateTime.Today;
                 estado.UltimaCampanaYm = hoy.ToString("yyyy-MM");
                 estado.UltimaCampanaFecha = DateTime.Now;
+                if (fechaProgramadaConsumida.HasValue)
+                {
+                    estado.UltimaProgramadaYmd = fechaProgramadaConsumida.Value.ToString("yyyy-MM-dd");
+                    if (estado.FechaProgramada?.Date == fechaProgramadaConsumida.Value.Date)
+                        estado.FechaProgramada = null;
+                }
+                else
+                {
+                    estado.UltimaProgramadaYmd = hoy.ToString("yyyy-MM-dd");
+                }
             }
             Guardar(estado);
         }
@@ -64,6 +88,16 @@ namespace WebColegio.Services
             var f = fecha ?? DateTime.Today;
             var estado = Leer();
             return string.Equals(estado.UltimaCampanaYm, f.ToString("yyyy-MM"), StringComparison.Ordinal);
+        }
+
+        public bool ProgramadaPendienteParaHoy(DateTime ahora)
+        {
+            var estado = Leer();
+            if (!estado.FechaProgramada.HasValue)
+                return false;
+            if (estado.FechaProgramada.Value.Date > ahora.Date)
+                return false;
+            return !string.Equals(estado.UltimaProgramadaYmd, ahora.ToString("yyyy-MM-dd"), StringComparison.Ordinal);
         }
     }
 }

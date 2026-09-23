@@ -22,9 +22,7 @@ namespace WebColegio.ViewComponents
 
             var menus = (await _menuPermiso.ObtenerPorRolAsync(idRol.Value))
                 .Where(m => m.Activo
-                    && !string.Equals(m.Codigo, "caja.whatsapp", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(m.Codigo, "usuario.permisos", StringComparison.OrdinalIgnoreCase)
-                    && !(m.Titulo ?? "").Contains("WhatsApp", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(m.Titulo, "Permisos de menú", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(m => m.Orden)
                 .ToList();

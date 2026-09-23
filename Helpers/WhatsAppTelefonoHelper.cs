@@ -47,5 +47,27 @@ namespace WebColegio.Helpers
 
             return digitos;
         }
+
+        public static string? RemitenteE164(string? numeroColegio, string codigoPais = "505")
+            => Normalizar(numeroColegio, codigoPais);
+
+        public static string FormatearMostrar(string? numero, string codigoPais = "505")
+        {
+            var e164 = Normalizar(numero, codigoPais);
+            if (e164 == null)
+                return string.IsNullOrWhiteSpace(numero) ? "—" : numero.Trim();
+
+            if (e164.StartsWith("505") && e164.Length == 11)
+                return "+505 " + e164[3..7] + " " + e164[7..];
+
+            return "+" + e164;
+        }
+
+        public static bool EsMismoNumero(string? a, string? b, string codigoPais = "505")
+        {
+            var na = Normalizar(a, codigoPais);
+            var nb = Normalizar(b, codigoPais);
+            return na != null && nb != null && string.Equals(na, nb, StringComparison.Ordinal);
+        }
     }
 }

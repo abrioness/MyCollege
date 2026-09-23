@@ -1,0 +1,2 @@
+Unhandled exception. System.IO.FileLoadException: Could not load file or assembly 'c:\Users\Usuario\source\repos\WebColegio\bin\Debug\net8.0\WebColegio.dll'. Una directiva de Control de aplicaciones bloque¢ este archivo. (0x800711C7)
+File name: 'c:\Users\Usuario\source\repos\WebColegio\bin\Debug\net8.0\WebColegio.dll'

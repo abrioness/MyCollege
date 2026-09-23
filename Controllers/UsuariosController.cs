@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis.Scripting;
@@ -9,6 +10,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
+using WebColegio.Helpers;
 using WebColegio.Models;
 using WebColegio.Models.ViewModel;
 using WebColegio.Services;
@@ -31,14 +33,16 @@ namespace WebColegio.Controllers
             var _usuarios = await _Iservices.GetUsuariosAsync();
             var _recintos = await _Iservices.GetRecintosAsync();
             var _roles = await _Iservices.GetRolAsync();
-            
+            var _alumnos = await _Iservices.GetAlumnosAsync();
+            var _grados = await _Iservices.GetGradosAsync();
 
             var viewmodel = new UsuarioViewModel
             {
                 ListaUsuarios = _usuarios,
                 ListRol=_roles,
-                ListRecintos=_recintos
-
+                ListRecintos=_recintos,
+                ListaAlumnos = _alumnos ?? new List<TblAlumno>(),
+                ListGrados = _grados ?? new List<Grados>()
             };
 
             return View(viewmodel);
@@ -87,34 +91,29 @@ namespace WebColegio.Controllers
             {
                 int idUsuario = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 bool response=false;
-                bool existeLogin;
-                string nombre = viewmodel.usuarios.NombreUsuario;
-                string cedula = viewmodel.usuarios.Cedula;
+                string cedula = viewmodel.usuarios.Cedula?.Trim() ?? string.Empty;
+                viewmodel.usuarios.Cedula = string.IsNullOrWhiteSpace(cedula) ? viewmodel.usuarios.Cedula : cedula;
                 string password = viewmodel.Password;
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
                 byte[] passwordBytes = Encoding.UTF8.GetBytes(hashedPassword);
 
-                existeLogin = await _Iservices.validarUsuarios(cedula);//validar si existe el usuario
-
-                if (existeLogin)
+                if (!string.IsNullOrWhiteSpace(cedula))
                 {
-                    TempData["Mensaje"] = "El usuario ya se encuentra registrado.";
-                    TempData["Tipo"] = "informacion";
-                    return RedirectToAction("Create");
+                    var existeCedula = await _Iservices.validarUsuarios(cedula);
+                    if (existeCedula)
+                    {
+                        TempData["Mensaje"] = "Ya existe un usuario registrado con este número de cédula. No se puede guardar un duplicado.";
+                        TempData["Tipo"] = "warning";
+                        return RedirectToAction("Create");
+                    }
                 }
 
-                else
-                {
+                viewmodel.usuarios.Password = passwordBytes;
+                viewmodel.usuarios.UsuarioRegistro = idUsuario;
+                viewmodel.usuarios.FechaRegistro = DateTime.Now;
+                viewmodel.usuarios.Activo = true;
 
-                    //viewmodel.usuarios.NombreUsuario = nombre;
-
-                    viewmodel.usuarios.Password = passwordBytes;
-                    viewmodel.usuarios.UsuarioRegistro = idUsuario;
-                    viewmodel.usuarios.FechaRegistro = DateTime.Now;
-                    viewmodel.usuarios.Activo = true;
-
-                     response=await _Iservices.PostUsuarios(viewmodel.usuarios);
-                }
+                response=await _Iservices.PostUsuarios(viewmodel.usuarios);
                 if(response)
                 {
                     TempData["Mensaje"] = "Usuaio registrado correctamente.";
@@ -197,6 +196,19 @@ namespace WebColegio.Controllers
 
                 await CargarListasEditAsync();
 
+                var cedulaEdit = usuario.usuarios.Cedula?.Trim();
+                usuario.usuarios.Cedula = string.IsNullOrWhiteSpace(cedulaEdit) ? usuario.usuarios.Cedula : cedulaEdit;
+                if (!string.IsNullOrWhiteSpace(cedulaEdit))
+                {
+                    var existeCedula = await _Iservices.validarUsuarios(cedulaEdit, usuario.usuarios.IdUsuario);
+                    if (existeCedula)
+                    {
+                        TempData["Mensaje"] = "El número de cédula ya pertenece a otro usuario. No se puede guardar un duplicado.";
+                        TempData["Tipo"] = "warning";
+                        return View(usuario);
+                    }
+                }
+
                 if (!string.IsNullOrWhiteSpace(usuario.Password))
                 {
                     string hashedPassword = BCrypt.Net.BCrypt.HashPassword(usuario.Password.Trim());
@@ -239,25 +251,63 @@ namespace WebColegio.Controllers
             }
         }
 
-        // GET: UsuariosController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: UsuariosController/Delete/5
+        // POST: UsuariosController/Eliminar/5 — eliminación física
+        [Authorize(Roles = "Admin,UserSystem")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<ActionResult> Eliminar(int id)
         {
+            if (id <= 0)
+            {
+                TempData["Mensaje"] = "Usuario no válido.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var idActual = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            if (id == idActual)
+            {
+                TempData["Mensaje"] = "No puede eliminar su propia cuenta mientras está en sesión.";
+                TempData["Tipo"] = "warning";
+                return RedirectToAction(nameof(Index));
+            }
+
+            TblUsuarios? objetivo = null;
             try
             {
-                return RedirectToAction(nameof(Index));
+                objetivo = await _Iservices.GetUsuarioIdAsync(id);
             }
             catch
             {
-                return View();
+                objetivo = null;
             }
+            if (objetivo != null && objetivo.IdUsuario > 0)
+            {
+                var rolObjetivo = await _Iservices.GetRol(objetivo.IdRol);
+                var nombreRol = AuthRoleHelper.ResolverNombreRol(rolObjetivo?.NombreRol, objetivo.IdRol);
+                if (string.Equals(nombreRol, "UserSystem", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(rolObjetivo?.NombreRol, "UserSystem", StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData["Mensaje"] = "No se puede eliminar la cuenta de sistema.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
+            var (ok, mensaje) = await _Iservices.DeleteUsuarioAsync(id);
+            if (ok)
+            {
+                TempData["Mensaje"] = "La cuenta se eliminó de forma permanente.";
+                TempData["Tipo"] = "success";
+            }
+            else
+            {
+                TempData["Mensaje"] = string.IsNullOrWhiteSpace(mensaje)
+                    ? "No se pudo eliminar la cuenta."
+                    : mensaje;
+                TempData["Tipo"] = "warning";
+            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -1,4 +1,5 @@
 @model WebColegio.Models.ViewModel.PagosViewModel
+@using WebColegio.Helpers
 
 @{
     Layout = null;
@@ -42,8 +43,8 @@
 
         <div class="v-section">
             <div class="v-row center bold">@(Model.Pago.IdTipoMovimiento == 2 || Model.Pago.IdTipoMovimiento == 4 ? "RECIBO DE MATRÍCULA" : "RECIBO DE CAJA")</div>
-            <div class="v-row">Serie: <span>@Model.Pago.Serie</span></div>
-            <div class="v-row">N°: <span>@Model.Pago.NumeroRecibo</span></div>
+            <div class="v-row center bold">Serie: @Model.Pago.Serie</div>
+            <div class="v-row v-num">N°: @Model.Pago.NumeroRecibo</div>
         </div>
 
         @{
@@ -60,13 +61,38 @@
                 .FirstOrDefault(u => u.Value == Model.Pago.UsuarioRegistro.ToString())?.Text;
         }
 
-        <div class="v-section">
+        <div class="v-section v-datos">
             <div class="v-row"><b>Recibí de:</b> <span>@alumno?.Nombre @alumno?.Apellido</span></div>
             <div class="v-row"><b>Nivel:</b> <span>@grado?.NombreGrado</span></div>
             <div class="v-row"><b>Fecha de pago:</b> <span>@FormatearFecha(fechaPago)</span></div>
             <div class="v-row"><b>Fecha de emisión:</b> <span>@FormatearFechaDt(fechaRegistro)</span></div>
             <div class="v-row"><b>Concepto:</b>
-                <span>@(tipoMovimiento?.Concepto ?? "—")@(Model.Pago.IdTipoMovimiento == 1 && !string.IsNullOrEmpty(Model.DetalleMesesRecibo) ? " (" + Model.DetalleMesesRecibo + ")" : ""), @(Model.Pago?.Descripcion ?? "")</span>
+                @{
+                    var conceptoCatalogo = tipoMovimiento?.Concepto ?? "—";
+                    string conceptoVisible;
+                    if (EstadoCuentaCalculoHelper.EsConceptoRifa(tipoMovimiento?.Concepto, Model.Pago.IdTipoMovimiento))
+                    {
+                        conceptoVisible = EstadoCuentaCalculoHelper.ConceptoVisibleRifa(
+                            tipoMovimiento?.Concepto,
+                            EstadoCuentaCalculoHelper.SemestreRifaDePago(Model.Pago),
+                            Model.Pago.Descripcion);
+                    }
+                    else if (Model.Pago.IdTipoMovimiento == 1 && !string.IsNullOrEmpty(Model.DetalleMesesRecibo))
+                    {
+                        var descMes = EstadoCuentaCalculoHelper.QuitarMarcasInternasDescripcion(Model.Pago.Descripcion);
+                        conceptoVisible = string.IsNullOrWhiteSpace(descMes)
+                            ? $"{conceptoCatalogo} ({Model.DetalleMesesRecibo})"
+                            : $"{conceptoCatalogo} ({Model.DetalleMesesRecibo}), {descMes}";
+                    }
+                    else
+                    {
+                        var descPago = EstadoCuentaCalculoHelper.QuitarMarcasInternasDescripcion(Model.Pago.Descripcion);
+                        conceptoVisible = string.IsNullOrWhiteSpace(descPago)
+                            ? conceptoCatalogo
+                            : $"{conceptoCatalogo}, {descPago}";
+                    }
+                }
+                <span>@conceptoVisible</span>
             </div>
             <div class="v-row"><b>Método Pago:</b> <span>@metodopago?.MetodoPago</span></div>
 

@@ -42,7 +42,7 @@
                 }
             </p>
 
-            @if (!string.IsNullOrWhiteSpace(Model.ErrorApi))
+            @if (MensajeUsuarioHelper.MostrarDetalleTecnico && !string.IsNullOrWhiteSpace(Model.ErrorApi))
             {
                 <div class="alert alert-warning">@Model.ErrorApi</div>
             }
@@ -132,18 +132,21 @@
                         @if (!Model.Matriculas.Any())
                         {
                             <tr>
-                                <td colspan="8" class="text-center text-muted">
-                                    @if (!string.IsNullOrWhiteSpace(Model.ErrorApi))
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    @if (!string.IsNullOrWhiteSpace(Model.ErrorApi) && MensajeUsuarioHelper.MostrarDetalleTecnico)
                                     {
-                                        <span>La API no devolvió matrículas. Publique Api_Colegio y ejecute <code>docs/crear-tbl-matricula.sql</code> en MyCollege.</span>
+                                        <span>No se pudieron cargar las matrículas. @Model.ErrorApi</span>
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(Model.ErrorApi))
+                                    {
+                                        <span>No se pudieron cargar las matrículas. Intente de nuevo o contacte al administrador.</span>
                                     }
                                     else
                                     {
                                         <span>
-                                            No hay filas en <strong>Tbl_Matricula</strong>
-                                            @(Model.IdPeriodoFiltro == null ? " (ningún ciclo)." : " para este ciclo.")
-                                            Los estudiantes de <strong>Alumnos</strong> no aparecen aquí hasta copiarlos con el script SQL o usar “Matricular / rematricular”.
-                                            Pruebe <strong>Todos los ciclos</strong>.
+                                            No hay matrículas registradas@(Model.IdPeriodoFiltro == null ? "." : " para este ciclo.")
+                                            Use <strong>Matricular / rematricular</strong> para inscribir un estudiante
+                                            o seleccione <strong>Todos los ciclos</strong>.
                                         </span>
                                     }
                                 </td>

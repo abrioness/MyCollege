@@ -52,6 +52,7 @@ namespace WebColegio.Models.ViewModel
         public decimal TotalCordobas { get; set; }
         public decimal TotalDolares { get; set; }
         public decimal EquivalenteCordobas { get; set; }
+        public decimal TasaCambio { get; set; }
 
         public string TotalEnLetras { get; set; }
 

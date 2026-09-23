@@ -1,4 +1,5 @@
 ﻿@model WebColegio.Models.ViewModel.ColeccionCatalogos
+@using WebColegio.Helpers
 
 @* @{
 
@@ -147,7 +148,7 @@
 
 							<tr class="@(itemPago.Activo ? "" : "table-secondary")">
 
-								<td data-order="@itemPago.IdPago"><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">	@itemPago.NumeroRecibo</a></td>
+								<td data-order="@itemPago.IdPago"><a asp-action="Details" asp-controller="Pagos" asp-route-id="@itemPago.IdPago" class="btn btn-sm btn-info" target="_blank">@ReciboNumeracionHelper.Formato(itemPago.Serie, itemPago.NumeroRecibo)</a></td>
 
 
 
@@ -170,6 +171,12 @@
 								@{
 
 									var tipoMovimiento = Model.tipoMovimiento.FirstOrDefault(a => a.IdTipoMovimiento == itemPago.IdTipoMovimiento);
+									var conceptoLista = EstadoCuentaCalculoHelper.EsConceptoRifa(tipoMovimiento?.Concepto, itemPago.IdTipoMovimiento)
+										? EstadoCuentaCalculoHelper.ConceptoVisibleRifa(
+											tipoMovimiento?.Concepto,
+											EstadoCuentaCalculoHelper.SemestreRifaDePago(itemPago),
+											itemPago.Descripcion)
+										: tipoMovimiento?.Concepto;
 
 								}
 
@@ -177,7 +184,7 @@
 
 
 
-									@tipoMovimiento?.Concepto
+									@conceptoLista
 
 
 

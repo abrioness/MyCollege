@@ -5,6 +5,18 @@
     Layout = null; // Para que se imprima sin master page
     var cultInv = CultureInfo.InvariantCulture;
     var requiereRecintoAdmin = Model.EsAdministrador && Model.TblRecintos != null && Model.TblRecintos.Any(r => r.Activo);
+    int QtyC(decimal d) => WebColegio.Helpers.ArqueoDetalleDineroHelper.Cantidad(Model.DetalleCordobas, d);
+    int QtyD(decimal d) => WebColegio.Helpers.ArqueoDetalleDineroHelper.Cantidad(Model.DetalleDolares, d);
+    string MontoC(decimal d)
+    {
+        var q = QtyC(d);
+        return q > 0 ? "C$ " + (q * d).ToString("N2") : "";
+    }
+    string MontoD(decimal d)
+    {
+        var q = QtyD(d);
+        return q > 0 ? "$ " + (q * d).ToString("N2") : "";
+    }
 }
 
 <html>
@@ -102,12 +114,12 @@
                 <p>@Model.Colegio</p>
                 <p>VICARIA DE EDUCACIÓN CATÓLICA</p>
                 <p>@Model.Direccion</p>
-                <p>Serie: "A" &nbsp;&nbsp; Nº: @Model.siguienteNumero</p>
+                <p>Serie: "@(Model.Serie ?? "F")" &nbsp;&nbsp; Nº: @Model.siguienteNumero</p>
                 @{
                     var fecha = DateTime.Now.ToString("dd/MM/yyyy");
                 }
                 <p>Fecha: @fecha</p>
-                <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="A" />
+                <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="@(Model.Serie ?? "F")" />
                 <input type="hidden" asp-for="@Model.arqueoDiario.NumeroArqueo" value="@Model.siguienteNumero" />
                 <input type="hidden" asp-for="@Model.arqueoDiario.IdRecinto" id="IdRecintoHidden" value="@(Model.arqueoDiario?.IdRecinto ?? 0)" />
             </div>
@@ -118,7 +130,7 @@
 
         <!-- Ingresos -->
         <h4>Ingresos</h4>
-        <table>
+        <table id="tablaIngresosArqueo">
             <thead>
                 <tr>
                     <th>Concepto</th>
@@ -159,7 +171,7 @@
         <input type="hidden" asp-for="@Model.arqueoDiario.TotalIngreso" value="@totalIngresos.ToString(cultInv)" />
         <!-- Egresos -->
         <h4>Egresos</h4>
-        <table>
+        <table id="tablaEgresosArqueo">
             <thead>
                 <tr>
                     <th>Detalle</th>
@@ -208,54 +220,54 @@
                 <tbody>
 
                     <tr>
-                                <td><input type="number" class="cantidadc" data-precio="1000" /></td>
+                                <td><input type="number" min="0" class="cantidadc" data-precio="1000" value="@(QtyC(1000) > 0 ? QtyC(1000).ToString() : "")" /></td>
                         <td><span>C$ 1,000.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(1000)" /></td>
                     </tr>
                     <tr>
-                                <td><input type="number" class="cantidadc" data-precio="500" /></td>
+                                <td><input type="number" min="0" class="cantidadc" data-precio="500" value="@(QtyC(500) > 0 ? QtyC(500).ToString() : "")" /></td>
                         <td><span>C$ 500.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(500)" /></td>
                     </tr>
                     <tr>
-                                <td><input type="number" class="cantidadc" data-precio="200" /></td>
+                                <td><input type="number" min="0" class="cantidadc" data-precio="200" value="@(QtyC(200) > 0 ? QtyC(200).ToString() : "")" /></td>
                         <td><span>C$ 200.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(200)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadc" data-precio="100" /></td>
+                                    <td><input type="number" min="0" class="cantidadc" data-precio="100" value="@(QtyC(100) > 0 ? QtyC(100).ToString() : "")" /></td>
                         <td><span>C$ 100.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(100)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadc" data-precio="50" /></td>
+                                    <td><input type="number" min="0" class="cantidadc" data-precio="50" value="@(QtyC(50) > 0 ? QtyC(50).ToString() : "")" /></td>
                         <td><span>C$ 50.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(50)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadc" data-precio="20" /></td>
+                                    <td><input type="number" min="0" class="cantidadc" data-precio="20" value="@(QtyC(20) > 0 ? QtyC(20).ToString() : "")" /></td>
                         <td><span>C$ 20.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(20)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadc" data-precio="10" /></td>
+                                    <td><input type="number" min="0" class="cantidadc" data-precio="10" value="@(QtyC(10) > 0 ? QtyC(10).ToString() : "")" /></td>
                         <td><span>C$ 10.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(10)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadc" data-precio="5" /></td>
+                                    <td><input type="number" min="0" class="cantidadc" data-precio="5" value="@(QtyC(5) > 0 ? QtyC(5).ToString() : "")" /></td>
                         <td><span>C$ 5.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(5)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadc" data-precio="1" /></td>
+                                    <td><input type="number" min="0" class="cantidadc" data-precio="1" value="@(QtyC(1) > 0 ? QtyC(1).ToString() : "")" /></td>
                         <td><span>C$ 1.00</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(1)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadc" data-precio="0.50" /></td>
+                                    <td><input type="number" min="0" step="1" class="cantidadc" data-precio="0.50" value="@(QtyC(0.50m) > 0 ? QtyC(0.50m).ToString() : "")" /></td>
                         <td><span>C$ 0.50</span></td>
-                                <td><input type="text" class="totalc" readonly /></td>
+                                <td><input type="text" class="totalc" readonly value="@MontoC(0.50m)" /></td>
                     </tr>
                             <tr>
                                 <td></td>
@@ -293,34 +305,34 @@
                 <tbody>
 
                     <tr>
-                                    <td><input type="number" class="cantidadd" data-precio="100" /></td>
+                                    <td><input type="number" min="0" class="cantidadd" data-precio="100" value="@(QtyD(100) > 0 ? QtyD(100).ToString() : "")" /></td>
                         <td><span>$ 100.00</span></td>
-                                <td><input type="text" class="totald" readonly /></td>
+                                <td><input type="text" class="totald" readonly value="@MontoD(100)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadd" data-precio="50" /></td>
+                                    <td><input type="number" min="0" class="cantidadd" data-precio="50" value="@(QtyD(50) > 0 ? QtyD(50).ToString() : "")" /></td>
                         <td><span>$ 50.00</span></td>
-                                <td><input type="text" class="totald" readonly /></td>
+                                <td><input type="text" class="totald" readonly value="@MontoD(50)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadd" data-precio="20" /></td>
+                                    <td><input type="number" min="0" class="cantidadd" data-precio="20" value="@(QtyD(20) > 0 ? QtyD(20).ToString() : "")" /></td>
                         <td><span>$ 20.00</span></td>
-                                <td><input type="text" class="totald" readonly /></td>
+                                <td><input type="text" class="totald" readonly value="@MontoD(20)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadd" data-precio="10" /></td>
+                                    <td><input type="number" min="0" class="cantidadd" data-precio="10" value="@(QtyD(10) > 0 ? QtyD(10).ToString() : "")" /></td>
                         <td><span>$ 10.00</span></td>
-                                <td><input type="text" class="totald" readonly /></td>
+                                <td><input type="text" class="totald" readonly value="@MontoD(10)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadd" data-precio="5" /></td>
+                                    <td><input type="number" min="0" class="cantidadd" data-precio="5" value="@(QtyD(5) > 0 ? QtyD(5).ToString() : "")" /></td>
                         <td><span>$ 5.00</span></td>
-                                <td><input type="text" class="totald" readonly /></td>
+                                <td><input type="text" class="totald" readonly value="@MontoD(5)" /></td>
                     </tr>
                     <tr>
-                                    <td><input type="number" class="cantidadd" data-precio="1" /></td>
+                                    <td><input type="number" min="0" class="cantidadd" data-precio="1" value="@(QtyD(1) > 0 ? QtyD(1).ToString() : "")" /></td>
                         <td><span>$ 1.00</span></td>
-                                <td><input type="text" class="totald" readonly /></td>
+                                <td><input type="text" class="totald" readonly value="@MontoD(1)" /></td>
                     </tr>
                             <tr>
                                 <td></td>
@@ -334,7 +346,7 @@
                                 <td></td>
                                 <td class="totales">Tasa de Cambio</td>
 
-                                    <td><input type="text" class="cantidadcambio" /></td>
+                                    <td><input type="text" class="cantidadcambio" value="@WebColegio.Helpers.ArqueoDetalleDineroHelper.TasaTexto(Model.TasaCambio)" /></td>
                             </tr>
                             <tr>
                                 <td></td>
@@ -362,6 +374,7 @@
             Diferencia (Efectivo a entregar − Detalle dinero): <u id="valorDiferencia">C$ 0.00</u> <span id="tipoDiferencia"></span>
         </p>
             <input type="hidden" asp-for="@Model.arqueoDiario.TotalDetalleEfectivo" value="@totalEfectivoEntregar.ToString(cultInv)" />
+            <input type="hidden" asp-for="@Model.arqueoDiario.Detalle" id="detalleDineroHidden" />
     </div>
 
         <p class="totales">
@@ -383,6 +396,9 @@
     <br />
     
     <button type="button" class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
+    <button type="button" id="btnExportarArqueoExcel" class="btn btn-success no-print" style="margin-left: 0.5rem;">
+        Exportar a Excel
+    </button>
 
         <button type="submit" id="btnGuardarArqueo" class="btn btn-primary no-print" @(Model.CajaCerrada ? "" : "disabled")>
             <i class="bi bi-save"></i> Guardar Arqueo
@@ -397,6 +413,7 @@
 
 </html>
 <script src="https://cdn.jsdelivr.net/npm/numero-a-letras@1.0.6/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     // Selección de recinto: solo un checkbox a la vez; actualiza el hidden IdRecinto
     document.querySelectorAll(".recinto-checkbox").forEach(function (cb) {
@@ -418,7 +435,38 @@
 
     // Evitar doble envío y validar recinto (solo Admin con lista)
     var envioArqueoEnCurso = false;
+    function serializarDetalleDinero() {
+        var cordobas = [];
+        document.querySelectorAll(".cantidadc").forEach(function (input) {
+            var c = parseInt(input.value, 10) || 0;
+            if (c > 0)
+                cordobas.push({ d: parseFloat(input.dataset.precio) || 0, c: c });
+        });
+        var dolares = [];
+        document.querySelectorAll(".cantidadd").forEach(function (input) {
+            var c = parseInt(input.value, 10) || 0;
+            if (c > 0)
+                dolares.push({ d: parseFloat(input.dataset.precio) || 0, c: c });
+        });
+        var totalC = parseMonto(document.getElementById("totalGeneralCordobas"));
+        var totalD = getTotalDolaresUsd ? getTotalDolaresUsd() : 0;
+        var equivalente = actualizarEquivalenteDolares ? actualizarEquivalenteDolares() : 0;
+        var hidden = document.getElementById("detalleDineroHidden");
+        if (hidden) {
+            hidden.value = JSON.stringify({
+                cordobas: cordobas,
+                dolares: dolares,
+                tasa: getTasaCambio ? getTasaCambio() : 0,
+                totalCordobas: totalC,
+                totalDolares: totalD,
+                equivalente: equivalente,
+                totalDetalleDinero: getTotalDetalleDinero ? getTotalDetalleDinero() : 0
+            });
+        }
+    }
+
     document.getElementById("formArqueo").addEventListener("submit", function (e) {
+        serializarDetalleDinero();
         if (envioArqueoEnCurso) {
             e.preventDefault();
             return false;
@@ -556,6 +604,8 @@
         var valorParaLetras = totaDetalleDinero > 0.01 ? totaDetalleDinero : totalEfectivo;
         var elLetras = document.getElementById("totalEnLetrasTexto");
         if (elLetras) elLetras.textContent = numeroALetrasJS(valorParaLetras);
+        if (typeof serializarDetalleDinero === "function")
+            serializarDetalleDinero();
     }
 
     function totalGeneralCordobas() {
@@ -611,7 +661,117 @@
     document.addEventListener("DOMContentLoaded", function () {
         actualizarTotalesLibro();
         updateTotalDetalleYDiferencia();
+        var btnExcel = document.getElementById("btnExportarArqueoExcel");
+        if (btnExcel) btnExcel.addEventListener("click", exportarArqueoExcel);
     });
+
+    window.addEventListener("beforeprint", function () {
+        if (typeof updateTotalDetalleYDiferencia === "function")
+            updateTotalDetalleYDiferencia();
+        document.querySelectorAll("input.cantidadc, input.cantidadd, input.totalc, input.totald, input.cantidadcambio, #totalGeneralCordobas, #totalGeneralDolares, #EquivalenteCordoba").forEach(function (el) {
+            el.setAttribute("value", el.value || "");
+        });
+    });
+
+    function celdaTabla(td) {
+        return (td && td.innerText ? td.innerText : "").replace(/\s+/g, " ").trim();
+    }
+
+    function filasDenominacion(selectorCantidad, selectorTotal) {
+        var filas = [];
+        document.querySelectorAll(selectorCantidad).forEach(function (input) {
+            var tr = input.closest("tr");
+            if (!tr) return;
+            var denom = tr.querySelector("span");
+            var total = tr.querySelector(selectorTotal);
+            filas.push([
+                input.value || "0",
+                denom ? denom.innerText.trim() : "",
+                total ? total.value : ""
+            ]);
+        });
+        return filas;
+    }
+
+    function exportarArqueoExcel() {
+        if (typeof XLSX === "undefined") {
+            alert("No se pudo cargar la librería de Excel. Revise la conexión e intente de nuevo.");
+            return;
+        }
+        updateTotalDetalleYDiferencia();
+        var filas = [];
+        filas.push(["ARQUEO DE CAJA"]);
+        filas.push(["Colegio", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Colegio ?? ""))]);
+        filas.push(["Dirección", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Direccion ?? ""))]);
+        filas.push(["Serie", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Serie ?? "F")), "Nº", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.siguienteNumero.ToString()))]);
+        filas.push(["Fecha", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Fecha.ToString("dd/MM/yyyy")))]);
+        @if (Model.InicioVentana != default && Model.FinVentana != default)
+        {
+            <text>
+        filas.push(["Turno", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.InicioVentana.ToString("dd/MM/yyyy hh:mm tt") + " - " + Model.FinVentana.ToString("dd/MM/yyyy hh:mm tt")))]);
+            </text>
+        }
+        filas.push([]);
+        filas.push(["INGRESOS"]);
+        filas.push(["Concepto", "No. Recibo", "Cantidad", "Monto"]);
+        var tablaIng = document.getElementById("tablaIngresosArqueo");
+        if (tablaIng) {
+            tablaIng.querySelectorAll("tbody tr").forEach(function (tr) {
+                var tds = tr.querySelectorAll("td");
+                if (tds.length >= 4)
+                    filas.push([celdaTabla(tds[0]), celdaTabla(tds[1]), celdaTabla(tds[2]), celdaTabla(tds[3])]);
+            });
+        }
+        var elIng = document.getElementById("textoTotalIngresos");
+        filas.push(["Total ingresos", "", "", elIng ? elIng.textContent : ""]);
+        filas.push([]);
+        filas.push(["EGRESOS"]);
+        filas.push(["Detalle", "Monto"]);
+        var tablaEg = document.getElementById("tablaEgresosArqueo");
+        if (tablaEg) {
+            tablaEg.querySelectorAll("tbody tr").forEach(function (tr) {
+                var tds = tr.querySelectorAll("td");
+                if (tds.length >= 2)
+                    filas.push([celdaTabla(tds[0]), celdaTabla(tds[1])]);
+            });
+        }
+        var elEg = document.getElementById("textoTotalEgresos");
+        filas.push(["Total egresos", elEg ? elEg.textContent : ""]);
+        var elEnt = document.getElementById("textoTotalEfectivoEntregar");
+        filas.push(["TOTAL DE EFECTIVO A ENTREGAR", elEnt ? elEnt.textContent : ""]);
+        filas.push([]);
+        filas.push(["DETALLE DE DINERO (CÓRDOBAS)"]);
+        filas.push(["Cantidad", "Denominación", "Monto"]);
+        filasDenominacion(".cantidadc", ".totalc").forEach(function (r) { filas.push(r); });
+        var totC = document.getElementById("totalGeneralCordobas");
+        filas.push(["", "Total en córdobas", totC ? totC.value : ""]);
+        filas.push([]);
+        filas.push(["DETALLE DE DINERO (DÓLARES)"]);
+        filas.push(["Cantidad", "Denominación", "Monto"]);
+        filasDenominacion(".cantidadd", ".totald").forEach(function (r) { filas.push(r); });
+        var totD = document.getElementById("totalGeneralDolares");
+        filas.push(["", "Total dólares", totD ? totD.value : ""]);
+        var tasa = document.querySelector(".cantidadcambio");
+        filas.push(["", "Tasa de cambio", tasa ? tasa.value : ""]);
+        var eq = document.getElementById("EquivalenteCordoba");
+        filas.push(["", "Equivalente en córdobas", eq ? eq.value : ""]);
+        filas.push([]);
+        var det = document.getElementById("valorTotalDetalleDinero");
+        var dif = document.getElementById("valorDiferencia");
+        var tipo = document.getElementById("tipoDiferencia");
+        var letras = document.getElementById("totalEnLetrasTexto");
+        filas.push(["TOTAL DETALLE DE DINERO", det ? det.textContent : ""]);
+        filas.push(["Diferencia", (dif ? dif.textContent : "") + " " + (tipo ? tipo.textContent : "")]);
+        filas.push(["Total en letras", letras ? letras.textContent : ""]);
+
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.aoa_to_sheet(filas);
+        ws["!cols"] = [{ wch: 36 }, { wch: 28 }, { wch: 16 }, { wch: 18 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Arqueo");
+        var colegio = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((Model.Colegio ?? "Arqueo").Replace(" ", "_")));
+        var fechaNom = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Fecha.ToString("yyyyMMdd")));
+        XLSX.writeFile(wb, "Arqueo_" + colegio + "_" + fechaNom + ".xlsx");
+    }
 </script>
 @if (TempData["Mensaje"] != null)
 {

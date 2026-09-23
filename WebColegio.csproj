@@ -6,9 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <!-- IIS Express evita el .exe local que bloquea Smart App Control -->
+  <!-- IIS Express + sin .exe local: Windows Smart App Control bloquea binarios nuevos sin firma -->
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <LaunchProfileName>IIS Express</LaunchProfileName>
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>

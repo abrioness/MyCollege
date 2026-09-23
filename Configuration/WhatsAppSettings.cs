@@ -11,6 +11,10 @@ namespace WebColegio.Configuration
         public int HoraEnvio { get; set; } = 8;
 
         public string CodigoPais { get; set; } = "505";
+
+        /// <summary>Número del colegio desde el que salen los avisos masivos (sin código de país).</summary>
+        public string NumeroRemitente { get; set; } = "84258684";
+
         public string NombreColegio { get; set; } = "Colegio Parroquial San Francisco Javier";
 
         /// <summary>Token permanente o temporal de Meta WhatsApp Cloud API.</summary>
