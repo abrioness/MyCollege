@@ -87,7 +87,7 @@
 										<strong>@fila.NombreCompleto</strong>
 										@if (!string.IsNullOrWhiteSpace(fila.EtiquetaEstadoAlumno))
 										{
-											<span class="badge badge-sin-cobro ms-1">@fila.EtiquetaEstadoAlumno · sin cobros</span>
+											<span class="badge badge-sin-cobro ms-1">@fila.EtiquetaEstadoAlumno</span>
 										}
 										— @fila.MotivoIncompleto
 									</td>
@@ -122,7 +122,7 @@
 									}
 									@if (!string.IsNullOrWhiteSpace(fila.EtiquetaEstadoAlumno))
 									{
-										<span class="badge badge-sin-cobro ms-1">@fila.EtiquetaEstadoAlumno · sin cobros</span>
+										<span class="badge badge-sin-cobro ms-1">@fila.EtiquetaEstadoAlumno</span>
 									}
 								</td>
 								<td>@(fila.NombreGrado ?? "—")</td>
@@ -134,25 +134,7 @@
 										<span class="badge @(fila.EsHistorialTraslado ? "bg-secondary" : "bg-primary") ms-1">@fila.EtiquetaRecinto</span>
 									}
 								</td>
-								@if (fila.EsRetiradoOInactivo)
-								{
-									<td class="text-center" title="No se generan cobros: alumno retirado o bloqueado">
-										<span class="badge badge-sin-cobro">@(fila.EtiquetaEstadoAlumno ?? "Bloqueado")</span>
-									</td>
-									<td class="celda-sin-cobro" data-export="">——</td>
-									<td class="celda-sin-cobro" data-export="">——</td>
-									<td class="celda-sin-cobro" data-export="">——</td>
-									<td class="celda-sin-cobro" data-export="">——</td>
-									<td class="celda-sin-cobro" data-export="">——</td>
-									@for (int m = 0; m < colsMes; m++)
-									{
-										<td class="celda-sin-cobro" data-export="">——</td>
-									}
-									<td class="celda-sin-cobro" data-export="">——</td>
-									<td class="celda-sin-cobro" data-export="">——</td>
-								}
-								else
-								{
+								@{
 									string? tooltipEstado = null;
 									if (fila.EstadoPagoMensualidad == "Solvente" && !string.IsNullOrEmpty(fila.NombreUltimoMesPagado))
 										tooltipEstado = $"Pagado hasta {fila.NombreUltimoMesPagado}";
@@ -165,6 +147,7 @@
 												? $"Debe: {fila.MesesPendientesSolvencia}"
 												: $"{tooltipEstado} · Debe: {fila.MesesPendientesSolvencia}";
 									}
+								}
 								<td class="text-center col-estado-pago" title="@tooltipEstado">
 									@if (string.IsNullOrEmpty(fila.EstadoPagoMensualidad) || fila.EstadoPagoMensualidad == "N/D")
 									{
@@ -199,9 +182,11 @@
 										<text>C$ @((fila.MatriculaCancelada ? 0m : fila.SaldoMatricula).ToString("N2"))</text>
 									}
 								</td>
-								var espR1 = fila.RifaReferencia > 0.01m ? fila.RifaReferencia : fila.SaldoRifaSemestre1;
-								var espR2 = fila.RifaReferencia > 0.01m ? fila.RifaReferencia : fila.SaldoRifaSemestre2;
-								var espPr = fila.PromocionReferencia > 0.01m ? fila.PromocionReferencia : fila.SaldoPromocion;
+								@{
+									var espR1 = fila.RifaReferencia > 0.01m ? fila.RifaReferencia : fila.SaldoRifaSemestre1;
+									var espR2 = fila.RifaReferencia > 0.01m ? fila.RifaReferencia : fila.SaldoRifaSemestre2;
+									var espPr = fila.PromocionReferencia > 0.01m ? fila.PromocionReferencia : fila.SaldoPromocion;
+								}
 								<td class="text-end @(!fila.AplicaRifaSemestre1 ? "" : fila.RifaSemestre1Pagada ? "table-success" : fila.TieneAbonoRifaSemestre1 ? "table-warning" : espR1 > 0.01m ? "table-danger" : "")" data-export="@(!fila.AplicaRifaSemestre1 ? "" : fila.RifaSemestre1Pagada ? "0" : espR1 > 0.01m ? Exp(fila.SaldoRifaSemestre1) : "")" title="@(fila.AplicaRifaSemestre1 ? $"Tarifa C$ {espR1:N2} · Pagado C$ {fila.MontoRifaSemestre1:N2}" : fila.MotivoRifaSemestre1)">
 									@if (!fila.AplicaRifaSemestre1)
 									{
@@ -259,7 +244,11 @@
 								@foreach (var cel in fila.Meses ?? Array.Empty<WebColegio.Models.ViewModel.EstadoCuentaMesCelda>())
 								{
 									var titulo = $"Tarifa C$ {cel.MontoEsperado:N2} · Pagado C$ {cel.MontoPagado:N2}";
-									if (cel.NoCorresponde)
+									if (cel.PosteriorAlRetiro)
+									{
+										<td class="celda-sin-cobro text-center" data-export="" title="No aplica: el alumno se retiró antes de este mes">——</td>
+									}
+									else if (cel.NoCorresponde)
 									{
 										<td class="text-center text-muted" data-export="" title="No aplica: el alumno ingresó en un mes posterior">No aplica</td>
 									}
@@ -278,7 +267,6 @@
 								}
 								<td class="text-end fw-semibold" data-export="@Exp(fila.TotalSaldoMensualidades)">C$ @fila.TotalSaldoMensualidades.ToString("N2")</td>
 								<td class="text-end fw-bold" data-export="@Exp(fila.GranTotalPendiente)">C$ @fila.GranTotalPendiente.ToString("N2")</td>
-								}
 							</tr>
 							}
 						}
@@ -349,7 +337,7 @@
 						}
 					}
 				],
-				language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+				language: window.datatablesEspanol,
 				columnDefs: [
 					{
 						targets: 4,

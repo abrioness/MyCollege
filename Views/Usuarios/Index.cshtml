@@ -11,16 +11,30 @@
 @* <p>
     <a asp-action="Create">Create New</a>
 </p> *@
-<div class="container mt-4">
+<style>
+    .usuarios-lista {
+        max-width: 100%;
+    }
+    .usuarios-lista .card-body {
+        overflow-x: auto;
+    }
+    .usuarios-lista .dataTables_wrapper {
+        width: 100%;
+    }
+    .usuarios-lista table.dataTable thead th,
+    .usuarios-lista table.dataTable tbody td {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+</style>
+<div class="container-fluid mt-3 px-3 usuarios-lista">
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white">
             <h4 class="mb-0"> <i class="bi bi-card-checklist"></i> Reporte de Usuarios </h4>
-        </div>@* <br />
-         <div>
-                    <a id="btnNuevo" class="btn btn-primary float-end" href="@Url.Action("Create", "Contenidos")"> <i class="bi bi-plus-circle"></i>Nuevo </a>
-                </div> *@
+        </div>
         <div class="card-body">
-            <table id="tablaUsuarios" class="table table-bordered table-striped display " style="width:100%">
+            <div class="table-responsive">
+            <table id="tablaUsuarios" class="table table-bordered table-striped table-sm w-100">
                 <thead>
                     <tr>
                         @* <th>
@@ -166,6 +180,7 @@
 }
     </tbody>
             </table>
+            </div>
         </div>
     </div>
 </div>
@@ -210,15 +225,14 @@
         var colAcciones = $('#tablaUsuarios thead th.no-export').index();
         $('#tablaUsuarios').DataTable({
         responsive: false,
+        autoWidth: false,
         pageLength: 10,
         lengthMenu: [[5, 10, 20], [5, 10, 20]],
         paging: true,
         dom: esCajero ? 'lfrtip' : 'Blfrtip',
         buttons: botones,
         columnDefs: colAcciones >= 0 ? [{ orderable: false, targets: colAcciones }] : [],
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
-            }
+            language: window.datatablesEspanol
         });
     });
 </script>

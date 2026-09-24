@@ -76,7 +76,7 @@
 									<span class="btn btn-sm @(fila.EsRetiradoOInactivo ? "btn-secondary" : "btn-info")">@fila.NombreCompleto</span>
 									@if (!string.IsNullOrWhiteSpace(fila.EtiquetaEstadoAlumno))
 									{
-										<span class="badge badge-sin-cobro ms-1">@fila.EtiquetaEstadoAlumno · sin cobros</span>
+										<span class="badge badge-sin-cobro ms-1">@fila.EtiquetaEstadoAlumno</span>
 									}
 								</td>
 								<td>@(fila.NombreGrado ?? "-")</td>
@@ -88,19 +88,6 @@
 										<span class="badge @(fila.EsHistorialTraslado ? "bg-secondary" : "bg-primary")">@fila.EtiquetaRecinto</span>
 									}
 								</td>
-								@if (fila.EsRetiradoOInactivo)
-								{
-									<td class="celda-sin-cobro" title="No se generan cobros">——</td>
-									<td class="celda-sin-cobro">——</td>
-									<td class="celda-sin-cobro">——</td>
-									<td class="celda-sin-cobro">——</td>
-									@for (int m = 0; m < 12; m++)
-									{
-										<td class="celda-sin-cobro">——</td>
-									}
-								}
-								else
-								{
 								<td class="text-center">
 									@if (fila.MatriculaReferencia <= 0.01m)
 									{
@@ -176,7 +163,11 @@
 								@foreach (var cel in fila.Meses ?? Array.Empty<WebColegio.Models.ViewModel.EstadoCuentaMesCelda>())
 								{
 									<td class="text-center">
-										@if (cel.NoCorresponde)
+										@if (cel.PosteriorAlRetiro)
+										{
+											<span class="celda-sin-cobro" title="No aplica: el alumno se retiró antes de este mes">——</span>
+										}
+										else if (cel.NoCorresponde)
 										{
 											<span class="text-muted" title="No aplica: el alumno ingresó en un mes posterior">No aplica</span>
 										}
@@ -193,7 +184,6 @@
 											<span class="badge bg-warning text-dark">Pendiente</span>
 										}
 									</td>
-								}
 								}
 							</tr>
 						}
@@ -216,9 +206,7 @@
 			paging: true,
 			order: [[0, 'desc']],
 			dom: 'lfrtip',
-			language: {
-				url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
-			}
+			language: window.datatablesEspanol
 		});
 	});
 </script>

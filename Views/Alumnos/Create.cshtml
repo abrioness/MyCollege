@@ -361,13 +361,6 @@ Layout = "~/Views/Shared/_Layout.cshtml";
 <script src="~/seewtalert/sweetalertstyle.js"></script>
 <link href="~/seewtalert/sweetalert.min.css" rel="stylesheet" />
 <script>
-function capitalizeWords(input) {
-    input.value = input.value
-        .toLowerCase()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-}
 function calcularEdad(FechaNacimiento) {
 const hoy = new Date();
 const nacimiento = new Date(FechaNacimiento);

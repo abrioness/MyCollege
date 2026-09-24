@@ -39,6 +39,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Update="web.config" CopyToPublishDirectory="Never" />
     <Content Include="logs\.gitkeep" CopyToPublishDirectory="PreserveNewest" />

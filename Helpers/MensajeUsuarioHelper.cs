@@ -48,6 +48,8 @@ namespace WebColegio.Helpers
                 return amigable;
             if (MostrarDetalleTecnico)
                 return mensaje.Trim();
+            if (EsAvisoNegocioTrasExito(mensaje))
+                return RecortarDetalleTecnico(mensaje);
             if (EsTecnico(mensaje))
                 return Clasificar(mensaje);
             return mensaje.Trim();
@@ -69,6 +71,26 @@ namespace WebColegio.Helpers
             if (EsTecnico(mensaje))
                 return null;
             return mensaje;
+        }
+
+        private static readonly string[] AvisosNegocioTrasExito =
+        {
+            "El recibo se registró",
+            "Pago registrado",
+            "Se procesó correctamente"
+        };
+
+        private static bool EsAvisoNegocioTrasExito(string mensaje)
+            => AvisosNegocioTrasExito.Any(p => mensaje.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
+        private static string RecortarDetalleTecnico(string mensaje)
+        {
+            var corte = TokenTecnico.Match(mensaje);
+            var texto = corte.Success ? mensaje[..corte.Index] : mensaje;
+            texto = texto.Trim().TrimEnd(':', ';', '-', '·', ' ');
+            if (string.IsNullOrWhiteSpace(texto))
+                return OperacionNoCompletada;
+            return texto.EndsWith('.') ? texto : texto + ".";
         }
 
         private static string Clasificar(string mensaje)

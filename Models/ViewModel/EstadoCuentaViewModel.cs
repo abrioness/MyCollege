@@ -41,7 +41,9 @@ namespace WebColegio.Models.ViewModel
         public string? MotivoRifaSemestre2 { get; set; }
         public bool EsRetiradoOInactivo { get; set; }
         public string? EtiquetaEstadoAlumno { get; set; }
-        /// <summary>Retirado/inactivo: no se cobra matrícula; la celda muestra líneas.</summary>
+        /// <summary>Último mes del ciclo que se cobra si el alumno se retiró (los posteriores van con líneas).</summary>
+        public int? MesHastaRetiro { get; set; }
+        /// <summary>Ya no se usa para ocultar cobros; se conserva por compatibilidad.</summary>
         public bool NoAplicaMatricula { get; set; }
         public decimal RifaReferencia { get; set; }
         public decimal SaldoRifaSemestre1 { get; set; }
@@ -85,5 +87,7 @@ namespace WebColegio.Models.ViewModel
         public bool TieneAbonoParcial { get; set; }
         /// <summary>Mes anterior al ingreso (traslado o matrícula tardía); no se cobra.</summary>
         public bool NoCorresponde { get; set; }
+        /// <summary>Mes posterior al retiro en el ciclo en que se retiró; se muestra con líneas.</summary>
+        public bool PosteriorAlRetiro { get; set; }
     }
 }

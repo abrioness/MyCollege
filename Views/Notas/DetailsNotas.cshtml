@@ -57,7 +57,7 @@
 <script>
     $(document).ready(function () {
         if ($('#detalleNotas tbody tr').length && $('#detalleNotas tbody tr td[colspan]').length === 0) {
-            $('#detalleNotas').DataTable({ scrollX: true, ordering: false, language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" } });
+            $('#detalleNotas').DataTable({ scrollX: true, ordering: false, language: window.datatablesEspanol });
         }
     });
 </script>

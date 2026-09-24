@@ -263,6 +263,8 @@ namespace WebColegio.Controllers
                 return RedirectToAction("Create");
             }
 
+            int idNuevoRecibo = 0;
+            bool reciboYaGuardado = false;
             try
             {
                 pagoscaja.UsuarioRegistro = idUsuario;
@@ -328,26 +330,46 @@ namespace WebColegio.Controllers
                     return RedirectToAction("Create");
                 }
 
+                reciboYaGuardado = true;
                 var listaActualizada = await _Iservices.GetPagoCajaAsync() ?? new List<TblPagoCaja>();
                 var reciboGuardado = listaActualizada
                     .Where(r => r.NumeroRecibo == pagoscaja.NumeroRecibo && r.Serie == pagoscaja.Serie && r.Activo)
                     .OrderByDescending(r => r.IdPagoCaja)
                     .FirstOrDefault();
 
-                int idNuevoRecibo = reciboGuardado?.IdPagoCaja ?? 0;
+                idNuevoRecibo = reciboGuardado?.IdPagoCaja ?? 0;
                 if (idNuevoRecibo <= 0)
                     idNuevoRecibo = listaActualizada.Max(a => (int?)a.IdPagoCaja) ?? 0;
-
-                if (itemsValidos.Count > 0 && idNuevoRecibo > 0)
+            }
+            catch (Exception ex)
+            {
+                if (reciboYaGuardado)
                 {
-                    var erroresInventario = new List<string>();
-                    var avisosBajoMinimo = new List<string>();
+                    TempData["Mensaje"] = "El recibo se registró correctamente. No se pudo completar el descuento de inventario. Revise el stock en Productos.";
+                    TempData["Tipo"] = "warning";
+                    return idNuevoRecibo > 0
+                        ? RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo })
+                        : RedirectToAction("Index");
+                }
+                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                    "Error al procesar. Intente de nuevo.",
+                    ex.Message);
+                TempData["Tipo"] = "warning";
+                return RedirectToAction("Create");
+            }
+
+            if (itemsValidos.Count > 0 && idNuevoRecibo > 0)
+            {
+                var productosSinStock = new List<string>();
+                var avisosBajoMinimo = new List<string>();
+                try
+                {
                     foreach (var item in itemsValidos)
                     {
                         var producto = await _Iservices.GetProductoByIdAsync(item.IdProducto);
                         if (producto == null || producto.StockActual < item.Cantidad)
                         {
-                            erroresInventario.Add(producto?.NombreProducto ?? $"Id {item.IdProducto}");
+                            productosSinStock.Add(producto?.NombreProducto ?? "un producto");
                             continue;
                         }
 
@@ -359,7 +381,8 @@ namespace WebColegio.Controllers
                         var (ok, detalle) = await _Iservices.UpdateProductoAsync(producto);
                         if (!ok)
                         {
-                            erroresInventario.Add($"{producto.NombreProducto}: {detalle ?? "no se pudo actualizar stock"}");
+                            productosSinStock.Add(producto.NombreProducto ?? "un producto");
+                            System.Diagnostics.Debug.WriteLine("Inventario tras recibo " + idNuevoRecibo + ": " + detalle);
                             continue;
                         }
 
@@ -379,34 +402,34 @@ namespace WebColegio.Controllers
                         if (InventarioAlertaHelper.EstaBajoMinimo(producto))
                             avisosBajoMinimo.Add(InventarioAlertaHelper.TextoAlerta(producto));
                     }
-
-                    if (erroresInventario.Count > 0)
-                    {
-                        TempData["Mensaje"] = "Pago registrado, pero hubo problemas al descontar inventario: " + string.Join("; ", erroresInventario);
-                        TempData["Tipo"] = "warning";
-                        return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
-                    }
-
-                    if (avisosBajoMinimo.Count > 0)
-                    {
-                        TempData["Mensaje"] = "Pago registrado. Inventario bajo, reponer: " + string.Join("; ", avisosBajoMinimo);
-                        TempData["Tipo"] = "warning";
-                        return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
-                    }
+                }
+                catch (Exception exInv)
+                {
+                    System.Diagnostics.Debug.WriteLine("Inventario tras recibo " + idNuevoRecibo + ": " + exInv.Message);
+                    if (productosSinStock.Count == 0)
+                        productosSinStock.Add("el producto vendido");
                 }
 
-                TempData["Mensaje"] = "Se procesó correctamente el pago.";
-                TempData["Tipo"] = "success";
-                return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
+                if (productosSinStock.Count > 0)
+                {
+                    TempData["Mensaje"] = "El recibo se registró correctamente. No se pudo descontar el inventario de: "
+                        + string.Join(", ", productosSinStock)
+                        + ". Revise el stock en Productos.";
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
+                }
+
+                if (avisosBajoMinimo.Count > 0)
+                {
+                    TempData["Mensaje"] = "El recibo se registró. Inventario bajo, reponer: " + string.Join("; ", avisosBajoMinimo);
+                    TempData["Tipo"] = "warning";
+                    return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
+                }
             }
-            catch (Exception ex)
-            {
-                TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
-                    "Error al procesar. Intente de nuevo.",
-                    ex.Message);
-                TempData["Tipo"] = "warning";
-                return RedirectToAction("Create");
-            }
+
+            TempData["Mensaje"] = "Se procesó correctamente el pago.";
+            TempData["Tipo"] = "success";
+            return RedirectToAction("Details", "PagoCaja", new { id = idNuevoRecibo });
         }
         //public async Task<ActionResult> EstadoCuenta()
         //{
