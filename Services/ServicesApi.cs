@@ -1132,43 +1132,67 @@ namespace WebColegio.Services
         //Pago de Caja
         public async Task<bool> PostPagosCajaAsync(TblPagoCaja pagosCaja)
         {
+            LimpiarErrorApi();
+            if (pagosCaja == null)
+                return false;
 
-            bool respuesta = false;
+            if (string.IsNullOrWhiteSpace(pagosCaja.Nombre))
+                pagosCaja.Nombre = "Cliente";
+            if (pagosCaja.FechaRegistro == default)
+                pagosCaja.FechaRegistro = DateTime.Now;
+            pagosCaja.FechaRegistro = TruncarFechaSql(pagosCaja.FechaRegistro);
+            if (pagosCaja.FechaEmision.HasValue)
+                pagosCaja.FechaEmision = TruncarFechaSql(pagosCaja.FechaEmision.Value);
+            if (pagosCaja.Anyo is null or <= 0)
+                pagosCaja.Anyo = (pagosCaja.FechaEmision ?? pagosCaja.FechaRegistro).Year;
 
-            // Asegurar datos mínimos requeridos
-            //pagos.Activo = true;
-            //pagos.UsuarioRegistro = 1;
-            //pagos.FechaRegistro = DateTime.Now;
+            var descOriginal = pagosCaja.Descripcion;
+            string? ultimoError = null;
 
-            try
+            async Task<bool> Intentar(bool incluirSerie, int maxDesc)
             {
-                using (var httpClient = CreateApiClient())
+                pagosCaja.Descripcion = AcotarTexto(descOriginal, maxDesc);
+                var (ok, err) = await PostConRutasAsync(
+                    PayloadPagoCajaApi(pagosCaja, incluirSerie),
+                    "api/TblPagoCajas",
+                    "api/TblPagoCaja");
+                if (ok)
                 {
-                    // Serializar el objeto alumno
-                    string jsonPagosCaja = JsonConvert.SerializeObject(pagosCaja);
-                    var content = new StringContent(jsonPagosCaja, Encoding.UTF8, "application/json");
+                    pagosCaja.Descripcion = descOriginal;
+                    return true;
+                }
+                ultimoError = err;
+                return false;
+            }
 
-                    // Enviar POST
-                    var response = await httpClient.PostAsync(url + "api/TblPagoCajas", content);
+            if (await Intentar(true, 4000))
+                return true;
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        respuesta = true;
-                    }
-                    else
-                    {
-                        // Para debug: mostrar mensaje de error
-                        var errorMsg = await response.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Error en POST: " + errorMsg);
-                    }
+            if (await Intentar(false, 4000))
+                return true;
+
+            foreach (var max in new[] { 500, 250, 200, 100 })
+            {
+                if (await Intentar(true, max) || await Intentar(false, max))
+                    return true;
+            }
+
+            if (PareceDuplicadoNumero(ultimoError))
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    pagosCaja.NumeroRecibo++;
+                    if (await Intentar(true, 200) || await Intentar(false, 200))
+                        return true;
+                    if (!PareceDuplicadoNumero(ultimoError))
+                        break;
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Excepción en PostPagosCajaAsync: " + ex.Message);
-            }
 
-            return respuesta;
+            pagosCaja.Descripcion = descOriginal;
+            LastApiError = ultimoError;
+            Debug.WriteLine("Error en PostPagosCajaAsync: " + ultimoError);
+            return false;
         }
 
 
@@ -1584,6 +1608,86 @@ namespace WebColegio.Services
                 || t.Contains("varchar")
                 || t.Contains("data would be truncated")
                 || t.Contains("maximum length");
+        }
+
+        private static object PayloadPagoCajaApi(TblPagoCaja p, bool incluirSerie)
+        {
+            var fechaEmision = p.FechaEmision.HasValue
+                ? TruncarFechaSql(p.FechaEmision.Value)
+                : TruncarFechaSql(p.FechaRegistro);
+            if (incluirSerie)
+            {
+                return new
+                {
+                    p.Nombre,
+                    p.NumeroRecibo,
+                    Serie = string.IsNullOrWhiteSpace(p.Serie) ? "A" : p.Serie.Trim(),
+                    p.IdGrado,
+                    p.IdTurno,
+                    p.IdPeriodo,
+                    IdRecinto = p.IdRecinto is > 0 ? p.IdRecinto : null,
+                    Anyo = p.Anyo is > 0 ? p.Anyo : fechaEmision.Year,
+                    FechaEmision = fechaEmision,
+                    p.Monto,
+                    p.Concepto,
+                    p.Descripcion,
+                    p.Activo,
+                    p.UsuarioRegistro,
+                    FechaRegistro = TruncarFechaSql(p.FechaRegistro)
+                };
+            }
+
+            return new
+            {
+                p.Nombre,
+                p.NumeroRecibo,
+                p.IdGrado,
+                p.IdTurno,
+                p.IdPeriodo,
+                IdRecinto = p.IdRecinto is > 0 ? p.IdRecinto : null,
+                Anyo = p.Anyo is > 0 ? p.Anyo : fechaEmision.Year,
+                FechaEmision = fechaEmision,
+                p.Monto,
+                p.Concepto,
+                p.Descripcion,
+                p.Activo,
+                p.UsuarioRegistro,
+                FechaRegistro = TruncarFechaSql(p.FechaRegistro)
+            };
+        }
+
+        private static string? AcotarTexto(string? texto, int max)
+        {
+            if (string.IsNullOrEmpty(texto) || max <= 0 || texto.Length <= max)
+                return texto;
+            if (max <= 1)
+                return texto[..max];
+            return texto[..(max - 1)].TrimEnd() + "…";
+        }
+
+        private static bool PareceErrorColumnaSerie(string? error)
+        {
+            if (string.IsNullOrWhiteSpace(error))
+                return false;
+            var t = error.ToLowerInvariant();
+            return t.Contains("serie") && (t.Contains("invalid column") || t.Contains("columna") || t.Contains("unknown") || t.Contains("not exist"));
+        }
+
+        private static bool PareceErrorTruncacion(string? error)
+        {
+            if (string.IsNullOrWhiteSpace(error))
+                return false;
+            var t = error.ToLowerInvariant();
+            return t.Contains("truncat") || t.Contains("string or binary") || t.Contains("maximum length") || t.Contains("nvarchar") || t.Contains("varchar");
+        }
+
+        private static bool PareceDuplicadoNumero(string? error)
+        {
+            if (string.IsNullOrWhiteSpace(error))
+                return false;
+            var t = error.ToLowerInvariant();
+            return t.Contains("duplicate") || t.Contains("unique") || t.Contains("ya existe")
+                || t.Contains("cannot insert") || t.Contains("violation of") || t.Contains("primary key");
         }
 
         public async Task<(bool Ok, string? ErrorMessage)> PostCierreCajaAsync(TblCierreCaja cierre)

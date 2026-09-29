@@ -215,15 +215,17 @@ namespace WebColegio.Controllers
                 TipoCorrelativoRecibo.Caja);
             pagoscaja.Serie = asignadoCaja.Serie;
             pagoscaja.NumeroRecibo = asignadoCaja.Numero;
+            var numerosOcupados = buscarIdGuardado
+                .Where(r => r.Activo)
+                .Select(r => r.NumeroRecibo)
+                .ToHashSet();
+            while (numerosOcupados.Contains(pagoscaja.NumeroRecibo))
+                pagoscaja.NumeroRecibo++;
 
-            if (buscarIdGuardado.Any(r => r.NumeroRecibo == pagoscaja.NumeroRecibo
-                && string.Equals(r.Serie, pagoscaja.Serie, StringComparison.OrdinalIgnoreCase)
-                && r.Activo))
-            {
-                TempData["Mensaje"] = "El número de Recibo ya Existe.";
-                TempData["Tipo"] = "warning";
-                return RedirectToAction("Create");
-            }
+            if (pagoscaja.FechaEmision is null || pagoscaja.FechaEmision.Value.Year < 2000)
+                pagoscaja.FechaEmision = DateTime.Today;
+            if (pagoscaja.Anyo is null or <= 0)
+                pagoscaja.Anyo = pagoscaja.FechaEmision.Value.Year;
 
             var itemsValidos = (DetalleItems ?? new List<DetallePagoCajaItem>())
                 .Where(x => x.IdProducto > 0 && x.Cantidad > 0)
@@ -255,6 +257,9 @@ namespace WebColegio.Controllers
                 }
                 pagoscaja.Monto = totalCalculado;
             }
+
+            if (string.IsNullOrWhiteSpace(pagoscaja.Nombre))
+                pagoscaja.Nombre = lineasProducto.Count > 0 ? "Venta de librería" : "Cliente";
 
             if (pagoscaja.Monto <= 0)
             {
@@ -325,7 +330,9 @@ namespace WebColegio.Controllers
                 bool response = await _Iservices.PostPagosCajaAsync(pagoscaja);
                 if (!response)
                 {
-                    TempData["Mensaje"] = "No se pudo procesar el pago. Intente de nuevo.";
+                    TempData["Mensaje"] = MensajeUsuarioHelper.Combinar(
+                        "No se pudo guardar el recibo. Recargue la página e intente de nuevo.",
+                        _Iservices.LastApiError);
                     TempData["Tipo"] = "warning";
                     return RedirectToAction("Create");
                 }
