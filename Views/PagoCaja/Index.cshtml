@@ -75,7 +75,8 @@
 							<th>Turno</th>
 							<th>Descripción</th>
 							<th>Colegio</th>
-							<th>Fecha Emisión</th>
+							<th>Fecha de pago</th>
+							<th>Fecha de emisión</th>
 							<th>Cajero</th>
 							<th>Estado</th>
 							@if (puedeAnularRecibo)
@@ -175,11 +176,15 @@
 
 									</td>
 								
-							<td>
-									@(string.IsNullOrWhiteSpace(itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy"))
-																? " "
-																: itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy"))
-                                
+							<td data-order="@(itemPagoCaja.FechaEmision?.ToString("yyyy-MM-dd") ?? "")">
+									@(itemPagoCaja.FechaEmision.HasValue && itemPagoCaja.FechaEmision.Value != default
+										? itemPagoCaja.FechaEmision.Value.ToString("dd/MM/yyyy")
+										: "—")
+							</td>
+							<td data-order="@(itemPagoCaja.FechaRegistro != default ? itemPagoCaja.FechaRegistro.ToString("yyyy-MM-dd") : "")">
+									@(itemPagoCaja.FechaRegistro != default
+										? itemPagoCaja.FechaRegistro.ToString("dd/MM/yyyy")
+										: "—")
 							</td>
 							<td>
 								@{

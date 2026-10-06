@@ -339,6 +339,7 @@
             }
             if (!window._trasladoConfirmado) {
                 e.preventDefault();
+                this.dataset.mantenerBloqueo = '1';
                 const mesNombre = $('#mesIngreso option:selected').text();
                 Swal.fire({
                     title: 'Confirmar mes de ingreso',
@@ -349,9 +350,17 @@
                     confirmButtonText: 'Confirmar traslado',
                     cancelButtonText: 'Cambiar fecha'
                 }).then(function (res) {
+                    var formTraslado = document.getElementById('formTraslado');
                     if (res.isConfirmed) {
                         window._trasladoConfirmado = true;
+                        if (formTraslado) {
+                            formTraslado.dataset.mantenerBloqueo = '';
+                            if (window.WebColegioForm)
+                                window.WebColegioForm.permitirSiguienteEnvio(formTraslado);
+                        }
                         $('#formTraslado').trigger('submit');
+                    } else if (formTraslado && window.WebColegioForm) {
+                        window.WebColegioForm.desbloquear(formTraslado);
                     }
                 });
             }

@@ -1,4 +1,5 @@
 ﻿@model WebColegio.Models.ViewModel.EgresoViewModel
+@using WebColegio.Helpers
 
 @{
     Layout = null;
@@ -47,11 +48,14 @@
 
         @{
             var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.Egresos.Concepto);
-            var fecha = Model.Egresos.FechaRegistro;
+            var fechaEmision = Model.Egresos.FechaRegistro;
+            var fechaPago = FechaReciboHelper.CompletarHoraPago(Model.Egresos.FechaEmision, fechaEmision);
+            var fecha = fechaEmision != default ? fechaEmision : (fechaPago ?? DateTime.Now);
         }
         <div class="v-section v-datos">
             <div class="v-row"><b>Páguese A:</b> <span>@Model.Egresos.Nombre</span></div>
-            <div class="v-row"><b>Fecha Pago:</b> <span>@Model.Egresos.FechaRegistro.ToString("dd/MM/yyyy")</span></div>
+            <div class="v-row"><b>Fecha de pago:</b> <span>@(fechaPago.HasValue && fechaPago.Value != default ? fechaPago.Value.ToString("dd/MM/yyyy HH:mm") : "—")</span></div>
+            <div class="v-row"><b>Fecha de emisión:</b> <span>@(fechaEmision != default ? fechaEmision.ToString("dd/MM/yyyy HH:mm") : "—")</span></div>
             <div class="v-row"><b>En Concepto de:</b> <span>@tipoMovimiento?.Concepto, @Model.Egresos.Descripcion</span></div>
            
             <div class="v-row"><b>La cantidad de:</b> <span>C$ @Model.Egresos.Monto.ToString("N2")</span></div>

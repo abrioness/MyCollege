@@ -223,7 +223,9 @@ namespace WebColegio.Controllers
                 pagoscaja.NumeroRecibo++;
 
             if (pagoscaja.FechaEmision is null || pagoscaja.FechaEmision.Value.Year < 2000)
-                pagoscaja.FechaEmision = DateTime.Today;
+                pagoscaja.FechaEmision = DateTime.Now;
+            else if (pagoscaja.FechaEmision.Value.TimeOfDay == TimeSpan.Zero)
+                pagoscaja.FechaEmision = pagoscaja.FechaEmision.Value.Date.Add(DateTime.Now.TimeOfDay);
             if (pagoscaja.Anyo is null or <= 0)
                 pagoscaja.Anyo = pagoscaja.FechaEmision.Value.Year;
 

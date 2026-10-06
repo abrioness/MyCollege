@@ -410,17 +410,26 @@ namespace WebColegio.Controllers
             if (!tipoMov.HasValue && int.TryParse(Request.Query["tipoMovimiento"].FirstOrDefault(), out var tm) && tm is 1 or 2)
                 tipoMov = tm;
 
-            var movimientos = await _Iservices.GetMovimientosInventarioAsync(idProd, ini, fin);
+            // La API de inventario suele ignorar query params; se trae el listado y se filtra aquí.
+            var movimientos = await _Iservices.GetMovimientosInventarioAsync(null, null, null);
             var lista = (movimientos ?? new List<MovimientoInventario>()).ToList();
 
+            DateTime FechaMov(MovimientoInventario m)
+                => m.FechaMovimiento != default ? m.FechaMovimiento : m.FechaRegistro;
+
+            if (idProd.HasValue)
+                lista = lista.Where(m => m.IdProducto == idProd.Value).ToList();
             if (ini.HasValue)
-                lista = lista.Where(m => m.FechaMovimiento.Date >= ini.Value.Date).ToList();
+                lista = lista.Where(m => FechaMov(m).Date >= ini.Value.Date).ToList();
             if (fin.HasValue)
-                lista = lista.Where(m => m.FechaMovimiento.Date <= fin.Value.Date).ToList();
+                lista = lista.Where(m => FechaMov(m).Date <= fin.Value.Date).ToList();
             if (tipoMov.HasValue)
                 lista = lista.Where(m => m.TipoMovimiento == tipoMov.Value).ToList();
 
-            lista = lista.OrderByDescending(m => m.FechaMovimiento).ThenByDescending(m => m.IdInventario).ToList();
+            lista = lista
+                .OrderByDescending(m => FechaMov(m))
+                .ThenByDescending(m => m.IdInventario)
+                .ToList();
 
             var productos = await _Iservices.GetProductosAsync();
             ViewBag.Productos = productos ?? new List<Productos>();

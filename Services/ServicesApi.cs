@@ -1504,6 +1504,8 @@ namespace WebColegio.Services
                 using (var httpclient = CreateApiClient())
                 {
                     var response = await httpclient.GetAsync(url + "api/Inventario" + qs);
+                    if (!response.IsSuccessStatusCode && query.Count > 0)
+                        response = await httpclient.GetAsync(url + "api/Inventario");
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();

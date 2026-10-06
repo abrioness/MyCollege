@@ -143,10 +143,12 @@ namespace WebColegio.Controllers
                     return RedirectToAction(nameof(ArqueoCaja), new { fecha = fechaReporte, idRecinto = idRecintoCtx });
                 }
 
-                var yaGuardadoHoy = buscarIdGuardado
+                var yaGuardadoHoy = buscarIdGuardado.FirstOrDefault(r =>
+                        r.Activo && arqueoDia.arqueoDiario.IdArqueo > 0 && r.IdArqueo == arqueoDia.arqueoDiario.IdArqueo)
+                    ?? buscarIdGuardado
                     .Where(r => r.Activo
                         && r.IdRecinto == idRecGuardar.Value
-                        && r.FechaRegistro.Date == DateTime.Today)
+                        && r.FechaRegistro.Date == fechaReporte)
                     .OrderByDescending(r => r.FechaRegistro)
                     .FirstOrDefault();
                 if (yaGuardadoHoy != null)
@@ -235,7 +237,7 @@ namespace WebColegio.Controllers
 
         }
         [Authorize]
-        public async Task<ActionResult> ArqueoCaja(DateTime fecha, int? idRecinto = null)
+        public async Task<ActionResult> ArqueoCaja(DateTime fecha, int? idRecinto = null, int? idArqueo = null)
         {
             // Si no viene fecha (ej. entrada directa a la URL), usar hoy
             if (fecha == default)
@@ -319,14 +321,32 @@ namespace WebColegio.Controllers
                     arqueo.Colegio = recintoSel.Recinto?.ToUpper() ?? "RECINTO";
                     arqueo.Direccion = ObtenerDireccionRecinto(recintoEfectivo.Value);
                 }
-                var asignadoVista = ReciboNumeracionHelper.Resolver(
-                    recintoSel,
-                    recibos.Select(r => (r.Serie, r.NumeroArqueo)),
-                    TipoCorrelativoRecibo.Arqueo);
-                arqueo.Serie = asignadoVista.Serie;
-                arqueo.siguienteNumero = asignadoVista.Numero;
-                arqueo.arqueoDiario.Serie = asignadoVista.Serie;
-                arqueo.arqueoDiario.NumeroArqueo = asignadoVista.Numero;
+                var arqueoGuardado = idArqueo is > 0
+                    ? recibos.FirstOrDefault(r => r.Activo && r.IdArqueo == idArqueo.Value)
+                    : ventana.ArqueoDelDia;
+                if (arqueoGuardado != null
+                    && recintoEfectivo is > 0
+                    && (arqueoGuardado.IdRecinto == recintoEfectivo || arqueoGuardado.IdRecinto is null))
+                {
+                    arqueo.Serie = string.IsNullOrWhiteSpace(arqueoGuardado.Serie)
+                        ? ReciboNumeracionHelper.SerieDe(recintoSel)
+                        : arqueoGuardado.Serie.Trim();
+                    arqueo.siguienteNumero = arqueoGuardado.NumeroArqueo;
+                    arqueo.arqueoDiario.IdArqueo = arqueoGuardado.IdArqueo;
+                    arqueo.arqueoDiario.Serie = arqueo.Serie;
+                    arqueo.arqueoDiario.NumeroArqueo = arqueoGuardado.NumeroArqueo;
+                }
+                else
+                {
+                    var asignadoVista = ReciboNumeracionHelper.Resolver(
+                        recintoSel,
+                        recibos.Select(r => (r.Serie, r.NumeroArqueo)),
+                        TipoCorrelativoRecibo.Arqueo);
+                    arqueo.Serie = asignadoVista.Serie;
+                    arqueo.siguienteNumero = asignadoVista.Numero;
+                    arqueo.arqueoDiario.Serie = asignadoVista.Serie;
+                    arqueo.arqueoDiario.NumeroArqueo = asignadoVista.Numero;
+                }
             }
             else if (esAdmin)
             {

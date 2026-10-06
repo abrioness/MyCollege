@@ -53,10 +53,10 @@
             var tipoMovimiento = Model.tipoMovimiento?.FirstOrDefault(a => a.IdTipoMovimiento == Model.Pago.IdTipoMovimiento);
             var metodopago = Model.metodoPago?.FirstOrDefault(a => a.IdMetodoPago == Model.Pago.IdMetodoPago);
             var fechaRegistro = Model.Pago.FechaRegistro;
-            var fechaPago = Model.Pago.FechaEmision;
+            var fechaPago = FechaReciboHelper.CompletarHoraPago(Model.Pago.FechaEmision, fechaRegistro);
             var fechaPieRecibo = fechaRegistro != default ? fechaRegistro : (fechaPago ?? DateTime.Now);
-            string FormatearFecha(DateTime? d) => d.HasValue && d.Value != default ? d.Value.ToString("dd/MM/yyyy") : "—";
-            string FormatearFechaDt(DateTime d) => d != default ? d.ToString("dd/MM/yyyy") : "—";
+            string FormatearFecha(DateTime? d) => d.HasValue && d.Value != default ? d.Value.ToString("dd/MM/yyyy HH:mm") : "—";
+            string FormatearFechaDt(DateTime d) => d != default ? d.ToString("dd/MM/yyyy HH:mm") : "—";
             var usuarioCajero = Model.usuariosSelectListItem?
                 .FirstOrDefault(u => u.Value == Model.Pago.UsuarioRegistro.ToString())?.Text;
         }

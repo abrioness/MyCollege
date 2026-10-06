@@ -128,7 +128,8 @@
 
 							<th>Colegio</th>
 
-							<th>Fecha Emisión</th>
+							<th>Fecha de pago</th>
+							<th>Fecha de emisión</th>
 							<th>Cajero</th>
 							<th>Estado</th>
 							@if (puedeAnularRecibo)
@@ -290,11 +291,16 @@
 
 
 
-							 <td>
-
-								@itemPago.FechaRegistro.ToString("dd/MM/yyyy")
-
-						</td>
+							 <td data-order="@(itemPago.FechaEmision?.ToString("yyyy-MM-dd") ?? "")">
+								@(itemPago.FechaEmision.HasValue && itemPago.FechaEmision.Value != default
+									? itemPago.FechaEmision.Value.ToString("dd/MM/yyyy")
+									: "—")
+							</td>
+							 <td data-order="@(itemPago.FechaRegistro != default ? itemPago.FechaRegistro.ToString("yyyy-MM-dd") : "")">
+								@(itemPago.FechaRegistro != default
+									? itemPago.FechaRegistro.ToString("dd/MM/yyyy")
+									: "—")
+							</td>
 							<td>
 								@{
 									var cajero = Model.usuarios?.FirstOrDefault(u => u.IdUsuario == itemPago.UsuarioRegistro);

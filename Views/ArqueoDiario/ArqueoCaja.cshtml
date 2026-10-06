@@ -22,6 +22,7 @@
 <html>
 <head>
     <link href="~/css/denominacionesarqueo.css" rel="stylesheet" />
+    <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
@@ -104,6 +105,11 @@
                 </form>
             }
         }
+        <div style="margin-top: 0.75rem;">
+            <button type="button" class="js-exportar-arqueo-excel" style="background:#198754;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:700;">
+                Exportar a Excel
+            </button>
+        </div>
     </div>
     <form method="post" asp-action="Create" enctype="multipart/form-data" id="formArqueo">
         <input type="hidden" asp-for="Fecha" />
@@ -115,10 +121,8 @@
                 <p>VICARIA DE EDUCACIÓN CATÓLICA</p>
                 <p>@Model.Direccion</p>
                 <p>Serie: "@(Model.Serie ?? "F")" &nbsp;&nbsp; Nº: @Model.siguienteNumero</p>
-                @{
-                    var fecha = DateTime.Now.ToString("dd/MM/yyyy");
-                }
-                <p>Fecha: @fecha</p>
+                <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p>
+                <input type="hidden" asp-for="@Model.arqueoDiario.IdArqueo" />
                 <input type="hidden" asp-for="@Model.arqueoDiario.Serie" value="@(Model.Serie ?? "F")" />
                 <input type="hidden" asp-for="@Model.arqueoDiario.NumeroArqueo" value="@Model.siguienteNumero" />
                 <input type="hidden" asp-for="@Model.arqueoDiario.IdRecinto" id="IdRecintoHidden" value="@(Model.arqueoDiario?.IdRecinto ?? 0)" />
@@ -396,7 +400,7 @@
     <br />
     
     <button type="button" class="no-print text-center align-content-center" onclick="window.print()">🖨 Imprimir</button>
-    <button type="button" id="btnExportarArqueoExcel" class="btn btn-success no-print" style="margin-left: 0.5rem;">
+    <button type="button" class="js-exportar-arqueo-excel btn btn-success no-print" style="margin-left: 0.5rem; background:#198754; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:700;">
         Exportar a Excel
     </button>
 
@@ -661,8 +665,9 @@
     document.addEventListener("DOMContentLoaded", function () {
         actualizarTotalesLibro();
         updateTotalDetalleYDiferencia();
-        var btnExcel = document.getElementById("btnExportarArqueoExcel");
-        if (btnExcel) btnExcel.addEventListener("click", exportarArqueoExcel);
+        document.querySelectorAll(".js-exportar-arqueo-excel").forEach(function (btnExcel) {
+            btnExcel.addEventListener("click", exportarArqueoExcel);
+        });
     });
 
     window.addEventListener("beforeprint", function () {

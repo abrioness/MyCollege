@@ -55,7 +55,8 @@
 						<th>Descripción</th>						
 						<th>Año</th>
 						<th>Colegio</th>
-						<th>Fecha Registro</th>
+						<th>Fecha de pago</th>
+						<th>Fecha de emisión</th>
 						<th>Cajero</th>
 						<th>Estado</th>
 						@if (puedeAnularRecibo)
@@ -117,9 +118,15 @@
 								@(recinto?.Recinto ?? "—")
 							</td>
 							
-							<td>
-
-								@itemEgreso.FechaRegistro.ToString("dd/MM/yyyy")
+							<td data-order="@(itemEgreso.FechaEmision?.ToString("yyyy-MM-dd") ?? "")">
+								@(itemEgreso.FechaEmision.HasValue && itemEgreso.FechaEmision.Value != default
+									? itemEgreso.FechaEmision.Value.ToString("dd/MM/yyyy")
+									: "—")
+							</td>
+							<td data-order="@(itemEgreso.FechaRegistro != default ? itemEgreso.FechaRegistro.ToString("yyyy-MM-dd") : "")">
+								@(itemEgreso.FechaRegistro != default
+									? itemEgreso.FechaRegistro.ToString("dd/MM/yyyy")
+									: "—")
 							</td>
 							<td>
 								@{

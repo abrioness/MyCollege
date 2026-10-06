@@ -207,6 +207,10 @@ namespace WebColegio.Controllers
                     egresos.UsuarioRegistro = idUsuario;
                     egresos.Activo = true;
                     egresos.FechaRegistro = DateTime.Now;
+                    if (egresos.FechaEmision is null || egresos.FechaEmision.Value.Year < 2000)
+                        egresos.FechaEmision = DateTime.Now;
+                    else if (egresos.FechaEmision.Value.TimeOfDay == TimeSpan.Zero)
+                        egresos.FechaEmision = egresos.FechaEmision.Value.Date.Add(DateTime.Now.TimeOfDay);
                    
                     //await _Iservices.InsertarPagoAsync(nuevoPago);
                     response = await _Iservices.PostEgresoAsync(egresos);

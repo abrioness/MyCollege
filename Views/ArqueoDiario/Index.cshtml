@@ -82,7 +82,7 @@
 							<tr>
 								<td>@item.NumeroArqueo</td>
 								<td>@(item.Serie ?? "A")</td>
-								<td>@item.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+								<td>@item.FechaRegistro.ToString("dd/MM/yyyy")</td>
 								<td>@(recinto?.Recinto ?? "N/A")</td>
 								<td class="text-end">@((item.TotalIngreso ?? 0).ToString("C"))</td>
 								<td class="text-end">@((item.TotalEgreso ?? 0).ToString("C"))</td>
@@ -91,6 +91,7 @@
 									<a asp-controller="ArqueoDiario" asp-action="ArqueoCaja"
 									   asp-route-fecha="@item.FechaRegistro.ToString("yyyy-MM-dd")"
 									   asp-route-idRecinto="@(item.IdRecinto ?? 0)"
+									   asp-route-idArqueo="@item.IdArqueo"
 									   class="btn btn-sm btn-info" target="_blank" title="Ver arqueo">
 										<i class="bi bi-eye"></i> Ver
 									</a>
@@ -110,15 +111,28 @@
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
 	$(document).ready(function () {
-		if ($('#tablaArqueos tbody tr').length > 0) {
-			$('#tablaArqueos').DataTable({
-				responsive: false,
-				order: [[2, 'desc']],
-				language: window.datatablesEspanol,
-				pageLength: 25
-			});
-		}
+		if (!$.fn.DataTable || !$('#tablaArqueos').length) return;
+		var puedeExportar = @(User.IsInRole("Cajero") || User.IsInRole("Admin") || User.IsInRole("UserSystem") ? "true" : "false");
+		var botones = puedeExportar ? [{
+			extend: 'excelHtml5',
+			text: 'Exportar a Excel',
+			className: 'btn btn-success btn-sm',
+			title: 'Reporte de Arqueos Diarios',
+			exportOptions: { columns: ':not(:last-child)' }
+		}] : [];
+		$('#tablaArqueos').DataTable({
+			responsive: false,
+			order: [[2, 'desc']],
+			language: window.datatablesEspanol,
+			pageLength: 25,
+			dom: puedeExportar ? 'Blfrtip' : 'lfrtip',
+			buttons: botones
+		});
 	});
 </script>

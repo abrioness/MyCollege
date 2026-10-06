@@ -63,11 +63,12 @@
                     </div>
                         <div class="form-group">
                             @{
-
-                                var fechapago = DateTime.Now.ToString("dd/MM/yyyy");
+                                var ahoraEmision = DateTime.Now;
+                                var fechapago = ahoraEmision.ToString("dd/MM/yyyy HH:mm");
                             }
                             <label asp-for="Egresos.FechaEmision" class="control-label">Fecha de Emisión</label>
-                            <input type="text" asp-for="Egresos.FechaEmision" value="@fechapago" class="form-control" readonly />
+                            <input type="text" value="@fechapago" class="form-control" readonly />
+                            <input type="hidden" asp-for="Egresos.FechaEmision" value="@ahoraEmision.ToString("yyyy-MM-ddTHH:mm:ss")" />
                             <span asp-validation-for="Egresos.FechaEmision" class="text-danger"></span>
                         </div>
                         <div class="form-group">

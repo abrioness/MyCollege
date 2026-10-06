@@ -1521,6 +1521,10 @@ namespace WebColegio.Controllers
                 {
                     pagos.Pago.UsuarioRegistro = idUsuario;
                     pagos.Pago.FechaRegistro = DateTime.Now;
+                    if (pagos.Pago.FechaEmision is null || pagos.Pago.FechaEmision.Value.Year < 2000)
+                        pagos.Pago.FechaEmision = DateTime.Now;
+                    else if (pagos.Pago.FechaEmision.Value.TimeOfDay == TimeSpan.Zero)
+                        pagos.Pago.FechaEmision = pagos.Pago.FechaEmision.Value.Date.Add(DateTime.Now.TimeOfDay);
                     pagos.Pago.Activo = true;
                     var recintosPago = await _Iservices.GetRecintosAsync() ?? new List<Recintos>();
                     var recintoPago = recintosPago.FirstOrDefault(r => r.IdRecinto == pagos.Pago.IdRecinto);
@@ -1797,7 +1801,7 @@ namespace WebColegio.Controllers
                             {
                                 TempData["Mensaje"] = $"El mes {Mes(idMes).Result} ya fue pagado por este alumno.";
                                 TempData["Tipo"] = "warning";
-                                continue;
+                                return RedirectToAction("Create");
                             }
 
                             if (!matriculaInicioCiclo
@@ -2764,13 +2768,23 @@ namespace WebColegio.Controllers
                     tarifa *= 0.5m;
             }
 
-            var ids = (meses ?? string.Empty)
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            var ids = Request.Query["meses"]
+                .SelectMany(v => (v ?? string.Empty).Split(new[] { ',', '|', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
                 .Select(s => int.TryParse(s.Trim(), out var n) ? n : 0)
                 .Where(n => n >= 1 && n <= 12)
                 .Distinct()
                 .OrderBy(n => n)
                 .ToList();
+            if (ids.Count == 0)
+            {
+                ids = (meses ?? string.Empty)
+                    .Split(new[] { ',', '|', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var n) ? n : 0)
+                    .Where(n => n >= 1 && n <= 12)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList();
+            }
 
             var listpagos = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
             var periodosConsulta = ResolverPeriodosConsultaPago(listpagos, idAlumno, idPeriodo);

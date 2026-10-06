@@ -38,7 +38,7 @@ namespace WebColegio.Helpers
         {
             fechaReporte = fechaReporte.Date;
             var listaArqueos = (arqueos ?? Enumerable.Empty<TblArqueoDiario>())
-                .Where(a => a.Activo && string.Equals(a.Serie, "A", StringComparison.OrdinalIgnoreCase))
+                .Where(a => a.Activo)
                 .Where(a => !idRecinto.HasValue || idRecinto.Value <= 0 || a.IdRecinto == idRecinto)
                 .ToList();
             var listaCierres = (cierres ?? Enumerable.Empty<TblCierreCaja>())

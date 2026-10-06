@@ -2,10 +2,10 @@
 @{
     ViewData["Title"] = "Movimientos de inventario";
     var productos = ViewBag.Productos as List<WebColegio.Models.Productos> ?? new List<WebColegio.Models.Productos>();
-    var desde = ViewBag.Desde as DateTime?;
-    var hasta = ViewBag.Hasta as DateTime?;
-    var idProducto = ViewBag.IdProducto as int?;
-    var tipoMovimiento = ViewBag.TipoMovimiento as int?;
+    DateTime? desde = ViewBag.Desde is DateTime d1 ? d1 : ViewBag.Desde as DateTime?;
+    DateTime? hasta = ViewBag.Hasta is DateTime d2 ? d2 : ViewBag.Hasta as DateTime?;
+    int? idProducto = ViewBag.IdProducto is int ip ? ip : ViewBag.IdProducto as int?;
+    int? tipoMovimiento = ViewBag.TipoMovimiento is int tm ? tm : ViewBag.TipoMovimiento as int?;
     string NombreProducto(int id)
     {
         var p = productos.FirstOrDefault(x => x.IdProducto == id);
@@ -19,20 +19,19 @@
             <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> Entradas y salidas de inventario</h5>
         </div>
         <div class="card-body">
-            @using (Html.BeginForm("Movimientos", "Productos", FormMethod.Get))
-            {
+            <form asp-action="Movimientos" asp-controller="Productos" method="get">
                 <div class="row g-2 mb-3">
                     <div class="col-md-2">
-                        <label class="form-label">Desde</label>
-                        <input type="date" name="desde" class="form-control" value="@(desde?.ToString("yyyy-MM-dd"))" />
+                        <label class="form-label" for="filtroDesde">Desde</label>
+                        <input type="date" id="filtroDesde" name="desde" class="form-control" value="@(desde?.ToString("yyyy-MM-dd"))" />
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Hasta</label>
-                        <input type="date" name="hasta" class="form-control" value="@(hasta?.ToString("yyyy-MM-dd"))" />
+                        <label class="form-label" for="filtroHasta">Hasta</label>
+                        <input type="date" id="filtroHasta" name="hasta" class="form-control" value="@(hasta?.ToString("yyyy-MM-dd"))" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Producto</label>
-                        <select name="idProducto" class="form-select">
+                        <label class="form-label" for="filtroProducto">Producto</label>
+                        <select id="filtroProducto" name="idProducto" class="form-select">
                             <option value="">Todos</option>
                             @foreach (var p in productos)
                             {
@@ -48,8 +47,8 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Tipo de movimiento</label>
-                        <select name="tipoMovimiento" class="form-select">
+                        <label class="form-label" for="filtroTipo">Tipo de movimiento</label>
+                        <select id="filtroTipo" name="tipoMovimiento" class="form-select">
                             @if (tipoMovimiento == null)
                             {
                                 <option value="" selected="selected">Todos</option>
@@ -76,13 +75,21 @@
                             }
                         </select>
                     </div>
-                    <div class="col-md-1 d-flex align-items-end">
+                    <div class="col-md-3 d-flex align-items-end gap-2">
                         <button type="submit" class="btn btn-primary">Filtrar</button>
+                        <a asp-action="Movimientos" asp-controller="Productos" class="btn btn-outline-secondary">Limpiar</a>
                     </div>
                 </div>
-            }
+            </form>
+            <div class="mb-2">
+                <button type="button" id="btnExcelMovimientos" class="btn btn-success">
+                    <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
+                </button>
+            </div>
+                </div>
+           
             <div class="table-responsive">
-                <table class="table table-sm table-bordered">
+                <table id="tablaMovimientosInventario" class="table table-sm table-bordered">
                     <thead class="table-light">
                         <tr>
                             <th>Fecha</th>
@@ -94,12 +101,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if (Model != null)
                         {
-                            @foreach (var m in Model)
+                            foreach (var m in Model)
                             {
+                                var fechaMov = m.FechaMovimiento != default ? m.FechaMovimiento : m.FechaRegistro;
                                 <tr>
-                                    <td>@m.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td data-order="@fechaMov.ToString("yyyy-MM-dd")">@fechaMov.ToString("dd/MM/yyyy")</td>
                                     <td>@NombreProducto(m.IdProducto)</td>
                                     <td>
                                         @if (m.TipoMovimiento == WebColegio.Models.TipoMovimientoInventario.Entrada)
@@ -113,10 +121,6 @@
                                 </tr>
                             }
                         }
-                        else
-                        {
-                            <tr><td colspan="6" class="text-center text-muted">No hay movimientos para los filtros seleccionados. Ajuste fechas o producto.</td></tr>
-                        }
                     </tbody>
                 </table>
             </div>
@@ -126,3 +130,42 @@
         </div>
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script>
+    $(document).ready(function () {
+        if (!$.fn.DataTable || !$('#tablaMovimientosInventario').length) return;
+        function textoCelda(data) {
+            return $('<div>').html(data).text().replace(/\s+/g, ' ').trim();
+        }
+        var tabla = $('#tablaMovimientosInventario').DataTable({
+            responsive: false,
+            pageLength: 10,
+            lengthMenu: [[5, 10, 20], [5, 10, 20]],
+            paging: true,
+            order: [[0, 'desc']],
+            language: window.datatablesEspanol
+        });
+        if ($.fn.dataTable.Buttons) {
+            new $.fn.dataTable.Buttons(tabla, {
+                buttons: [{
+                    extend: 'excelHtml5',
+                    title: 'Entradas y salidas de inventario',
+                    exportOptions: {
+                        columns: ':visible',
+                        format: { body: function (data) { return textoCelda(data); } }
+                    }
+                }]
+            });
+            tabla.buttons().container().addClass('d-none');
+        }
+        $('#btnExcelMovimientos').on('click', function () {
+            tabla.button(0).trigger();
+        });
+    });
+</script>

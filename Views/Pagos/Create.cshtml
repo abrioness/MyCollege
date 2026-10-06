@@ -228,7 +228,7 @@
                 <br />
                 <!-- Botones -->
                 <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" id="btnProcesarPago" class="btn btn-primary">
                         <i class="bi bi-save"></i> Procesar Pago
                     </button>
                     @* <a asp-action="Index" class="btn btn-secondary">
@@ -578,6 +578,12 @@
                 return String(val).split(',').filter(x => x.trim()).length;
             }
 
+            function numeroOpcional(v) {
+                if (v === null || v === undefined || v === '') return NaN;
+                const n = parseFloat(String(v).replace(',', '.'));
+                return Number.isFinite(n) ? n : NaN;
+            }
+
             function recalcularMontoPorMeses() {
                 if (!esMensualidadOAbono()) return;
 
@@ -609,19 +615,49 @@
                         idRecinto: $recinto.val(),
                         idGrado: $grado.val(),
                         idModalidad: $modalidad.val(),
-                        meses: meses
+                        meses: String(meses).split(',').map(function (x) { return x.trim(); }).filter(Boolean).join('|')
                     }, function(data) {
-                        const tarifa = parseFloat(data && data.tarifa) || costoMensualidadUnitario;
-                        costoMensualidadUnitario = tarifa;
-                        const restante = parseFloat(data && data.totalRestante);
-                        const montoBase = isNaN(restante) ? tarifa * cantidadMeses : restante;
+                        const tarifaApi = numeroOpcional(data && data.tarifa);
+                        const tarifa = Number.isFinite(tarifaApi) ? tarifaApi : costoMensualidadUnitario;
+                        if (tarifa > 0)
+                            costoMensualidadUnitario = tarifa;
+
+                        const detalle = (data && Array.isArray(data.meses)) ? data.meses : [];
+                        const restanteApi = numeroOpcional(data && data.totalRestante);
+                        let montoBase;
+                        let mesesYaPagados = false;
+
+                        if (tarifa <= 0) {
+                            montoBase = 0;
+                        } else if (detalle.length > 0) {
+                            montoBase = detalle.reduce(function (s, m) {
+                                return s + (numeroOpcional(m.restante) || 0);
+                            }, 0);
+                            mesesYaPagados = detalle.every(function (m) { return !!m.cancelado; });
+                            if (mesesYaPagados)
+                                montoBase = 0;
+                            else if (montoBase <= 0)
+                                montoBase = tarifa * cantidadMeses;
+                        } else if (Number.isFinite(restanteApi) && restanteApi > 0) {
+                            montoBase = restanteApi;
+                        } else {
+                            montoBase = tarifa * cantidadMeses;
+                        }
+
                         $monto.val(montoBase.toFixed(2));
 
-                        let txt = cantidadMeses + ' mes(es) × C$ ' + tarifa.toFixed(2) + '. Saldo a cancelar: C$ ' + montoBase.toFixed(2) + '.';
-                        const detalleAbonos = (data && data.meses ? data.meses : []).filter(function(m) { return m.tieneAbono; });
+                        let txt;
+                        if (tarifa <= 0) {
+                            txt = 'Este alumno tiene beca completa. Saldo de mensualidad: C$ 0.00.';
+                        } else if (mesesYaPagados) {
+                            txt = 'Los meses seleccionados ya están pagados. Saldo a cancelar: C$ 0.00.';
+                        } else {
+                            txt = cantidadMeses + ' mes(es) × C$ ' + tarifa.toFixed(2) + '. Saldo a cancelar: C$ ' + montoBase.toFixed(2) + '.';
+                        }
+                        const detalleAbonos = detalle.filter(function(m) { return m.tieneAbono; });
                         if (detalleAbonos.length) {
                             txt += ' Ya hay abono en: ' + detalleAbonos.map(function(m) {
-                                return 'mes ' + m.idMes + ' (C$ ' + parseFloat(m.pagado).toFixed(2) + ')';
+                                return 'mes ' + m.idMes + ' (C$ ' + (numeroOpcional(m.pagado) || 0).toFixed(2) + ')';
                             }).join(', ') + '.';
                         }
                         txt += ' Puede abonar menos del saldo. Si entrega de más, el sobrante pasa al mes siguiente.';
@@ -853,6 +889,7 @@
             onTipoMovimientoChange();
 
             $('form[asp-action], form').first().on('submit', function (e) {
+                const form = this;
                 if (esConfirmacionMatricula()) {
                     const montoReserva = parseFloat($monto.val()) || 0;
                     if (montoReserva + 0.01 < MONTO_MINIMO_RESERVA) {
@@ -881,14 +918,20 @@
                     return false;
                 }
 
-                const form = this;
                 if (form.dataset.matriculaValidada === '1')
                     return true;
 
                 e.preventDefault();
+                if (form.dataset.validandoMatricula === '1')
+                    return false;
+                form.dataset.validandoMatricula = '1';
+                form.dataset.mantenerBloqueo = '1';
                 const idAlumno = parseInt($idAlumno.val(), 10) || 0;
                 const continuar = function () {
+                    form.dataset.validandoMatricula = '';
                     if (window._tienePendienteMatriculaCicloActual) {
+                        if (window.WebColegioForm)
+                            window.WebColegioForm.desbloquear(form);
                         Swal.fire({
                             icon: 'warning',
                             title: 'Matrícula pendiente',
@@ -897,7 +940,10 @@
                         return;
                     }
                     form.dataset.matriculaValidada = '1';
-                    form.submit();
+                    form.dataset.mantenerBloqueo = '';
+                    if (window.WebColegioForm)
+                        window.WebColegioForm.permitirSiguienteEnvio(form);
+                    HTMLFormElement.prototype.submit.call(form);
                 };
                 if (!idAlumno) {
                     continuar();

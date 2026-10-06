@@ -14,6 +14,9 @@ namespace WebColegio.Helpers
             var s = value.Trim();
             if (DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
                 return d;
+            if (DateTime.TryParseExact(s, new[] { "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-ddTHH:mm", "yyyy-MM-ddTHH:mm:ss" },
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out d))
+                return d;
             if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None, out d))
                 return d;
             if (DateTime.TryParse(s, CultureInfo.CurrentCulture, DateTimeStyles.None, out d))

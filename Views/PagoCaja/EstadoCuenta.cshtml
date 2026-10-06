@@ -28,6 +28,9 @@
 			<div class="table-responsive" style="font-size: 12px;">
 				<br />
 				<div class="col-12 text-end">
+					<button type="button" id="btnExcelEstadoCaja" class="btn btn-success me-2">
+						<i class="bi bi-file-earmark-excel"></i> Exportar a Excel
+					</button>
 					<div class="btn-group">
 						<button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Agregar Pagos</button>
 						<ul class="dropdown-menu">
@@ -197,9 +200,20 @@
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script>
 	$(document).ready(function () {
-		$('#estadocuenta').DataTable({
+		if (!$.fn.DataTable || !$('#estadocuenta').length) return;
+		if ($.fn.DataTable.isDataTable('#estadocuenta')) {
+			$('#estadocuenta').DataTable().destroy();
+		}
+		function textoCelda(data) {
+			return $('<div>').html(data).text().replace(/\s+/g, ' ').trim();
+		}
+		var tabla = $('#estadocuenta').DataTable({
 			responsive: false,
 			pageLength: 10,
 			lengthMenu: [[5, 10, 20], [5, 10, 20]],
@@ -207,6 +221,22 @@
 			order: [[0, 'desc']],
 			dom: 'lfrtip',
 			language: window.datatablesEspanol
+		});
+		if ($.fn.dataTable.Buttons) {
+			new $.fn.dataTable.Buttons(tabla, {
+				buttons: [{
+					extend: 'excelHtml5',
+					title: 'Estado de cuenta de caja',
+					exportOptions: {
+						columns: ':visible',
+						format: { body: function (data) { return textoCelda(data); } }
+					}
+				}]
+			});
+			tabla.buttons().container().addClass('d-none');
+		}
+		$('#btnExcelEstadoCaja').on('click', function () {
+			tabla.button(0).trigger();
 		});
 	});
 </script>
