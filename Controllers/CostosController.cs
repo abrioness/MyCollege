@@ -63,6 +63,15 @@ namespace WebColegio.Controllers
                 costosMen = costosMen.Where(c => c.IdPeriodo == idFiltro).ToList();
             }
 
+            costosMat = costosMat
+                .Where(c => OfertaColegioHelper.RecintoOfreceModalidad(
+                    recintos, modalidades, c.IdRecinto, c.IdModalidad))
+                .ToList();
+            costosMen = costosMen
+                .Where(c => OfertaColegioHelper.RecintoOfreceMensualidad(
+                    recintos, modalidades, grados, c.IdRecinto, c.IdModalidad, c.IdGrado))
+                .ToList();
+
             int idSiguiente = periodoSiguiente?.IdPeriodo ?? 0;
             var vm = new CostosAdminViewModel
             {
@@ -227,7 +236,7 @@ namespace WebColegio.Controllers
         public async Task<IActionResult> CreateMatricula(CostoMatriculaFormViewModel form)
         {
             var costo = form?.Costo ?? new TblCostoMatricula();
-            if (!ValidarCostoMatricula(costo, out var error))
+            if (!await ValidarCostoMatriculaAsync(costo, out var error))
             {
                 SetMensaje(error, "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, false));
@@ -275,7 +284,7 @@ namespace WebColegio.Controllers
                 SetMensaje("Registro no válido.", "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, true));
             }
-            if (!ValidarCostoMatricula(costo, out var errorMat))
+            if (!await ValidarCostoMatriculaAsync(costo, out var errorMat))
             {
                 SetMensaje(errorMat, "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, true));
@@ -486,8 +495,17 @@ namespace WebColegio.Controllers
                 .Where(c => c.IdPeriodo == idPeriodoDestino)
                 .ToList();
 
+            var recintosCopia = await _services.GetRecintosAsync() ?? new List<Recintos>();
+            var modalidadesCopia = await _services.GetModalidadesAsync() ?? new List<Modalidades>();
+
             foreach (var origen in mats)
             {
+                if (!OfertaColegioHelper.RecintoOfreceModalidad(
+                    recintosCopia, modalidadesCopia, origen.IdRecinto, origen.IdModalidad))
+                {
+                    invalidos++;
+                    continue;
+                }
                 bool yaExiste = destMats.Any(d =>
                     d.IdRecinto == origen.IdRecinto && d.IdModalidad == origen.IdModalidad);
                 if (yaExiste)
@@ -528,7 +546,10 @@ namespace WebColegio.Controllers
 
             foreach (var origen in mens)
             {
-                if (!CostoNivelHelper.EsValido(origen.IdGrado, gradosCatalogo))
+                if (!CostoNivelHelper.EsValido(origen.IdGrado, gradosCatalogo)
+                    || !OfertaColegioHelper.RecintoOfreceMensualidad(
+                        recintosCopia, modalidadesCopia, gradosCatalogo,
+                        origen.IdRecinto, origen.IdModalidad, origen.IdGrado))
                 {
                     invalidos++;
                     continue;
@@ -700,7 +721,7 @@ namespace WebColegio.Controllers
                 && (!excluirId.HasValue || c.IdMensualidad != excluirId.Value));
         }
 
-        private static bool ValidarCostoMatricula(TblCostoMatricula costo, out string error)
+        private async Task<bool> ValidarCostoMatriculaAsync(TblCostoMatricula costo, out string error)
         {
             if (costo.CostoMatricula <= 0)
             {
@@ -710,6 +731,14 @@ namespace WebColegio.Controllers
             if (costo.IdPeriodo <= 0 || costo.IdRecinto <= 0)
             {
                 error = "Debe seleccionar ciclo y colegio.";
+                return false;
+            }
+            var recintos = await _services.GetRecintosAsync() ?? new List<Recintos>();
+            var modalidades = await _services.GetModalidadesAsync() ?? new List<Modalidades>();
+            if (!OfertaColegioHelper.RecintoOfreceModalidad(
+                recintos, modalidades, costo.IdRecinto, costo.IdModalidad))
+            {
+                error = OfertaColegioHelper.MensajeSinSecundariaSanMiguel();
                 return false;
             }
             error = "";
@@ -727,6 +756,14 @@ namespace WebColegio.Controllers
             if (costo.Activo && !CostoNivelHelper.EsValido(costo.IdGrado, grados))
             {
                 return (false, "El nivel seleccionado no es válido. Elija un grado real del catálogo (no NINGUNO ni códigos que ya no existen).");
+            }
+
+            var recintos = await _services.GetRecintosAsync() ?? new List<Recintos>();
+            var modalidades = await _services.GetModalidadesAsync() ?? new List<Modalidades>();
+            if (!OfertaColegioHelper.RecintoOfreceMensualidad(
+                recintos, modalidades, grados, costo.IdRecinto, costo.IdModalidad, costo.IdGrado))
+            {
+                return (false, OfertaColegioHelper.MensajeSinSecundariaSanMiguel());
             }
 
             return (true, "");

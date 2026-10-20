@@ -1008,6 +1008,33 @@ namespace WebColegio.Helpers
         }
 
         /// <summary>
+        /// Mensualidad de enero típica de un recinto/modalidad (la más frecuente entre grados válidos).
+        /// </summary>
+        public static IReadOnlyList<decimal> MensualidadesEneroDeModalidad(
+            IEnumerable<TblCostoMensualidad>? mensualidades,
+            int idRecinto,
+            int idPeriodo,
+            int idModalidad,
+            IEnumerable<Grados>? grados = null)
+        {
+            if (mensualidades == null)
+                return Array.Empty<decimal>();
+
+            return mensualidades
+                .Where(x =>
+                    x.Activo
+                    && x.IdRecinto == idRecinto
+                    && x.IdPeriodo == idPeriodo
+                    && (idModalidad <= 0 || x.IdModalidad == 0 || x.IdModalidad == idModalidad)
+                    && (grados == null || CostoNivelHelper.EsValido(x.IdGrado, grados)))
+                .Select(x => (decimal)x.CostoMensualidad)
+                .Where(v => v > 0m)
+                .Distinct()
+                .OrderBy(v => v)
+                .ToList();
+        }
+
+        /// <summary>
         /// En catálogo, CostoMatricula es el paquete (matrícula + enero). La neta es paquete − enero
         /// (p. ej. C$ 1300 − C$ 370 = C$ 930).
         /// </summary>

@@ -59,6 +59,30 @@
         </div>
     </div>
 </div>
+<script>
+    (function () {
+        var recinto = document.getElementById('Costo_IdRecinto');
+        var modalidad = document.getElementById('Costo_IdModalidad');
+        if (!recinto || !modalidad) return;
+        function esMiguel(txt) { return /miguel/i.test(txt || ''); }
+        function esSecundaria(txt) { return /secundaria/i.test(txt || ''); }
+        function aplicarOferta() {
+            var miguel = esMiguel(recinto.options[recinto.selectedIndex] && recinto.options[recinto.selectedIndex].text);
+            var actual = modalidad.value;
+            var limpio = true;
+            for (var i = 0; i < modalidad.options.length; i++) {
+                var opt = modalidad.options[i];
+                var oculta = miguel && esSecundaria(opt.text);
+                opt.hidden = oculta;
+                opt.disabled = oculta;
+                if (oculta && opt.value === actual) limpio = false;
+            }
+            if (!limpio) modalidad.value = '0';
+        }
+        recinto.addEventListener('change', aplicarOferta);
+        aplicarOferta();
+    })();
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @if (TempData["Mensaje"] != null)

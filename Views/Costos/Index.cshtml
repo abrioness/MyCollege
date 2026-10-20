@@ -117,8 +117,9 @@
                 </div>
             </form>
             <p class="small text-muted">
-                El valor de catálogo de matrícula es el total a pagar en matrícula completa (incluye enero).
-                La confirmación de matrícula usa el mismo valor como tope de reserva, sin cobrar enero.
+                El valor de catálogo es el total a pagar en matrícula completa (incluye enero).
+                La columna de matrícula neta resta la mensualidad de enero de ese colegio y modalidad; no se edita aparte.
+                La confirmación usa el total como tope de reserva, sin cobrar enero.
             </p>
             <div class="table-responsive">
                 <table class="table table-bordered table-sm table-striped">
@@ -127,7 +128,9 @@
                             <th>Ciclo</th>
                             <th>Colegio</th>
                             <th>Modalidad</th>
-                            <th class="text-end">Valor (C$)</th>
+                            <th class="text-end">Matrícula neta (sin enero)</th>
+                            <th class="text-end">Enero (C$)</th>
+                            <th class="text-end">Total (con enero)</th>
                             <th>Estado</th>
                             <th></th>
                         </tr>
@@ -135,14 +138,34 @@
                     <tbody>
                         @if (!Model.CostosMatricula.Any())
                         {
-                            <tr><td colspan="6" class="text-center text-muted">No hay tarifas de matrícula para este ciclo.</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted">No hay tarifas de matrícula para este ciclo.</td></tr>
                         }
                         @foreach (var item in Model.CostosMatricula)
                         {
+                            var paquete = (decimal)item.CostoMatricula;
+                            var eneros = EstadoCuentaCalculoHelper.MensualidadesEneroDeModalidad(
+                                Model.CostosMensualidad, item.IdRecinto, item.IdPeriodo, item.IdModalidad, Model.Grados);
+                            var netas = eneros
+                                .Select(e => EstadoCuentaCalculoHelper.MatriculaNetaDesdePaquete(paquete, e))
+                                .Distinct()
+                                .OrderBy(n => n)
+                                .ToList();
+                            string txtNeta = netas.Count == 0
+                                ? "—"
+                                : netas.Count == 1
+                                    ? netas[0].ToString("N2")
+                                    : netas[0].ToString("N2") + " – " + netas[netas.Count - 1].ToString("N2");
+                            string txtEnero = eneros.Count == 0
+                                ? "—"
+                                : eneros.Count == 1
+                                    ? eneros[0].ToString("N2")
+                                    : eneros[0].ToString("N2") + " – " + eneros[eneros.Count - 1].ToString("N2");
                             <tr>
                                 <td>@NombrePeriodo(item.IdPeriodo)</td>
                                 <td>@NombreRecinto(item.IdRecinto)</td>
                                 <td>@NombreModalidad(item.IdModalidad)</td>
+                                <td class="text-end">@txtNeta</td>
+                                <td class="text-end">@txtEnero</td>
                                 <td class="text-end">@item.CostoMatricula.ToString("N2")</td>
                                 <td>@(item.Activo ? "Activo" : "Inactivo")</td>
                                 <td>
