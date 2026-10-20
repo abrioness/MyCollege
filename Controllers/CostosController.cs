@@ -236,9 +236,10 @@ namespace WebColegio.Controllers
         public async Task<IActionResult> CreateMatricula(CostoMatriculaFormViewModel form)
         {
             var costo = form?.Costo ?? new TblCostoMatricula();
-            if (!await ValidarCostoMatriculaAsync(costo, out var error))
+            var validacionMat = await ValidarCostoMatriculaAsync(costo);
+            if (!validacionMat.Ok)
             {
-                SetMensaje(error, "warning");
+                SetMensaje(validacionMat.Error, "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, false));
             }
 
@@ -284,9 +285,10 @@ namespace WebColegio.Controllers
                 SetMensaje("Registro no válido.", "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, true));
             }
-            if (!await ValidarCostoMatriculaAsync(costo, out var errorMat))
+            var validacionMat = await ValidarCostoMatriculaAsync(costo);
+            if (!validacionMat.Ok)
             {
-                SetMensaje(errorMat, "warning");
+                SetMensaje(validacionMat.Error, "warning");
                 return View("FormMatricula", await ConstruirFormMatriculaAsync(costo, true));
             }
 
@@ -721,28 +723,22 @@ namespace WebColegio.Controllers
                 && (!excluirId.HasValue || c.IdMensualidad != excluirId.Value));
         }
 
-        private async Task<bool> ValidarCostoMatriculaAsync(TblCostoMatricula costo, out string error)
+        private async Task<(bool Ok, string Error)> ValidarCostoMatriculaAsync(TblCostoMatricula costo)
         {
             if (costo.CostoMatricula <= 0)
-            {
-                error = "El valor de matrícula debe ser mayor que cero.";
-                return false;
-            }
+                return (false, "El valor de matrícula debe ser mayor que cero.");
             if (costo.IdPeriodo <= 0 || costo.IdRecinto <= 0)
-            {
-                error = "Debe seleccionar ciclo y colegio.";
-                return false;
-            }
+                return (false, "Debe seleccionar ciclo y colegio.");
+
             var recintos = await _services.GetRecintosAsync() ?? new List<Recintos>();
             var modalidades = await _services.GetModalidadesAsync() ?? new List<Modalidades>();
             if (!OfertaColegioHelper.RecintoOfreceModalidad(
                 recintos, modalidades, costo.IdRecinto, costo.IdModalidad))
             {
-                error = OfertaColegioHelper.MensajeSinSecundariaSanMiguel();
-                return false;
+                return (false, OfertaColegioHelper.MensajeSinSecundariaSanMiguel());
             }
-            error = "";
-            return true;
+
+            return (true, "");
         }
 
         private async Task<(bool Ok, string Error)> ValidarCostoMensualidadAsync(TblCostoMensualidad costo)

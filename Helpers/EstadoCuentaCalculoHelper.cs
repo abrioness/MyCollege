@@ -158,7 +158,7 @@ namespace WebColegio.Helpers
 
                 bool esTraslado = TrasladoHelper.EsTraslado(matriculaAlum, alumno);
                 int? mesIngreso = ResolverMesInicioMensualidad(
-                    matriculaAlum, alumno, pagos, tiposMatriculaPago, idPeriodoFila, idR);
+                    matriculaAlum, alumno, pagos, tiposMatriculaPago, idPeriodoFila, idR, anioFila, anioPeriodo);
                 int? idRecintoOrigen = esTraslado
                     ? TrasladoHelper.LeerRecintoOrigen(matriculaAlum?.Observaciones)
                       ?? TrasladoHelper.LeerRecintoOrigen(alumno.Observaciones)
@@ -439,8 +439,8 @@ namespace WebColegio.Helpers
 
         /// <summary>
         /// Primer mes que se cobra de mensualidad. Traslado: mes de ingreso al destino.
-        /// Matrícula tardía (feb–sep): el mes de la ficha o del primer pago de matrícula.
-        /// Oct–dic o continuidad: el ciclo completo desde enero.
+        /// Matrícula tardía (feb–sep del mismo año lectivo): el mes de la ficha o del primer pago.
+        /// Oct–dic, continuidad o matrícula del siguiente ciclo (fecha de un año anterior): desde enero.
         /// </summary>
         public static int? ResolverMesInicioMensualidad(
             TblMatricula? matricula,
@@ -448,11 +448,23 @@ namespace WebColegio.Helpers
             IEnumerable<TblPago>? pagos = null,
             IReadOnlyCollection<int>? tiposMatricula = null,
             int idPeriodo = 0,
-            int? idRecinto = null)
+            int? idRecinto = null,
+            int anioCiclo = 0,
+            int anioVigente = 0)
         {
+            // Ciclo siguiente (p. ej. 2027 visto en 2026): se cobra enero–diciembre completo.
+            if (EsCicloNuevoSinCorteMensual(anioCiclo, anioVigente))
+                return null;
+
             if (TrasladoHelper.EsTraslado(matricula, alumno))
             {
+                var fechaTraslado = TrasladoHelper.LeerFechaTraslado(matricula?.Observaciones)
+                    ?? TrasladoHelper.LeerFechaTraslado(alumno?.Observaciones);
+                if (fechaTraslado is { Year: > 2000 } ft && EsMatriculaDesdeEnero(ft, anioCiclo))
+                    return null;
                 var mesTraslado = TrasladoHelper.ResolverMesIngreso(matricula, alumno);
+                if (mesTraslado is >= 10 and <= 12)
+                    return null;
                 if (mesTraslado is >= 1 and <= 12)
                     return mesTraslado;
             }
@@ -462,10 +474,9 @@ namespace WebColegio.Helpers
 
             if (matricula?.FechaMatricula is { Year: > 2000 } fechaAcad)
             {
-                if (fechaAcad.Month >= 10)
-                    return null;
-                if (fechaAcad.Month >= 2)
-                    return fechaAcad.Month;
+                var mesFicha = MesInicioSegunFechaCiclo(fechaAcad, anioCiclo);
+                if (mesFicha.HasValue || EsMatriculaDesdeEnero(fechaAcad, anioCiclo))
+                    return mesFicha;
             }
 
             if (pagos != null && tiposMatricula is { Count: > 0 } && alumno != null)
@@ -483,18 +494,59 @@ namespace WebColegio.Helpers
                 {
                     if (pagoMat.Continuidad)
                         return null;
-                    var mesPago = (pagoMat.FechaEmision ?? pagoMat.FechaRegistro).Month;
-                    if (mesPago >= 10)
-                        return null;
-                    if (mesPago >= 2)
+                    var fechaPago = pagoMat.FechaEmision ?? pagoMat.FechaRegistro;
+                    var mesPago = MesInicioSegunFechaCiclo(fechaPago, anioCiclo);
+                    if (mesPago.HasValue || EsMatriculaDesdeEnero(fechaPago, anioCiclo))
                         return mesPago;
                 }
             }
 
-            if (matricula?.FechaRegistro is { Year: > 2000 } fechaReg
-                && fechaReg.Month is >= 2 and <= 9)
-                return fechaReg.Month;
+            if (matricula?.FechaRegistro is { Year: > 2000 } fechaReg)
+            {
+                var mesReg = MesInicioSegunFechaCiclo(fechaReg, anioCiclo);
+                if (mesReg.HasValue || EsMatriculaDesdeEnero(fechaReg, anioCiclo))
+                    return mesReg;
+            }
 
+            return null;
+        }
+
+        /// <summary>
+        /// El año lectivo de la fila es posterior al ciclo de mensualidades o al calendario:
+        /// matrícula adelantada, sin corte por mes de ingreso.
+        /// </summary>
+        private static bool EsCicloNuevoSinCorteMensual(int anioCiclo, int anioVigente)
+        {
+            if (anioCiclo <= 0)
+                return false;
+            if (anioVigente > 0 && anioCiclo > anioVigente)
+                return true;
+            return anioCiclo > DateTime.Now.Year;
+        }
+
+        /// <summary>
+        /// true si esa fecha abre el ciclo completo (octubre–diciembre o año anterior al lectivo).
+        /// </summary>
+        private static bool EsMatriculaDesdeEnero(DateTime fecha, int anioCiclo)
+        {
+            if (fecha.Year <= 2000)
+                return false;
+            if (fecha.Month >= 10)
+                return true;
+            return anioCiclo > 0 && fecha.Year < anioCiclo;
+        }
+
+        /// <summary>
+        /// Mes de inicio si es matrícula tardía del mismo año lectivo; null si corre desde enero.
+        /// </summary>
+        private static int? MesInicioSegunFechaCiclo(DateTime fecha, int anioCiclo)
+        {
+            if (EsMatriculaDesdeEnero(fecha, anioCiclo))
+                return null;
+            if (anioCiclo > 0 && fecha.Year != anioCiclo)
+                return null;
+            if (fecha.Month is >= 2 and <= 9)
+                return fecha.Month;
             return null;
         }
 
