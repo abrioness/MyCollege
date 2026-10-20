@@ -56,7 +56,10 @@
 
             <div class="d-flex flex-wrap gap-2">
                 <form asp-action="HabilitarSiguienteCiclo" method="post" class="d-inline"
-                      onsubmit="return confirmarHabilitarCiclo(this);">
+                      data-confirm-tipo="guardar"
+                      data-mensaje="@(Model.PeriodoSiguienteExiste
+                          ? $"Se copiarán al ciclo {Model.AnioCicloSiguiente} las tarifas del ciclo actual que aún no existan. No se marcará como ciclo vigente."
+                          : $"Se creará el ciclo {Model.AnioCicloSiguiente} y se copiarán las tarifas del ciclo actual. No se marcará como ciclo vigente (las mensualidades siguen en el año en curso).")">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="copiarTarifas" value="true" />
                     <button type="submit" class="btn btn-success" id="btnHabilitarCiclo">
@@ -69,7 +72,8 @@
                 @if (Model.PeriodoSiguiente != null && Model.PeriodoSiguiente.Actual == false)
                 {
                     <form asp-action="ActivarCiclo" method="post" class="d-inline"
-                          onsubmit="return confirm('¿Marcar @Model.AnioCicloSiguiente como ciclo actual? Las mensualidades pasarán a ese año. Hágalo cuando cierre el ciclo vigente (habitualmente en enero).');">
+                          data-confirm-tipo="actualizar"
+                          data-mensaje="¿Marcar @Model.AnioCicloSiguiente como ciclo actual? Las mensualidades pasarán a ese año. Hágalo cuando cierre el ciclo vigente (habitualmente en enero).">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="idPeriodo" value="@Model.PeriodoSiguiente.IdPeriodo" />
                         <button type="submit" class="btn btn-outline-primary">
@@ -166,7 +170,8 @@
                     Si falta un grado real (por ejemplo PRIMERO), edite esa fila y asigne el nivel correcto;
                     las demás puede desactivarlas.
                     <form asp-action="DesactivarNivelesInvalidos" method="post" class="mt-2"
-                          onsubmit="return confirm('¿Desactivar todas las tarifas con nivel incorrecto de este ciclo?');">
+                          data-confirm-tipo="anular"
+                          data-mensaje="¿Desactivar todas las tarifas con nivel incorrecto de este ciclo?">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="idPeriodo" value="@Model.IdPeriodoFiltro" />
                         <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -214,7 +219,8 @@
                                     @if (invalido && item.Activo)
                                     {
                                         <form asp-action="AnularMensualidad" method="post" class="d-inline"
-                                              onsubmit="return confirm('¿Desactivar esta tarifa con nivel incorrecto?');">
+                                              data-confirm-tipo="anular"
+                                              data-mensaje="¿Desactivar esta tarifa con nivel incorrecto?">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@item.IdMensualidad" />
                                             <input type="hidden" name="idPeriodo" value="@item.IdPeriodo" />
@@ -230,24 +236,6 @@
         </div>
     </div>
 </div>
-
-<script>
-    function confirmarHabilitarCiclo(form) {
-        var anio = @Model.AnioCicloSiguiente;
-        var yaExiste = @(Model.PeriodoSiguienteExiste ? "true" : "false");
-        var texto = yaExiste
-            ? 'Se copiarán al ciclo ' + anio + ' las tarifas del ciclo actual que aún no existan. No se marcará como ciclo vigente.'
-            : 'Se creará el ciclo ' + anio + ' y se copiarán las tarifas del ciclo actual. No se marcará como ciclo vigente (las mensualidades siguen en el año en curso).';
-        if (!confirm(texto))
-            return false;
-        var btn = form.querySelector('button[type="submit"]');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerText = 'Procesando…';
-        }
-        return true;
-    }
-</script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @if (TempData["Mensaje"] != null)

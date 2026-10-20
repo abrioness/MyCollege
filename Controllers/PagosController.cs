@@ -2035,43 +2035,31 @@ namespace WebColegio.Controllers
                         else if (esMatriculaCompleta || esAbonoMatricula)
                         {
                             var periodosCat = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
-                            var periodoActualCiclo = CicloLectivoHelper.ResolverPeriodoActual(periodosCat);
                             int periodoMatricula = pagos.Pago.IdPeriodo;
                             bool esContinuidadMatricula = pagos.Pago.Continuidad;
                             int mesPresentacion = pagos.Pago.FechaEmision?.Month ?? DateTime.Now.Month;
                             var alumnoPago = await _Iservices.GetAlumnoIdAsync(pagos.Pago.IdAlumno);
+                            var cicloEnCurso = CicloLectivoHelper.ResolverPeriodoVigente(periodosCat);
+                            bool formEsSiguienteCiclo = CicloLectivoHelper.EsPeriodoSiguienteAlVigente(
+                                periodosCat, pagos.Pago.IdPeriodo);
 
-                            if (!esContinuidadMatricula)
+                            // Continuidad automática solo para liquidar el año en curso, nunca el 2027.
+                            if (!esContinuidadMatricula && !formEsSiguienteCiclo)
                             {
                                 if (EsTipoEstudianteContinuidad(alumnoPago?.TipoEstudiante)
                                     && !EsMatriculaInicioCicloLectivo(mesPresentacion))
                                     esContinuidadMatricula = true;
                             }
 
-                            bool pendienteCicloActual = periodoActualCiclo != null
-                                && await TienePendienteMatriculaCicloAsync(
-                                    pagos.Pago.IdAlumno,
-                                    periodoActualCiclo,
-                                    pagos.Pago.IdRecinto,
-                                    pagos.Pago.IdGrado,
-                                    pagos.Pago.IdModalidad);
-
-                            var pagosCicloActual = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
-                            bool tienePagosCicloVigente = periodoActualCiclo != null && pagosCicloActual.Any(p =>
-                                p.IdAlumno == pagos.Pago.IdAlumno
-                                && p.IdPeriodo == periodoActualCiclo.IdPeriodo
-                                && p.Activo);
-                            bool esDelCicloVigente = periodoActualCiclo != null && (
-                                alumnoPago?.IdPeriodo == periodoActualCiclo.IdPeriodo
-                                || tienePagosCicloVigente);
-
-                            var cicloEnCurso = CicloLectivoHelper.ResolverPeriodoMensualidad(periodosCat)
-                                ?? periodoActualCiclo;
-                            bool forzarCicloActual = esAbonoMatricula
-                                || esContinuidadMatricula
-                                || (esDelCicloVigente && pendienteCicloActual);
-                            if (forzarCicloActual && cicloEnCurso != null)
-                                periodoMatricula = cicloEnCurso.IdPeriodo;
+                            if (esAbonoMatricula || esContinuidadMatricula)
+                            {
+                                if (cicloEnCurso != null)
+                                    periodoMatricula = cicloEnCurso.IdPeriodo;
+                            }
+                            else if (pagos.Pago.IdPeriodo > 0)
+                            {
+                                periodoMatricula = pagos.Pago.IdPeriodo;
+                            }
                             
                             // Validar que los campos requeridos estén presentes
                             if (pagos.Pago.IdGrado == 0)
@@ -2577,8 +2565,11 @@ namespace WebColegio.Controllers
             int? idModalidad = null)
         {
             var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
-            var cicloEnCurso = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos)
-                ?? CicloLectivoHelper.ResolverPeriodoActual(periodos);
+            var cicloEnCurso = CicloLectivoHelper.ResolverPeriodoVigente(periodos);
+
+            if (CicloLectivoHelper.EsPeriodoSiguienteAlVigente(periodos, idPeriodoFormulario))
+                return idPeriodoFormulario;
+
             if (idAlumno > 0 && cicloEnCurso != null
                 && await TienePendienteMatriculaCicloAsync(
                     idAlumno, cicloEnCurso, idRecinto, idGrado, idModalidad))
@@ -2677,13 +2668,11 @@ namespace WebColegio.Controllers
                 return Json(new { ok = false, mensaje = "Alumno no encontrado" });
 
             var periodos = await _Iservices.GetPeriodoAsync() ?? new List<CatPeriodo>();
-            var periodoActual = CicloLectivoHelper.ResolverPeriodoMensualidad(periodos);
+            var periodoActual = CicloLectivoHelper.ResolverPeriodoVigente(periodos);
             var periodoSiguiente = CicloLectivoHelper.ResolverPeriodoSiguiente(periodos);
             var filaMatriculaCiclo = periodoActual != null
                 ? await _Iservices.GetMatriculaAlumnoPeriodoAsync(idAlumno, periodoActual.IdPeriodo)
                 : null;
-            bool sugerirContinuidad = EsTipoEstudianteContinuidad(alumno.TipoEstudiante)
-                || (filaMatriculaCiclo?.Continuidad == true && !TrasladoHelper.EsTraslado(filaMatriculaCiclo, alumno));
             bool esTraslado = TrasladoHelper.EsTraslado(filaMatriculaCiclo, alumno);
             int? mesIngresoTraslado = TrasladoHelper.ResolverMesIngreso(filaMatriculaCiclo, alumno)
                 ?? (filaMatriculaCiclo?.FechaMatricula is { Year: > 2000 } fm && !EsMatriculaInicioCicloLectivo(fm.Month)
@@ -2701,16 +2690,11 @@ namespace WebColegio.Controllers
                     alumno.IdModalidad);
             }
 
-            var pagosAlumno = await _Iservices.GetPagosAsync() ?? new List<TblPago>();
-            bool tienePagosCicloActual = periodoActual != null && pagosAlumno.Any(p =>
-                p.IdAlumno == idAlumno && p.IdPeriodo == periodoActual.IdPeriodo && p.Activo);
-            bool esDelCicloVigente = periodoActual != null && (
-                alumno.IdPeriodo == periodoActual.IdPeriodo
-                || filaMatriculaCiclo != null
-                || tienePagosCicloActual);
+            bool sugerirContinuidad = pendienteMatriculaCicloActual && (
+                EsTipoEstudianteContinuidad(alumno.TipoEstudiante)
+                || (filaMatriculaCiclo?.Continuidad == true && !esTraslado));
 
-            bool forzarCicloActual = sugerirContinuidad
-                || (esDelCicloVigente && pendienteMatriculaCicloActual);
+            bool forzarCicloActual = pendienteMatriculaCicloActual;
 
             var periodoMatricula = CicloLectivoHelper.ResolverPeriodoMatricula(
                 periodos, DateTime.Now, forzarCicloActual);

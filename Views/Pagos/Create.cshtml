@@ -396,10 +396,9 @@
                     }
                 }
 
-                // Abono o deuda del ciclo en curso: nunca el 2027.
-                if ((esAbonoMatricula() || esMatriculaCompleta())
-                    && window._idPeriodoActual
-                    && (esAbonoMatricula() || esContinuidadMarcada() || window._tienePendienteMatriculaCicloActual)) {
+                // Abono o continuidad del año en curso: ciclo de mensualidades, no el siguiente.
+                if ((esAbonoMatricula() || (esMatriculaCompleta() && esContinuidadMarcada()))
+                    && window._idPeriodoActual) {
                     $periodo.val(String(window._idPeriodoActual));
                     return;
                 }

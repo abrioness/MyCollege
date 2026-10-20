@@ -64,11 +64,13 @@
                 <div class="mb-3 d-flex flex-wrap gap-2">
                     @if (Model.ApiConfigurada)
                     {
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-success" data-confirm-tipo="enviar"
+                                data-mensaje="¿Enviar WhatsApp a los tutores seleccionados?">
                             <i class="bi bi-send"></i> Enviar seleccionados
                         </button>
                         <button type="submit" formaction="@Url.Action("EnviarCampana")" class="btn btn-outline-success"
-                                onclick="return confirm('¿Enviar WhatsApp a todos los tutores con teléfono y saldo pendiente desde @Model.NumeroRemitente?');">
+                                data-confirm-tipo="enviar"
+                                data-mensaje="¿Enviar WhatsApp a todos los tutores con teléfono y saldo pendiente desde @Model.NumeroRemitente?">
                             <i class="bi bi-broadcast"></i> Campaña completa
                         </button>
                     }

@@ -252,25 +252,6 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-	$(document).on("submit", "form.js-anular-recibo", function (e) {
-		e.preventDefault();
-		var form = this;
-		var mensaje = form.getAttribute("data-mensaje") || "¿Anular el recibo?";
-		if (typeof Swal === "undefined") {
-			if (window.confirm(mensaje)) form.submit();
-			return;
-		}
-		Swal.fire({
-			title: "Atención",
-			text: mensaje,
-			icon: "warning",
-			showCancelButton: true,
-			confirmButtonText: "Aceptar",
-			cancelButtonText: "Cancelar"
-		}).then(function (result) {
-			if (result.isConfirmed) form.submit();
-		});
-	});
 	$(document).ready(function () {
 		var esCajero = @(User.IsInRole("Cajero") ? "true" : "false");
 		var botones = esCajero ? [] : [

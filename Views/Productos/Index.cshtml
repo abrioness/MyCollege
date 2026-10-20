@@ -228,25 +228,6 @@
 		var colFecha = $('#tablaProducto thead th.col-fecha').index();
 		if (colFecha < 0) colFecha = $('#tablaProducto thead th').length - 1;
 		var colAcciones = $('#tablaProducto thead th.no-export').index();
-		$(document).on('submit', 'form.js-anular-recibo', function (e) {
-			e.preventDefault();
-			var form = this;
-			var mensaje = form.getAttribute('data-mensaje') || '¿Anular el producto?';
-			if (typeof Swal === 'undefined') {
-				if (window.confirm(mensaje)) form.submit();
-				return;
-			}
-			Swal.fire({
-				title: 'Atención',
-				text: mensaje,
-				icon: 'warning',
-				showCancelButton: true,
-				confirmButtonText: 'Anular',
-				cancelButtonText: 'Cancelar'
-			}).then(function (result) {
-				if (result.isConfirmed) form.submit();
-			});
-		});
 		$('#tablaProducto').DataTable({
 		responsive: false,
 		order: [[colFecha, 'desc']],

@@ -441,4 +441,9 @@ span {
         line-height: 1.25;
         margin-bottom: 4px;
     }
+
+    .normas-reglamento {
+        break-before: page;
+        page-break-before: always;
+    }
 }

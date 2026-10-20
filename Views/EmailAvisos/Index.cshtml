@@ -59,11 +59,13 @@
                 <div class="mb-3 d-flex flex-wrap gap-2">
                     @if (Model.SmtpConfigurado)
                     {
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" data-confirm-tipo="enviar"
+                                data-mensaje="¿Enviar correo a los tutores seleccionados?">
                             <i class="bi bi-send"></i> Enviar seleccionados
                         </button>
                         <button type="submit" formaction="@Url.Action("EnviarCampana")" class="btn btn-outline-primary"
-                                onclick="return confirm('¿Enviar correo a todos los tutores con correo y saldo pendiente?');">
+                                data-confirm-tipo="enviar"
+                                data-mensaje="¿Enviar correo a todos los tutores con correo y saldo pendiente?">
                             <i class="bi bi-broadcast"></i> Campaña completa
                         </button>
                     }

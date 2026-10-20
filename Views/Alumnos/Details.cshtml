@@ -344,9 +344,36 @@
                 }
     </div>
         </fieldset>
-        @if (Model.alumnos.IdModalidad == 1 && Model.alumnos.IdRecinto == 1)
+        @{
+            var nombreModalidadHoja = (modalidad?.Text ?? string.Empty).ToLowerInvariant();
+            var nombreNivelHoja = (nivel?.Text ?? string.Empty).ToLowerInvariant();
+            var nombreRecintoHoja = (recinto?.Text ?? string.Empty).ToLowerInvariant();
+            bool esSanFrancisco = Model.alumnos.IdRecinto == 1 || nombreRecintoHoja.Contains("san francisco");
+            bool esSanMiguel = Model.alumnos.IdRecinto == 2 || nombreRecintoHoja.Contains("san miguel");
+            if (!esSanFrancisco && !esSanMiguel)
+                esSanFrancisco = true;
+
+            bool esHojaPreescolar = Model.alumnos.IdModalidad == 1 || nombreModalidadHoja.Contains("preescolar");
+            bool esHojaPrimaria = Model.alumnos.IdModalidad == 2 || nombreModalidadHoja.Contains("primaria");
+            bool esHojaSecundaria = Model.alumnos.IdModalidad == 3 || nombreModalidadHoja.Contains("secundaria");
+            if (!esHojaPreescolar && !esHojaPrimaria && !esHojaSecundaria)
+            {
+                if (nombreNivelHoja.Contains("preescolar") || nombreNivelHoja.Contains("inicial")
+                    || nombreNivelHoja.Contains("kinder") || nombreNivelHoja.Contains("parvulo")
+                    || nombreNivelHoja.Contains("párvulo"))
+                    esHojaPreescolar = true;
+                else if (nombreNivelHoja.Contains("septimo") || nombreNivelHoja.Contains("séptimo")
+                    || nombreNivelHoja.Contains("octavo") || nombreNivelHoja.Contains("noveno")
+                    || nombreNivelHoja.Contains("decimo") || nombreNivelHoja.Contains("décimo")
+                    || nombreNivelHoja.Contains("undecimo") || nombreNivelHoja.Contains("undécimo"))
+                    esHojaSecundaria = true;
+                else
+                    esHojaPrimaria = true;
+            }
+        }
+        @if (esHojaPreescolar && esSanFrancisco)
         {
-            <div class="row" id="peescolar">
+            <div class="row normas-reglamento" id="peescolar">
                 <p class="titulo-parrafo"><span>ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</span></p>
                 <p>
                     1.	“El Colegio parroquial San Francisco Javier es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
@@ -370,9 +397,9 @@
                                 
             </div>
         }
-        @if (Model.alumnos.IdModalidad == 2 && Model.alumnos.IdRecinto==1)
+        @if (esHojaPrimaria && esSanFrancisco)
         {
-        <div class="row" id="Primaria">
+        <div class="row normas-reglamento" id="Primaria">
                 <p class="titulo-parrafo"><span>ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</span></p>
                 <p>
                 1.	“El Colegio parroquial San Francisco Javier es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
@@ -398,9 +425,9 @@
                 
             </div>
             }
-        @if (Model.alumnos.IdModalidad == 3 && Model.alumnos.IdRecinto == 1)
+        @if (esHojaSecundaria && esSanFrancisco)
         {
-                <div class="row" id="Secundaria">
+                <div class="row normas-reglamento" id="Secundaria">
                 <p class="titulo-parrafo"><span>ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</span></p>
                 <p>
                 1.	“El Colegio parroquial San Francisco Javier es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
@@ -425,9 +452,9 @@
                 </p>
             </div>
             }
-             @if (Model.alumnos.IdModalidad == 1 && Model.alumnos.IdRecinto == 2)
+             @if (esHojaPreescolar && esSanMiguel)
         {
-                <div class="row" id="recinto2Preescolar">
+                <div class="row normas-reglamento" id="recinto2Preescolar">
                 <p class="titulo-parrafo">ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</p>
                 <p>
                 1.	“El Centro Educativo parroquial San Miguel Arcángel es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.
@@ -450,9 +477,9 @@
 
                     </div>
         }
-        @if (Model.alumnos.IdModalidad == 2 && Model.alumnos.IdRecinto == 2)
+        @if ((esHojaPrimaria || esHojaSecundaria) && esSanMiguel)
         {
-            <div class="row" id="recinto2Primaria">
+            <div class="row normas-reglamento" id="recinto2Primaria">
                 <p class="titulo-parrafo">ALGUNAS NORMAS A TENER PRESENTE DEL REGLAMENTO INTERNO:</p>
 
                 <p>1.	“El Centro Educativo parroquial San Miguel Arcángel es eminentemente católico y todo Padre, Madre, Tutor y Estudiante que desee ser parte del centro debe de regirse por el reglamento interno del centro”.

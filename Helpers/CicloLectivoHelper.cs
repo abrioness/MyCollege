@@ -24,27 +24,43 @@ namespace WebColegio.Helpers
                    ?? lista.OrderByDescending(p => p.Periodo).ThenByDescending(p => p.IdPeriodo).FirstOrDefault();
         }
 
+        /// <summary>
+        /// Año escolar en curso para cobros (ene–dic). Si marcaron el siguiente año como Actual
+        /// (p. ej. 2027 en octubre 2026), sigue siendo el año calendario.
+        /// </summary>
+        public static CatPeriodo? ResolverPeriodoVigente(IEnumerable<CatPeriodo>? periodos)
+            => ResolverPeriodoMensualidad(periodos) ?? ResolverPeriodoActual(periodos);
+
         public static CatPeriodo? ResolverPeriodoSiguiente(IEnumerable<CatPeriodo>? periodos)
         {
-            var actual = ResolverPeriodoActual(periodos);
-            if (actual == null)
+            var vigente = ResolverPeriodoVigente(periodos);
+            if (vigente == null)
                 return null;
 
-            int anio = AnioSiguienteCiclo(actual.Periodo);
+            int anio = AnioSiguienteCiclo(vigente.Periodo);
             return periodos?.FirstOrDefault(p => p.Activo && p.Periodo == anio);
         }
 
         /// <summary>
-        /// El siguiente ciclo existe y no está marcado como actual (p. ej. 2027 habilitado en 2026).
+        /// El siguiente ciclo existe respecto al año de mensualidades (p. ej. 2027 habilitado en 2026),
+        /// aunque alguien lo haya marcado como Actual.
         /// </summary>
         public static bool EstaHabilitadoSiguienteCiclo(IEnumerable<CatPeriodo>? periodos)
         {
-            var actual = ResolverPeriodoActual(periodos);
+            var vigente = ResolverPeriodoVigente(periodos);
             var siguiente = ResolverPeriodoSiguiente(periodos);
-            return actual != null
+            return vigente != null
                    && siguiente != null
-                   && siguiente.IdPeriodo != actual.IdPeriodo
-                   && !siguiente.Actual;
+                   && siguiente.IdPeriodo != vigente.IdPeriodo;
+        }
+
+        public static bool EsPeriodoSiguienteAlVigente(IEnumerable<CatPeriodo>? periodos, int idPeriodo)
+        {
+            if (idPeriodo <= 0)
+                return false;
+            var vigente = ResolverPeriodoVigente(periodos);
+            var elegido = periodos?.FirstOrDefault(p => p.IdPeriodo == idPeriodo);
+            return vigente != null && elegido != null && elegido.Periodo > vigente.Periodo;
         }
 
         /// <summary>
@@ -94,16 +110,16 @@ namespace WebColegio.Helpers
             DateTime fecha,
             bool forzarCicloActual = false)
         {
-            var actual = ResolverPeriodoActual(periodos);
-            if (actual == null)
+            var vigente = ResolverPeriodoVigente(periodos);
+            if (vigente == null)
                 return null;
             if (forzarCicloActual)
-                return actual;
+                return vigente;
 
             if (!CorrespondeMatriculaSiguienteCiclo(fecha, periodos))
-                return actual;
+                return vigente;
 
-            return ResolverPeriodoSiguiente(periodos) ?? actual;
+            return ResolverPeriodoSiguiente(periodos) ?? vigente;
         }
 
         public static bool EsMismoPeriodo(CatPeriodo? a, int idPeriodo)
