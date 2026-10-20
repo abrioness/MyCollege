@@ -236,14 +236,23 @@
                 <div class="fila-interna">
                     <div class="etiqueta"><strong>Código del Estudiante:</strong></div>
                     <div class="valor">@Model.alumnos.CodigoMINED</div>
-                    
+                    <div class="col-md-8 columna-izquierda">
+                        <div class="fila-interna">
+                            <div class="etiqueta"><strong>Código de Persona:</strong></div>
+                            <div class="valor">
+
+                                @Model.alumnos.CodigoUnico
+
+                            </div>
+                        </div>
+                    </div>
                                </div>
                                </div>
             <div class="col-md-8 columna-izquierda">
                 <div class="fila-interna">
                     
 
-                    <div class="etiqueta"><strong>Código único del Establecimiento Escolar:</strong></div>
+                    <div class="etiqueta"><strong>Código Único del Establecimiento Escolar:</strong></div>
                     @{
                         var codigoUnicoEstablecimientoSFJ = 13715;
                         var codigoCentroEscolarSFJ = 21054;

@@ -16,18 +16,18 @@
       "applicationUrl": "http://localhost:5009",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ApiSettings__BaseUrl": "https://localhost:7008/",
+        "ApiSettings__BaseUrl": "http://localhost:5224/",
         "ApiSettings__AllowInvalidCertificate": "true"
       }
     },
-    "https": {
+    "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7247;http://localhost:5009",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ApiSettings__BaseUrl": "https://localhost:7008/",
+        "ApiSettings__BaseUrl": "http://localhost:5224/",
         "ApiSettings__AllowInvalidCertificate": "true"
       }
     },
@@ -36,7 +36,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ApiSettings__BaseUrl": "https://localhost:7008/",
+        "ApiSettings__BaseUrl": "http://localhost:5224/",
         "ApiSettings__AllowInvalidCertificate": "true"
       }
     }
